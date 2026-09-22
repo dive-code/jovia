@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Jovia Network</title>
+  <meta name="description" content="Securely sign in to your Jovia Network member account.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #57158a;
+      --purple-dark: #3d0d64;
+      --purple-light: #7b2cbf;
+      --gold: #f5b51b;
+      --gold-light: #ffd75a;
+      --dark: #17121d;
+      --text: #27212d;
+      --muted: #77717d;
+      --background: #f7f5f9;
+      --white: #ffffff;
+      --border: #e7e1eb;
+      --danger: #d92d20;
+      --danger-bg: #fff4f3;
+      --danger-border: #ffd8d4;
+      --success: #14804a;
+      --success-bg: #effaf4;
+      --success-border: #c9efd9;
+      --shadow: 0 25px 70px rgba(40, 18, 55, 0.10);
+      --shadow-small: 0 10px 30px rgba(40, 18, 55, 0.07);
+      --radius: 22px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Manrope", sans-serif;
+      background: radial-gradient(circle at 10% 10%, rgba(87, 21, 138, 0.05), transparent 28%), radial-gradient(circle at 90% 90%, rgba(245, 181, 27, 0.07), transparent 25%), var(--background);
+      color: var(--text); min-height: 100vh; overflow-x: hidden;
+    }
+    button, input { font-family: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    a { text-decoration: none; color: inherit; }
+    .page-decoration { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .circle { position: absolute; border-radius: 50%; filter: blur(1px); }
+    .circle-one { width: 460px; height: 460px; background: rgba(87, 21, 138, 0.055); top: -240px; left: -190px; }
+    .circle-two { width: 400px; height: 400px; background: rgba(245, 181, 27, 0.065); right: -190px; bottom: -190px; }
+    header { position: relative; z-index: 10; width: 100%; padding: 21px 5%; background: rgba(255, 255, 255, 0.90); border-bottom: 1px solid rgba(231, 225, 235, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+    .nav { width: 100%; max-width: 1180px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .logo { width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px; background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: #fff; font-size: 22px; font-weight: 800; box-shadow: 0 9px 24px rgba(87, 21, 138, 0.22); }
+    .brand-text { line-height: 1.05; }
+    .brand-name { color: var(--dark); font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand-network { margin-top: 4px; color: var(--purple); font-size: 9px; font-weight: 800; letter-spacing: 2.1px; }
+    .home-link { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid transparent; border-radius: 10px; color: var(--purple); font-size: 13px; font-weight: 800; transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease; }
+    .home-link:hover { background: rgba(87, 21, 138, 0.06); border-color: rgba(87, 21, 138, 0.08); transform: translateX(-2px); }
+    main { position: relative; z-index: 2; width: 100%; padding: 70px 20px 80px; }
+    .container { width: 100%; max-width: 1080px; margin: auto; }
+    .login-layout { display: grid; grid-template-columns: minmax(0, 0.88fr) minmax(420px, 1.12fr); gap: 70px; align-items: center; }
+    .intro { padding: 5px 0; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 9px; padding: 8px 13px; border-radius: 50px; background: rgba(87, 21, 138, 0.075); color: var(--purple); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(245, 181, 27, 0.12); }
+    .intro h1 { max-width: 500px; margin-top: 21px; margin-bottom: 20px; color: var(--dark); font-size: clamp(40px, 5vw, 61px); line-height: 1.02; letter-spacing: -3px; font-weight: 800; }
+    .intro h1 span { color: var(--purple); }
+    .intro-description { max-width: 500px; color: var(--muted); font-size: 14px; line-height: 1.85; font-weight: 500; }
+    .feature-list { display: grid; gap: 14px; margin-top: 31px; }
+    .feature { display: flex; align-items: center; gap: 13px; }
+    .feature-icon { width: 41px; height: 41px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(255, 255, 255, 0.92); border: 1px solid var(--border); color: var(--purple); font-size: 14px; font-weight: 800; box-shadow: var(--shadow-small); }
+    .feature-content strong { display: block; margin-bottom: 2px; color: var(--dark); font-size: 12px; font-weight: 800; }
+    .feature-content small { display: block; color: var(--muted); font-size: 10.5px; line-height: 1.5; font-weight: 500; }
+    .login-card { width: 100%; padding: 39px; background: rgba(255, 255, 255, 0.97); border: 1px solid rgba(231, 225, 235, 0.95); border-radius: 25px; box-shadow: var(--shadow); }
+    .card-header { margin-bottom: 26px; }
+    .card-header h2 { margin-bottom: 8px; color: var(--dark); font-size: 26px; line-height: 1.2; letter-spacing: -0.9px; font-weight: 800; }
+    .card-header p { color: var(--muted); font-size: 12px; line-height: 1.65; font-weight: 500; }
+    .form-message { display: none; align-items: flex-start; gap: 9px; margin-bottom: 18px; padding: 12px 13px; border-radius: 11px; font-size: 11px; line-height: 1.5; font-weight: 700; }
+    .form-message.show { display: flex; }
+    .form-message.error { color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger-border); }
+    .form-message.success { color: var(--success); background: var(--success-bg); border: 1px solid var(--success-border); }
+    .message-icon { flex-shrink: 0; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 9px; font-weight: 800; }
+    .error .message-icon { background: rgba(217, 45, 32, 0.10); }
+    .success .message-icon { background: rgba(20, 128, 74, 0.10); }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; margin-bottom: 8px; color: var(--dark); font-size: 11px; font-weight: 800; }
+    .input-wrap { position: relative; }
+    .input-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); width: 18px; color: #9b94a2; pointer-events: none; font-size: 15px; text-align: center; }
+    .input-wrap input { width: 100%; height: 54px; padding: 0 47px 0 45px; border: 1px solid var(--border); border-radius: 13px; outline: none; background: #fcfbfd; color: var(--dark); font-size: 12px; font-weight: 700; transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; }
+    .input-wrap input::placeholder { color: #aaa4ae; font-weight: 500; }
+    .input-wrap input:hover { border-color: #d9d0df; }
+    .input-wrap input:focus { border-color: var(--purple); background: #fff; box-shadow: 0 0 0 4px rgba(87, 21, 138, 0.075); }
+    .input-wrap input.input-error { border-color: var(--danger); background: #fffafa; }
+    .password-toggle { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 9px; background: transparent; color: #8e8795; cursor: pointer; font-size: 14px; transition: background 0.2s ease, color 0.2s ease; }
+    .password-toggle:hover { background: #f3eff6; color: var(--purple); }
+    .form-options { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin: 2px 0 22px; }
+    .remember { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--muted); font-size: 10.5px; font-weight: 600; }
+    .remember input { width: 16px; height: 16px; margin: 0; accent-color: var(--purple); cursor: pointer; }
+    .forgot-link { color: var(--purple); font-size: 10.5px; font-weight: 800; transition: color 0.2s ease; }
+    .forgot-link:hover { color: var(--purple-dark); text-decoration: underline; }
+    .login-button { position: relative; width: 100%; height: 55px; display: flex; align-items: center; justify-content: center; gap: 9px; border: none; border-radius: 13px; background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: #fff; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 13px 28px rgba(87, 21, 138, 0.20); transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease; }
+    .login-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 17px 32px rgba(87, 21, 138, 0.25); }
+    .login-button:disabled { opacity: 0.72; cursor: not-allowed; }
+    .button-arrow { font-size: 16px; line-height: 1; }
+    .spinner { display: none; width: 17px; height: 17px; border: 2px solid rgba(255, 255, 255, 0.35); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .login-button.loading .spinner { display: block; }
+    .login-button.loading .button-arrow { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .divider { display: flex; align-items: center; gap: 13px; margin: 24px 0; color: #aaa3ae; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+    .register-box { padding: 16px; border-radius: 14px; background: linear-gradient(135deg, #faf8fb, #fffdfb); border: 1px solid #eee8f1; text-align: center; }
+    .register-box p { margin-bottom: 7px; color: var(--muted); font-size: 10.5px; font-weight: 500; }
+    .register-box a { color: var(--purple); font-size: 11.5px; font-weight: 800; }
+    .security-note { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 18px; color: #918a96; font-size: 9.5px; font-weight: 600; }
+    .security-icon { width: 17px; height: 17px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(20, 128, 74, 0.08); color: var(--success); font-size: 9px; font-weight: 800; }
+    footer { position: relative; z-index: 2; padding: 0 20px 28px; text-align: center; color: #98919e; font-size: 9.5px; font-weight: 500; }
+    footer strong { color: var(--purple); font-weight: 800; }
+    @media (max-width: 900px) {
+      .login-layout { grid-template-columns: 1fr; max-width: 620px; margin: auto; gap: 38px; }
+      .intro { text-align: center; }
+      .intro h1, .intro-description { margin-left: auto; margin-right: auto; }
+      .feature-list { max-width: 400px; margin-left: auto; margin-right: auto; text-align: left; }
+    }
+    @media (max-width: 520px) {
+      main { padding: 37px 14px 55px; }
+      .login-card { padding: 27px 18px; border-radius: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-decoration" aria-hidden="true"><div class="circle circle-one"></div><div class="circle circle-two"></div></div>
+  <header>
+    <nav class="nav">
+      <a href="index.html" class="brand"><div class="logo">J</div><div class="brand-text"><div class="brand-name">Jovia</div><div class="brand-network">NETWORK</div></div></a>
+      <a href="index.html" class="home-link"><span>←</span><span>Home</span></a>
+    </nav>
+  </header>
+  <main>
+    <div class="container">
+      <div class="login-layout">
+        <section class="intro">
+          <div class="eyebrow"><span class="eyebrow-dot"></span>MEMBER LOGIN</div>
+          <h1>Welcome <span>back.</span></h1>
+          <p class="intro-description">Sign in to your Jovia Network account and continue managing your membership, profile and dashboard from one secure place.</p>
+          <div class="feature-list">
+            <div class="feature"><div class="feature-icon">✓</div><div class="feature-content"><strong>Secure account access</strong><small>Your password is securely protected.</small></div></div>
+            <div class="feature"><div class="feature-icon">⚡</div><div class="feature-content"><strong>Fast dashboard access</strong><small>Sign in and continue where you left off.</small></div></div>
+            <div class="feature"><div class="feature-icon">◆</div><div class="feature-content"><strong>Your membership in one place</strong><small>Manage your Jovia account from your dashboard.</small></div></div>
+          </div>
+        </section>
+        <section class="login-card">
+          <div class="card-header"><h2>Sign in to your account</h2><p>Enter your username or email and password to continue.</p></div>
+          <div id="formMessage" class="form-message" role="alert" aria-live="polite"><span id="messageIcon" class="message-icon">!</span><span id="messageText"></span></div>
+          <form id="loginForm" novalidate>
+            <div class="form-group"><label class="form-label" for="login">Username or Email Address</label><div class="input-wrap"><span class="input-icon">✉</span><input type="text" id="login" name="login" placeholder="Enter your username or email" autocomplete="username" autocapitalize="none" spellcheck="false" required></div></div>
+            <div class="form-group"><label class="form-label" for="password">Password</label><div class="input-wrap"><span class="input-icon">🔒</span><input type="password" id="password" name="password" placeholder="Enter your password" autocomplete="current-password" required><button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password" title="Show password">👁</button></div></div>
+            <div class="form-options"><label class="remember"><input type="checkbox" id="rememberMe" name="rememberMe"><span>Remember me</span></label><a href="forgot-password.html" class="forgot-link">Forgot password?</a></div>
+            <button type="submit" class="login-button" id="loginButton"><span class="spinner" aria-hidden="true"></span><span class="button-text">Login to Dashboard</span><span class="button-arrow" aria-hidden="true">→</span></button>
+          </form>
+          <div class="divider">OR</div>
+          <div class="register-box"><p>Don't have a Jovia Network account?</p><a href="register.html">Create your account →</a></div>
+          <div class="security-note"><span class="security-icon">✓</span><span>Secure Jovia Network member login</span></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer>© <span id="year"></span> <strong>Jovia Network</strong>. All rights reserved.</footer>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const loginForm = document.getElementById("loginForm");
+    const loginInput = document.getElementById("login");
+    const passwordInput = document.getElementById("password");
+    const passwordToggle = document.getElementById("passwordToggle");
+    const rememberMe = document.getElementById("rememberMe");
+    const loginButton = document.getElementById("loginButton");
+    const buttonText = loginButton.querySelector(".button-text");
+    const formMessage = document.getElementById("formMessage");
+    const messageText = document.getElementById("messageText");
+    const messageIcon = document.getElementById("messageIcon");
+
+    function showMessage(message, type = "error") {
+      formMessage.classList.remove("error", "success", "show");
+      formMessage.classList.add(type);
+      messageText.textContent = message;
+      messageIcon.textContent = type === "success" ? "✓" : "!";
+      formMessage.classList.add("show");
+    }
+    function hideMessage() {
+      formMessage.classList.remove("show", "error", "success");
+      messageText.textContent = "";
+    }
+    passwordToggle.addEventListener("click", function () {
+      const showPassword = passwordInput.type === "password";
+      passwordInput.type = showPassword ? "text" : "password";
+      passwordToggle.textContent = showPassword ? "🙈" : "👁";
+      passwordToggle.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+    });
+    loginInput.addEventListener("input", function () { loginInput.classList.remove("input-error"); hideMessage(); });
+    passwordInput.addEventListener("input", function () { passwordInput.classList.remove("input-error"); hideMessage(); });
+
+    loginForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+      hideMessage();
+      loginInput.classList.remove("input-error");
+      passwordInput.classList.remove("input-error");
+      const login = loginInput.value.trim();
+      const password = passwordInput.value;
+      const remember = rememberMe.checked;
+      if (!login) { loginInput.classList.add("input-error"); showMessage("Please enter your username or email address."); loginInput.focus(); return; }
+      if (!password) { passwordInput.classList.add("input-error"); showMessage("Please enter your password."); passwordInput.focus(); return; }
+      if (password.length < 8) { passwordInput.classList.add("input-error"); showMessage("Your password must contain at least 8 characters."); passwordInput.focus(); return; }
+
+      loginButton.disabled = true;
+      loginButton.classList.add("loading");
+      buttonText.textContent = "Signing in...";
+
+      try {
+        const response = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ login: login, username: login, email: login, password: password, rememberMe: remember })
+        });
+        let data;
+        try { data = await response.json(); } catch { throw new Error("Invalid server response."); }
+        if (!response.ok || !data.success) {
+          showMessage(data.message || "Incorrect username/email or password.");
+          loginButton.disabled = false;
+          loginButton.classList.remove("loading");
+          buttonText.textContent = "Login to Dashboard";
+          return;
+        }
+
+        showMessage("Login successful. Opening your dashboard...", "success");
+        buttonText.textContent = "Opening Dashboard...";
+        localStorage.removeItem('adminToken'); localStorage.removeItem('admin');
+
+        const userRole = (data.user?.role || data.role || '').toString().toLowerCase();
+        const isAdmin = userRole === 'admin' || data.user?.is_admin === true || data.user?.isAdmin === true;
+
+        setTimeout(function () {
+          if (isAdmin) {
+            window.location.href = "admin.html";
+          } else {
+            window.location.href = "dashboard.html"; // FIXED: was index.html
+          }
+        }, 500);
+
+      } catch (error) {
+        console.error("Login error:", error);
+        showMessage("Unable to connect to Jovia Network. Make sure the server is running and try again.");
+        loginButton.disabled = false;
+        loginButton.classList.remove("loading");
+        buttonText.textContent = "Login to Dashboard";
+      }
+    });
+
+    async function checkExistingSession() {
+      try {
+        const response = await fetch("/api/me", { method: "GET", credentials: "include", cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.success && data.user) {
+          showMessage("You are already signed in. Opening your dashboard...", "success");
+          loginButton.disabled = true;
+          const role = (data.user.role || '').toString().toLowerCase();
+          const isAdmin = role === 'admin' || data.user.is_admin === true;
+          setTimeout(function () {
+            if (isAdmin) { window.location.href = "admin.html"; }
+            else { window.location.href = "dashboard.html"; }
+          }, 500);
+        }
+      } catch (error) { console.log("Session check unavailable."); }
+    }
+    checkExistingSession();
+  </script>
+</body>
+</html>

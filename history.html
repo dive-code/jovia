@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JOVIA - History</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--purple:#2a0f3d;--purple2:#4b1d6b;--gold:#f5b700;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1;--green:#16a34a;--red:#dc2626}
+body{font-family:Poppins,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{width:100%;max-width:680px;margin:auto;min-height:100vh;background:var(--bg);padding-bottom:110px}
+.topbar{background:rgba(255,255,255,.92);backdrop-filter:blur(12px);height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border:1px solid var(--border);border-radius:18px;margin:12px 12px 0;box-shadow:0 8px 25px rgba(42,15,61,.06);position:sticky;top:12px;z-index:20}
+.brand{font-size:22px;font-weight:900;color:var(--purple);display:flex;align-items:center;gap:10px}
+.brand-icon{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900}
+.brand span{color:var(--gold)}
+.top-title{font-size:11px;font-weight:800;color:var(--muted);background:#f6f0ff;padding:6px 12px;border-radius:20px;letter-spacing:1px}
+.content{padding:22px 16px 25px}
+.page-heading{margin-bottom:18px}
+.page-heading h1{font-size:26px;font-weight:800;color:var(--purple);letter-spacing:-.8px}
+.page-heading p{font-size:12px;color:var(--muted);line-height:1.5;margin-top:4px;font-weight:500}
+.summary-card{background:linear-gradient(145deg,#2f1347 0%,#4a1f6e 50%,#5e2a85 100%);color:white;border-radius:22px;padding:22px 20px;margin-bottom:18px;box-shadow:0 20px 40px rgba(42,15,61,.22);position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.summary-card::before{content:"";position:absolute;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,0,.18) 0%,transparent 70%);right:-60px;top:-60px}
+.summary-label{font-size:10px;color:rgba(255,255,255,.65);margin-bottom:8px;letter-spacing:1.2px;font-weight:700;position:relative;z-index:1}
+.summary-value{font-size:34px;font-weight:900;margin-bottom:6px;letter-spacing:-1px;position:relative;z-index:1}
+.summary-note{font-size:11px;color:rgba(255,255,255,.6);position:relative;z-index:1}
+.filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-btn{border:1px solid var(--border);background:#fff;color:var(--muted);padding:9px 16px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;transition:.2s}
+.filter-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;box-shadow:0 6px 15px rgba(42,15,61,.18)}
+.history-section{background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 8px 25px rgba(42,15,61,.05)}
+.history-header{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.history-header h2{font-size:14px;font-weight:800;color:var(--purple)}
+.history-count{font-size:10px;color:var(--muted);font-weight:700;background:#f6f0ff;padding:6px 10px;border-radius:20px}
+.transaction{display:flex;align-items:center;gap:13px;padding:16px 18px;border-bottom:1px solid #f4f0f7;transition:.15s}
+.transaction:last-child{border-bottom:none}
+.transaction:hover{background:#fdfaff}
+.transaction-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,#f6f0ff,#efe6ff);border:1px solid #ece6f1;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;font-weight:800}
+.transaction-info{min-width:0;flex:1}
+.transaction-title{font-size:12.5px;font-weight:700;margin-bottom:4px;word-break:break-word;color:var(--purple);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.transaction-date{font-size:10px;color:var(--muted);font-weight:500}
+.transaction-right{text-align:right;flex-shrink:0}
+.transaction-amount{font-size:13px;font-weight:800;margin-bottom:5px}
+.amount-positive{color:var(--green)}
+.amount-negative{color:var(--red)}
+.status{display:inline-flex;align-items:center;justify-content:center;padding:5px 10px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.3px}
+.status-success{background:#e8f5e9;color:#166534}
+.status-pending{background:#fff8d6;color:#92400e}
+.status-paid{background:var(--purple);color:white}
+.status-failed{background:#fee2e2;color:#991b1b}
+.status-refunded{background:#e0f2fe;color:#0c6eb3}
+.loading{padding:35px 20px;text-align:center;color:var(--muted);font-size:12px;font-weight:600}
+.loading-dot{display:inline-block;width:8px;height:8px;background:var(--gold);border-radius:50%;margin-right:6px;animation:pulse 1s infinite alternate}
+@keyframes pulse{from{opacity:.3}to{opacity:1}}
+.empty{padding:45px 20px;text-align:center;display:none}
+.empty-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:18px;background:#f6f0ff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:25px}
+.empty h3{font-size:14px;font-weight:800;margin-bottom:6px;color:var(--purple)}
+.empty p{font-size:11px;color:var(--muted);line-height:1.5}
+.error{padding:20px;text-align:center;color:#991b1b;background:#fee2e2;font-size:12px;line-height:1.5;display:none}
+.bottom-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:calc(100% - 24px);max-width:500px;height:66px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;display:flex;align-items:center;justify-content:space-around;z-index:30;box-shadow:0 15px 40px rgba(42,15,61,.12)}
+.nav-item{border:none;background:transparent;color:#9a92a6;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700;cursor:pointer;min-width:60px;padding:6px 10px;border-radius:14px;transition:.2s}
+.nav-icon{font-size:18px;line-height:1}
+.nav-item.active{color:var(--purple);background:#f6f0ff}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar"><div class="brand"><div class="brand-icon">J</div>JOVIA<span>.</span></div><div class="top-title">History</div></header>
+<main class="content">
+<div class="page-heading"><h1>Transaction History</h1><p>View your account transactions and activity.</p></div>
+<section class="summary-card"><div class="summary-label">Total Transactions</div><div class="summary-value" id="totalTransactions">0</div><div class="summary-note">Withdrawals stay Pending until admin approves. Earnings are auto Successful.</div></section>
+<div class="filter-row">
+<button class="filter-btn active" onclick="filterTransactions('all',this)">All</button>
+<button class="filter-btn" onclick="filterTransactions('payment',this)">Payments</button>
+<button class="filter-btn" onclick="filterTransactions('earning',this)">Earnings</button>
+<button class="filter-btn" onclick="filterTransactions('withdrawal',this)">Withdrawals</button>
+</div>
+<section class="history-section">
+<div class="history-header"><h2>Recent Activity</h2><span class="history-count" id="historyCount">0 records</span></div>
+<div class="loading" id="loadingState"><span class="loading-dot"></span>Loading history...</div>
+<div class="error" id="errorState">Unable to load your transaction history.</div>
+<div class="empty" id="emptyState"><div class="empty-icon">🧾</div><h3>No transactions yet</h3><p>Your payments, earnings and withdrawals will appear here when available.</p></div>
+<div id="transactionsList"></div>
+</section>
+</main>
+</div>
+<nav class="bottom-nav">
+<a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a>
+<a class="nav-item" href="payment.html"><span class="nav-icon">₦</span><span>Payment</span></a>
+<a class="nav-item active" href="history.html"><span class="nav-icon">◷</span><span>History</span></a>
+<a class="nav-item" href="profile.html"><span class="nav-icon">◍</span><span>Profile</span></a>
+</nav>
+<script>
+let allTransactions = [];
+let allWithdrawals = [];
+let currentFilter = "all";
+function formatNaira(amount){const n=Number(amount);if(!Number.isFinite(n))return "₦0";return "₦"+Math.abs(n).toLocaleString("en-NG",{maximumFractionDigits:2});}
+function formatDate(value){if(!value)return "—";const date=new Date(value);if(Number.isNaN(date.getTime()))return String(value);return date.toLocaleString("en-NG",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});}
+function isRefundTransaction(t){
+  const text = String((t?.description||"")+" "+(t?.title||"")+" "+(t?.type||"")+" "+(t?.reference||"")).toLowerCase();
+  return text.includes("rejected") || text.includes("refund") || text.includes("withdrawal_refund");
+}
+function getType(t){
+  if(isRefundTransaction(t)) return "earning";
+  const type=String(t?.type||t?.transaction_type||"").toLowerCase();
+  if(type.includes("withdraw")) return "withdrawal";
+  if(type.includes("earning")||type.includes("bonus")||type.includes("reward")||type.includes("job")||type.includes("referral")||type.includes("video")) return "earning";
+  if(type.includes("payment")||type.includes("deposit")) return "payment";
+  return t._sourceType || "earning";
+}
+function getTitle(t){return t?.description || t?.title || (getType(t)==="withdrawal"?"Withdrawal":"Earning");}
+function getIcon(t){
+  if(isRefundTransaction(t)) return "↩";
+  if(getType(t)==="withdrawal") return "↗";
+  if(getType(t)==="earning") return "✓";
+  return "₦";
+}
+function getStatus(t){
+  if(isRefundTransaction(t)) return {text:"Refunded",className:"status-refunded"};
+  const s=String(t?.status||"").toLowerCase();
+  const type=getType(t);
+  // YOUR VOICE FIX:
+  if(type==="earning"){
+    return {text:"Successful",className:"status-success"};
+  }
+  if(type==="withdrawal"){
+    if(s==="pending") return {text:"Pending",className:"status-pending"};
+    if(s==="paid"||s==="approved"||s==="successful"||s==="completed") return {text:"Paid",className:"status-paid"};
+    if(s==="rejected"||s==="failed") return {text:"Refunded",className:"status-refunded"};
+    return {text:"Pending",className:"status-pending"};
+  }
+  if(s==="pending") return {text:"Pending",className:"status-pending"};
+  if(s==="paid"||s==="approved") return {text:"Paid",className:"status-paid"};
+  if(s==="rejected"||s==="failed") return {text:"Rejected",className:"status-failed"};
+  return {text:"Successful",className:"status-success"};
+}
+function escapeHTML(v){return String(v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+function renderTransactions(transactions){
+  const list=document.getElementById("transactionsList");
+  const empty=document.getElementById("emptyState");
+  const loading=document.getElementById("loadingState");
+  const error=document.getElementById("errorState");
+  loading.style.display="none";error.style.display="none";list.innerHTML="";
+  document.getElementById("historyCount").textContent=`${transactions.length} ${transactions.length===1?"record":"records"}`;
+  if(!transactions.length){empty.style.display="block";return;}
+  empty.style.display="none";
+  transactions.forEach(function(t){
+    const type=getType(t);
+    const status=getStatus(t);
+    const amount=Number(t.amount||0);
+    const isRefund=isRefundTransaction(t);
+    let amountClass="amount-positive"; let sign="+";
+    if(isRefund){amountClass="amount-positive"; sign="+";}
+    else if(type==="earning"){amountClass="amount-positive"; sign="+";}
+    else if(type==="withdrawal"){amountClass="amount-negative"; sign="-";}
+    const displayAmount = `${sign}${formatNaira(amount)}`;
+    const item=document.createElement("div");
+    item.className="transaction";
+    item.innerHTML=`
+<div class="transaction-icon">${getIcon(t)}</div>
+<div class="transaction-info">
+<div class="transaction-title">${escapeHTML(getTitle(t))}</div>
+<div class="transaction-date">${escapeHTML(formatDate(t.created_at||t.createdAt))}</div>
+</div>
+<div class="transaction-right">
+<div class="transaction-amount ${amountClass}">${displayAmount}</div>
+<span class="status ${status.className}">${status.text}</span>
+</div>`;
+    list.appendChild(item);
+  });
+}
+function filterTransactions(filter,button){
+  currentFilter=filter;
+  document.querySelectorAll(".filter-btn").forEach(function(btn){btn.classList.remove("active");});
+  button.classList.add("active");
+  let filtered=[];
+  if(filter==="all") filtered=[...allWithdrawals,...allTransactions];
+  else if(filter==="withdrawal") filtered=[...allWithdrawals];
+  else if(filter==="earning") filtered=allTransactions.filter(t=>getType(t)==="earning" || isRefundTransaction(t));
+  else if(filter==="payment") filtered=allTransactions.filter(t=>getType(t)==="payment");
+  filtered.sort((a,b)=> new Date(b.created_at||b.createdAt||0) - new Date(a.created_at||a.createdAt||0));
+  renderTransactions(filtered);
+}
+async function requestJSON(url){
+  const response=await fetch(url,{method:"GET",credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});
+  let data={};try{data=await response.json();}catch(error){data={};}
+  return {response,data};
+}
+async function loadHistory(){
+  const loading=document.getElementById("loadingState");
+  const error=document.getElementById("errorState");
+  const empty=document.getElementById("emptyState");
+  try{
+    loading.style.display="block";error.style.display="none";empty.style.display="none";
+    let result=await requestJSON("/api/history?t="+Date.now());
+    let response=result.response; let data=result.data;
+    if(!response.ok ||!data.success || (!data.withdrawals &&!data.history)){
+      result=await requestJSON("/api/wallet?t="+Date.now());
+      response=result.response; data=result.data;
+    }
+    if(response.status===401){window.location.href="login.html";return;}
+    if(!response.ok) throw new Error(data.message||"Unable to load");
+    let withdrawals = [];
+    if(Array.isArray(data.withdrawals)) withdrawals = data.withdrawals;
+    else if(Array.isArray(data.data?.withdrawals)) withdrawals = data.data.withdrawals;
+    allWithdrawals = withdrawals.map(w=>{
+      return {
+        _sourceType: "withdrawal",
+        type: "withdrawal",
+        description: `Withdrawal request - ${w.type||w.withdrawal_type||"regular"}`,
+        amount: Number(w.amount||0),
+        status: String(w.status||"pending").toLowerCase(),
+        created_at: w.created_at || w.createdAt,
+        title: `Withdrawal request - ${w.type||"regular"}`
+      };
+    });
+    let txs=[];
+    if(data.wallet && Array.isArray(data.wallet.transactions)) txs=data.wallet.transactions;
+    else if(Array.isArray(data.transactions)) txs=data.transactions;
+    else if(Array.isArray(data.history)) txs=data.history;
+    else if(Array.isArray(data.data)) txs=data.data;
+    allTransactions = txs.filter(t=>{
+      const type=String(t.type||"").toLowerCase();
+      if(type==="withdrawal" && Number(t.amount)<0) return false;
+      return true;
+    }).map(t=>({
+    ...t,
+      _sourceType: isRefundTransaction(t)? "earning" : "earning",
+      created_at: t.created_at||t.createdAt
+    }));
+    const total = allWithdrawals.length + allTransactions.length;
+    document.getElementById("totalTransactions").textContent=total;
+    let combined=[...allWithdrawals,...allTransactions];
+    combined.sort((a,b)=> new Date(b.created_at||0) - new Date(a.created_at||0));
+    if(currentFilter==="all") renderTransactions(combined);
+    else if(currentFilter==="withdrawal") renderTransactions(allWithdrawals);
+    else filterTransactions(currentFilter, document.querySelector(`.filter-btn.active`) || document.querySelectorAll(".filter-btn")[0]);
+  }catch(err){
+    console.error("HISTORY LOAD ERROR:",err);
+    loading.style.display="none";empty.style.display="none";error.style.display="block";
+    document.getElementById("historyCount").textContent="Unavailable";
+  }
+}
+document.addEventListener("DOMContentLoaded",function(){loadHistory();});
+</script>
+</body>
+</html>

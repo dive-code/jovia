@@ -1,0 +1,9 @@
+node_modules/
+.env
+
+jovia.db
+jovia.db-wal
+jovia.db-shm
+
+uploads/*
+!uploads/.gitkeep

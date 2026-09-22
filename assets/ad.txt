@@ -1,0 +1,5181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jovia Network | Admin Dashboard</title>
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      background: #f5f7fb;
+      color: #172033;
+    }
+
+    /* =========================
+       ADMIN LOGIN
+    ========================== */
+
+    #loginScreen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: #f5f7fb;
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      padding: 35px 30px;
+      border-radius: 18px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.08);
+    }
+
+    .login-logo {
+      text-align: center;
+      font-size: 27px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .login-logo span {
+      color: #4f8cff;
+    }
+
+    .login-subtitle {
+      text-align: center;
+      color: #7b8494;
+      font-size: 13px;
+      margin-bottom: 30px;
+    }
+
+    .login-group {
+      margin-bottom: 18px;
+    }
+
+    .login-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #596579;
+      margin-bottom: 7px;
+    }
+
+    .login-group input {
+      width: 100%;
+      border: 1px solid #dce2ea;
+      border-radius: 9px;
+      padding: 13px 12px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      background: white;
+      color: #172033;
+    }
+
+    .login-group input:focus {
+      border-color: #2563eb;
+    }
+
+    .login-button {
+      width: 100%;
+      border: none;
+      padding: 13px;
+      border-radius: 9px;
+      background: #2563eb;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .login-button:hover {
+      background: #1d4ed8;
+    }
+
+    .login-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .login-error {
+      display: none;
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 11px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-bottom: 17px;
+    }
+
+    .login-loading {
+      display: none;
+      text-align: center;
+      color: #7b8494;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+
+    /* =========================
+       DASHBOARD
+    ========================== */
+
+    #dashboardScreen {
+      display: none;
+    }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 250px;
+      height: 100vh;
+      background: #111827;
+      color: white;
+      padding: 25px 18px;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      padding: 0 12px 35px;
+    }
+
+    .logo span {
+      color: #4f8cff;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav a {
+      text-decoration: none;
+      color: #aeb8ca;
+      padding: 14px 15px;
+      border-radius: 10px;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      background: #1f2937;
+      color: white;
+    }
+
+    .logout-link {
+      margin-top: 10px;
+    }
+
+    .main {
+      margin-left: 250px;
+      padding: 30px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .topbar h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+    }
+
+    .topbar p {
+      color: #7b8494;
+      font-size: 14px;
+    }
+
+    .admin {
+      background: white;
+      padding: 10px 16px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      font-weight: 600;
+    }
+
+    /* =========================
+       DASHBOARD CARDS
+    ========================== */
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .card p {
+      color: #7b8494;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .card h2 {
+      font-size: 28px;
+    }
+
+    /* =========================
+       GENERAL BOX
+    ========================== */
+
+    .section-box,
+    .users-box,
+    .links-box,
+    .videos-box {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      margin-bottom: 30px;
+    }
+
+    /* =========================
+       HEADERS
+    ========================== */
+
+    .users-header,
+    .jobs-header,
+    .links-header,
+    .videos-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 15px;
+    }
+
+    .users-header h2,
+    .jobs-header h2,
+    .links-header h2,
+    .videos-header h2 {
+      font-size: 20px;
+    }
+
+    .users-info,
+    .jobs-info,
+    .links-info,
+    .videos-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      color: #7b8494;
+      font-size: 12px;
+    }
+
+    .live-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.35; }
+      100% { opacity: 1; }
+    }
+
+    /* =========================
+       BUTTONS
+    ========================== */
+
+    button {
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .refresh {
+      background: #2563eb;
+      color: white;
+    }
+
+    .refresh:hover {
+      background: #1d4ed8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    th,
+    td {
+      padding: 14px 10px;
+      text-align: left;
+      border-bottom: 1px solid #edf0f4;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    th {
+      color: #6b7280;
+      font-weight: 600;
+      background: #fafbfc;
+    }
+
+    tbody tr:hover {
+      background: #fafcff;
+    }
+
+    /* =========================
+       PASSWORD
+    ========================== */
+
+    .password-protected {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 6px 9px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* =========================
+       STATUS
+    ========================== */
+
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .pending {
+      background: #fff4d6;
+      color: #9a6700;
+    }
+
+    .approved,
+    .active,
+    .available {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .suspended,
+    .paused,
+    .inactive,
+    .closed {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .completed {
+      background: #e0e7ff;
+      color: #4338ca;
+    }
+
+    /* =========================
+       PACKAGE
+    ========================== */
+
+    .silver {
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .gold {
+      color: #d97706;
+      font-weight: 700;
+    }
+
+    /* =========================
+       ACTIONS
+    ========================== */
+
+    .action {
+      margin-right: 5px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      padding: 8px 11px;
+    }
+
+    .approve,
+    .restore,
+    .activate-job,
+    .activate-link,
+    .activate-video {
+      background: #16a34a;
+      color: white;
+    }
+
+    .approve:hover,
+    .restore:hover,
+    .activate-job:hover,
+    .activate-link:hover,
+    .activate-video:hover {
+      background: #15803d;
+    }
+
+    .reset,
+    .edit-link,
+    .edit-video {
+      background: #2563eb;
+      color: white;
+    }
+
+    .reset:hover,
+    .edit-link:hover,
+    .edit-video:hover {
+      background: #1d4ed8;
+    }
+
+    .suspend,
+    .delete-link,
+    .delete-video {
+      background: #dc2626;
+      color: white;
+    }
+
+    .suspend:hover,
+    .delete-link:hover,
+    .delete-video:hover {
+      background: #b91c1c;
+    }
+
+    .pause-job,
+    .pause-link,
+    .pause-video {
+      background: #f59e0b;
+      color: white;
+    }
+
+    .pause-job:hover,
+    .pause-link:hover,
+    .pause-video:hover {
+      background: #d97706;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 35px !important;
+      color: #7b8494;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    /* =========================
+       FORM
+    ========================== */
+
+    .job-form,
+    .link-form,
+    .video-form {
+      background: #f8fafc;
+      border: 1px solid #edf0f4;
+      border-radius: 13px;
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    .job-form h3,
+    .link-form h3,
+    .video-form h3 {
+      font-size: 17px;
+      margin-bottom: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #596579;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      border: 1px solid #dce2ea;
+      border-radius: 9px;
+      padding: 11px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      background: white;
+      color: #172033;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: #2563eb;
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .create-job,
+    .create-link,
+    .create-video {
+      margin-top: 17px;
+      background: #16a34a;
+      color: white;
+    }
+
+    .create-job:hover,
+    .create-link:hover,
+    .create-video:hover {
+      background: #15803d;
+    }
+
+    /* =========================
+       JOB TABLE
+    ========================== */
+
+    .jobs-table-wrapper,
+    .links-table-wrapper,
+    .videos-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .jobs-table {
+      min-width: 1250px;
+    }
+
+    .job-title,
+    .link-name,
+    .video-title {
+      font-weight: 700;
+      color: #172033;
+    }
+
+    .job-description,
+    .link-description,
+    .video-description {
+      color: #6b7280;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+
+    .reward {
+      color: #16a34a;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .category {
+      background: #eef2ff;
+      color: #4338ca;
+      padding: 5px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+    }
+
+    .slot {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .job-url,
+    .link-url,
+    .video-url {
+      color: #2563eb;
+      font-weight: 600;
+      text-decoration: none;
+      word-break: break-all;
+      display: inline-block;
+      max-width: 250px;
+    }
+
+    .job-url:hover,
+    .link-url:hover,
+    .video-url:hover {
+      text-decoration: underline;
+    }
+
+    .job-action,
+    .link-action,
+    .video-action {
+      font-size: 11px;
+      padding: 8px 11px;
+      margin-right: 5px;
+      margin-bottom: 4px;
+    }
+
+    /* =========================
+       LINKS
+    ========================== */
+
+    .link-form.editing,
+    .video-form.editing {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .cancel-edit {
+      margin-top: 17px;
+      margin-left: 8px;
+      background: #64748b;
+      color: white;
+      display: none;
+    }
+
+    .cancel-edit:hover {
+      background: #475569;
+    }
+
+    .link-status-active,
+    .video-status-active {
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .link-status-inactive,
+    .video-status-inactive {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    /* =========================
+       VIDEO
+    ========================== */
+
+    .video-thumbnail {
+      width: 90px;
+      height: 55px;
+      object-fit: cover;
+      border-radius: 7px;
+      background: #e5e7eb;
+      display: block;
+    }
+
+    .video-placeholder {
+      width: 90px;
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 7px;
+      background: #e5e7eb;
+      color: #64748b;
+      font-size: 20px;
+    }
+
+    .video-note {
+      margin-top: 10px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+      padding: 11px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    /* =========================
+       MOBILE
+    ========================== */
+
+    @media (max-width: 1200px) {
+      .cards {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 1000px) {
+      .cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-group.full {
+        grid-column: auto;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .sidebar {
+        width: 70px;
+        padding: 20px 8px;
+      }
+
+      .logo {
+        font-size: 0;
+        text-align: center;
+      }
+
+      .logo span {
+        font-size: 22px;
+      }
+
+      .nav a {
+        font-size: 0;
+        text-align: center;
+        padding: 13px 5px;
+      }
+
+      .nav a::first-letter {
+        font-size: 20px;
+      }
+
+      .main {
+        margin-left: 70px;
+        padding: 18px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        gap: 10px;
+        flex-direction: column;
+      }
+
+      .admin {
+        width: 100%;
+      }
+
+      .users-box,
+      .section-box,
+      .links-box,
+      .videos-box {
+        padding: 18px;
+      }
+
+      .users-header,
+      .jobs-header,
+      .links-header,
+      .videos-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .users-info,
+      .jobs-info,
+      .links-info,
+      .videos-info {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .login-box {
+        padding: 30px 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- =========================
+       ADMIN LOGIN
+  ========================== -->
+
+  <div id="loginScreen">
+
+    <div class="login-box">
+
+      <div class="login-logo">
+        Jovia<span>Network</span>
+      </div>
+
+      <p class="login-subtitle">
+        Administrator Login
+      </p>
+
+      <div id="loginError" class="login-error"></div>
+
+      <form id="adminLoginForm" onsubmit="adminLogin(event)">
+
+        <div class="login-group">
+
+          <label for="adminUsername">
+            Username
+          </label>
+
+          <input
+            type="text"
+            id="adminUsername"
+            placeholder="Enter admin username"
+            autocomplete="username"
+            required
+          >
+
+        </div>
+
+        <div class="login-group">
+
+          <label for="adminPassword">
+            Password
+          </label>
+
+          <input
+            type="password"
+            id="adminPassword"
+            placeholder="Enter admin password"
+            autocomplete="current-password"
+            required
+          >
+
+        </div>
+
+        <button
+          type="submit"
+          class="login-button"
+          id="loginButton"
+        >
+          Login to Admin
+        </button>
+
+        <div id="loginLoading" class="login-loading">
+          Checking administrator credentials...
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+  <!-- =========================
+       DASHBOARD
+  ========================== -->
+
+  <div id="dashboardScreen">
+
+    <aside class="sidebar">
+
+      <div class="logo">
+        Jovia<span>Network</span>
+      </div>
+
+      <nav class="nav">
+
+        <a href="#dashboard" class="active" onclick="setActiveNav(this)">
+          📊 Dashboard
+        </a>
+
+        <a href="#users" onclick="setActiveNav(this)">
+          👥 Users
+        </a>
+
+        <a href="#jobs" onclick="setActiveNav(this)">
+          💼 Jobs
+        </a>
+
+        <a href="#videos" onclick="setActiveNav(this)">
+          🎬 Videos
+        </a>
+
+        <a href="#links" onclick="setActiveNav(this)">
+          🔗 Links
+        </a>
+
+        <a href="#" onclick="return false">
+          💳 Payments
+        </a>
+
+        <a href="#" onclick="return false">
+          📦 Packages
+        </a>
+
+        <a href="#" onclick="return false">
+          ⚙️ Settings
+        </a>
+
+        <a
+          href="#"
+          class="logout-link"
+          onclick="adminLogout(event)"
+        >
+          🚪 Logout
+        </a>
+
+      </nav>
+
+    </aside>
+
+    <main class="main">
+
+      <div class="topbar">
+
+        <div>
+
+          <h1>
+            Admin Dashboard
+          </h1>
+
+          <p>
+            Welcome back, Administrator.
+          </p>
+
+        </div>
+
+        <div class="admin">
+          👤 <span id="adminName">Administrator</span>
+        </div>
+
+      </div>
+
+      <!-- DASHBOARD CARDS -->
+
+      <section class="cards" id="dashboard">
+
+        <div class="card">
+          <p>Total Users</p>
+          <h2 id="totalUsers">0</h2>
+        </div>
+
+        <div class="card">
+          <p>Pending Accounts</p>
+          <h2 id="pendingUsers">0</h2>
+        </div>
+
+        <div class="card">
+          <p>Approved Accounts</p>
+          <h2 id="approvedUsers">0</h2>
+        </div>
+
+        <div class="card">
+          <p>Gold Members</p>
+          <h2 id="goldUsers">0</h2>
+        </div>
+
+        <div class="card">
+          <p>Silver Members</p>
+          <h2 id="silverUsers">0</h2>
+        </div>
+
+      </section>
+
+      <!-- USERS -->
+
+      <section class="users-box" id="users">
+
+        <div class="users-header">
+
+          <h2>
+            Registered Users
+          </h2>
+
+          <button
+            class="refresh"
+            onclick="loadUsers()"
+          >
+            🔄 Refresh
+          </button>
+
+        </div>
+
+        <div class="users-info">
+
+          <div class="live-status">
+
+            <span class="live-dot"></span>
+
+            <span>
+              Live updates enabled
+            </span>
+
+          </div>
+
+          <div>
+
+            Last updated:
+            <span id="lastUpdated">
+              Waiting...
+            </span>
+
+          </div>
+
+        </div>
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Password</th>
+              <th>Package</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody id="usersTable">
+
+            <tr>
+
+              <td colspan="10" class="empty">
+                Loading users...
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </section>
+
+      <!-- =========================
+           JOB MANAGEMENT
+           JOB + URL ARE TOGETHER
+      ========================== -->
+
+      <section class="section-box" id="jobs">
+
+        <div class="jobs-header">
+
+          <h2>
+            💼 Jobs Management
+          </h2>
+
+          <button
+            class="refresh"
+            onclick="loadAdminJobs()"
+          >
+            🔄 Refresh Jobs
+          </button>
+
+        </div>
+
+        <div class="jobs-info">
+
+          <div>
+            Manage the 3 daily job slots available to members.
+          </div>
+
+          <div>
+            Total Jobs:
+            <strong id="totalJobs">
+              0
+            </strong>
+          </div>
+
+        </div>
+
+        <!-- CREATE JOB -->
+
+        <div class="job-form">
+
+          <h3>
+            ➕ Create New Job
+          </h3>
+
+          <form
+            id="createJobForm"
+            onsubmit="createJob(event)"
+          >
+
+            <div class="form-grid">
+
+              <!-- JOB SLOT -->
+
+              <div class="form-group">
+
+                <label for="jobSlot">
+                  Daily Job Slot
+                </label>
+
+                <select
+                  id="jobSlot"
+                  required
+                >
+
+                  <option value="1">
+                    Job 1
+                  </option>
+
+                  <option value="2">
+                    Job 2
+                  </option>
+
+                  <option value="3">
+                    Job 3
+                  </option>
+
+                </select>
+
+              </div>
+
+              <!-- TITLE -->
+
+              <div class="form-group">
+
+                <label for="jobTitle">
+                  Job Title
+                </label>
+
+                <input
+                  type="text"
+                  id="jobTitle"
+                  placeholder="e.g. Join Telegram Channel"
+                  required
+                >
+
+              </div>
+
+              <!-- CATEGORY -->
+
+              <div class="form-group">
+
+                <label for="jobCategory">
+                  Category
+                </label>
+
+                <input
+                  type="text"
+                  id="jobCategory"
+                  placeholder="e.g. Social Media"
+                  value="General"
+                  required
+                >
+
+              </div>
+
+              <!-- REWARD -->
+
+              <div class="form-group">
+
+                <label for="jobReward">
+                  Reward (₦)
+                </label>
+
+                <input
+                  type="number"
+                  id="jobReward"
+                  placeholder="e.g. 500"
+                  min="0"
+                  step="1"
+                  required
+                >
+
+              </div>
+
+              <!-- URL -->
+
+              <div class="form-group full">
+
+                <label for="jobUrl">
+                  Job URL
+                </label>
+
+                <input
+                  type="url"
+                  id="jobUrl"
+                  placeholder="https://example.com/your-job-link"
+                  required
+                >
+
+              </div>
+
+              <!-- DESCRIPTION -->
+
+              <div class="form-group full">
+
+                <label for="jobDescription">
+                  Job Description
+                </label>
+
+                <textarea
+                  id="jobDescription"
+                  placeholder="Explain exactly what members need to do..."
+                  required
+                ></textarea>
+
+              </div>
+
+              <!-- DURATION -->
+
+              <div class="form-group">
+
+                <label for="jobDuration">
+                  Duration
+                </label>
+
+                <input
+                  type="text"
+                  id="jobDuration"
+                  placeholder="e.g. 10 minutes"
+                  value="Flexible"
+                  required
+                >
+
+              </div>
+
+              <!-- STATUS -->
+
+              <div class="form-group">
+
+                <label for="jobStatus">
+                  Status
+                </label>
+
+                <select id="jobStatus">
+
+                  <option value="available">
+                    Available
+                  </option>
+
+                  <option value="inactive">
+                    Paused
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
+
+            <button
+              type="submit"
+              class="create-job"
+              id="createJobButton"
+            >
+              ➕ Create Job
+            </button>
+
+          </form>
+
+        </div>
+
+        <!-- DAILY JOB RULE -->
+
+        <div class="video-note" style="margin-bottom:25px;">
+
+          <strong>Daily Job Rule:</strong>
+          Members can complete a maximum of
+          <strong>3 jobs per day</strong> —
+          Job 1, Job 2 and Job 3.
+
+          <br><br>
+
+          A reward should only be credited after the backend
+          confirms that the member completed the required action
+          for that particular job.
+
+        </div>
+
+        <!-- JOB TABLE -->
+
+        <div class="jobs-table-wrapper">
+
+          <table class="jobs-table">
+
+            <thead>
+
+              <tr>
+
+                <th>Slot</th>
+                <th>ID</th>
+                <th>Job Title</th>
+                <th>Category</th>
+                <th>URL</th>
+                <th>Description</th>
+                <th>Reward</th>
+                <th>Duration</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="jobsTable">
+
+              <tr>
+
+                <td colspan="11" class="empty">
+                  Loading jobs...
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+      <!-- =========================
+           VIDEO MANAGEMENT
+      ========================== -->
+
+      <section class="videos-box" id="videos">
+
+        <div class="videos-header">
+
+          <h2>
+            🎬 Video Management
+          </h2>
+
+          <button
+            class="refresh"
+            onclick="loadAdminVideos()"
+          >
+            🔄 Refresh Videos
+          </button>
+
+        </div>
+
+        <div class="videos-info">
+
+          <div>
+            Add and manage videos displayed to members.
+          </div>
+
+          <div>
+            Total Videos:
+            <strong id="totalVideos">
+              0
+            </strong>
+          </div>
+
+        </div>
+
+        <!-- ADD VIDEO -->
+
+        <div
+          class="video-form"
+          id="videoFormBox"
+        >
+
+          <h3 id="videoFormTitle">
+            ➕ Add New Video
+          </h3>
+
+          <form
+            id="videoForm"
+            onsubmit="saveVideo(event)"
+          >
+
+            <div class="form-grid">
+
+              <div class="form-group">
+
+                <label for="videoTitle">
+                  Video Title
+                </label>
+
+                <input
+                  type="text"
+                  id="videoTitle"
+                  placeholder="e.g. Welcome Training"
+                  required
+                >
+
+              </div>
+
+              <div class="form-group">
+
+                <label for="videoCategory">
+                  Category
+                </label>
+
+                <input
+                  type="text"
+                  id="videoCategory"
+                  placeholder="e.g. Training"
+                  value="General"
+                  required
+                >
+
+              </div>
+
+              <div class="form-group full">
+
+                <label for="videoUrl">
+                  Video URL
+                </label>
+
+                <input
+                  type="url"
+                  id="videoUrl"
+                  placeholder="https://youtube.com/... or video URL"
+                  required
+                >
+
+              </div>
+
+              <div class="form-group full">
+
+                <label for="videoDescription">
+                  Video Description
+                </label>
+
+                <textarea
+                  id="videoDescription"
+                  placeholder="Explain what members will learn from this video..."
+                ></textarea>
+
+              </div>
+
+              <div class="form-group">
+
+                <label for="videoThumbnail">
+                  Thumbnail URL
+                </label>
+
+                <input
+                  type="url"
+                  id="videoThumbnail"
+                  placeholder="https://example.com/image.jpg"
+                >
+
+              </div>
+
+              <div class="form-group">
+
+                <label for="videoReward">
+                  Reward (₦)
+                </label>
+
+                <input
+                  type="number"
+                  id="videoReward"
+                  placeholder="0"
+                  min="0"
+                  step="1"
+                  value="0"
+                >
+
+              </div>
+
+              <div class="form-group">
+
+                <label for="videoStatus">
+                  Status
+                </label>
+
+                <select id="videoStatus">
+
+                  <option value="active">
+                    Active
+                  </option>
+
+                  <option value="inactive">
+                    Inactive
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
+
+            <button
+              type="submit"
+              class="create-video"
+              id="saveVideoButton"
+            >
+              ➕ Add Video
+            </button>
+
+            <button
+              type="button"
+              class="cancel-edit"
+              id="cancelVideoEditButton"
+              onclick="cancelVideoEdit()"
+            >
+              Cancel Edit
+            </button>
+
+          </form>
+
+        </div>
+
+        <!-- VIDEO TABLE -->
+
+        <div class="videos-table-wrapper">
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>ID</th>
+                <th>Thumbnail</th>
+                <th>Title</th>
+                <th>Category</th>
+                <th>Video URL</th>
+                <th>Description</th>
+                <th>Reward</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="videosTable">
+
+              <tr>
+
+                <td colspan="10" class="empty">
+                  Loading videos...
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+      <!-- =========================
+           LINKS MANAGEMENT
+      ========================== -->
+
+      <section class="links-box" id="links">
+
+        <div class="links-header">
+
+          <h2>
+            🔗 Links Management
+          </h2>
+
+          <button
+            class="refresh"
+            onclick="loadAdminLinks()"
+          >
+            🔄 Refresh Links
+          </button>
+
+        </div>
+
+        <div class="links-info">
+
+          <div>
+            Manage general links displayed to Jovia members.
+          </div>
+
+          <div>
+            Total Links:
+            <strong id="totalLinks">
+              0
+            </strong>
+          </div>
+
+        </div>
+
+        <div
+          class="link-form"
+          id="linkFormBox"
+        >
+
+          <h3 id="linkFormTitle">
+            ➕ Add New Link
+          </h3>
+
+          <form
+            id="linkForm"
+            onsubmit="saveLink(event)"
+          >
+
+            <div class="form-grid">
+
+              <div class="form-group">
+
+                <label for="linkName">
+                  Link Name
+                </label>
+
+                <input
+                  type="text"
+                  id="linkName"
+                  placeholder="e.g. Official Website"
+                  required
+                >
+
+              </div>
+
+              <div class="form-group">
+
+                <label for="linkCategory">
+                  Category
+                </label>
+
+                <input
+                  type="text"
+                  id="linkCategory"
+                  placeholder="e.g. Registration"
+                  value="General"
+                  required
+                >
+
+              </div>
+
+              <div class="form-group full">
+
+                <label for="linkUrl">
+                  URL
+                </label>
+
+                <input
+                  type="url"
+                  id="linkUrl"
+                  placeholder="https://example.com"
+                  required
+                >
+
+              </div>
+
+              <div class="form-group full">
+
+                <label for="linkDescription">
+                  Description
+                </label>
+
+                <textarea
+                  id="linkDescription"
+                  placeholder="Briefly explain what this link is for..."
+                ></textarea>
+
+              </div>
+
+              <div class="form-group">
+
+                <label for="linkStatus">
+                  Status
+                </label>
+
+                <select id="linkStatus">
+
+                  <option value="active">
+                    Active
+                  </option>
+
+                  <option value="inactive">
+                    Inactive
+                  </option>
+
+                </select>
+
+              </div>
+
+            </div>
+
+            <button
+              type="submit"
+              class="create-link"
+              id="saveLinkButton"
+            >
+              ➕ Add Link
+            </button>
+
+            <button
+              type="button"
+              class="cancel-edit"
+              id="cancelEditButton"
+              onclick="cancelLinkEdit()"
+            >
+              Cancel Edit
+            </button>
+
+          </form>
+
+        </div>
+
+        <div class="links-table-wrapper">
+
+          <table>
+
+            <thead>
+
+              <tr>
+
+                <th>ID</th>
+                <th>Name</th>
+                <th>URL</th>
+                <th>Description</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody id="linksTable">
+
+              <tr>
+
+                <td colspan="8" class="empty">
+                  Loading links...
+                </td>
+
+              </tr>
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </section>
+
+    </main>
+
+  </div>
+
+  <script>
+
+    /* =========================
+       GLOBAL STATE
+    ========================== */
+
+    let adminAuthenticated = false;
+
+    let userRefreshTimer = null;
+    let jobRefreshTimer = null;
+    let linkRefreshTimer = null;
+    let videoRefreshTimer = null;
+
+    let usersCache = new Map();
+    let linksCache = new Map();
+    let jobsCache = new Map();
+    let videosCache = new Map();
+
+    let editingLinkId = null;
+    let editingVideoId = null;
+
+    /* =========================
+       SAFE HTML
+    ========================== */
+
+    function escapeHTML(value) {
+
+      const div = document.createElement("div");
+
+      div.textContent = value ?? "";
+
+      return div.innerHTML;
+
+    }
+
+    /* =========================
+       SAFE URL
+    ========================== */
+
+    function safeUrl(value) {
+
+      try {
+
+        const url = new URL(
+          String(value || "").trim()
+        );
+
+        if (
+          url.protocol !== "http:" &&
+          url.protocol !== "https:"
+        ) {
+          return "#";
+        }
+
+        return url.href;
+
+      } catch {
+
+        return "#";
+
+      }
+
+    }
+
+    /* =========================
+       FORMAT NAIRA
+    ========================== */
+
+    function formatNaira(value) {
+
+      const amount = Number(value || 0);
+
+      return "₦" +
+        amount.toLocaleString("en-NG");
+
+    }
+
+    /* =========================
+       FORMAT DATE
+    ========================== */
+
+    function formatDate(value) {
+
+      if (!value) {
+        return "-";
+      }
+
+      const raw = String(value);
+
+      let date;
+
+      if (
+        raw.includes(" ") &&
+        !raw.includes("T")
+      ) {
+
+        date = new Date(
+          raw.replace(" ", "T") + "Z"
+        );
+
+      } else {
+
+        date = new Date(raw);
+
+      }
+
+      if (Number.isNaN(date.getTime())) {
+        return raw;
+      }
+
+      return date.toLocaleString(
+        "en-NG",
+        {
+          dateStyle: "medium",
+          timeStyle: "short"
+        }
+      );
+
+    }
+
+    /* =========================
+       NAVIGATION
+    ========================== */
+
+    function setActiveNav(link) {
+
+      document
+        .querySelectorAll(".nav a")
+        .forEach(item => {
+
+          item.classList.remove("active");
+
+        });
+
+      link.classList.add("active");
+
+    }
+
+    /* =========================
+       SHOW LOGIN
+    ========================== */
+
+    function showLogin(message = "") {
+
+      adminAuthenticated = false;
+
+      usersCache.clear();
+      linksCache.clear();
+      jobsCache.clear();
+      videosCache.clear();
+
+      if (userRefreshTimer) {
+        clearInterval(userRefreshTimer);
+        userRefreshTimer = null;
+      }
+
+      if (jobRefreshTimer) {
+        clearInterval(jobRefreshTimer);
+        jobRefreshTimer = null;
+      }
+
+      if (linkRefreshTimer) {
+        clearInterval(linkRefreshTimer);
+        linkRefreshTimer = null;
+      }
+
+      if (videoRefreshTimer) {
+        clearInterval(videoRefreshTimer);
+        videoRefreshTimer = null;
+      }
+
+      document.getElementById(
+        "dashboardScreen"
+      ).style.display = "none";
+
+      document.getElementById(
+        "loginScreen"
+      ).style.display = "flex";
+
+      const error =
+        document.getElementById("loginError");
+
+      if (message) {
+
+        error.textContent = message;
+        error.style.display = "block";
+
+      } else {
+
+        error.textContent = "";
+        error.style.display = "none";
+
+      }
+
+    }
+
+    /* =========================
+       SHOW DASHBOARD
+    ========================== */
+
+    function showDashboard(admin) {
+
+      adminAuthenticated = true;
+
+      document.getElementById(
+        "loginScreen"
+      ).style.display = "none";
+
+      document.getElementById(
+        "dashboardScreen"
+      ).style.display = "block";
+
+      document.getElementById(
+        "adminName"
+      ).textContent =
+        admin.username || "Administrator";
+
+      loadUsers();
+      loadAdminJobs();
+      loadAdminLinks();
+      loadAdminVideos();
+
+      if (userRefreshTimer) {
+        clearInterval(userRefreshTimer);
+      }
+
+      if (jobRefreshTimer) {
+        clearInterval(jobRefreshTimer);
+      }
+
+      if (linkRefreshTimer) {
+        clearInterval(linkRefreshTimer);
+      }
+
+      if (videoRefreshTimer) {
+        clearInterval(videoRefreshTimer);
+      }
+
+      userRefreshTimer =
+        setInterval(loadUsers, 3000);
+
+      jobRefreshTimer =
+        setInterval(loadAdminJobs, 5000);
+
+      linkRefreshTimer =
+        setInterval(loadAdminLinks, 10000);
+
+      videoRefreshTimer =
+        setInterval(loadAdminVideos, 10000);
+
+    }
+
+    /* =========================
+       CHECK ADMIN SESSION
+    ========================== */
+
+    async function checkAdminSession() {
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/me",
+            {
+              method: "GET",
+              cache: "no-store",
+              credentials: "same-origin"
+            }
+          );
+
+        if (!response.ok) {
+          showLogin();
+          return;
+        }
+
+        const data =
+          await response.json();
+
+        if (
+          !data.success ||
+          !data.admin
+        ) {
+
+          showLogin();
+          return;
+
+        }
+
+        showDashboard(data.admin);
+
+      } catch (error) {
+
+        console.error(
+          "Admin session check error:",
+          error
+        );
+
+        showLogin(
+          "Unable to connect to the server."
+        );
+
+      }
+
+    }
+
+    /* =========================
+       ADMIN LOGIN
+    ========================== */
+
+    async function adminLogin(event) {
+
+      event.preventDefault();
+
+      const username =
+        document.getElementById(
+          "adminUsername"
+        ).value.trim();
+
+      const password =
+        document.getElementById(
+          "adminPassword"
+        ).value;
+
+      const button =
+        document.getElementById(
+          "loginButton"
+        );
+
+      const loading =
+        document.getElementById(
+          "loginLoading"
+        );
+
+      const error =
+        document.getElementById(
+          "loginError"
+        );
+
+      error.textContent = "";
+      error.style.display = "none";
+
+      if (!username || !password) {
+
+        error.textContent =
+          "Please enter your username and password.";
+
+        error.style.display = "block";
+
+        return;
+
+      }
+
+      button.disabled = true;
+      button.textContent = "Logging in...";
+      loading.style.display = "block";
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/login",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+                username: username,
+                password: password
+              })
+
+            }
+          );
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Invalid administrator credentials."
+          );
+
+        }
+
+        document.getElementById(
+          "adminLoginForm"
+        ).reset();
+
+        showDashboard(
+          data.admin || {
+            username: username
+          }
+        );
+
+      } catch (loginError) {
+
+        console.error(
+          "Admin login error:",
+          loginError
+        );
+
+        error.textContent =
+          loginError.message ||
+          "Unable to login.";
+
+        error.style.display = "block";
+
+      } finally {
+
+        button.disabled = false;
+        button.textContent = "Login to Admin";
+        loading.style.display = "none";
+
+      }
+
+    }
+
+    /* =========================
+       ADMIN LOGOUT
+    ========================== */
+
+    async function adminLogout(event) {
+
+      if (event) {
+        event.preventDefault();
+      }
+
+      const confirmed =
+        confirm(
+          "Are you sure you want to logout?"
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        await fetch(
+          "/api/admin/logout",
+          {
+            method: "POST",
+            credentials: "same-origin"
+          }
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Admin logout error:",
+          error
+        );
+
+      }
+
+      showLogin(
+        "You have been logged out."
+      );
+
+    }
+
+    /* =========================
+       HANDLE UNAUTHORIZED
+    ========================== */
+
+    function handleUnauthorized() {
+
+      if (!adminAuthenticated) {
+        return;
+      }
+
+      showLogin(
+        "Your admin session has expired. Please login again."
+      );
+
+    }
+
+    /* =========================
+       LOAD USERS
+    ========================== */
+
+    async function loadUsers() {
+
+      if (!adminAuthenticated) {
+        return;
+      }
+
+      const table =
+        document.getElementById(
+          "usersTable"
+        );
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/users?t=" +
+            Date.now(),
+            {
+              method: "GET",
+              cache: "no-store",
+              credentials: "same-origin"
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Server returned " +
+            response.status
+          );
+
+        }
+
+        const data =
+          await response.json();
+
+        if (!data.success) {
+
+          throw new Error(
+            data.message ||
+            "Unable to load users."
+          );
+
+        }
+
+        const users =
+          Array.isArray(data.users)
+            ? data.users
+            : [];
+
+        usersCache =
+          new Map(
+            users.map(user => [
+              Number(user.id),
+              user
+            ])
+          );
+
+        document.getElementById(
+          "totalUsers"
+        ).textContent =
+          users.length;
+
+        document.getElementById(
+          "pendingUsers"
+        ).textContent =
+          users.filter(
+            user =>
+              String(
+                user.account_status
+              ).toLowerCase() ===
+              "pending"
+          ).length;
+
+        document.getElementById(
+          "approvedUsers"
+        ).textContent =
+          users.filter(user => {
+
+            const status =
+              String(
+                user.account_status || ""
+              ).toLowerCase();
+
+            return (
+              status === "approved" ||
+              status === "active"
+            );
+
+          }).length;
+
+        document.getElementById(
+          "goldUsers"
+        ).textContent =
+          users.filter(
+            user =>
+              String(
+                user.package || ""
+              ).toLowerCase() ===
+              "gold"
+          ).length;
+
+        document.getElementById(
+          "silverUsers"
+        ).textContent =
+          users.filter(
+            user =>
+              String(
+                user.package || ""
+              ).toLowerCase() ===
+              "silver"
+          ).length;
+
+        if (users.length === 0) {
+
+          table.innerHTML = `
+            <tr>
+              <td colspan="10" class="empty">
+                No registered users yet.
+              </td>
+            </tr>
+          `;
+
+          updateLastUpdated();
+          return;
+
+        }
+
+        table.innerHTML =
+          users.map(user => {
+
+            const status =
+              String(
+                user.account_status ||
+                "pending"
+              ).toLowerCase();
+
+            const packageName =
+              user.package || "-";
+
+            const packageClass =
+              String(packageName).toLowerCase() ===
+              "gold"
+                ? "gold"
+                : "silver";
+
+            const amount =
+              Number(
+                user.package_amount || 0
+              );
+
+            let actionButtons = "";
+
+            if (status === "pending") {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="action approve"
+                  onclick="updateStatus(
+                    ${Number(user.id)},
+                    'approved'
+                  )"
+                >
+                  Approve
+                </button>
+              `;
+
+            }
+
+            if (
+              status === "approved" ||
+              status === "active"
+            ) {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="action suspend"
+                  onclick="confirmSuspend(
+                    ${Number(user.id)}
+                  )"
+                >
+                  Suspend
+                </button>
+              `;
+
+            }
+
+            if (status === "suspended") {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="action restore"
+                  onclick="updateStatus(
+                    ${Number(user.id)},
+                    'approved'
+                  )"
+                >
+                  Restore
+                </button>
+              `;
+
+            }
+
+            actionButtons += `
+              <button
+                type="button"
+                class="action reset"
+                onclick="resetPassword(
+                  ${Number(user.id)}
+                )"
+              >
+                Reset Password
+              </button>
+            `;
+
+            return `
+              <tr>
+
+                <td>
+                  ${escapeHTML(
+                    user.full_name || "-"
+                  )}
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    user.username || "-"
+                  )}
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    user.email || "-"
+                  )}
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    user.phone || "-"
+                  )}
+                </td>
+
+                <td>
+                  <span class="password-protected">
+                    🔒 Protected
+                  </span>
+                </td>
+
+                <td class="${packageClass}">
+                  ${escapeHTML(packageName)}
+                </td>
+
+                <td>
+                  ${formatNaira(amount)}
+                </td>
+
+                <td>
+                  <span
+                    class="status ${escapeHTML(status)}"
+                  >
+                    ${escapeHTML(status)}
+                  </span>
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    formatDate(user.created_at)
+                  )}
+                </td>
+
+                <td>
+                  ${actionButtons}
+                </td>
+
+              </tr>
+            `;
+
+          }).join("");
+
+        updateLastUpdated();
+
+      } catch (error) {
+
+        console.error(
+          "Admin dashboard error:",
+          error
+        );
+
+        table.innerHTML = `
+          <tr>
+            <td colspan="10" class="empty error">
+              Unable to connect to the admin server.
+            </td>
+          </tr>
+        `;
+
+      }
+
+    }
+
+    /* =========================
+       RESET PASSWORD
+    ========================== */
+
+    async function resetPassword(id) {
+
+      const user =
+        usersCache.get(Number(id));
+
+      if (!user) {
+
+        alert(
+          "User information could not be found. Please refresh the users list."
+        );
+
+        return;
+
+      }
+
+      const username =
+        user.username || "this user";
+
+      const newPassword =
+        prompt(
+          `Enter a new password for ${username}:\n\nMinimum 8 characters.`
+        );
+
+      if (newPassword === null) {
+        return;
+      }
+
+      if (newPassword.length < 8) {
+
+        alert(
+          "Password must contain at least 8 characters."
+        );
+
+        return;
+
+      }
+
+      const confirmPassword =
+        prompt(
+          "Enter the new password again to confirm:"
+        );
+
+      if (confirmPassword === null) {
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+
+        alert(
+          "The passwords do not match."
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/admin/users/${Number(id)}/reset-password`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+                newPassword: newPassword
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to reset password."
+          );
+
+        }
+
+        alert(
+          data.message ||
+          "Password reset successfully."
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Password reset error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to connect to the server."
+        );
+
+      }
+
+    }
+
+    /* =========================
+       SUSPEND USER
+    ========================== */
+
+    function confirmSuspend(id) {
+
+      const user =
+        usersCache.get(Number(id));
+
+      const username =
+        user && user.username
+          ? user.username
+          : "this account";
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to suspend ${username}?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      updateStatus(
+        id,
+        "suspended"
+      );
+
+    }
+
+    /* =========================
+       UPDATE USER STATUS
+    ========================== */
+
+    async function updateStatus(id, status) {
+
+      const user =
+        usersCache.get(Number(id));
+
+      let message = "update this account";
+
+      if (status === "approved") {
+        message = "approve this account";
+      }
+
+      if (status === "suspended") {
+        message = "suspend this account";
+      }
+
+      if (status === "approved") {
+
+        const confirmed =
+          confirm(
+            `Are you sure you want to approve ${
+              user && user.username
+                ? user.username
+                : "this account"
+            }?`
+          );
+
+        if (!confirmed) {
+          return;
+        }
+
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/users/" +
+            Number(id) +
+            "/status",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+                status: status
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.message ||
+            "Server returned " +
+            response.status
+          );
+
+        }
+
+        if (!data.success) {
+
+          throw new Error(
+            data.message ||
+            `Unable to ${message}.`
+          );
+
+        }
+
+        await loadUsers();
+
+      } catch (error) {
+
+        console.error(
+          "Status update error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to update account."
+        );
+
+      }
+
+    }
+
+    /* =========================================================
+       JOB MANAGEMENT
+       JOB + URL + SLOT
+    ========================================================= */
+
+    async function createJob(event) {
+
+      event.preventDefault();
+
+      const slot =
+        Number(
+          document.getElementById(
+            "jobSlot"
+          ).value
+        );
+
+      const title =
+        document.getElementById(
+          "jobTitle"
+        ).value.trim();
+
+      const category =
+        document.getElementById(
+          "jobCategory"
+        ).value.trim();
+
+      const url =
+        document.getElementById(
+          "jobUrl"
+        ).value.trim();
+
+      const description =
+        document.getElementById(
+          "jobDescription"
+        ).value.trim();
+
+      const reward =
+        Number(
+          document.getElementById(
+            "jobReward"
+          ).value
+        );
+
+      const duration =
+        document.getElementById(
+          "jobDuration"
+        ).value.trim();
+
+      const status =
+        document.getElementById(
+          "jobStatus"
+        ).value;
+
+      if (![1, 2, 3].includes(slot)) {
+
+        alert(
+          "Job slot must be Job 1, Job 2 or Job 3."
+        );
+
+        return;
+
+      }
+
+      if (!title) {
+
+        alert(
+          "Please enter a job title."
+        );
+
+        return;
+
+      }
+
+      if (!category) {
+
+        alert(
+          "Please enter a job category."
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const parsedUrl =
+          new URL(url);
+
+        if (
+          parsedUrl.protocol !== "http:" &&
+          parsedUrl.protocol !== "https:"
+        ) {
+
+          throw new Error();
+
+        }
+
+      } catch {
+
+        alert(
+          "Please enter a valid HTTP or HTTPS job URL."
+        );
+
+        return;
+
+      }
+
+      if (!description) {
+
+        alert(
+          "Please enter a job description."
+        );
+
+        return;
+
+      }
+
+      if (
+        !Number.isFinite(reward) ||
+        reward < 0
+      ) {
+
+        alert(
+          "Please enter a valid reward."
+        );
+
+        return;
+
+      }
+
+      const button =
+        document.getElementById(
+          "createJobButton"
+        );
+
+      button.disabled = true;
+      button.textContent = "Creating...";
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/jobs",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+
+                slot: slot,
+
+                title: title,
+
+                category: category,
+
+                url: url,
+
+                description: description,
+
+                reward: reward,
+
+                duration:
+                  duration || "Flexible",
+
+                status: status
+
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to create job."
+          );
+
+        }
+
+        alert(
+          data.message ||
+          `Job ${slot} created successfully.`
+        );
+
+        document.getElementById(
+          "createJobForm"
+        ).reset();
+
+        document.getElementById(
+          "jobSlot"
+        ).value = "1";
+
+        document.getElementById(
+          "jobCategory"
+        ).value = "General";
+
+        document.getElementById(
+          "jobDuration"
+        ).value = "Flexible";
+
+        document.getElementById(
+          "jobStatus"
+        ).value = "available";
+
+        await loadAdminJobs();
+
+      } catch (error) {
+
+        console.error(
+          "Create job error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to create job."
+        );
+
+      } finally {
+
+        button.disabled = false;
+        button.textContent = "➕ Create Job";
+
+      }
+
+    }
+
+    /* =========================
+       LOAD ADMIN JOBS
+    ========================== */
+
+    async function loadAdminJobs() {
+
+      if (!adminAuthenticated) {
+        return;
+      }
+
+      const table =
+        document.getElementById(
+          "jobsTable"
+        );
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/jobs?t=" +
+            Date.now(),
+            {
+              method: "GET",
+              cache: "no-store",
+              credentials: "same-origin"
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Server returned " +
+            response.status
+          );
+
+        }
+
+        const data =
+          await response.json();
+
+        if (!data.success) {
+
+          throw new Error(
+            data.message ||
+            "Unable to load jobs."
+          );
+
+        }
+
+        const jobs =
+          Array.isArray(data.jobs)
+            ? data.jobs
+            : [];
+
+        jobsCache =
+          new Map(
+            jobs.map(job => [
+              Number(job.id),
+              job
+            ])
+          );
+
+        document.getElementById(
+          "totalJobs"
+        ).textContent =
+          jobs.length;
+
+        if (jobs.length === 0) {
+
+          table.innerHTML = `
+            <tr>
+              <td colspan="11" class="empty">
+                No jobs have been created yet.
+              </td>
+            </tr>
+          `;
+
+          return;
+
+        }
+
+        table.innerHTML =
+          jobs.map(job => {
+
+            const status =
+              String(
+                job.status ||
+                "available"
+              ).toLowerCase();
+
+            let statusClass = "paused";
+
+            if (
+              status === "available" ||
+              status === "active"
+            ) {
+
+              statusClass = "active";
+
+            } else if (
+              status === "completed"
+            ) {
+
+              statusClass = "completed";
+
+            }
+
+            let actionButton = "";
+
+            if (
+              status === "available" ||
+              status === "active"
+            ) {
+
+              actionButton = `
+                <button
+                  type="button"
+                  class="job-action pause-job"
+                  onclick="changeJobStatus(
+                    ${Number(job.id)},
+                    'inactive'
+                  )"
+                >
+                  ⏸ Pause
+                </button>
+              `;
+
+            } else if (
+              status === "inactive" ||
+              status === "closed"
+            ) {
+
+              actionButton = `
+                <button
+                  type="button"
+                  class="job-action activate-job"
+                  onclick="changeJobStatus(
+                    ${Number(job.id)},
+                    'available'
+                  )"
+                >
+                  ▶️ Activate
+                </button>
+              `;
+
+            } else {
+
+              actionButton = `
+                <span
+                  style="
+                    color:#64748b;
+                    font-size:11px;
+                    font-weight:600;
+                  "
+                >
+                  Completed
+                </span>
+              `;
+
+            }
+
+            return `
+              <tr>
+
+                <td>
+                  <span class="slot">
+                    Job ${Number(job.slot || job.job_slot || 0)}
+                  </span>
+                </td>
+
+                <td>
+                  #${Number(job.id)}
+                </td>
+
+                <td>
+                  <div class="job-title">
+                    ${escapeHTML(
+                      job.title || "-"
+                    )}
+                  </div>
+                </td>
+
+                <td>
+                  <span class="category">
+                    ${escapeHTML(
+                      job.category || "General"
+                    )}
+                  </span>
+                </td>
+
+                <td>
+
+                  <a
+                    class="job-url"
+                    href="${escapeHTML(
+                      safeUrl(job.url)
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ${escapeHTML(
+                      job.url || "-"
+                    )}
+                  </a>
+
+                </td>
+
+                <td>
+                  <div class="job-description">
+                    ${escapeHTML(
+                      job.description || "-"
+                    )}
+                  </div>
+                </td>
+
+                <td>
+                  <span class="reward">
+                    ${formatNaira(job.reward)}
+                  </span>
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    job.duration || "Flexible"
+                  )}
+                </td>
+
+                <td>
+                  <span
+                    class="status ${statusClass}"
+                  >
+                    ${escapeHTML(status)}
+                  </span>
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    formatDate(job.created_at)
+                  )}
+                </td>
+
+                <td>
+                  ${actionButton}
+                </td>
+
+              </tr>
+            `;
+
+          }).join("");
+
+      } catch (error) {
+
+        console.error(
+          "Load admin jobs error:",
+          error
+        );
+
+        table.innerHTML = `
+          <tr>
+            <td colspan="11" class="empty error">
+              Unable to connect to the jobs server.
+            </td>
+          </tr>
+        `;
+
+      }
+
+    }
+
+    /* =========================
+       CHANGE JOB STATUS
+    ========================== */
+
+    async function changeJobStatus(id, status) {
+
+      const job =
+        jobsCache.get(Number(id));
+
+      const title =
+        job && job.title
+          ? job.title
+          : "this job";
+
+      const action =
+        status === "inactive"
+          ? "pause"
+          : "activate";
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to ${action} "${title}"?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/admin/jobs/${Number(id)}/status`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+                status: status
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to update job."
+          );
+
+        }
+
+        await loadAdminJobs();
+
+      } catch (error) {
+
+        console.error(
+          "Job status error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to update job."
+        );
+
+      }
+
+    }
+
+    /* =========================================================
+       VIDEO MANAGEMENT
+    ========================================================= */
+
+    async function saveVideo(event) {
+
+      event.preventDefault();
+
+      const title =
+        document.getElementById(
+          "videoTitle"
+        ).value.trim();
+
+      const category =
+        document.getElementById(
+          "videoCategory"
+        ).value.trim();
+
+      const url =
+        document.getElementById(
+          "videoUrl"
+        ).value.trim();
+
+      const description =
+        document.getElementById(
+          "videoDescription"
+        ).value.trim();
+
+      const thumbnail =
+        document.getElementById(
+          "videoThumbnail"
+        ).value.trim();
+
+      const reward =
+        Number(
+          document.getElementById(
+            "videoReward"
+          ).value
+        );
+
+      const status =
+        document.getElementById(
+          "videoStatus"
+        ).value;
+
+      if (!title) {
+
+        alert(
+          "Please enter a video title."
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const parsedUrl =
+          new URL(url);
+
+        if (
+          parsedUrl.protocol !== "http:" &&
+          parsedUrl.protocol !== "https:"
+        ) {
+
+          throw new Error();
+
+        }
+
+      } catch {
+
+        alert(
+          "Please enter a valid video URL beginning with http:// or https://."
+        );
+
+        return;
+
+      }
+
+      if (thumbnail) {
+
+        try {
+
+          const thumbnailUrl =
+            new URL(thumbnail);
+
+          if (
+            thumbnailUrl.protocol !== "http:" &&
+            thumbnailUrl.protocol !== "https:"
+          ) {
+
+            throw new Error();
+
+          }
+
+        } catch {
+
+          alert(
+            "Please enter a valid thumbnail URL."
+          );
+
+          return;
+
+        }
+
+      }
+
+      if (
+        !Number.isFinite(reward) ||
+        reward < 0
+      ) {
+
+        alert(
+          "Please enter a valid video reward."
+        );
+
+        return;
+
+      }
+
+      const button =
+        document.getElementById(
+          "saveVideoButton"
+        );
+
+      button.disabled = true;
+
+      button.textContent =
+        editingVideoId
+          ? "Updating..."
+          : "Adding...";
+
+      try {
+
+        const endpoint =
+          editingVideoId
+            ? `/api/admin/videos/${Number(editingVideoId)}`
+            : "/api/admin/videos";
+
+        const method =
+          editingVideoId
+            ? "PUT"
+            : "POST";
+
+        const response =
+          await fetch(
+            endpoint,
+            {
+              method: method,
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+
+                title: title,
+
+                category:
+                  category || "General",
+
+                url: url,
+
+                description:
+                  description,
+
+                thumbnail:
+                  thumbnail,
+
+                reward:
+                  reward,
+
+                status:
+                  status
+
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            (
+              editingVideoId
+                ? "Unable to update video."
+                : "Unable to add video."
+            )
+          );
+
+        }
+
+        alert(
+          data.message ||
+          (
+            editingVideoId
+              ? "Video updated successfully."
+              : "Video added successfully."
+          )
+        );
+
+        cancelVideoEdit();
+
+        await loadAdminVideos();
+
+      } catch (error) {
+
+        console.error(
+          "Save video error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to save video."
+        );
+
+      } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+          editingVideoId
+            ? "Update Video"
+            : "➕ Add Video";
+
+      }
+
+    }
+
+    /* =========================
+       LOAD VIDEOS
+    ========================== */
+
+    async function loadAdminVideos() {
+
+      if (!adminAuthenticated) {
+        return;
+      }
+
+      const table =
+        document.getElementById(
+          "videosTable"
+        );
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/videos?t=" +
+            Date.now(),
+            {
+              method: "GET",
+              cache: "no-store",
+              credentials: "same-origin"
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Server returned " +
+            response.status
+          );
+
+        }
+
+        const data =
+          await response.json();
+
+        if (!data.success) {
+
+          throw new Error(
+            data.message ||
+            "Unable to load videos."
+          );
+
+        }
+
+        const videos =
+          Array.isArray(data.videos)
+            ? data.videos
+            : [];
+
+        videosCache =
+          new Map(
+            videos.map(video => [
+              Number(video.id),
+              video
+            ])
+          );
+
+        document.getElementById(
+          "totalVideos"
+        ).textContent =
+          videos.length;
+
+        if (videos.length === 0) {
+
+          table.innerHTML = `
+            <tr>
+              <td colspan="10" class="empty">
+                No videos have been added yet.
+              </td>
+            </tr>
+          `;
+
+          return;
+
+        }
+
+        table.innerHTML =
+          videos.map(video => {
+
+            const status =
+              String(
+                video.status ||
+                "active"
+              ).toLowerCase();
+
+            const statusClass =
+              status === "active"
+                ? "video-status-active"
+                : "video-status-inactive";
+
+            const thumbnailUrl =
+              safeUrl(
+                video.thumbnail ||
+                video.thumbnail_url
+              );
+
+            let thumbnailHTML =
+              `<div class="video-placeholder">🎬</div>`;
+
+            if (thumbnailUrl !== "#") {
+
+              thumbnailHTML = `
+                <img
+                  class="video-thumbnail"
+                  src="${escapeHTML(thumbnailUrl)}"
+                  alt="Video thumbnail"
+                  loading="lazy"
+                  onerror="this.style.display='none';"
+                >
+              `;
+
+            }
+
+            let actionButtons = "";
+
+            if (status === "active") {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="video-action pause-video"
+                  onclick="changeVideoStatus(
+                    ${Number(video.id)},
+                    'inactive'
+                  )"
+                >
+                  ⏸ Disable
+                </button>
+              `;
+
+            } else {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="video-action activate-video"
+                  onclick="changeVideoStatus(
+                    ${Number(video.id)},
+                    'active'
+                  )"
+                >
+                  ▶️ Activate
+                </button>
+              `;
+
+            }
+
+            actionButtons += `
+              <button
+                type="button"
+                class="video-action edit-video"
+                onclick="editVideo(
+                  ${Number(video.id)}
+                )"
+              >
+                ✏️ Edit
+              </button>
+
+              <button
+                type="button"
+                class="video-action delete-video"
+                onclick="deleteVideo(
+                  ${Number(video.id)}
+                )"
+              >
+                🗑️ Delete
+              </button>
+            `;
+
+            return `
+              <tr>
+
+                <td>
+                  #${Number(video.id)}
+                </td>
+
+                <td>
+                  ${thumbnailHTML}
+                </td>
+
+                <td>
+                  <div class="video-title">
+                    ${escapeHTML(
+                      video.title || "-"
+                    )}
+                  </div>
+                </td>
+
+                <td>
+                  <span class="category">
+                    ${escapeHTML(
+                      video.category ||
+                      "General"
+                    )}
+                  </span>
+                </td>
+
+                <td>
+
+                  <a
+                    class="video-url"
+                    href="${escapeHTML(
+                      safeUrl(video.url)
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ${escapeHTML(
+                      video.url || "-"
+                    )}
+                  </a>
+
+                </td>
+
+                <td>
+                  <div class="video-description">
+                    ${escapeHTML(
+                      video.description || "-"
+                    )}
+                  </div>
+                </td>
+
+                <td>
+                  <span class="reward">
+                    ${formatNaira(
+                      video.reward
+                    )}
+                  </span>
+                </td>
+
+                <td>
+
+                  <span
+                    class="status ${statusClass}"
+                  >
+                    ${escapeHTML(status)}
+                  </span>
+
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    formatDate(
+                      video.created_at
+                    )
+                  )}
+                </td>
+
+                <td>
+                  ${actionButtons}
+                </td>
+
+              </tr>
+            `;
+
+          }).join("");
+
+      } catch (error) {
+
+        console.error(
+          "Load admin videos error:",
+          error
+        );
+
+        table.innerHTML = `
+          <tr>
+            <td colspan="10" class="empty error">
+              Unable to connect to the videos server.
+            </td>
+          </tr>
+        `;
+
+      }
+
+    }
+
+    /* =========================
+       EDIT VIDEO
+    ========================== */
+
+    function editVideo(id) {
+
+      const video =
+        videosCache.get(Number(id));
+
+      if (!video) {
+
+        alert(
+          "Video information could not be found. Please refresh the video list."
+        );
+
+        return;
+
+      }
+
+      editingVideoId = Number(id);
+
+      document.getElementById(
+        "videoTitle"
+      ).value =
+        video.title || "";
+
+      document.getElementById(
+        "videoCategory"
+      ).value =
+        video.category || "General";
+
+      document.getElementById(
+        "videoUrl"
+      ).value =
+        video.url || "";
+
+      document.getElementById(
+        "videoDescription"
+      ).value =
+        video.description || "";
+
+      document.getElementById(
+        "videoThumbnail"
+      ).value =
+        video.thumbnail ||
+        video.thumbnail_url ||
+        "";
+
+      document.getElementById(
+        "videoReward"
+      ).value =
+        Number(video.reward || 0);
+
+      document.getElementById(
+        "videoStatus"
+      ).value =
+        String(
+          video.status || "active"
+        ).toLowerCase();
+
+      document.getElementById(
+        "videoFormTitle"
+      ).textContent =
+        "✏️ Edit Video";
+
+      document.getElementById(
+        "saveVideoButton"
+      ).textContent =
+        "Update Video";
+
+      document.getElementById(
+        "cancelVideoEditButton"
+      ).style.display =
+        "inline-block";
+
+      document.getElementById(
+        "videoFormBox"
+      ).classList.add("editing");
+
+      document.getElementById(
+        "videoFormBox"
+      ).scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+    }
+
+    /* =========================
+       CANCEL VIDEO EDIT
+    ========================== */
+
+    function cancelVideoEdit() {
+
+      editingVideoId = null;
+
+      document.getElementById(
+        "videoForm"
+      ).reset();
+
+      document.getElementById(
+        "videoCategory"
+      ).value =
+        "General";
+
+      document.getElementById(
+        "videoReward"
+      ).value =
+        "0";
+
+      document.getElementById(
+        "videoStatus"
+      ).value =
+        "active";
+
+      document.getElementById(
+        "videoFormTitle"
+      ).textContent =
+        "➕ Add New Video";
+
+      document.getElementById(
+        "saveVideoButton"
+      ).textContent =
+        "➕ Add Video";
+
+      document.getElementById(
+        "cancelVideoEditButton"
+      ).style.display =
+        "none";
+
+      document.getElementById(
+        "videoFormBox"
+      ).classList.remove("editing");
+
+    }
+
+    /* =========================
+       CHANGE VIDEO STATUS
+    ========================== */
+
+    async function changeVideoStatus(id, status) {
+
+      const video =
+        videosCache.get(Number(id));
+
+      const name =
+        video && video.title
+          ? video.title
+          : "this video";
+
+      const action =
+        status === "inactive"
+          ? "disable"
+          : "activate";
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to ${action} "${name}"?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/admin/videos/${Number(id)}/status`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+                status: status
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to update video status."
+          );
+
+        }
+
+        await loadAdminVideos();
+
+      } catch (error) {
+
+        console.error(
+          "Video status error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to update video."
+        );
+
+      }
+
+    }
+
+    /* =========================
+       DELETE VIDEO
+    ========================== */
+
+    async function deleteVideo(id) {
+
+      const video =
+        videosCache.get(Number(id));
+
+      const name =
+        video && video.title
+          ? video.title
+          : "this video";
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to permanently delete "${name}"?\n\nThis action cannot be undone.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/admin/videos/${Number(id)}`,
+            {
+              method: "DELETE",
+              credentials: "same-origin"
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to delete video."
+          );
+
+        }
+
+        alert(
+          data.message ||
+          "Video deleted successfully."
+        );
+
+        if (
+          editingVideoId === Number(id)
+        ) {
+
+          cancelVideoEdit();
+
+        }
+
+        await loadAdminVideos();
+
+      } catch (error) {
+
+        console.error(
+          "Delete video error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to delete video."
+        );
+
+      }
+
+    }
+
+    /* =========================================================
+       LINKS MANAGEMENT
+    ========================================================= */
+
+    async function loadAdminLinks() {
+
+      if (!adminAuthenticated) {
+        return;
+      }
+
+      const table =
+        document.getElementById(
+          "linksTable"
+        );
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/admin/links?t=" +
+            Date.now(),
+            {
+              method: "GET",
+              cache: "no-store",
+              credentials: "same-origin"
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        if (!response.ok) {
+
+          throw new Error(
+            "Server returned " +
+            response.status
+          );
+
+        }
+
+        const data =
+          await response.json();
+
+        if (!data.success) {
+
+          throw new Error(
+            data.message ||
+            "Unable to load links."
+          );
+
+        }
+
+        const links =
+          Array.isArray(data.links)
+            ? data.links
+            : [];
+
+        linksCache =
+          new Map(
+            links.map(link => [
+              Number(link.id),
+              link
+            ])
+          );
+
+        document.getElementById(
+          "totalLinks"
+        ).textContent =
+          links.length;
+
+        if (links.length === 0) {
+
+          table.innerHTML = `
+            <tr>
+              <td colspan="8" class="empty">
+                No links have been added yet.
+              </td>
+            </tr>
+          `;
+
+          return;
+
+        }
+
+        table.innerHTML =
+          links.map(link => {
+
+            const status =
+              String(
+                link.status ||
+                "active"
+              ).toLowerCase();
+
+            const statusClass =
+              status === "active"
+                ? "link-status-active"
+                : "link-status-inactive";
+
+            const url =
+              safeUrl(link.url);
+
+            let actionButtons = "";
+
+            if (status === "active") {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="link-action pause-link"
+                  onclick="changeLinkStatus(
+                    ${Number(link.id)},
+                    'inactive'
+                  )"
+                >
+                  ⏸ Disable
+                </button>
+              `;
+
+            } else {
+
+              actionButtons += `
+                <button
+                  type="button"
+                  class="link-action activate-link"
+                  onclick="changeLinkStatus(
+                    ${Number(link.id)},
+                    'active'
+                  )"
+                >
+                  ▶️ Activate
+                </button>
+              `;
+
+            }
+
+            actionButtons += `
+              <button
+                type="button"
+                class="link-action edit-link"
+                onclick="editLink(
+                  ${Number(link.id)}
+                )"
+              >
+                ✏️ Edit
+              </button>
+
+              <button
+                type="button"
+                class="link-action delete-link"
+                onclick="deleteLink(
+                  ${Number(link.id)}
+                )"
+              >
+                🗑️ Delete
+              </button>
+            `;
+
+            return `
+              <tr>
+
+                <td>
+                  #${Number(link.id)}
+                </td>
+
+                <td>
+                  <div class="link-name">
+                    ${escapeHTML(
+                      link.name ||
+                      link.title ||
+                      "-"
+                    )}
+                  </div>
+                </td>
+
+                <td>
+
+                  <a
+                    class="link-url"
+                    href="${escapeHTML(url)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    ${escapeHTML(
+                      link.url || "-"
+                    )}
+                  </a>
+
+                </td>
+
+                <td>
+
+                  <div class="link-description">
+                    ${escapeHTML(
+                      link.description || "-"
+                    )}
+                  </div>
+
+                </td>
+
+                <td>
+
+                  <span class="category">
+                    ${escapeHTML(
+                      link.category ||
+                      "General"
+                    )}
+                  </span>
+
+                </td>
+
+                <td>
+
+                  <span
+                    class="status ${statusClass}"
+                  >
+                    ${escapeHTML(status)}
+                  </span>
+
+                </td>
+
+                <td>
+                  ${escapeHTML(
+                    formatDate(
+                      link.created_at
+                    )
+                  )}
+                </td>
+
+                <td>
+                  ${actionButtons}
+                </td>
+
+              </tr>
+            `;
+
+          }).join("");
+
+      } catch (error) {
+
+        console.error(
+          "Load admin links error:",
+          error
+        );
+
+        table.innerHTML = `
+          <tr>
+            <td colspan="8" class="empty error">
+              Unable to connect to the links server.
+            </td>
+          </tr>
+        `;
+
+      }
+
+    }
+
+    /* =========================
+       ADD / EDIT LINK
+    ========================== */
+
+    async function saveLink(event) {
+
+      event.preventDefault();
+
+      const name =
+        document.getElementById(
+          "linkName"
+        ).value.trim();
+
+      const url =
+        document.getElementById(
+          "linkUrl"
+        ).value.trim();
+
+      const description =
+        document.getElementById(
+          "linkDescription"
+        ).value.trim();
+
+      const category =
+        document.getElementById(
+          "linkCategory"
+        ).value.trim();
+
+      const status =
+        document.getElementById(
+          "linkStatus"
+        ).value;
+
+      if (!name) {
+
+        alert(
+          "Please enter a link name."
+        );
+
+        return;
+
+      }
+
+      try {
+
+        const parsedUrl =
+          new URL(url);
+
+        if (
+          parsedUrl.protocol !== "http:" &&
+          parsedUrl.protocol !== "https:"
+        ) {
+
+          throw new Error();
+
+        }
+
+      } catch {
+
+        alert(
+          "Please enter a valid URL beginning with http:// or https://."
+        );
+
+        return;
+
+      }
+
+      const button =
+        document.getElementById(
+          "saveLinkButton"
+        );
+
+      button.disabled = true;
+
+      button.textContent =
+        editingLinkId
+          ? "Updating..."
+          : "Adding...";
+
+      try {
+
+        const endpoint =
+          editingLinkId
+            ? `/api/admin/links/${Number(editingLinkId)}`
+            : "/api/admin/links";
+
+        const method =
+          editingLinkId
+            ? "PUT"
+            : "POST";
+
+        const response =
+          await fetch(
+            endpoint,
+            {
+              method: method,
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+
+                name: name,
+
+                url: url,
+
+                description:
+                  description,
+
+                category:
+                  category || "General",
+
+                status:
+                  status
+
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            (
+              editingLinkId
+                ? "Unable to update link."
+                : "Unable to add link."
+            )
+          );
+
+        }
+
+        alert(
+          data.message ||
+          (
+            editingLinkId
+              ? "Link updated successfully."
+              : "Link added successfully."
+          )
+        );
+
+        cancelLinkEdit();
+
+        await loadAdminLinks();
+
+      } catch (error) {
+
+        console.error(
+          "Save link error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to save link."
+        );
+
+      } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+          editingLinkId
+            ? "Update Link"
+            : "➕ Add Link";
+
+      }
+
+    }
+
+    /* =========================
+       EDIT LINK
+    ========================== */
+
+    function editLink(id) {
+
+      const link =
+        linksCache.get(Number(id));
+
+      if (!link) {
+
+        alert(
+          "Link information could not be found. Please refresh the links list."
+        );
+
+        return;
+
+      }
+
+      editingLinkId = Number(id);
+
+      document.getElementById(
+        "linkName"
+      ).value =
+        link.name ||
+        link.title ||
+        "";
+
+      document.getElementById(
+        "linkUrl"
+      ).value =
+        link.url || "";
+
+      document.getElementById(
+        "linkDescription"
+      ).value =
+        link.description || "";
+
+      document.getElementById(
+        "linkCategory"
+      ).value =
+        link.category || "General";
+
+      document.getElementById(
+        "linkStatus"
+      ).value =
+        String(
+          link.status || "active"
+        ).toLowerCase();
+
+      document.getElementById(
+        "linkFormTitle"
+      ).textContent =
+        "✏️ Edit Link";
+
+      document.getElementById(
+        "saveLinkButton"
+      ).textContent =
+        "Update Link";
+
+      document.getElementById(
+        "cancelEditButton"
+      ).style.display =
+        "inline-block";
+
+      document.getElementById(
+        "linkFormBox"
+      ).classList.add("editing");
+
+      document.getElementById(
+        "linkFormBox"
+      ).scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+    }
+
+    /* =========================
+       CANCEL LINK EDIT
+    ========================== */
+
+    function cancelLinkEdit() {
+
+      editingLinkId = null;
+
+      document.getElementById(
+        "linkForm"
+      ).reset();
+
+      document.getElementById(
+        "linkCategory"
+      ).value =
+        "General";
+
+      document.getElementById(
+        "linkStatus"
+      ).value =
+        "active";
+
+      document.getElementById(
+        "linkFormTitle"
+      ).textContent =
+        "➕ Add New Link";
+
+      document.getElementById(
+        "saveLinkButton"
+      ).textContent =
+        "➕ Add Link";
+
+      document.getElementById(
+        "cancelEditButton"
+      ).style.display =
+        "none";
+
+      document.getElementById(
+        "linkFormBox"
+      ).classList.remove("editing");
+
+    }
+
+    /* =========================
+       CHANGE LINK STATUS
+    ========================== */
+
+    async function changeLinkStatus(id, status) {
+
+      const link =
+        linksCache.get(Number(id));
+
+      const name =
+        link &&
+        (link.name || link.title)
+          ? (
+              link.name ||
+              link.title
+            )
+          : "this link";
+
+      const action =
+        status === "inactive"
+          ? "disable"
+          : "activate";
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to ${action} ${name}?`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/admin/links/${Number(id)}/status`,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              credentials: "same-origin",
+
+              body: JSON.stringify({
+                status: status
+              })
+
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to update link status."
+          );
+
+        }
+
+        await loadAdminLinks();
+
+      } catch (error) {
+
+        console.error(
+          "Link status error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to update link."
+        );
+
+      }
+
+    }
+
+    /* =========================
+       DELETE LINK
+    ========================== */
+
+    async function deleteLink(id) {
+
+      const link =
+        linksCache.get(Number(id));
+
+      const name =
+        link &&
+        (link.name || link.title)
+          ? (
+              link.name ||
+              link.title
+            )
+          : "this link";
+
+      const confirmed =
+        confirm(
+          `Are you sure you want to permanently delete "${name}"?\n\nThis action cannot be undone.`
+        );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+
+        const response =
+          await fetch(
+            `/api/admin/links/${Number(id)}`,
+            {
+              method: "DELETE",
+              credentials: "same-origin"
+            }
+          );
+
+        if (response.status === 401) {
+
+          handleUnauthorized();
+          return;
+
+        }
+
+        let data;
+
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+
+        if (
+          !response.ok ||
+          !data.success
+        ) {
+
+          throw new Error(
+            data.message ||
+            "Unable to delete link."
+          );
+
+        }
+
+        alert(
+          data.message ||
+          "Link deleted successfully."
+        );
+
+        if (
+          editingLinkId === Number(id)
+        ) {
+
+          cancelLinkEdit();
+
+        }
+
+        await loadAdminLinks();
+
+      } catch (error) {
+
+        console.error(
+          "Delete link error:",
+          error
+        );
+
+        alert(
+          error.message ||
+          "Unable to delete link."
+        );
+
+      }
+
+    }
+
+    /* =========================
+       LAST UPDATED
+    ========================== */
+
+    function updateLastUpdated() {
+
+      const now = new Date();
+
+      document.getElementById(
+        "lastUpdated"
+      ).textContent =
+        now.toLocaleTimeString("en-NG");
+
+    }
+
+    /* =========================
+       START
+    ========================== */
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      checkAdminSession
+    );
+
+  </script>
+
+</body>
+</html>
