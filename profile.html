@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JOVIA - Profile</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7fb;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 680px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #f5f7fb;
+      padding-bottom: 90px;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      background: #ffffff;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 1px solid #e5e7eb;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #111827;
+    }
+
+    .brand span {
+      color: #f59e0b;
+    }
+
+    .top-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #374151;
+    }
+
+    /* CONTENT */
+    .content {
+      padding: 20px 16px 25px;
+    }
+
+    /* PROFILE HERO */
+    .profile-hero {
+      background: linear-gradient(135deg, #111827, #1f2937);
+      border-radius: 22px;
+      padding: 28px 20px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: #f59e0b;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 14px;
+      font-size: 28px;
+      font-weight: 800;
+      border: 4px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .profile-name {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 5px;
+    }
+
+    .profile-username {
+      color: #d1d5db;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+
+    .badges {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 13px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .gold-badge {
+      background: #f59e0b;
+      color: #111827;
+    }
+
+    .silver-badge {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .approved-badge {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .pending-badge {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .suspended-badge {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .default-badge {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    /* SECTION */
+    .section {
+      background: #ffffff;
+      border-radius: 18px;
+      margin-bottom: 16px;
+      padding: 18px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 15px;
+      color: #111827;
+    }
+
+    /* DETAILS */
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      padding: 13px 0;
+      border-bottom: 1px solid #f0f1f3;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .detail-row:first-child {
+      padding-top: 0;
+    }
+
+    .detail-label {
+      color: #6b7280;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+      color: #111827;
+      word-break: break-word;
+    }
+
+    /* PACKAGE CARD */
+    .package-box {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 15px;
+      padding: 16px;
+    }
+
+    .package-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .package-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: #111827;
+    }
+
+    .package-amount {
+      font-size: 14px;
+      font-weight: 800;
+      color: #92400e;
+    }
+
+    .bonus-box {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bonus-label {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .bonus-value {
+      color: #15803d;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    /* REFERRAL */
+    .referral-box {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 15px;
+      padding: 15px;
+    }
+
+    .referral-label {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 7px;
+    }
+
+    .referral-code-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .referral-code {
+      flex: 1;
+      min-width: 0;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      border: none;
+      background: #f59e0b;
+      color: #111827;
+      padding: 0 15px;
+      border-radius: 10px;
+      font-weight: 800;
+      cursor: pointer;
+      min-width: 75px;
+    }
+
+    .copy-btn:active {
+      transform: scale(0.97);
+    }
+
+    .referral-link {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+
+    .referral-count {
+      margin-top: 14px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .referral-count span:first-child {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .referral-count strong {
+      font-size: 18px;
+      color: #111827;
+    }
+
+    /* STATUS MESSAGE */
+    .message {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .message.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    /* LOGOUT */
+    .logout-btn {
+      width: 100%;
+      border: none;
+      background: #111827;
+      color: white;
+      padding: 15px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .logout-btn:active {
+      transform: scale(0.99);
+    }
+
+    /* BOTTOM NAV */
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 680px;
+      height: 72px;
+      background: #ffffff;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 30;
+    }
+
+    .nav-item {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 60px;
+    }
+
+    .nav-icon {
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .nav-item.active {
+      color: #f59e0b;
+    }
+
+    @media (min-width: 681px) {
+      .bottom-nav {
+        border-left: 1px solid #e5e7eb;
+        border-right: 1px solid #e5e7eb;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="brand">JOVIA<span>.</span></div>
+      <div class="top-title">My Profile</div>
+    </header>
+
+    <main class="content">
+
+      <div id="errorMessage" class="message"></div>
+
+      <!-- PROFILE HERO -->
+      <section class="profile-hero">
+        <div class="avatar" id="avatar">J</div>
+
+        <div class="profile-name" id="profileName">
+          Loading...
+        </div>
+
+        <div class="profile-username" id="profileUsername">
+          @username
+        </div>
+
+        <div class="badges">
+          <span class="badge default-badge" id="packageBadge">
+            Loading
+          </span>
+
+          <span class="badge default-badge" id="statusBadge">
+            Loading
+          </span>
+        </div>
+      </section>
+
+      <!-- PERSONAL INFORMATION -->
+      <section class="section">
+        <h2 class="section-title">Personal Information</h2>
+
+        <div class="detail-row">
+          <span class="detail-label">Full Name</span>
+          <span class="detail-value" id="fullName">—</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Username</span>
+          <span class="detail-value" id="username">—</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Email</span>
+          <span class="detail-value" id="email">—</span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">Phone Number</span>
+          <span class="detail-value" id="phone">—</span>
+        </div>
+      </section>
+
+      <!-- MEMBERSHIP -->
+      <section class="section">
+        <h2 class="section-title">Membership</h2>
+
+        <div class="package-box">
+
+          <div class="package-top">
+            <div class="package-name" id="packageName">
+              —
+            </div>
+
+            <div class="package-amount" id="packageAmount">
+              —
+            </div>
+          </div>
+
+          <div class="bonus-box">
+            <span class="bonus-label">Welcome Bonus</span>
+            <span class="bonus-value" id="welcomeBonus">
+              —
+            </span>
+          </div>
+
+        </div>
+
+        <div class="detail-row" style="margin-top: 10px;">
+          <span class="detail-label">Joined</span>
+          <span class="detail-value" id="joinedDate">—</span>
+        </div>
+      </section>
+
+      <!-- REFERRAL -->
+      <section class="section">
+        <h2 class="section-title">My Referral</h2>
+
+        <div class="referral-box">
+
+          <div class="referral-label">
+            Your Referral Code
+          </div>
+
+          <div class="referral-code-row">
+            <div class="referral-code" id="referralCode">
+              Loading...
+            </div>
+
+            <button class="copy-btn" id="copyBtn" onclick="copyReferral()">
+              Copy
+            </button>
+          </div>
+
+          <div class="referral-link" id="referralLink">
+            Your referral link will appear here.
+          </div>
+
+          <div class="referral-count">
+            <span>Referral Members</span>
+            <strong id="referralCount">0</strong>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ACCOUNT -->
+      <section class="section">
+        <h2 class="section-title">Account</h2>
+
+        <button class="logout-btn" onclick="logout()">
+          Log Out
+        </button>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+
+    <a class="nav-item" href="dashboard.html">
+      <span class="nav-icon">⌂</span>
+      <span>Home</span>
+    </a>
+
+    <a class="nav-item" href="payment.html">
+      <span class="nav-icon">₦</span>
+      <span>Payment</span>
+    </a>
+
+    <a class="nav-item" href="dashboard.html">
+      <span class="nav-icon">👥</span>
+      <span>Referral</span>
+    </a>
+
+    <a class="nav-item active" href="profile.html">
+      <span class="nav-icon">👤</span>
+      <span>Profile</span>
+    </a>
+
+  </nav>
+
+  <script>
+    const API_BASE = "";
+
+    let currentUser = null;
+
+    function formatNaira(amount) {
+      const number = Number(amount);
+
+      if (!Number.isFinite(number)) {
+        return "₦0";
+      }
+
+      return "₦" + number.toLocaleString("en-NG");
+    }
+
+    function getInitials(name) {
+      if (!name) return "J";
+
+      const parts = String(name)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      if (parts.length === 1) {
+        return parts[0].substring(0, 2).toUpperCase();
+      }
+
+      return (
+        parts[0].charAt(0) +
+        parts[parts.length - 1].charAt(0)
+      ).toUpperCase();
+    }
+
+    function detectPackage(user) {
+      const value = String(
+        user?.package ||
+        user?.plan ||
+        user?.membership ||
+        ""
+      ).toLowerCase();
+
+      if (value.includes("gold")) {
+        return "Gold";
+      }
+
+      if (value.includes("silver")) {
+        return "Silver";
+      }
+
+      const amount = Number(
+        user?.package_amount ??
+        user?.packageAmount ??
+        user?.amount ??
+        0
+      );
+
+      if (amount === 15000) {
+        return "Gold";
+      }
+
+      if (amount === 9000) {
+        return "Silver";
+      }
+
+      return "—";
+    }
+
+    function getPackageAmount(user, packageName) {
+      const amount = Number(
+        user?.package_amount ??
+        user?.packageAmount ??
+        0
+      );
+
+      if (amount > 0) {
+        return amount;
+      }
+
+      if (packageName === "Gold") {
+        return 15000;
+      }
+
+      if (packageName === "Silver") {
+        return 9000;
+      }
+
+      return 0;
+    }
+
+    function getWelcomeBonus(user, packageName) {
+      const bonus = Number(
+        user?.welcome_bonus ??
+        user?.welcomeBonus ??
+        user?.bonus ??
+        0
+      );
+
+      if (bonus > 0) {
+        return bonus;
+      }
+
+      if (packageName === "Gold") {
+        return 15000;
+      }
+
+      if (packageName === "Silver") {
+        return 9000;
+      }
+
+      return 0;
+    }
+
+    function getReferralCode(user) {
+      const possibleValues = [
+        user?.referralCode,
+        user?.referral_code,
+        user?.refCode,
+        user?.ref_code,
+        user?.inviteCode,
+        user?.invite_code,
+        user?.referralUsername,
+        user?.referral_username,
+        user?.profile?.referralCode,
+        user?.profile?.referral_code,
+        user?.username
+      ];
+
+      for (const value of possibleValues) {
+        if (value !== undefined && value !== null) {
+          const cleaned = String(value)
+            .trim()
+            .replace(/[^a-zA-Z0-9_-]/g, "");
+
+          if (cleaned) {
+            return cleaned;
+          }
+        }
+      }
+
+      return "—";
+    }
+
+    function formatDate(value) {
+      if (!value) {
+        return "—";
+      }
+
+      const date = new Date(value);
+
+      if (Number.isNaN(date.getTime())) {
+        return String(value);
+      }
+
+      return date.toLocaleDateString("en-NG", {
+        day: "numeric",
+        month: "long",
+        year: "numeric"
+      });
+    }
+
+    function setPackageBadge(packageName) {
+      const badge = document.getElementById("packageBadge");
+
+      badge.textContent = packageName;
+
+      badge.className = "badge";
+
+      if (packageName === "Gold") {
+        badge.classList.add("gold-badge");
+      } else if (packageName === "Silver") {
+        badge.classList.add("silver-badge");
+      } else {
+        badge.classList.add("default-badge");
+      }
+    }
+
+    function setStatusBadge(status) {
+      const badge = document.getElementById("statusBadge");
+
+      const normalized = String(status || "pending").toLowerCase();
+
+      badge.className = "badge";
+
+      if (normalized === "approved" || normalized === "active") {
+        badge.textContent = "Approved";
+        badge.classList.add("approved-badge");
+        return;
+      }
+
+      if (normalized === "suspended") {
+        badge.textContent = "Suspended";
+        badge.classList.add("suspended-badge");
+        return;
+      }
+
+      badge.textContent = "Pending";
+      badge.classList.add("pending-badge");
+    }
+
+    function displayUser(user) {
+      currentUser = user;
+
+      const fullName =
+        user?.full_name ||
+        user?.fullName ||
+        user?.name ||
+        "Jovia Member";
+
+      const username =
+        user?.username ||
+        user?.user_name ||
+        "username";
+
+      const email =
+        user?.email ||
+        "—";
+
+      const phone =
+        user?.phone ||
+        user?.phone_number ||
+        user?.phoneNumber ||
+        "—";
+
+      const packageName = detectPackage(user);
+
+      const packageAmount =
+        getPackageAmount(user, packageName);
+
+      const welcomeBonus =
+        getWelcomeBonus(user, packageName);
+
+      const referralCode =
+        getReferralCode(user);
+
+      const status =
+        user?.account_status ||
+        user?.accountStatus ||
+        user?.status ||
+        "pending";
+
+      const joined =
+        user?.created_at ||
+        user?.createdAt ||
+        user?.joined_at ||
+        user?.joinedAt;
+
+      document.getElementById("avatar").textContent =
+        getInitials(fullName);
+
+      document.getElementById("profileName").textContent =
+        fullName;
+
+      document.getElementById("profileUsername").textContent =
+        "@" + String(username).replace(/^@/, "");
+
+      document.getElementById("fullName").textContent =
+        fullName;
+
+      document.getElementById("username").textContent =
+        "@" + String(username).replace(/^@/, "");
+
+      document.getElementById("email").textContent =
+        email;
+
+      document.getElementById("phone").textContent =
+        phone;
+
+      document.getElementById("packageName").textContent =
+        packageName;
+
+      document.getElementById("packageAmount").textContent =
+        packageAmount > 0
+          ? formatNaira(packageAmount)
+          : "—";
+
+      document.getElementById("welcomeBonus").textContent =
+        welcomeBonus > 0
+          ? formatNaira(welcomeBonus)
+          : "—";
+
+      document.getElementById("joinedDate").textContent =
+        formatDate(joined);
+
+      document.getElementById("referralCode").textContent =
+        referralCode;
+
+      const referralLink =
+        referralCode !== "—"
+          ? `${window.location.origin}/register.html?ref=${encodeURIComponent(referralCode)}`
+          : "Your referral link will appear here.";
+
+      document.getElementById("referralLink").textContent =
+        referralLink;
+
+      setPackageBadge(packageName);
+      setStatusBadge(status);
+    }
+
+    async function loadUser() {
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/me?t=${Date.now()}`,
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store"
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Unable to load your profile.");
+        }
+
+        const data = await response.json();
+
+        const user =
+          data?.user ||
+          data?.data?.user ||
+          data?.member ||
+          data;
+
+        if (!user || (!user.username && !user.email && !user.full_name)) {
+          throw new Error("No logged-in user was found.");
+        }
+
+        displayUser(user);
+
+        loadReferralCount();
+
+      } catch (error) {
+        console.error("PROFILE LOAD ERROR:", error);
+
+        showError(
+          error.message ||
+          "Unable to load your profile."
+        );
+      }
+    }
+
+    async function loadReferralCount() {
+      try {
+        const response = await fetch(
+          `${API_BASE}/api/referrals?t=${Date.now()}`,
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store"
+          }
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        let referrals =
+          data?.referrals ||
+          data?.members ||
+          data?.data?.referrals ||
+          [];
+
+        if (!Array.isArray(referrals)) {
+          referrals = [];
+        }
+
+        document.getElementById("referralCount").textContent =
+          referrals.length;
+
+      } catch (error) {
+        console.log(
+          "Referral count unavailable:",
+          error.message
+        );
+      }
+    }
+
+    async function copyReferral() {
+      if (!currentUser) {
+        return;
+      }
+
+      const code =
+        getReferralCode(currentUser);
+
+      if (!code || code === "—") {
+        return;
+      }
+
+      const link =
+        `${window.location.origin}/register.html?ref=${encodeURIComponent(code)}`;
+
+      const button =
+        document.getElementById("copyBtn");
+
+      try {
+        await navigator.clipboard.writeText(link);
+
+        const oldText = button.textContent;
+
+        button.textContent = "Copied!";
+
+        setTimeout(() => {
+          button.textContent = oldText;
+        }, 1500);
+
+      } catch (error) {
+        const temp =
+          document.createElement("textarea");
+
+        temp.value = link;
+        temp.style.position = "fixed";
+        temp.style.opacity = "0";
+
+        document.body.appendChild(temp);
+
+        temp.focus();
+        temp.select();
+
+        try {
+          document.execCommand("copy");
+
+          button.textContent = "Copied!";
+
+          setTimeout(() => {
+            button.textContent = "Copy";
+          }, 1500);
+
+        } catch (copyError) {
+          alert("Unable to copy referral link.");
+        }
+
+        document.body.removeChild(temp);
+      }
+    }
+
+    function showError(message) {
+      const box =
+        document.getElementById("errorMessage");
+
+      box.textContent = message;
+      box.className = "message error";
+    }
+
+    async function logout() {
+      try {
+        await fetch(
+          `${API_BASE}/api/logout`,
+          {
+            method: "POST",
+            credentials: "include",
+            cache: "no-store"
+          }
+        );
+      } catch (error) {
+        console.log("Logout request error:", error);
+      }
+
+      localStorage.removeItem("jovia_name");
+      localStorage.removeItem("jovia_username");
+      localStorage.removeItem("jovia_plan");
+      localStorage.removeItem("jovia_package");
+      localStorage.removeItem("jovia_status");
+
+      window.location.href = "index.html";
+    }
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      loadUser
+    );
+  </script>
+
+</body>
+</html>
