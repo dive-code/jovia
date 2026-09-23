@@ -26,7 +26,7 @@ const PORT=Number(process.env.PORT||3000);
 const HOST=process.env.HOST||"0.0.0.0";
 
 // ===== FIX 2: PERSISTENCE - Railway Volume Support =====
-const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.RAILWAY_VOLUME || "/app/data";
+const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.RAILWAY_VOLUME || null;
 const DB_DIR = VOLUME_PATH? VOLUME_PATH : __dirname;
 const DB_PATH = process.env.DB_PATH || path.join(DB_DIR,"jovia.db");
 
