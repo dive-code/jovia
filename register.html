@@ -3,13 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Create Account | Jovia Network</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 <style>
 :root{
     --purple:#57158a;
@@ -26,1919 +23,314 @@
     --danger:#a52a2a;
     --shadow:0 22px 60px rgba(62,20,84,.09);
 }
-
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-}
-
-html{
-    scroll-behavior:smooth;
-}
-
-body{
-    font-family:"Manrope",sans-serif;
-    background:var(--background);
-    color:var(--dark);
-    min-height:100vh;
-    overflow-x:hidden;
-}
-
-button,input{
-    font-family:inherit;
-}
-
-a{
-    text-decoration:none;
-}
-
-.page{
-    position:relative;
-    min-height:100vh;
-    overflow:hidden;
-}
-
-.shape{
-    position:absolute;
-    border-radius:50%;
-    pointer-events:none;
-    z-index:0;
-}
-
-.shape-one{
-    width:560px;
-    height:560px;
-    top:-270px;
-    right:-160px;
-    background:rgba(245,181,27,.11);
-}
-
-.shape-two{
-    width:430px;
-    height:430px;
-    left:-250px;
-    bottom:-220px;
-    background:rgba(87,21,138,.06);
-}
-
-/* HEADER */
-
-header{
-    position:relative;
-    z-index:5;
-    width:min(1180px,92%);
-    height:90px;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-}
-
-.brand{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    color:var(--purple);
-}
-
-.brand-icon{
-    width:48px;
-    height:48px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:15px;
-    background:linear-gradient(145deg,var(--purple),#7627a8);
-    color:white;
-    font-size:24px;
-    font-weight:800;
-    box-shadow:0 10px 25px rgba(87,21,138,.18);
-}
-
-.brand-name{
-    display:block;
-    font-size:23px;
-    line-height:1;
-    font-weight:800;
-    letter-spacing:-.8px;
-}
-
-.brand-small{
-    display:block;
-    margin-top:5px;
-    text-align:center;
-    color:#918897;
-    font-size:8px;
-    font-weight:800;
-    letter-spacing:3px;
-}
-
-.home-link{
-    display:flex;
-    align-items:center;
-    gap:9px;
-    color:var(--purple);
-    font-size:16px;
-    font-weight:800;
-    transition:.2s ease;
-}
-
-.home-link:hover{
-    transform:translateX(-3px);
-}
-
-.home-arrow{
-    font-size:24px;
-    font-weight:500;
-}
-
-/* MAIN */
-
-main{
-    position:relative;
-    z-index:2;
-    width:min(1180px,92%);
-    margin:auto;
-    padding:55px 0 90px;
-}
-
-/* HERO */
-
-.hero{
-    display:grid;
-    grid-template-columns:1fr .75fr;
-    gap:80px;
-    align-items:center;
-    margin-bottom:42px;
-}
-
-.hero-copy{
-    max-width:650px;
-}
-
-.eyebrow{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-    padding:10px 17px;
-    margin-bottom:22px;
-    border:1px solid #eadfea;
-    border-radius:100px;
-    background:rgba(255,255,255,.8);
-    color:var(--purple);
-    font-size:13px;
-    font-weight:800;
-}
-
-.eyebrow-dot{
-    width:8px;
-    height:8px;
-    border-radius:50%;
-    background:var(--gold);
-}
-
-.hero h1{
-    color:var(--purple);
-    font-size:clamp(45px,5vw,60px);
-    line-height:1.04;
-    letter-spacing:-2.5px;
-    font-weight:800;
-    margin-bottom:23px;
-}
-
-.hero h1 span{
-    color:var(--dark);
-}
-
-.hero-description{
-    max-width:590px;
-    color:var(--muted);
-    font-size:17px;
-    line-height:1.75;
-}
-
-/* HERO ART */
-
-.hero-art{
-    position:relative;
-    height:300px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.hero-circle{
-    width:290px;
-    height:290px;
-    border-radius:50%;
-    background:linear-gradient(145deg,#fff8e7,#f5e4cd);
-}
-
-.floating-card{
-    position:absolute;
-    width:245px;
-    padding:25px;
-    border-radius:22px;
-    background:rgba(255,255,255,.95);
-    border:1px solid white;
-    box-shadow:0 25px 55px rgba(52,20,72,.14);
-    transform:rotate(3deg);
-}
-
-.floating-top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
-}
-
-.floating-logo{
-    width:38px;
-    height:38px;
-    display:grid;
-    place-items:center;
-    border-radius:12px;
-    background:var(--purple);
-    color:white;
-    font-size:18px;
-    font-weight:800;
-}
-
-.online{
-    width:10px;
-    height:10px;
-    border-radius:50%;
-    background:#22a566;
-}
-
-.floating-label{
-    color:var(--muted);
-    font-size:12px;
-    font-weight:600;
-}
-
-.floating-title{
-    color:var(--purple);
-    font-size:28px;
-    font-weight:800;
-    margin-top:5px;
-}
-
-/* BENEFITS */
-
-.benefits{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:18px;
-    margin-bottom:40px;
-}
-
-.benefit{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    padding:20px;
-    border:1px solid var(--border);
-    border-radius:18px;
-    background:rgba(255,255,255,.82);
-}
-
-.benefit-icon{
-    width:42px;
-    height:42px;
-    min-width:42px;
-    display:grid;
-    place-items:center;
-    border-radius:13px;
-    background:var(--purple-light);
-    color:var(--purple);
-    font-size:17px;
-    font-weight:800;
-}
-
-.benefit strong{
-    display:block;
-    color:var(--dark);
-    font-size:14px;
-    line-height:1.4;
-}
-
-.benefit small{
-    display:block;
-    margin-top:3px;
-    color:var(--muted);
-    font-size:11px;
-}
-
-/* REGISTRATION */
-
-.registration{
-    display:grid;
-    grid-template-columns:.7fr 1.3fr;
-    gap:28px;
-    align-items:stretch;
-}
-
-/* SIDE PANEL */
-
-.side-panel{
-    position:relative;
-    overflow:hidden;
-    padding:38px;
-    border-radius:26px;
-    background:linear-gradient(145deg,var(--purple-dark),var(--purple));
-    color:white;
-    box-shadow:var(--shadow);
-}
-
-.side-panel::after{
-    content:"";
-    position:absolute;
-    width:300px;
-    height:300px;
-    right:-150px;
-    bottom:-150px;
-    border-radius:50%;
-    background:rgba(255,255,255,.06);
-}
-
-.side-panel h2{
-    position:relative;
-    z-index:1;
-    font-size:30px;
-    line-height:1.25;
-    letter-spacing:-1px;
-    margin-bottom:15px;
-}
-
-.side-panel>p{
-    position:relative;
-    z-index:1;
-    color:rgba(255,255,255,.72);
-    font-size:14px;
-    line-height:1.7;
-    margin-bottom:35px;
-}
-
-.steps{
-    position:relative;
-    z-index:1;
-    display:grid;
-    gap:25px;
-}
-
-.step{
-    display:flex;
-    gap:15px;
-}
-
-.step-number{
-    width:38px;
-    height:38px;
-    min-width:38px;
-    display:grid;
-    place-items:center;
-    border:1px solid rgba(255,255,255,.2);
-    border-radius:50%;
-    background:rgba(255,255,255,.08);
-    font-size:11px;
-    font-weight:800;
-}
-
-.step h3{
-    font-size:14px;
-    margin-bottom:4px;
-}
-
-.step p{
-    color:rgba(255,255,255,.6);
-    font-size:11px;
-    line-height:1.55;
-}
-
-/* FORM CARD */
-
-.form-card{
-    padding:42px;
-    background:var(--white);
-    border:1px solid var(--border);
-    border-radius:26px;
-    box-shadow:var(--shadow);
-}
-
-.form-heading{
-    margin-bottom:32px;
-}
-
-.form-heading h2{
-    color:var(--purple);
-    font-size:32px;
-    line-height:1.2;
-    letter-spacing:-1px;
-    margin-bottom:7px;
-}
-
-.form-heading p{
-    color:var(--muted);
-    font-size:15px;
-}
-
-.form-heading a{
-    color:var(--purple);
-    font-weight:800;
-}
-
-/* MESSAGE */
-
-.form-message{
-    display:none;
-    margin-bottom:22px;
-    padding:13px 15px;
-    border-radius:12px;
-    background:#fff0f0;
-    border:1px solid #f0caca;
-    color:var(--danger);
-    font-size:13px;
-    line-height:1.5;
-    font-weight:700;
-}
-
-.form-message.show{
-    display:block;
-}
-
-.form-message.success{
-    background:#effbf5;
-    border-color:#c8ead8;
-    color:var(--success);
-}
-
-/* FIELDS */
-
-.field{
-    margin-bottom:21px;
-}
-
-.field label{
-    display:block;
-    margin-bottom:9px;
-    color:var(--dark);
-    font-size:14px;
-    font-weight:800;
-}
-
-.input-wrap{
-    position:relative;
-}
-
-.input-wrap input{
-    width:100%;
-    height:60px;
-    padding:0 19px;
-    border:1.5px solid var(--border);
-    border-radius:15px;
-    outline:none;
-    background:#fcfbfd;
-    color:var(--dark);
-    font-size:16px;
-    transition:.2s ease;
-}
-
-.input-wrap input::placeholder{
-    color:#a19aa5;
-}
-
-.input-wrap input:focus{
-    border-color:var(--purple);
-    background:white;
-    box-shadow:0 0 0 4px rgba(87,21,138,.07);
-}
-
-.input-wrap input:invalid:not(:placeholder-shown){
-    border-color:#d69a9a;
-}
-
-/* PASSWORD */
-
-.password-input{
-    padding-right:58px!important;
-}
-
-.password-toggle{
-    position:absolute;
-    top:50%;
-    right:12px;
-    transform:translateY(-50%);
-    width:38px;
-    height:38px;
-    border:none;
-    background:transparent;
-    color:#706675;
-    cursor:pointer;
-    font-size:17px;
-}
-
-/* PACKAGES */
-
-.package-heading{
-    display:block;
-    margin:28px 0 11px;
-    color:var(--dark);
-    font-size:14px;
-    font-weight:800;
-}
-
-.packages{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:15px;
-}
-
-.package{
-    position:relative;
-}
-
-.package input{
-    position:absolute;
-    opacity:0;
-    pointer-events:none;
-}
-
-.package-label{
-    position:relative;
-    display:block;
-    min-height:155px;
-    padding:22px;
-    border:1.5px solid var(--border);
-    border-radius:18px;
-    background:#fff;
-    color:var(--dark);
-    cursor:pointer;
-    transition:.25s ease;
-}
-
-.package-label:hover{
-    transform:translateY(-2px);
-    border-color:#bca8c7;
-}
-
-/* SILVER SELECTED */
-
-#silver:checked+.package-label{
-    background:var(--purple);
-    border-color:var(--purple);
-    color:white;
-    box-shadow:0 12px 28px rgba(87,21,138,.22);
-}
-
-#silver:checked+.package-label .package-type{
-    color:rgba(255,255,255,.75);
-}
-
-#silver:checked+.package-label .package-name,
-#silver:checked+.package-label .package-price,
-#silver:checked+.package-label .package-bonus{
-    color:white;
-}
-
-#silver:checked+.package-label .package-check{
-    border-color:white;
-    color:white;
-}
-
-/* GOLD SELECTED */
-
-#gold:checked+.package-label{
-    background:linear-gradient(135deg,#f8c52d,#e7a600);
-    border-color:var(--gold-dark);
-    color:#351b00;
-    box-shadow:0 12px 28px rgba(230,164,0,.28);
-}
-
-#gold:checked+.package-label .package-type{
-    color:rgba(53,27,0,.7);
-}
-
-#gold:checked+.package-label .package-name,
-#gold:checked+.package-label .package-price,
-#gold:checked+.package-label .package-bonus{
-    color:#351b00;
-}
-
-#gold:checked+.package-label .package-check{
-    border-color:#351b00;
-    color:#351b00;
-}
-
-.package-type{
-    display:block;
-    margin-bottom:7px;
-    color:var(--muted);
-    font-size:11px;
-    font-weight:700;
-}
-
-.package-name{
-    display:block;
-    margin-bottom:4px;
-    color:var(--dark);
-    font-size:22px;
-    font-weight:800;
-}
-
-.package-price{
-    display:block;
-    color:var(--purple);
-    font-size:20px;
-    font-weight:800;
-}
-
-.package-bonus{
-    display:block;
-    margin-top:7px;
-    color:var(--muted);
-    font-size:11px;
-    font-weight:700;
-}
-
-.package-check{
-    position:absolute;
-    top:19px;
-    right:18px;
-    width:29px;
-    height:29px;
-    display:grid;
-    place-items:center;
-    border:1.5px solid #ded8e2;
-    border-radius:50%;
-    color:transparent;
-    font-size:13px;
-    font-weight:800;
-}
-
-/* TERMS */
-
-.terms{
-    display:flex;
-    align-items:flex-start;
-    gap:9px;
-    margin:22px 0;
-}
-
-.terms input{
-    width:17px;
-    height:17px;
-    min-width:17px;
-    margin-top:2px;
-    accent-color:var(--purple);
-}
-
-.terms label{
-    color:var(--muted);
-    font-size:11px;
-    line-height:1.6;
-}
-
-.terms a{
-    color:var(--purple);
-    font-weight:800;
-}
-
-/* BUTTON */
-
-.continue-button{
-    width:100%;
-    height:61px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:13px;
-    border:none;
-    border-radius:16px;
-    background:linear-gradient(135deg,var(--purple),#7626a6);
-    color:white;
-    font-size:16px;
-    font-weight:800;
-    cursor:pointer;
-    box-shadow:0 12px 28px rgba(87,21,138,.18);
-    transition:.2s ease;
-}
-
-.continue-button:hover:not(:disabled){
-    transform:translateY(-2px);
-}
-
-.continue-button:disabled{
-    opacity:.65;
-    cursor:wait;
-}
-
-.button-arrow{
-    font-size:22px;
-}
-
-/* SECURE */
-
-.secure{
-    text-align:center;
-    margin-top:13px;
-    color:#938b99;
-    font-size:10px;
-    line-height:1.5;
-}
-
-.secure strong{
-    color:#19945a;
-}
-
-/* FOOTER */
-
-footer{
-    position:relative;
-    z-index:2;
-    padding:0 20px 35px;
-    text-align:center;
-    color:#98919d;
-    font-size:11px;
-}
-
-/* TABLET */
-
-@media(max-width:950px){
-
-    .hero{
-        grid-template-columns:1fr;
-        gap:25px;
-    }
-
-    .hero-art{
-        display:none;
-    }
-
-    .registration{
-        grid-template-columns:1fr;
-    }
-
-    .side-panel{
-        display:none;
-    }
-}
-
-/* MOBILE */
-
-@media(max-width:650px){
-
-    header{
-        width:90%;
-        height:78px;
-    }
-
-    .brand-icon{
-        width:42px;
-        height:42px;
-        font-size:21px;
-    }
-
-    .brand-name{
-        font-size:20px;
-    }
-
-    .home-link{
-        font-size:14px;
-    }
-
-    main{
-        width:90%;
-        padding:38px 0 60px;
-    }
-
-    .hero{
-        margin-bottom:30px;
-    }
-
-    .eyebrow{
-        font-size:11px;
-        padding:9px 14px;
-    }
-
-    .hero h1{
-        font-size:44px;
-        letter-spacing:-2px;
-    }
-
-    .hero-description{
-        font-size:15px;
-        line-height:1.7;
-    }
-
-    .benefits{
-        grid-template-columns:1fr;
-        gap:11px;
-        margin-bottom:28px;
-    }
-
-    .benefit{
-        padding:16px;
-    }
-
-    .form-card{
-        padding:30px 22px;
-        border-radius:23px;
-    }
-
-    .form-heading h2{
-        font-size:28px;
-    }
-
-    .form-heading p{
-        font-size:13px;
-    }
-
-    .input-wrap input{
-        height:58px;
-        font-size:15px;
-    }
-
-    .packages{
-        gap:11px;
-    }
-
-    .package-label{
-        min-height:150px;
-        padding:19px;
-    }
-
-    .package-name{
-        font-size:20px;
-    }
-
-    .package-price{
-        font-size:18px;
-    }
-
-    .continue-button{
-        height:59px;
-        font-size:15px;
-    }
-}
-
-@media(max-width:400px){
-
-    .hero h1{
-        font-size:38px;
-    }
-
-    .form-card{
-        padding:27px 18px;
-    }
-
-    .packages{
-        grid-template-columns:1fr;
-    }
-
-    .package-label{
-        min-height:140px;
-    }
-}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Manrope",sans-serif;background:var(--background);color:var(--dark);min-height:100vh;overflow-x:hidden}
+button,input{font-family:inherit}
+a{text-decoration:none}
+.page{position:relative;min-height:100vh;overflow:hidden}
+.shape{position:absolute;border-radius:50%;pointer-events:none;z-index:0}
+.shape-one{width:560px;height:560px;top:-270px;right:-160px;background:rgba(245,181,27,.11)}
+.shape-two{width:430px;height:430px;left:-250px;bottom:-220px;background:rgba(87,21,138,.06)}
+header{position:relative;z-index:5;width:min(1180px,92%);height:90px;margin:auto;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px;color:var(--purple)}
+.brand-icon{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border-radius:15px;background:linear-gradient(145deg,var(--purple),#7627a8);color:white;font-size:24px;font-weight:800;box-shadow:0 10px 25px rgba(87,21,138,.18)}
+.brand-name{display:block;font-size:23px;line-height:1;font-weight:800;letter-spacing:-.8px}
+.brand-small{display:block;margin-top:5px;text-align:center;color:#918897;font-size:8px;font-weight:800;letter-spacing:3px}
+.home-link{display:flex;align-items:center;gap:9px;color:var(--purple);font-size:16px;font-weight:800;transition:.2s ease}
+.home-link:hover{transform:translateX(-3px)}
+.home-arrow{font-size:24px;font-weight:500}
+main{position:relative;z-index:2;width:min(1180px,92%);margin:auto;padding:55px 0 90px}
+.hero{display:grid;grid-template-columns:1fr .75fr;gap:80px;align-items:center;margin-bottom:42px}
+.hero-copy{max-width:650px}
+.eyebrow{display:inline-flex;align-items:center;gap:10px;padding:10px 17px;margin-bottom:22px;border:1px solid #eadfea;border-radius:100px;background:rgba(255,255,255,.8);color:var(--purple);font-size:13px;font-weight:800}
+.eyebrow-dot{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+.hero h1{color:var(--purple);font-size:clamp(45px,5vw,60px);line-height:1.04;letter-spacing:-2.5px;font-weight:800;margin-bottom:23px}
+.hero h1 span{color:var(--dark)}
+.hero-description{max-width:590px;color:var(--muted);font-size:17px;line-height:1.75}
+.hero-art{position:relative;height:300px;display:flex;align-items:center;justify-content:center}
+.hero-circle{width:290px;height:290px;border-radius:50%;background:linear-gradient(145deg,#fff8e7,#f5e4cd)}
+.floating-card{position:absolute;width:245px;padding:25px;border-radius:22px;background:rgba(255,255,255,.95);border:1px solid white;box-shadow:0 25px 55px rgba(52,20,72,.14);transform:rotate(3deg)}
+.floating-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.floating-logo{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:var(--purple);color:white;font-size:18px;font-weight:800}
+.online{width:10px;height:10px;border-radius:50%;background:#22a566}
+.floating-label{color:var(--muted);font-size:12px;font-weight:600}
+.floating-title{color:var(--purple);font-size:28px;font-weight:800;margin-top:5px}
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:40px}
+.benefit{display:flex;align-items:center;gap:14px;padding:20px;border:1px solid var(--border);border-radius:18px;background:rgba(255,255,255,.82)}
+.benefit-icon{width:42px;height:42px;min-width:42px;display:grid;place-items:center;border-radius:13px;background:var(--purple-light);color:var(--purple);font-size:17px;font-weight:800}
+.benefit strong{display:block;color:var(--dark);font-size:14px;line-height:1.4}
+.benefit small{display:block;margin-top:3px;color:var(--muted);font-size:11px}
+.registration{display:grid;grid-template-columns:.7fr 1.3fr;gap:28px;align-items:stretch}
+.side-panel{position:relative;overflow:hidden;padding:38px;border-radius:26px;background:linear-gradient(145deg,var(--purple-dark),var(--purple));color:white;box-shadow:var(--shadow)}
+.side-panel::after{content:"";position:absolute;width:300px;height:300px;right:-150px;bottom:-150px;border-radius:50%;background:rgba(255,255,255,.06)}
+.side-panel h2{position:relative;z-index:1;font-size:30px;line-height:1.25;letter-spacing:-1px;margin-bottom:15px}
+.side-panel>p{position:relative;z-index:1;color:rgba(255,255,255,.72);font-size:14px;line-height:1.7;margin-bottom:35px}
+.steps{position:relative;z-index:1;display:grid;gap:25px}
+.step{display:flex;gap:15px}
+.step-number{width:38px;height:38px;min-width:38px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(255,255,255,.08);font-size:11px;font-weight:800}
+.step h3{font-size:14px;margin-bottom:4px}
+.step p{color:rgba(255,255,255,.6);font-size:11px;line-height:1.55}
+.form-card{padding:42px;background:var(--white);border:1px solid var(--border);border-radius:26px;box-shadow:var(--shadow)}
+.form-heading{margin-bottom:22px}
+.form-heading h2{color:var(--purple);font-size:32px;line-height:1.2;letter-spacing:-1px;margin-bottom:7px}
+.form-heading p{color:var(--muted);font-size:15px}
+.form-heading a{color:var(--purple);font-weight:800}
+.form-message{display:none;margin-bottom:22px;padding:13px 15px;border-radius:12px;background:#fff0f0;border:1px solid #f0caca;color:var(--danger);font-size:13px;line-height:1.5;font-weight:700}
+.form-message.show{display:block}
+.form-message.success{background:#effbf5;border-color:#c8ead8;color:var(--success)}
+.referral-banner{display:none;margin-bottom:22px;padding:14px 16px;border-radius:13px;background:#f4ecfa;border:1.5px solid #decdf0;color:#42106b;font-size:13px;line-height:1.4}
+.referral-banner b{color:var(--purple)}
+.field{margin-bottom:21px}
+.field label{display:block;margin-bottom:9px;color:var(--dark);font-size:14px;font-weight:800}
+.input-wrap{position:relative}
+.input-wrap input{width:100%;height:60px;padding:0 19px;border:1.5px solid var(--border);border-radius:15px;outline:none;background:#fcfbfd;color:var(--dark);font-size:16px;transition:.2s ease}
+.input-wrap input::placeholder{color:#a19aa5}
+.input-wrap input:focus{border-color:var(--purple);background:white;box-shadow:0 0 0 4px rgba(87,21,138,.07)}
+.password-input{padding-right:58px!important}
+.password-toggle{position:absolute;top:50%;right:12px;transform:translateY(-50%);width:38px;height:38px;border:none;background:transparent;color:#706675;cursor:pointer;font-size:17px}
+.package-heading{display:block;margin:28px 0 11px;color:var(--dark);font-size:14px;font-weight:800}
+.packages{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.package{position:relative}
+.package input{position:absolute;opacity:0;pointer-events:none}
+.package-label{position:relative;display:block;min-height:155px;padding:22px;border:1.5px solid var(--border);border-radius:18px;background:#fff;color:var(--dark);cursor:pointer;transition:.25s ease}
+.package-label:hover{transform:translateY(-2px);border-color:#bca8c7}
+#silver:checked+.package-label{background:var(--purple);border-color:var(--purple);color:white;box-shadow:0 12px 28px rgba(87,21,138,.22)}
+#silver:checked+.package-label .package-type{color:rgba(255,255,255,.75)}
+#silver:checked+.package-label .package-name,#silver:checked+.package-label .package-price,#silver:checked+.package-label .package-bonus{color:white}
+#silver:checked+.package-label .package-check{border-color:white;color:white}
+#gold:checked+.package-label{background:linear-gradient(135deg,#f8c52d,#e7a600);border-color:var(--gold-dark);color:#351b00;box-shadow:0 12px 28px rgba(230,164,0,.28)}
+#gold:checked+.package-label .package-type{color:rgba(53,27,0,.7)}
+#gold:checked+.package-label .package-name,#gold:checked+.package-label .package-price,#gold:checked+.package-label .package-bonus{color:#351b00}
+#gold:checked+.package-label .package-check{border-color:#351b00;color:#351b00}
+.package-type{display:block;margin-bottom:7px;color:var(--muted);font-size:11px;font-weight:700}
+.package-name{display:block;margin-bottom:4px;color:var(--dark);font-size:22px;font-weight:800}
+.package-price{display:block;color:var(--purple);font-size:20px;font-weight:800}
+.package-bonus{display:block;margin-top:7px;color:var(--muted);font-size:11px;font-weight:700}
+.package-check{position:absolute;top:19px;right:18px;width:29px;height:29px;display:grid;place-items:center;border:1.5px solid #ded8e2;border-radius:50%;color:transparent;font-size:13px;font-weight:800}
+.terms{display:flex;align-items:flex-start;gap:9px;margin:22px 0}
+.terms input{width:17px;height:17px;min-width:17px;margin-top:2px;accent-color:var(--purple)}
+.terms label{color:var(--muted);font-size:11px;line-height:1.6}
+.terms a{color:var(--purple);font-weight:800}
+.continue-button{width:100%;height:61px;display:flex;align-items:center;justify-content:center;gap:13px;border:none;border-radius:16px;background:linear-gradient(135deg,var(--purple),#7626a6);color:white;font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 12px 28px rgba(87,21,138,.18);transition:.2s ease}
+.continue-button:hover:not(:disabled){transform:translateY(-2px)}
+.continue-button:disabled{opacity:.65;cursor:wait}
+.button-arrow{font-size:22px}
+.secure{text-align:center;margin-top:13px;color:#938b99;font-size:10px;line-height:1.5}
+.secure strong{color:#19945a}
+footer{position:relative;z-index:2;padding:0 20px 35px;text-align:center;color:#98919d;font-size:11px}
+@media(max-width:950px){.hero{grid-template-columns:1fr;gap:25px}.hero-art{display:none}.registration{grid-template-columns:1fr}.side-panel{display:none}}
+@media(max-width:650px){header{width:90%;height:78px}.brand-icon{width:42px;height:42px;font-size:21px}.brand-name{font-size:20px}.home-link{font-size:14px}main{width:90%;padding:38px 0 60px}.hero{margin-bottom:30px}.eyebrow{font-size:11px;padding:9px 14px}.hero h1{font-size:44px;letter-spacing:-2px}.hero-description{font-size:15px;line-height:1.7}.benefits{grid-template-columns:1fr;gap:11px;margin-bottom:28px}.benefit{padding:16px}.form-card{padding:30px 22px;border-radius:23px}.form-heading h2{font-size:28px}.form-heading p{font-size:13px}.input-wrap input{height:58px;font-size:15px}.packages{gap:11px}.package-label{min-height:150px;padding:19px}.package-name{font-size:20px}.package-price{font-size:18px}.continue-button{height:59px;font-size:15px}}
+@media(max-width:400px){.hero h1{font-size:38px}.form-card{padding:27px 18px}.packages{grid-template-columns:1fr}.package-label{min-height:140px}}
 </style>
 </head>
-
 <body>
-
 <div class="page">
-
 <div class="shape shape-one"></div>
 <div class="shape shape-two"></div>
-
 <header>
-
     <a href="index.html" class="brand">
-
         <div class="brand-icon">J</div>
-
-        <div>
-            <span class="brand-name">Jovia</span>
-            <span class="brand-small">NETWORK</span>
-        </div>
-
+        <div><span class="brand-name">Jovia</span><span class="brand-small">NETWORK</span></div>
     </a>
-
-    <a href="index.html" class="home-link">
-        <span class="home-arrow">←</span>
-        Home
-    </a>
-
+    <a href="index.html" class="home-link"><span class="home-arrow">←</span>Home</a>
 </header>
-
 <main>
-
 <section class="hero">
-
     <div class="hero-copy">
-
-        <div class="eyebrow">
-            <span class="eyebrow-dot"></span>
-            BUILD YOUR FINANCIAL FUTURE
-        </div>
-
-        <h1>
-            Build your income.
-            <span>Create your freedom.</span>
-        </h1>
-
-        <p class="hero-description">
-            Your financial journey starts with taking action.
-            Join Jovia Network to explore digital opportunities,
-            develop valuable skills and work toward greater
-            financial independence.
-        </p>
-
+        <div class="eyebrow"><span class="eyebrow-dot"></span>BUILD YOUR FINANCIAL FUTURE</div>
+        <h1>Build your income.<span>Create your freedom.</span></h1>
+        <p class="hero-description">Your financial journey starts with taking action. Join Jovia Network to explore digital opportunities, develop valuable skills and work toward greater financial independence.</p>
     </div>
-
     <div class="hero-art">
-
         <div class="hero-circle"></div>
-
         <div class="floating-card">
-
-            <div class="floating-top">
-
-                <div class="floating-logo">J</div>
-
-                <div class="online"></div>
-
-            </div>
-
-            <div class="floating-label">
-                Your financial journey
-            </div>
-
-            <div class="floating-title">
-                Jovia
-            </div>
-
+            <div class="floating-top"><div class="floating-logo">J</div><div class="online"></div></div>
+            <div class="floating-label">Your financial journey</div>
+            <div class="floating-title">Jovia</div>
         </div>
-
     </div>
-
 </section>
-
 <section class="benefits">
-
-    <div class="benefit">
-
-        <div class="benefit-icon">₦</div>
-
-        <div>
-            <strong>Explore income opportunities</strong>
-            <small>Discover ways to build additional income</small>
-        </div>
-
-    </div>
-
-    <div class="benefit">
-
-        <div class="benefit-icon">◆</div>
-
-        <div>
-            <strong>Build valuable skills</strong>
-            <small>Develop skills for your financial journey</small>
-        </div>
-
-    </div>
-
-    <div class="benefit">
-
-        <div class="benefit-icon">→</div>
-
-        <div>
-            <strong>Take the next step</strong>
-            <small>Create your account and get started</small>
-        </div>
-
-    </div>
-
+    <div class="benefit"><div class="benefit-icon">₦</div><div><strong>Explore income opportunities</strong><small>Discover ways to build additional income</small></div></div>
+    <div class="benefit"><div class="benefit-icon">◆</div><div><strong>Build valuable skills</strong><small>Develop skills for your financial journey</small></div></div>
+    <div class="benefit"><div class="benefit-icon">→</div><div><strong>Take the next step</strong><small>Create your account and get started</small></div></div>
 </section>
-
 <section class="registration">
-
 <aside class="side-panel">
-
-    <h2>
-        Your financial journey
-        starts with a decision.
-    </h2>
-
-    <p>
-        Financial independence is built over time.
-        Start by learning, taking action and
-        consistently working toward your goals.
-    </p>
-
+    <h2>Your financial journey starts with a decision.</h2>
+    <p>Financial independence is built over time. Start by learning, taking action and consistently working toward your goals.</p>
     <div class="steps">
-
-        <div class="step">
-
-            <div class="step-number">01</div>
-
-            <div>
-                <h3>Create your account</h3>
-                <p>Enter your details and create your Jovia profile.</p>
-            </div>
-
-        </div>
-
-        <div class="step">
-
-            <div class="step-number">02</div>
-
-            <div>
-                <h3>Choose your plan</h3>
-                <p>Select the membership option that suits your goals.</p>
-            </div>
-
-        </div>
-
-        <div class="step">
-
-            <div class="step-number">03</div>
-
-            <div>
-                <h3>Start your journey</h3>
-                <p>Access your dashboard and begin exploring Jovia.</p>
-            </div>
-
-        </div>
-
+        <div class="step"><div class="step-number">01</div><div><h3>Create your account</h3><p>Enter your details and create your Jovia profile.</p></div></div>
+        <div class="step"><div class="step-number">02</div><div><h3>Choose your plan</h3><p>Select the membership option that suits your goals.</p></div></div>
+        <div class="step"><div class="step-number">03</div><div><h3>Start your journey</h3><p>Access your dashboard and begin exploring Jovia.</p></div></div>
+    </div>
+</aside>
+<section class="form-card">
+    <div class="form-heading">
+        <h2>Create your account</h2>
+        <p>Already registered? <a href="login.html">Sign in</a></p>
     </div>
 
-</aside>
-
-<section class="form-card">
-
-    <div class="form-heading">
-
-        <h2>Create your account</h2>
-
-        <p>
-            Already registered?
-            <a href="login.html">Sign in</a>
-        </p>
-
+    <div id="referralBanner" class="referral-banner">
+        👤 Referred by: <b id="referredByName">...</b>
+        <span style="display:block;margin-top:4px;font-size:11px;color:#766d7d;font-weight:500;">You are registering with a referral link - referrer gets bonus</span>
     </div>
 
     <div id="formMessage" class="form-message"></div>
-
     <form id="registrationForm" novalidate>
-
-        <div class="field">
-
-            <label for="fullName">Full name</label>
-
-            <div class="input-wrap">
-
-                <input
-                    type="text"
-                    id="fullName"
-                    placeholder="Enter your full name"
-                    required
-                    autocomplete="name"
-                    maxlength="100"
-                >
-
-            </div>
-
-        </div>
-
-        <div class="field">
-
-            <label for="username">Username</label>
-
-            <div class="input-wrap">
-
-                <input
-                    type="text"
-                    id="username"
-                    placeholder="Choose a username"
-                    required
-                    minlength="3"
-                    maxlength="20"
-                    pattern="[A-Za-z0-9_-]+"
-                    autocomplete="username"
-                >
-
-            </div>
-
-        </div>
-
-        <div class="field">
-
-            <label for="email">Email address</label>
-
-            <div class="input-wrap">
-
-                <input
-                    type="email"
-                    id="email"
-                    placeholder="Enter your email"
-                    required
-                    maxlength="150"
-                    autocomplete="email"
-                >
-
-            </div>
-
-        </div>
-
-        <div class="field">
-
-            <label for="phone">Phone number</label>
-
-            <div class="input-wrap">
-
-                <input
-                    type="tel"
-                    id="phone"
-                    placeholder="Enter your phone number"
-                    required
-                    maxlength="30"
-                    autocomplete="tel"
-                >
-
-            </div>
-
-        </div>
-
-        <div class="field">
-
-            <label for="password">Password</label>
-
-            <div class="input-wrap">
-
-                <input
-                    type="password"
-                    id="password"
-                    class="password-input"
-                    placeholder="Create a password"
-                    required
-                    minlength="8"
-                    maxlength="100"
-                    autocomplete="new-password"
-                >
-
-                <button
-                    type="button"
-                    class="password-toggle"
-                    id="passwordToggle"
-                    aria-label="Show password"
-                >👁</button>
-
-            </div>
-
-        </div>
-
-        <span class="package-heading">
-            Choose your package
-        </span>
-
+        <div class="field"><label for="fullName">Full name</label><div class="input-wrap"><input type="text" id="fullName" placeholder="Enter your full name" required autocomplete="name" maxlength="100"></div></div>
+        <div class="field"><label for="username">Username</label><div class="input-wrap"><input type="text" id="username" placeholder="Choose a username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]+" autocomplete="username"></div></div>
+        <div class="field"><label for="email">Email address</label><div class="input-wrap"><input type="email" id="email" placeholder="Enter your email" required maxlength="150" autocomplete="email"></div></div>
+        <div class="field"><label for="phone">Phone number</label><div class="input-wrap"><input type="tel" id="phone" placeholder="Enter your phone number" required maxlength="30" autocomplete="tel"></div></div>
+        <div class="field"><label for="password">Password</label><div class="input-wrap"><input type="password" id="password" class="password-input" placeholder="Create a password" required minlength="8" maxlength="100" autocomplete="new-password"><button type="button" class="password-toggle" id="passwordToggle" aria-label="Show password">👁</button></div></div>
+        <span class="package-heading">Choose your package</span>
         <div class="packages">
-
-            <!-- SILVER -->
-
-            <div class="package">
-
-                <input
-                    type="radio"
-                    id="silver"
-                    name="plan"
-                    value="Silver"
-                >
-
-                <label
-                    for="silver"
-                    class="package-label"
-                >
-
-                    <span class="package-type">
-                        STANDARD PLAN
-                    </span>
-
-                    <span class="package-name">
-                        Silver
-                    </span>
-
-                    <span class="package-price">
-                        ₦9,000
-                    </span>
-
-                    <span class="package-bonus">
-                        Dashboard bonus: ₦9,000
-                    </span>
-
-                    <span class="package-check">
-                        ✓
-                    </span>
-
-                </label>
-
-            </div>
-
-            <!-- GOLD -->
-
-            <div class="package">
-
-                <input
-                    type="radio"
-                    id="gold"
-                    name="plan"
-                    value="Gold"
-                >
-
-                <label
-                    for="gold"
-                    class="package-label"
-                >
-
-                    <span class="package-type">
-                        PREMIUM PLAN
-                    </span>
-
-                    <span class="package-name">
-                        Gold
-                    </span>
-
-                    <span class="package-price">
-                        ₦15,000
-                    </span>
-
-                    <span class="package-bonus">
-                        Dashboard bonus: ₦15,000
-                    </span>
-
-                    <span class="package-check">
-                        ✓
-                    </span>
-
-                </label>
-
-            </div>
-
+            <div class="package"><input type="radio" id="silver" name="plan" value="Silver"><label for="silver" class="package-label"><span class="package-type">STANDARD PLAN</span><span class="package-name">Silver</span><span class="package-price">₦9,000</span><span class="package-bonus">Dashboard bonus: ₦9,000</span><span class="package-check">✓</span></label></div>
+            <div class="package"><input type="radio" id="gold" name="plan" value="Gold"><label for="gold" class="package-label"><span class="package-type">PREMIUM PLAN</span><span class="package-name">Gold</span><span class="package-price">₦15,000</span><span class="package-bonus">Dashboard bonus: ₦15,000</span><span class="package-check">✓</span></label></div>
         </div>
-
-        <div class="terms">
-
-            <input
-                type="checkbox"
-                id="terms"
-                required
-            >
-
-            <label for="terms">
-
-                I agree to the Jovia Network
-                <a href="terms.html">Terms & Conditions</a>
-                and confirm that the information provided is correct.
-
-            </label>
-
-        </div>
-
-        <button
-            type="submit"
-            class="continue-button"
-            id="continueButton"
-        >
-
-            <span id="buttonText">
-                Create My Account
-            </span>
-
-            <span class="button-arrow">
-                →
-            </span>
-
-        </button>
-
-        <div class="secure">
-
-            <strong>✓ Secure registration</strong>
-
-            &nbsp;
-
-            Your password is securely processed
-            by the Jovia server.
-
-        </div>
-
+        <div class="terms"><input type="checkbox" id="terms" required><label for="terms">I agree to the Jovia Network <a href="terms.html">Terms & Conditions</a> and confirm that the information provided is correct.</label></div>
+        <button type="submit" class="continue-button" id="continueButton"><span id="buttonText">Create My Account</span><span class="button-arrow">→</span></button>
+        <div class="secure"><strong>✓ Secure registration</strong> &nbsp; Your password is securely processed by the Jovia server.</div>
     </form>
-
 </section>
-
 </section>
-
 </main>
-
-<footer>
-    ©️ 2026 Jovia Network. All rights reserved.
-</footer>
-
+<footer>©️ 2026 Jovia Network. All rights reserved.</footer>
 </div>
-
 <script>
-
-/* =========================
-   PASSWORD TOGGLE
-========================= */
-
-const passwordInput =
-    document.getElementById("password");
-
-const passwordToggle =
-    document.getElementById("passwordToggle");
-
-passwordToggle.addEventListener(
-    "click",
-    function(){
-
-        if(passwordInput.type === "password"){
-
-            passwordInput.type = "text";
-
-            passwordToggle.textContent = "🙈";
-
-            passwordToggle.setAttribute(
-                "aria-label",
-                "Hide password"
-            );
-
-        }else{
-
-            passwordInput.type = "password";
-
-            passwordToggle.textContent = "👁";
-
-            passwordToggle.setAttribute(
-                "aria-label",
-                "Show password"
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================
-   REFERRAL CODE
-========================= */
+const passwordInput = document.getElementById("password");
+const passwordToggle = document.getElementById("passwordToggle");
+passwordToggle.addEventListener("click", function(){
+    if(passwordInput.type === "password"){passwordInput.type = "text";passwordToggle.textContent = "🙈";}else{passwordInput.type = "password";passwordToggle.textContent = "👁";}
+});
 
 function createReferralCode(username){
-
-    const cleanUsername =
-        String(username)
-        .trim()
-        .replace(/[^a-zA-Z0-9_-]/g,"")
-        .toUpperCase();
-
-    if(cleanUsername){
-        return cleanUsername;
-    }
-
-    return "JV" +
-        Math.random()
-        .toString(36)
-        .substring(2,8)
-        .toUpperCase();
+    const cleanUsername = String(username).trim().replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
+    if(cleanUsername){return cleanUsername;}
+    return "JV" + Math.random().toString(36).substring(2,8).toUpperCase();
 }
-
-
-/* =========================
-   SHOW MESSAGE
-========================= */
-
 function showMessage(text, success){
-
-    const message =
-        document.getElementById("formMessage");
-
+    const message = document.getElementById("formMessage");
     message.textContent = text;
-
     message.classList.add("show");
-
-    if(success){
-
-        message.classList.add("success");
-
-    }else{
-
-        message.classList.remove("success");
-
-    }
+    if(success){message.classList.add("success");}else{message.classList.remove("success");}
 }
 
+// === REFERRAL FIX START ===
+const urlParams = new URLSearchParams(window.location.search);
+const urlPlan = String(urlParams.get("plan") || "").trim().toLowerCase();
+const refFromUrl = String(urlParams.get("ref") || urlParams.get("referral") || "").trim();
 
-/* =========================
-   PLAN SELECTION
-========================= */
+const referralBanner = document.getElementById("referralBanner");
+const referredByNameSpan = document.getElementById("referredByName");
+let referredByCode = null;
 
-const silverRadio =
-    document.getElementById("silver");
-
-const goldRadio =
-    document.getElementById("gold");
-
-
-/*
- * Read plan from URL.
- *
- * Examples:
- *
- * register.html?plan=gold
- * register.html?plan=silver
- */
-
-const urlParams =
-    new URLSearchParams(window.location.search);
-
-const urlPlan =
-    String(
-        urlParams.get("plan") || ""
-    ).trim().toLowerCase();
-
-
-/*
- * Automatically select the plan
- * passed through the URL.
- */
-
-if(urlPlan === "gold"){
-
-    goldRadio.checked = true;
-
-}else if(urlPlan === "silver"){
-
-    silverRadio.checked = true;
-
-}else{
-
-    /*
-     * If no plan is provided,
-     * Silver remains the default.
-     */
-
-    silverRadio.checked = true;
-
+if(refFromUrl){
+    referredByCode = refFromUrl.toUpperCase();
+    localStorage.setItem("jovia_referred_by", referredByCode);
+    referredByNameSpan.textContent = referredByCode;
+    referralBanner.style.display = "block";
+    // Try to fetch real username
+    fetch(`/api/referral/${referredByCode}`).then(r=>r.json()).then(data=>{
+        if(data && data.username){ referredByNameSpan.textContent = data.username + " ("+referredByCode+")"; }
+    }).catch(()=>{});
+} else {
+    const savedRef = localStorage.getItem("jovia_referred_by");
+    if(savedRef){
+        referredByCode = savedRef;
+        referredByNameSpan.textContent = savedRef;
+        referralBanner.style.display = "block";
+    }
 }
-
-
-/*
- * Keep plan state synchronized
- * whenever the user clicks a package.
- */
-
-silverRadio.addEventListener(
-    "change",
-    function(){
-
-        if(this.checked){
-
-            goldRadio.checked = false;
-
-        }
-
-    }
-);
-
-goldRadio.addEventListener(
-    "change",
-    function(){
-
-        if(this.checked){
-
-            silverRadio.checked = false;
-
-        }
-
-    }
-);
-
-
-/* =========================
-   REGISTRATION
-========================= */
-
-document
-.getElementById("registrationForm")
-.addEventListener(
-    "submit",
-    async function(event){
-
-        event.preventDefault();
-
-        const form =
-            document.getElementById("registrationForm");
-
-        const message =
-            document.getElementById("formMessage");
-
-        const button =
-            document.getElementById("continueButton");
-
-        const buttonText =
-            document.getElementById("buttonText");
-
-        message.classList.remove(
-            "show",
-            "success"
-        );
-
-
-        /* GET VALUES */
-
-        const name =
-            document
-            .getElementById("fullName")
-            .value
-            .trim();
-
-        const username =
-            document
-            .getElementById("username")
-            .value
-            .trim();
-
-        const email =
-            document
-            .getElementById("email")
-            .value
-            .trim();
-
-        const phone =
-            document
-            .getElementById("phone")
-            .value
-            .trim();
-
-        const password =
-            document
-            .getElementById("password")
-            .value;
-
-        const selectedPlan =
-            document.querySelector(
-                'input[name="plan"]:checked'
-            );
-
-        const terms =
-            document.getElementById("terms");
-
-
-        /* VALIDATION */
-
-        if(
-            !name ||
-            !username ||
-            !email ||
-            !phone ||
-            !password
-        ){
-
-            showMessage(
-                "Please complete all required fields.",
-                false
-            );
-
-            return;
-        }
-
-        if(!selectedPlan){
-
-            showMessage(
-                "Please select a package.",
-                false
-            );
-
-            return;
-        }
-
-        if(password.length < 8){
-
-            showMessage(
-                "Your password must contain at least 8 characters.",
-                false
-            );
-
-            return;
-        }
-
-        if(!terms.checked){
-
-            showMessage(
-                "Please agree to the Terms & Conditions before continuing.",
-                false
-            );
-
-            return;
-        }
-
-        if(!form.checkValidity()){
-
-            form.reportValidity();
-
-            return;
-        }
-
-
-        /* =========================
-           GET SELECTED PLAN
-        ========================= */
-
-        /*
-         * IMPORTANT:
-         *
-         * The exact selected radio button
-         * is used here.
-         *
-         * Gold = Gold
-         * Silver = Silver
-         */
-
-        const plan =
-            selectedPlan.value === "Gold"
-                ? "Gold"
-                : "Silver";
-
-
-        /*
-         * Convert to lowercase for
-         * API compatibility.
-         */
-
-        const apiPlan =
-            plan.toLowerCase();
-
-
-        /*
-         * IMPORTANT:
-         * Gold = ₦15,000
-         * Silver = ₦9,000
-         */
-
-        const planPrice =
-            plan === "Gold"
-                ? 15000
-                : 9000;
-
-
-        /*
-         * Dashboard bonus:
-         * Gold = ₦15,000
-         * Silver = ₦9,000
-         */
-
-        const welcomeBonus =
-            plan === "Gold"
-                ? 15000
-                : 9000;
-
-
-        /* DISABLE BUTTON */
-
-        button.disabled = true;
-
-        buttonText.textContent =
-            "Creating Account...";
-
-
-        try{
-
-            /* =========================
-               SEND TO SERVER
-            ========================= */
-
-            const response =
-                await fetch(
-                    "/api/register",
-                    {
-                        method:"POST",
-
-                        headers:{
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        credentials:"include",
-
-                        body:JSON.stringify({
-
-                            fullName:name,
-
-                            username:username,
-
-                            email:email,
-
-                            phone:phone,
-
-                            password:password,
-
-                            /*
-                             * Send BOTH names so the
-                             * backend can receive the
-                             * selected plan whether it
-                             * reads "plan" or "package".
-                             */
-
-                            plan:apiPlan,
-
-                            package:plan
-
-                        })
-                    }
-                );
-
-
-            /* =========================
-               READ RESPONSE
-            ========================= */
-
-            let data = null;
-
-            try{
-
-                data =
-                    await response.json();
-
-            }catch{
-
-                data = null;
-
-            }
-
-
-            /* =========================
-               SERVER ERROR
-            ========================= */
-
-            if(
-                !response.ok ||
-                !data ||
-                !data.success
-            ){
-
-                const errorMessage =
-                    data &&
-                    data.message
-                        ? data.message
-                        : "Unable to create your account. Please try again.";
-
-                showMessage(
-                    errorMessage,
-                    false
-                );
-
-                button.disabled = false;
-
-                buttonText.textContent =
-                    "Create My Account";
-
-                return;
-            }
-
-
-            /* =========================
-               REFERRAL
-            ========================= */
-
-            const referralCode =
-                createReferralCode(username);
-
-
-            /*
-             * SAVE NON-SENSITIVE
-             * INFORMATION ONLY
-             */
-
-            localStorage.setItem(
-                "jovia_name",
-                name
-            );
-
-            localStorage.setItem(
-                "jovia_username",
-                username
-            );
-
-            localStorage.setItem(
-                "jovia_email",
-                email
-            );
-
-            localStorage.setItem(
-                "jovia_phone",
-                phone
-            );
-
-
-            /*
-             * SAVE THE ACTUAL SELECTED PLAN.
-             *
-             * This is important because the
-             * dashboard can use it as a fallback
-             * if the API does not immediately return
-             * the plan.
-             */
-
-            localStorage.setItem(
-                "jovia_plan",
-                plan
-            );
-
-            localStorage.setItem(
-                "jovia_plan_price",
-                String(planPrice)
-            );
-
-            localStorage.setItem(
-                "jovia_welcome_bonus",
-                String(welcomeBonus)
-            );
-
-            localStorage.setItem(
-                "jovia_referral_code",
-                referralCode
-            );
-
-            localStorage.setItem(
-                "jovia_status",
-                "Inactive"
-            );
-
-            localStorage.setItem(
-                "jovia_registered_at",
-                new Date().toISOString()
-            );
-
-
-            /*
-             * NEVER STORE PASSWORD
-             */
-
-            localStorage.removeItem(
-                "jovia_password"
-            );
-
-
-            /* =========================
-               SUCCESS
-            ========================= */
-
-            showMessage(
-                "Account created successfully. Opening your dashboard...",
-                true
-            );
-
-            buttonText.textContent =
-                "Opening Dashboard...";
-
-
-            /* =========================
-               REDIRECT
-            ========================= */
-
-            setTimeout(
-                function(){
-
-                    window.location.href =
-                        "dashboard.html";
-
-                },
-                900
-            );
-
-
-        }catch(error){
-
-            console.error(
-                "Registration request failed:",
-                error
-            );
-
-            showMessage(
-                "Unable to connect to the server. Please check your connection and try again.",
-                false
-            );
-
+// === REFERRAL FIX END ===
+
+const silverRadio = document.getElementById("silver");
+const goldRadio = document.getElementById("gold");
+if(urlPlan === "gold"){goldRadio.checked = true;}else if(urlPlan === "silver"){silverRadio.checked = true;}else{silverRadio.checked = true;}
+silverRadio.addEventListener("change", function(){ if(this.checked){goldRadio.checked = false;} });
+goldRadio.addEventListener("change", function(){ if(this.checked){silverRadio.checked = false;} });
+
+document.getElementById("registrationForm").addEventListener("submit", async function(event){
+    event.preventDefault();
+    const form = document.getElementById("registrationForm");
+    const message = document.getElementById("formMessage");
+    const button = document.getElementById("continueButton");
+    const buttonText = document.getElementById("buttonText");
+    message.classList.remove("show","success");
+
+    const name = document.getElementById("fullName").value.trim();
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value;
+    const selectedPlan = document.querySelector('input[name="plan"]:checked');
+    const terms = document.getElementById("terms");
+
+    if(!name || !username || !email || !phone || !password){showMessage("Please complete all required fields.", false);return;}
+    if(!selectedPlan){showMessage("Please select a package.", false);return;}
+    if(password.length < 8){showMessage("Your password must contain at least 8 characters.", false);return;}
+    if(!terms.checked){showMessage("Please agree to the Terms & Conditions before continuing.", false);return;}
+    if(!form.checkValidity()){form.reportValidity();return;}
+
+    const plan = selectedPlan.value === "Gold" ? "Gold" : "Silver";
+    const apiPlan = plan.toLowerCase();
+    const planPrice = plan === "Gold" ? 15000 : 9000;
+    const welcomeBonus = plan === "Gold" ? 15000 : 9000;
+
+    button.disabled = true;
+    buttonText.textContent = "Creating Account...";
+
+    try{
+        const response = await fetch("/api/register", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            credentials:"include",
+            body:JSON.stringify({
+                fullName:name,
+                username:username,
+                email:email,
+                phone:phone,
+                password:password,
+                plan:apiPlan,
+                package:plan,
+                referred_by: referredByCode,
+                referral_code: referredByCode,
+                referredBy: referredByCode
+            })
+        });
+        let data = null;
+        try{data = await response.json();}catch{data = null;}
+        if(!response.ok || !data || !data.success){
+            const errorMessage = data && data.message ? data.message : "Unable to create your account. Please try again.";
+            showMessage(errorMessage, false);
             button.disabled = false;
-
-            buttonText.textContent =
-                "Create My Account";
+            buttonText.textContent = "Create My Account";
+            return;
         }
+        const referralCode = createReferralCode(username);
+        localStorage.setItem("jovia_name", name);
+        localStorage.setItem("jovia_username", username);
+        localStorage.setItem("jovia_email", email);
+        localStorage.setItem("jovia_phone", phone);
+        localStorage.setItem("jovia_plan", plan);
+        localStorage.setItem("jovia_plan_price", String(planPrice));
+        localStorage.setItem("jovia_welcome_bonus", String(welcomeBonus));
+        localStorage.setItem("jovia_referral_code", referralCode);
+        localStorage.setItem("jovia_status", "Inactive");
+        localStorage.setItem("jovia_registered_at", new Date().toISOString());
+        localStorage.removeItem("jovia_password");
 
+        showMessage("Account created successfully. Opening your dashboard...", true);
+        buttonText.textContent = "Opening Dashboard...";
+        setTimeout(function(){ window.location.href = "dashboard.html"; }, 900);
+    }catch(error){
+        console.error("Registration request failed:", error);
+        showMessage("Unable to connect to the server. Please check your connection and try again.", false);
+        button.disabled = false;
+        buttonText.textContent = "Create My Account";
     }
-);
-
+});
 </script>
-
 </body>
 </html>
