@@ -26,7 +26,7 @@ const PORT=Number(process.env.PORT||3000);
 const HOST=process.env.HOST||"0.0.0.0";
 
 // ===== FIX 2: PERSISTENCE - Railway Volume Support =====
-const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.RAILWAY_VOLUME || null;
+const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.RAILWAY_VOLUME || "/app/data";
 const DB_DIR = VOLUME_PATH? VOLUME_PATH : __dirname;
 const DB_PATH = process.env.DB_PATH || path.join(DB_DIR,"jovia.db");
 
@@ -107,8 +107,6 @@ function migrateDatabase(){
   addColumnIfMissing("withdrawals","account_number","TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing("withdrawals","gateway","TEXT NOT NULL DEFAULT 'manual'");
   console.log("MIGRATION COMPLETE - LINKS TABLE + REFERRAL_CODE + REFERRALS ADDED");
-
-  // FIX: Seed jobs if Available 0
   try{
     const jobCount = db.prepare("SELECT COUNT(*) as c FROM jobs WHERE status='active'").get().c;
     if(jobCount === 0){
@@ -119,8 +117,6 @@ function migrateDatabase(){
       console.log("JOBS SEEDED - Available now 3");
     }
   }catch(e){console.log("SEED ERROR", e.message);}
-
-  // FIX: Ensure referral_code
   try{
     const users = db.prepare("SELECT id, username FROM users WHERE referral_code IS NULL OR referral_code=''").all();
     for(const u of users){ db.prepare("UPDATE users SET referral_code=? WHERE id=?").run(u.username.toUpperCase(), u.id); }
@@ -190,9 +186,7 @@ function addWithdrawalEvent(withdrawalId,action,actor,details){try{db.prepare(`I
 function refundWithdrawalIfNeeded(withdrawalId,reason,actor){return db.transaction(()=>{const row=db.prepare("SELECT * FROM withdrawals WHERE id =?").get(withdrawalId);if(!row)throw new Error("Withdrawal not found.");if(row.refund_processed)return row;const balanceColumn=row.type==="affiliate"?"affiliate_balance":"wallet_balance";updateUserBalance(row.user_id,balanceColumn,row.amount);recordWalletTransaction(row.user_id,"withdrawal_refund",row.amount,row.type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_REFUND_${row.id}`,reason||"Withdrawal refunded");db.prepare(`UPDATE withdrawals SET status='rejected',refund_processed=1,note=?,rejected_by=?,rejected_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(reason||"Withdrawal refunded",actor||"system",row.id);addWithdrawalEvent(row.id,"rejected_refunded",actor||"system",{reason:reason||"Withdrawal refunded"});return db.prepare("SELECT * FROM withdrawals WHERE id =?").get(row.id);})();}
 function processSuccessfulPayment(paymentReference,verificationData){return db.transaction(()=>{const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference =? LIMIT 1`).get(paymentReference);if(!payment)throw new Error("Payment record not found.");if(payment.payment_status==="PAID")return{paid:true,duplicate:true,payment};const paidAmount=Number(verificationData?.amountPaid!=null?verificationData.amountPaid:verificationData?.amount);const expectedAmount=Number(payment.amount);const paymentStatus=String(verificationData?.paymentStatus||"").toUpperCase();if(paymentStatus!=="PAID"){db.prepare(`UPDATE payments SET gateway_status=?,payment_status=?,gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(paymentStatus||"UNKNOWN",paymentStatus||"UNKNOWN",safeJson(verificationData),payment.id);return{paid:false,duplicate:false,payment:db.prepare("SELECT * FROM payments WHERE id =?").get(payment.id)};}if(!Number.isFinite(paidAmount)||Math.round(paidAmount)!==expectedAmount){db.prepare(`UPDATE payments SET gateway_status=?,payment_status='AMOUNT_MISMATCH',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(paymentStatus,safeJson(verificationData),payment.id);throw new Error("Payment amount does not match the expected package amount.");}const transactionReference=verificationData?.transactionReference||verificationData?.transactionReferenceNumber||payment.transaction_reference||"";db.prepare(`UPDATE payments SET transaction_reference=?,gateway_status='PAID',payment_status='PAID',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(transactionReference,safeJson(verificationData),payment.id);activateUserAndRewardsInternal(payment.user_id);return{paid:true,duplicate:false,payment:db.prepare("SELECT * FROM payments WHERE id =?").get(payment.id)};})();}
 
-app.get("/api/health",(req,res)=>{res.json({success:true,service:"Jovia Network API FIXED + PERSISTENT",status:"ok",dbPath:DB_PATH,volume:VOLUME_PATH||"local",monnifyConfigured:monnifyConfigured(),time:nowIso()});});
-
-// ===== FIX 3: REFERRAL LOOKUP FOR "REFERRED BY" BANNER =====
+app.get("/api/health",(req,res)=>{res.json({success:true,service:"Jovia Network API FIXED + PERSISTENT",status:"ok",dbPath:DB_PATH,volume:VOLUME_PATH||"local",uploadRoot:UPLOAD_ROOT,videoDir:VIDEO_DIR,time:nowIso()});});
 app.get("/api/referral/:code",(req,res)=>{
   try{
     const code = String(req.params.code||"").trim().toUpperCase();
@@ -202,8 +196,6 @@ app.get("/api/referral/:code",(req,res)=>{
     return res.json({success:true, username:user.username, code:user.referral_code||user.username.toUpperCase(), full_name:user.username});
   }catch(e){ return res.status(500).json({success:false}); }
 });
-
-// ===== FIX 4: REGISTER WITH USERNAME REFERRAL SUPPORT =====
 app.post("/api/register",async(req,res)=>{try{
   const body=req.body||{};
   const fullName=cleanString(body.fullName??body.full_name,120);
@@ -214,13 +206,11 @@ app.post("/api/register",async(req,res)=>{try{
   const selectedPackage=packageFromInput(body.package??body.plan);
   let referrerInput = cleanString(body.referred_by || body.referral_code || body.referredBy || body.referralCode || body.referrer || body.ref || "", 50);
   const referrerIdNum=toPositiveInteger(body.referrerId??body.referrer_id);
-
   if(!fullName||!username||!email||!phone||!password||!selectedPackage)return res.status(400).json({success:false,message:"Please complete all required fields."});
   if(password.length<6)return res.status(400).json({success:false,message:"Password must contain at least 6 characters."});
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return res.status(400).json({success:false,message:"Please enter a valid email address."});
   const exists=db.prepare(`SELECT id FROM users WHERE lower(username)=lower(?) OR lower(email)=lower(?) LIMIT 1`).get(username,email);
   if(exists)return res.status(409).json({success:false,message:"That username or email is already registered."});
-
   let validReferrerId=null;
   if(referrerIdNum){
     const referrer=db.prepare("SELECT id FROM users WHERE id =?").get(referrerIdNum);
@@ -230,7 +220,6 @@ app.post("/api/register",async(req,res)=>{try{
     const referrer=db.prepare("SELECT id FROM users WHERE UPPER(referral_code)=? OR UPPER(username)=? LIMIT 1").get(refUpper, refUpper);
     if(referrer) validReferrerId=referrer.id;
   }
-
   const passwordHash=await bcrypt.hash(password,12);
   const amount=PACKAGES[selectedPackage];
   const welcomeBonus=getWelcomeBonus(selectedPackage);
@@ -426,7 +415,7 @@ app.post("/api/admin/jobs",requireAdmin,(req,res)=>{
     return res.status(201).json({success:true,job:{...job,url:job.link,link:job.link},message:"Job created"});
   }catch(error){return res.status(400).json({success:false,message:error.message||"Unable to create job."});}
 });
-app.put("/api/admin/jobs/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid job."});const existing=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(id);if(!existing)return res.status(404).json({success:false,message:"Job not found."});const title=cleanString(req.body?.title??existing.title,150);const description=cleanString(req.body?.description??existing.description??"",1000);const reward=toPositiveInteger(req.body?.reward??existing.reward);const link=cleanString(req.body?.link??req.body?.url??existing.link??"",1000);const slot=cleanString(req.body?.slot??existing.slot??"",100);const category=cleanString(req.body?.category??existing.category??"",100);const duration=cleanString(req.body?.duration??existing.duration??"",100);const requestedStatus=String(req.body?.status??existing.status??"active").toLowerCase();let status;if(requestedStatus==="active")status="active";else status="inactive";if(!title)return res.status(400).json({success:false,message:"Job title is required."});if(reward===null||reward<=0)return res.status(400).json({success:false,message:"Job reward must be a positive number."});if(!link)return res.status(400).json({success:false,message:"Job link is required."});db.prepare(`UPDATE jobs SET title=?,description=?,reward=?,link=?,slot=?,category=?,duration=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(title,description,reward,link,slot,category,duration,status,id);const job=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(id);return res.json({success:true,job});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to update job."});}});
+app.put("/api/admin/jobs/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid job."});const existing=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(id);if(!existing)return res.status(404).json({success:false,message:"Job not found."});const title=cleanString(req.body?.title??existing.title,150);const description=cleanString(req.body?.description??existing.description??"",1000);const reward=toPositiveInteger(req.body?.reward??existing.reward);const link=cleanString(req.body?.link??existing.link??"",1000);const slot=cleanString(req.body?.slot??existing.slot??"",100);const category=cleanString(req.body?.category??existing.category??"",100);const duration=cleanString(req.body?.duration??existing.duration??"",100);const requestedStatus=String(req.body?.status??existing.status??"active").toLowerCase();let status;if(requestedStatus==="active")status="active";else status="inactive";if(!title)return res.status(400).json({success:false,message:"Job title is required."});if(reward===null||reward<=0)return res.status(400).json({success:false,message:"Job reward must be a positive number."});if(!link)return res.status(400).json({success:false,message:"Job link is required."});db.prepare(`UPDATE jobs SET title=?,description=?,reward=?,link=?,slot=?,category=?,duration=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(title,description,reward,link,slot,category,duration,status,id);const job=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(id);return res.json({success:true,job});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to update job."});}});
 app.post("/api/admin/jobs/:id/status",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id) return res.status(400).json({success:false,message:"Invalid job"});const s=String(req.body?.status||"active").toLowerCase();db.prepare("UPDATE jobs SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").run(s==="inactive"?"inactive":"active",id);return res.json({success:true,message:"Status updated"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
 app.delete("/api/admin/jobs/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid job."});db.prepare(`UPDATE jobs SET status='inactive',deleted_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(id);return res.json({success:true,message:"Job deleted"});}catch(error){return res.status(500).json({success:false,message:error.message||"Unable to delete job."});}});
 
@@ -454,11 +443,15 @@ app.post("/api/admin/links/:id/status",requireAdmin,(req,res)=>{try{const id=toP
 app.delete("/api/admin/links/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);db.prepare("DELETE FROM links WHERE id=?").run(id);return res.json({success:true,message:"Deleted"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
 
 app.get("/api/admin/videos",requireAdmin,(req,res)=>{try{return res.json({success:true,videos:db.prepare("SELECT * FROM videos ORDER BY id DESC").all()});}catch(e){return res.status(500).json({success:false,message:"Unable to load videos"});}});
+
+// ===== VIDEO UPLOAD FIXED - FULL URL =====
 app.post("/api/admin/videos/upload", requireAdmin, upload.single("video"), (req,res)=>{
   if(!req.file) return res.status(400).json({success:false,message:"No file received"});
-  const url = `/uploads/videos/${req.file.filename}`;
+  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const url = `${baseUrl}/uploads/videos/${req.file.filename}`;
   return res.json({success:true, url, video_url:url});
 });
+
 app.post("/api/admin/videos", requireAdmin, upload.fields([{name:"video",maxCount:1},{name:"thumbnail",maxCount:1}]), (req,res)=>{
   try{
     const t=cleanString(req.body?.title,200);
@@ -468,14 +461,16 @@ app.post("/api/admin/videos", requireAdmin, upload.fields([{name:"video",maxCoun
     const rw=Number(req.body?.reward||0);
     const duration=Number(req.body?.duration||0);
     const st=cleanString(req.body?.status||"active",20);
-    if(req.files?.video?.[0]) vu=`/uploads/videos/${req.files.video[0].filename}`;
-    if(req.files?.thumbnail?.[0]) th=`/uploads/videos/${req.files.thumbnail[0].filename}`;
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    if(req.files?.video?.[0]) vu=`${baseUrl}/uploads/videos/${req.files.video[0].filename}`;
+    if(req.files?.thumbnail?.[0]) th=`${baseUrl}/uploads/videos/${req.files.thumbnail[0].filename}`;
     if(!t) return res.status(400).json({success:false,message:"Title required"});
     if(!vu) return res.status(400).json({success:false,message:"Video file or URL required"});
     const r=db.prepare("INSERT INTO videos (title,description,video_url,thumbnail_url,reward,duration,status) VALUES (?,?,?,?,?,?,?)").run(t,d,vu,th,rw,duration,st||"active");
     return res.status(201).json({success:true, video: db.prepare("SELECT * FROM videos WHERE id=?").get(r.lastInsertRowid)});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
+
 app.put("/api/admin/videos/:id", requireAdmin, upload.fields([{name:"video",maxCount:1},{name:"thumbnail",maxCount:1}]), (req,res)=>{
   try{
     const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid video"});
@@ -487,22 +482,35 @@ app.put("/api/admin/videos/:id", requireAdmin, upload.fields([{name:"video",maxC
     const rw=Number(req.body?.reward??ex.reward);
     const duration=Number(req.body?.duration??ex.duration);
     const st=cleanString(req.body?.status??ex.status,20);
-    if(req.files?.video?.[0]) vu=`/uploads/videos/${req.files.video[0].filename}`;
-    if(req.files?.thumbnail?.[0]) th=`/uploads/videos/${req.files.thumbnail[0].filename}`;
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    if(req.files?.video?.[0]) vu=`${baseUrl}/uploads/videos/${req.files.video[0].filename}`;
+    if(req.files?.thumbnail?.[0]) th=`${baseUrl}/uploads/videos/${req.files.thumbnail[0].filename}`;
     db.prepare("UPDATE videos SET title=?,description=?,video_url=?,thumbnail_url=?,reward=?,duration=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").run(t,d,vu,th,rw,duration,st,id);
     return res.json({success:true, video: db.prepare("SELECT * FROM videos WHERE id=?").get(id)});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
+
 app.post("/api/admin/videos/:id/status",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);const st=String(req.body?.status||"active").toLowerCase();db.prepare("UPDATE videos SET status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").run(st==="inactive"?"inactive":"active",id);return res.json({success:true});}catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.delete("/api/admin/videos/:id", requireAdmin, (req,res)=>{
   try{
     const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid id"});
     const ex=db.prepare("SELECT * FROM videos WHERE id=?").get(id); if(!ex) return res.status(404).json({success:false,message:"Not found"});
-    if(ex.video_url?.startsWith("/uploads/")){ const fp=path.join(__dirname, ex.video_url); if(fs.existsSync(fp)) try{fs.unlinkSync(fp);}catch{} }
+    // handle both relative and absolute URLs
+    try{
+      let filePath = ex.video_url;
+      if(filePath.includes("/uploads/")){
+        const idx = filePath.indexOf("/uploads/");
+        const rel = filePath.slice(idx); // /uploads/videos/...
+        const fp = path.join(UPLOAD_ROOT, rel.replace("/uploads/",""));
+        if(fs.existsSync(fp)) fs.unlinkSync(fp);
+      }
+    }catch{}
     db.prepare("DELETE FROM videos WHERE id=?").run(id);
     return res.json({success:true,message:"Video deleted"});
   }catch(e){return res.status(500).json({success:false,message:e.message});}
 });
+
 app.get("/api/videos", requireActiveUser, (req,res)=>{
   try{
     const vids=db.prepare(`
@@ -525,7 +533,7 @@ app.post("/api/videos/:id/open", requireActiveUser, (req,res)=>{
     const video=db.prepare("SELECT * FROM videos WHERE id=? AND status='active'").get(videoId);
     if(!video) return res.status(404).json({success:false,message:"Video not found"});
     db.prepare("INSERT INTO user_videos (user_id,video_id,status) VALUES (?,?, 'started') ON CONFLICT(user_id, video_id) DO UPDATE SET status='started' WHERE status='pending'").run(req.user.id, videoId);
-    return res.json({success:true, message:"Video started"});
+   return res.json({success:true, message:"Video started"});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
 app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{
@@ -589,5 +597,4 @@ if (require.main === module) {
     console.log("");
   });
 }
-
 module.exports = app;
