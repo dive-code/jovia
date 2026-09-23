@@ -1,4 +1,5 @@
 const express = require("express");
+const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
 const https = require("https");
@@ -10,6 +11,12 @@ const multer = require("multer");
 function loadEnvFile(){const envPath=path.join(__dirname,".env");if(!fs.existsSync(envPath))return;try{const content=fs.readFileSync(envPath,"utf8");for(const line of content.split(/\r?\n/)){const trimmed=line.trim();if(!trimmed||trimmed.startsWith("#"))continue;const index=trimmed.indexOf("=");if(index===-1)continue;const key=trimmed.slice(0,index).trim();let value=trimmed.slice(index+1).trim();if((value.startsWith('"')&&value.endsWith('"'))||(value.startsWith("'")&&value.endsWith("'"))){value=value.slice(1,-1);}if(!process.env[key])process.env[key]=value;}}catch(e){}} loadEnvFile();
 
 const app=express();
+
+app.use(cors({
+  origin: "https://jovianetworkcom.vercel.app",
+  credentials: true
+}));
+
 const PORT=Number(process.env.PORT||3000);
 const HOST=process.env.HOST||"0.0.0.0";
 const DB_PATH=process.env.DB_PATH||path.join(__dirname,"jovia.db");
@@ -119,7 +126,7 @@ function packageFromInput(v){const s=String(v||"").trim().toLowerCase();if(s==="
 function getWelcomeBonus(p){return p==="Gold"?GOLD_WELCOME_BONUS:SILVER_WELCOME_BONUS;}
 function parseCookieHeader(h){const c={};String(h||"").split(";").forEach(p=>{const i=p.indexOf("=");if(i===-1)return;c[p.slice(0,i).trim()]=p.slice(i+1).trim();});return c;}
 function getSessionToken(req,n){return parseCookieHeader(req.headers.cookie||"")[n]||null;}
-function setSessionCookie(res,n,t,m){const s=process.env.NODE_ENV==="production"?"; Secure":"";res.setHeader("Set-Cookie",`${n}=${t}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${Math.floor(m/1000)}${s}`);}
+function setSessionCookie(res,n,t,m){const s=process.env.NODE_ENV==="production"?"; Secure":"";res.setHeader("Set-Cookie",`${n}=${t}; HttpOnly; SameSite=None; Path=/; Max-Age=${Math.floor(m/1000)}${s}`);}
 function clearSessionCookie(res,n){res.setHeader("Set-Cookie",`${n}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`);}
 function createReference(p){return p+"_"+Date.now()+"_"+crypto.randomBytes(5).toString("hex").toUpperCase();}
 function getSessionUser(req){const t=getSessionToken(req,"jovia_session");if(!t)return null;const s=sessions.get(t);if(!s||Date.now()>s.expiresAt){sessions.delete(t);return null;}const u=db.prepare("SELECT * FROM users WHERE id=?").get(s.userId);if(!u){sessions.delete(t);return null;}return u;}
@@ -489,4 +496,17 @@ app.use((error,req,res,next)=>{
   if(res.headersSent)return next(error);
   return res.status(500).json({success:false,message:error.message||"Internal server error."});
 });
-app.listen(PORT,HOST,()=>{console.log("");console.log("==========================================");console.log(" JOVIA NETWORK SERVER - FULLY FIXED");console.log(` Server: http://${HOST}:${PORT}`);console.log(` Admin: http://${HOST}:${PORT}/admin.html`);console.log(" Referral: Gold->Gold 13k, others 8k, Silver->Gold 0");console.log("==========================================");console.log("");});
+if (require.main === module) {
+  app.listen(PORT, HOST, () => {
+    console.log("");
+    console.log("==========================================");
+    console.log(" JOVIA NETWORK SERVER - FULLY FIXED");
+    console.log(` Server: http://${HOST}:${PORT}`);
+    console.log(` Admin: http://${HOST}:${PORT}/admin.html`);
+    console.log(" Referral: Gold->Gold 13k, others 8k, Silver->Gold 0");
+    console.log("==========================================");
+    console.log("");
+  });
+}
+
+module.exports = app;
