@@ -4,6 +4,7 @@ node_modules/
 jovia.db
 jovia.db-wal
 jovia.db-shm
+jovia-backup.db
 
 uploads/*
 !uploads/.gitkeep
