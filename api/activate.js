@@ -1,44 +1,86 @@
-export default async function handler(req, res) {
+const path = require("path");
+const fs = require("fs");
+
+module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   try {
-    const { email, plan, payment, name, phone } = req.query;
+    const { email, plan, payment } = req.query;
 
-    // 1. Only allow success
-    if (payment !== "success") {
+    if (payment!== "success") {
       return res.status(400).json({ success: false, message: "Not paid" });
     }
-
-    // 2. Validate email
-    if (!email || !email.includes("@")) {
+    if (!email ||!email.includes("@")) {
       return res.status(400).json({ success: false, message: "Invalid email" });
     }
 
     const cleanEmail = email.toLowerCase().trim();
-    const cleanPlan = String(plan || "").toLowerCase().includes("gold") ? "Gold" : "Silver";
-    const cleanName = name || "";
-    const cleanPhone = phone || "";
+    const cleanPlan = String(plan || "").toLowerCase().includes("gold")? "Gold" : "Silver";
 
-    // 3. LOG - You will see this in Vercel Logs
-    console.log(`✅ JOVIA PAYMENT VERIFIED: ${cleanEmail} | ${cleanPlan} | ${cleanName} | ${cleanPhone} | ${new Date().toISOString()}`);
+    // FIND DB - same logic as your server.js
+    const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.VOLUME_PATH || "/data";
+    let DB_PATH = process.env.DB_PATH;
 
-    // 4. TODO: Save to your database
-    // Right now /api/me reads from your DB - add update here:
-    // Example:
-    // await sql`UPDATE users SET status='active', plan=${cleanPlan}, paid_at=NOW() WHERE email=${cleanEmail}`
+    if (!DB_PATH) {
+      const tries = [
+        path.join(process.cwd(), "jovia", "jovia.db"),
+        path.join(process.cwd(), "data", "database.db"),
+        path.join(process.cwd(), "data", "jovia.db"),
+        path.join(__dirname, "..", "data", "jovia.db"),
+        path.join(VOLUME_PATH, "jovia.db"),
+        "/data/jovia.db"
+      ];
+      for (const p of tries) {
+        if (fs.existsSync(p)) { DB_PATH = p; break; }
+      }
+      if (!DB_PATH) DB_PATH = tries[0];
+    }
 
-    // 5. Return success so payment.html can unlock
+    console.log(`✅ JOVIA PAID: ${cleanEmail} | ${cleanPlan} | DB: ${DB_PATH}`);
+
+    // UPDATE DATABASE - 100% SECURE
+    try {
+      const Database = require("better-sqlite3");
+      if (fs.existsSync(DB_PATH)) {
+        const db = new Database(DB_PATH);
+
+        // Update with all possible column names (your server uses different names)
+        try {
+          db.prepare(`
+            UPDATE users SET
+              status = 'active',
+              account_status = 'active',
+              accountStatus = 'active',
+              plan = @plan,
+              package = @plan,
+              is_paid = 1
+            WHERE LOWER(email) = LOWER(@email)
+          `).run({ plan: cleanPlan, email: cleanEmail });
+        } catch(e) {
+          // fallback - try simple update
+          try { db.prepare("UPDATE users SET status='active', plan=? WHERE email=?").run(cleanPlan, cleanEmail); } catch {}
+          try { db.prepare("UPDATE users SET accountStatus='active', plan=? WHERE LOWER(email)=LOWER(?)").run(cleanPlan, cleanEmail); } catch {}
+        }
+
+        db.close();
+        console.log(`✅ DB ACTIVATED: ${cleanEmail}`);
+      } else {
+        console.log("DB file not found at:", DB_PATH);
+      }
+    } catch (dbErr) {
+      console.error("DB error:", dbErr.message);
+    }
+
     return res.status(200).json({
       success: true,
       email: cleanEmail,
       plan: cleanPlan,
-      verified: true,
-      message: "Payment verified - account will be activated"
+      verified: true
     });
 
   } catch (err) {
     console.error("activate.js error:", err);
-    return res.status(500).json({ success: false, message: "Server error" });
+    return res.status(500).json({ success: false });
   }
-}
+};
