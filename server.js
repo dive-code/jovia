@@ -145,7 +145,85 @@ function webhookSignatureValid(req){const signature=req.headers["monnify-signatu
 app.post("/api/webhooks/monnify",async(req,res)=>{try{if(!webhookSignatureValid(req))return res.status(401).json({success:false,message:"Invalid webhook signature."});const payload=req.body||{};const eventType=String(payload.eventType||payload.event||"").toUpperCase();const eventKey=payload.eventId||payload.eventID||payload.id||crypto.createHash("sha256").update(req.rawBody||Buffer.from(safeJson(payload))).digest("hex");if(!saveWebhookEvent(String(eventKey),eventType,payload))return res.status(200).json({success:true,duplicate:true});const eventData=payload.eventData||{};if(eventType==="SUCCESSFUL_TRANSACTION"){const paymentReference=eventData.paymentReference||eventData.payment_reference;if(paymentReference){try{const verified=await verifyMonnifyPayment(paymentReference);processSuccessfulPayment(paymentReference,verified);}catch(error){console.error("WEBHOOK PAYMENT ERROR:",error);}}}return res.status(200).json({success:true,received:true});}catch(error){console.error("WEBHOOK ERROR:",error);return res.status(500).json({success:false,message:"Webhook processing failed."});}});
 app.get("/api/jobs", requireActiveUser, (req,res)=>{try{let jobs; try{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' AND (j.deleted_at IS NULL OR j.deleted_at='') ORDER BY j.id DESC`).all(req.user.id, req.user.id);}catch{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' ORDER BY j.id DESC`).all(req.user.id, req.user.id);} return res.json({success:true, jobs:jobs.map((job)=>({id:job.id, title:job.title, description:job.description||"", category:job.category||"General", slot:job.slot||"General", reward:Number(job.reward||0), link:job.link||"", url:job.link||"", duration:job.duration||"Flexible", status:job.status, user_status:job.user_status, link_opened:job.link_opened, linkOpened:Boolean(job.link_opened), completed:job.user_status==="completed", started:job.user_status==="started"}))});}catch(err){return res.status(500).json({success:false, message:"Unable to load jobs"});}});
 app.post("/api/jobs/:id/open", requireActiveUser, function(req, res){try{const jobId = toPositiveInteger(req.params.id); if(!jobId) return res.status(400).json({success:false, message:"Invalid job."}); let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); } if(!job) return res.status(404).json({success:false, message:"Job not found"}); db.prepare("INSERT OR IGNORE INTO user_job_link_opens (user_id,job_id) VALUES (?,?)").run(req.user.id, jobId); const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId); if(!existing){db.prepare("INSERT INTO user_jobs (user_id,job_id,status) VALUES (?,?, 'started')").run(req.user.id, jobId);} else if(existing.status === "pending"){db.prepare("UPDATE user_jobs SET status='started' WHERE user_id=? AND job_id=?").run(req.user.id, jobId);} return res.json({success:true, linkOpened:true, url:job.link||"", link:job.link||"", title:job.title, message:"Task opened - now claim"});}catch(e){return res.status(400).json({success:false, message:e.message});}});
-app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){try{const jobId = toPositiveInteger(req.params.id); if(!jobId) return res.status(400).json({success:false, message:"Invalid job."}); let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); } if(!job) return res.status(404).json({success:false, message:"Job not found"}); const opened = db.prepare("SELECT * FROM user_job_link_opens WHERE user_id=? AND job_id=?").get(req.user.id, jobId); if(!opened){return res.status(400).json({success:false, message:"Open the task first before claiming."});} const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId); if(existing && (existing.status === "completed" || existing.status === "claimed")){const wallet = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id); return res.json({success:true, message:"Already completed", reward:existing.reward_amount, walletBalance:wallet? wallet.wallet_balance : 0});} const reward = Number(job.reward || 0); if(reward <= 0) return res.status(400).json({success:false, message:"Invalid reward"}); const newBalance = db.transaction(function(){db.prepare("UPDATE users SET wallet_balance = wallet_balance +? WHERE id=?").run(reward, req.user.id); if(existing){db.prepare("UPDATE user_jobs SET status='completed', completed_at=CURRENT_TIMESTAMP WHERE user_id=? AND job_id=?").run(req.user.id, jobId);} else {db.prepare("INSERT INTO user_jobs (user_id,job_id,status) VALUES (?,?, 'completed')").run(req.user.id, jobId);} try{db.prepare("INSERT INTO wallet_transactions (user_id, amount, type, description, reference) VALUES (?,?,?,?,?)").run(req.user.id, reward, 'job_reward', 'Job completed: ' + job.title, 'JOB_'+jobId);}catch(err){} const updatedUser = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id); return updatedUser? updatedUser.wallet_balance : 0;})(); return res.json({success:true, message:"✅ " + reward + " credited!", reward:reward, walletBalance:newBalance, wallet_balance:newBalance});}catch(e){console.error("complete job error", e); return res.status(400).json({success:false, message:e.message});}});
+
+// ===== FIXED COMPLETE - SILVER 2500 / GOLD 7000 =====
+app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
+  try{
+    const jobId = toPositiveInteger(req.params.id);
+    if(!jobId) return res.status(400).json({success:false, message:"Invalid job."});
+
+    const userPlan = String(req.user.package||"Silver").toLowerCase().includes("gold")? "Gold" : "Silver";
+    const limits = userPlan==="Gold"? {maxJobs:10, perTask:700, maxDaily:7000} : {maxJobs:5, perTask:500, maxDaily:2500};
+
+    let todayCount = 0;
+    try{
+      todayCount = db.prepare(`SELECT COUNT(*) as c FROM user_jobs WHERE user_id=? AND status='completed' AND date(completed_at)=date('now')`).get(req.user.id)?.c || 0;
+    }catch{
+      todayCount = db.prepare(`SELECT COUNT(*) as c FROM user_jobs WHERE user_id=? AND status='completed'`).get(req.user.id)?.c || 0;
+    }
+
+    if(todayCount >= limits.maxJobs){
+      return res.status(400).json({
+        success:false,
+        message:`🚫 Daily limit reached! ${userPlan} max ${limits.maxJobs} jobs (₦${limits.maxDaily.toLocaleString()}/day). Come back tomorrow. Upgrade to Gold for ₦7,000/day.`,
+        plan: userPlan,
+        limit: limits.maxJobs,
+        maxDaily: limits.maxDaily
+      });
+    }
+
+    let job;
+    try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }
+    catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); }
+    if(!job) return res.status(404).json({success:false, message:"Job not found"});
+
+    const opened = db.prepare("SELECT * FROM user_job_link_opens WHERE user_id=? AND job_id=?").get(req.user.id, jobId);
+    if(!opened){
+      return res.status(400).json({success:false, message:"Open the task first before claiming."});
+    }
+
+    const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId);
+    if(existing && (existing.status === "completed" || existing.status === "claimed")){
+      const wallet = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id);
+      return res.json({success:true, message:"Already completed", reward:existing.reward_amount||limits.perTask, walletBalance:wallet? wallet.wallet_balance : 0});
+    }
+
+    let reward = Number(job.reward || 0);
+    reward = Math.min(reward, limits.perTask);
+    if(reward <= 0) reward = limits.perTask;
+
+    const newBalance = db.transaction(function(){
+      db.prepare("UPDATE users SET wallet_balance = wallet_balance +?, total_earned = total_earned +? WHERE id=?").run(reward, reward, req.user.id);
+      if(existing){
+        db.prepare("UPDATE user_jobs SET status='completed', completed_at=CURRENT_TIMESTAMP WHERE user_id=? AND job_id=?").run(req.user.id, jobId);
+      } else {
+        db.prepare("INSERT INTO user_jobs (user_id,job_id,status, completed_at) VALUES (?,?, 'completed', CURRENT_TIMESTAMP)").run(req.user.id, jobId);
+      }
+      try{
+        db.prepare("INSERT INTO wallet_transactions (user_id, amount, type, description, reference, balance_type) VALUES (?,?,?,?,?,?)").run(req.user.id, reward, 'job_reward', 'Job completed: ' + job.title + ` [${userPlan} ${todayCount+1}/${limits.maxJobs}]`, 'JOB_'+jobId+'_'+Date.now(), 'wallet');
+      }catch(err){}
+      const updatedUser = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id);
+      return updatedUser? updatedUser.wallet_balance : 0;
+    })();
+
+    return res.json({
+      success:true,
+      message:`✅ ₦${reward} credited! ${todayCount+1}/${limits.maxJobs} today. Max ₦${limits.maxDaily.toLocaleString()}/day [${userPlan}]`,
+      reward:reward,
+      walletBalance:newBalance,
+      wallet_balance:newBalance,
+      plan: userPlan,
+      completedToday: todayCount+1,
+      maxJobs: limits.maxJobs,
+      maxDaily: limits.maxDaily
+    });
+
+  }catch(e){
+    console.error("complete job error", e);
+    return res.status(400).json({success:false, message:e.message});
+  }
+});
+
 app.get("/api/wallet",requireUser,(req,res)=>{try{const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance,total_earned FROM users WHERE id=?`).get(req.user.id);if(!user)return res.status(404).json({success:false,message:"User not found."});const transactions=db.prepare(`SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC`).all(req.user.id);return res.json({success:true,walletBalance:Number(user.wallet_balance||0),affiliateBalance:Number(user.affiliate_balance||0),totalEarned:Number(user.total_earned||0),transactions:transactions.map((item)=>({id:item.id,type:item.type,amount:Number(item.amount||0),balanceType:item.balance_type,reference:item.reference,description:item.description,createdAt:item.created_at}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load wallet."});}});
 app.post("/api/withdrawals",requireActiveUser,async(req,res)=>{try{if(!isWithdrawalsEnabled()){return res.status(403).json({success:false,message:"Withdrawals are currently disabled by admin. Please try again later."});} const body=req.body||{}; const type=String(body.type||"regular").toLowerCase()==="affiliate"?"affiliate":"regular"; const amount=toPositiveInteger(body.amount); const bankName=cleanString(body.bankName??body.bank_name,120); const accountNumber=cleanString(body.accountNumber??body.account_number,30).replace(/\s+/g,""); const accountNameInput=cleanString(body.accountName??body.account_name,150); const note=cleanString(body.note,500); if(!amount)return res.status(400).json({success:false,message:"Enter a valid withdrawal amount."}); if(!bankName)return res.status(400).json({success:false,message:"Bank name is required."}); if(!accountNumber)return res.status(400).json({success:false,message:"Account number is required."}); if(!/^\d{10}$/.test(accountNumber))return res.status(400).json({success:false,message:"Enter a valid 10-digit account number."}); if(!accountNameInput)return res.status(400).json({success:false,message:"Account name is required."}); const minimum=WITHDRAWAL_MINIMUMS[type];if(amount<minimum)return res.status(400).json({success:false,message:`Minimum ${type} withdrawal is ₦${minimum.toLocaleString()}.`}); const balanceColumn=type==="affiliate"?"affiliate_balance":"wallet_balance"; const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance FROM users WHERE id=? LIMIT 1`).get(req.user.id); if(!user)return res.status(404).json({success:false,message:"User not found."}); const currentBalance=Number(user[balanceColumn]||0);if(currentBalance<amount)return res.status(400).json({success:false,message:"Insufficient balance."}); const withdrawal=db.transaction(()=>{updateUserBalance(req.user.id,balanceColumn,-amount); const result=db.prepare(`INSERT INTO withdrawals (user_id,amount,type,status,bank_name,account_name,account_number,note,gateway) VALUES (?,?,?, 'pending',?,?,?,?, 'manual')`).run(req.user.id,amount,type,bankName,accountNameInput,accountNumber,note); const withdrawalId=Number(result.lastInsertRowid); recordWalletTransaction(req.user.id,"withdrawal",-amount,type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_${withdrawalId}`,`Withdrawal request - ${type}`); addWithdrawalEvent(withdrawalId,"withdrawal_requested",req.user.username,{amount,type,bankName,accountName:accountNameInput,accountNumber,note}); return db.prepare(`SELECT * FROM withdrawals WHERE id=? LIMIT 1`).get(withdrawalId);})(); return res.status(201).json({success:true,message:"Withdrawal request submitted successfully.",withdrawal:withdrawalResult(withdrawal)});}catch(error){return res.status(500).json({success:false,message:error.message||"Unable to submit withdrawal request."});}});
 async function verifyAdminPassword(password){const configured=String(ADMIN_PASSWORD||"");if(!configured)return false;if(configured.startsWith("$2a$")||configured.startsWith("$2b$")||configured.startsWith("$2y$")){return bcrypt.compare(password,configured);}return password===configured;}
@@ -190,7 +268,7 @@ app.get("/api/referrals", requireUser, (req,res)=>{try{const refs = db.prepare("
 app.post("/api/selar/activate", async (req, res) => {
   try {
     const email = normalizeEmail(req.body?.email || req.body?.customer_email || req.body?.buyer_email || req.query?.email || req.body?.data?.email);
-    const name = cleanString(req.body?.name || req.body?.fullName || "", 120);
+    const name = cleanString(req.body?.fullName || "", 120);
     const phone = cleanString(req.body?.phone || "", 30);
     let plan = packageFromInput(req.body?.plan) || null;
     const amountStr = String(req.body?.amount || req.body?.price || "");
@@ -239,5 +317,5 @@ app.post("/api/webhooks/selar", async (req, res) => {
 });
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
-if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA NETWORK SERVER - FIXED + SELAR ACTIVE + WITHDRAWALS TOGGLE"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Admin: http://${HOST}:${PORT}/admin.html`); console.log(" Bonus: Silver 9000, Gold 15000 | Referral: Gold->Gold 13k, others 8k, Silver->Gold 0"); console.log(" Withdrawals: Toggle via /api/admin/settings/withdrawals"); console.log("=========================================="); console.log("");});}
+if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA NETWORK SERVER - FIXED + SILVER 2500 / GOLD 7000 DAILY LIMIT"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Admin: http://${HOST}:${PORT}/admin.html`); console.log(" Limits: Silver 5x500=2500, Gold 10x700=7000 per day"); console.log("=========================================="); console.log("");});}
 module.exports = app;
