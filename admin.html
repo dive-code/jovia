@@ -1,2281 +1,1840 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Jovia Network Administrator Dashboard">
-<title>Jovia Network | Admin Dashboard</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-}
-
-:root{
-  --primary:#5b21b6;
-  --primary-dark:#3b0764;
-  --primary-light:#ede9fe;
-  --accent:#f59e0b;
-  --green:#16a34a;
-  --green-light:#dcfce7;
-  --red:#dc2626;
-  --red-light:#fee2e2;
-  --blue:#2563eb;
-  --blue-light:#dbeafe;
-  --orange:#f59e0b;
-  --orange-light:#fef3c7;
-
-  --bg:#f5f7fb;
-  --surface:#ffffff;
-  --surface-soft:#f8fafc;
-  --border:#e7eaf0;
-  --text:#172033;
-  --muted:#7b8494;
-  --sidebar:#171124;
-  --sidebar-hover:#251a3c;
-  --shadow:0 8px 30px rgba(15,23,42,.06);
-  --radius:16px;
-}
-
-html{
-  scroll-behavior:smooth;
-}
-
-body{
-  font-family:"Inter",sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-}
-
-button,
-input,
-textarea,
-select{
-  font-family:inherit;
-}
-
-button{
-  border:0;
-}
-
-button:disabled{
-  opacity:.55;
-  cursor:not-allowed;
-}
-
-a{
-  color:inherit;
-}
-
-/* ================= LOGIN ================= */
-
-#loginScreen{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:24px;
-  background:
-    radial-gradient(circle at top left,rgba(91,33,182,.10),transparent 35%),
-    radial-gradient(circle at bottom right,rgba(245,158,11,.08),transparent 35%),
-    #f6f7fb;
-}
-
-.login-box{
-  width:100%;
-  max-width:430px;
-  background:#fff;
-  padding:38px 34px;
-  border:1px solid var(--border);
-  border-radius:22px;
-  box-shadow:0 25px 70px rgba(15,23,42,.10);
-}
-
-.login-brand{
-  text-align:center;
-  margin-bottom:8px;
-}
-
-.login-logo{
-  font-family:"Poppins",sans-serif;
-  font-size:29px;
-  font-weight:800;
-  letter-spacing:-1px;
-}
-
-.login-logo span{
-  color:var(--primary);
-}
-
-.login-subtitle{
-  text-align:center;
-  color:var(--muted);
-  font-size:13px;
-  margin-bottom:30px;
-}
-
-.login-badge{
-  width:58px;
-  height:58px;
-  margin:0 auto 18px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:17px;
-  background:linear-gradient(135deg,var(--primary),#7c3aed);
-  color:white;
-  font-size:25px;
-  box-shadow:0 12px 25px rgba(91,33,182,.25);
-}
-
-.login-group{
-  margin-bottom:18px;
-}
-
-.login-group label{
-  display:block;
-  margin-bottom:7px;
-  color:#596579;
-  font-size:12px;
-  font-weight:700;
-}
-
-.login-group input{
-  width:100%;
-  padding:13px 14px;
-  border:1px solid #dce2ea;
-  border-radius:10px;
-  outline:none;
-  background:#fff;
-  color:var(--text);
-  font-size:14px;
-  transition:.2s;
-}
-
-.login-group input:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px rgba(91,33,182,.09);
-}
-
-.login-button{
-  width:100%;
-  padding:14px;
-  margin-top:4px;
-  border-radius:10px;
-  background:linear-gradient(135deg,var(--primary),#7c3aed);
-  color:#fff;
-  font-size:14px;
-  font-weight:800;
-  cursor:pointer;
-  transition:.2s;
-}
-
-.login-button:hover{
-  transform:translateY(-1px);
-  box-shadow:0 10px 22px rgba(91,33,182,.22);
-}
-
-.login-error{
-  display:none;
-  margin-bottom:17px;
-  padding:11px 12px;
-  border-radius:9px;
-  background:var(--red-light);
-  color:#b91c1c;
-  font-size:12px;
-}
-
-.login-loading{
-  display:none;
-  margin-top:14px;
-  text-align:center;
-  color:var(--muted);
-  font-size:12px;
-}
-
-/* ================= LAYOUT ================= */
-
-#dashboardScreen{
-  display:none;
-}
-
-.sidebar{
-  position:fixed;
-  z-index:1000;
-  top:0;
-  left:0;
-  width:255px;
-  height:100vh;
-  padding:24px 16px;
-  overflow-y:auto;
-  background:linear-gradient(180deg,#171124 0%,#120d1d 100%);
-  color:white;
-  border-right:1px solid rgba(255,255,255,.04);
-}
-
-.logo{
-  padding:4px 12px 32px;
-  font-family:"Poppins",sans-serif;
-  font-size:24px;
-  font-weight:800;
-  letter-spacing:-.6px;
-}
-
-.logo span{
-  color:#a78bfa;
-}
-
-.sidebar-label{
-  padding:0 12px 9px;
-  color:#766e85;
-  font-size:9px;
-  font-weight:800;
-  letter-spacing:1.2px;
-  text-transform:uppercase;
-}
-
-.nav{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-
-.nav a{
-  position:relative;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:12px 13px;
-  border-radius:10px;
-  color:#aaa3b9;
-  text-decoration:none;
-  font-size:12px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.2s;
-}
-
-.nav a:hover{
-  background:var(--sidebar-hover);
-  color:#fff;
-}
-
-.nav a.active{
-  background:linear-gradient(90deg,rgba(124,58,237,.24),rgba(124,58,237,.08));
-  color:#fff;
-}
-
-.nav a.active::before{
-  content:"";
-  position:absolute;
-  left:-16px;
-  width:3px;
-  height:22px;
-  border-radius:0 4px 4px 0;
-  background:#a78bfa;
-}
-
-.nav-divider{
-  height:1px;
-  margin:15px 8px;
-  background:rgba(255,255,255,.07);
-}
-
-.logout-link{
-  margin-top:5px;
-}
-
-.sidebar-footer{
-  margin-top:35px;
-  padding:14px 12px;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:12px;
-  color:#8e879b;
-  font-size:10px;
-  line-height:1.6;
-}
-
-.main{
-  margin-left:255px;
-  padding:30px;
-  min-height:100vh;
-}
-
-.topbar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:20px;
-  margin-bottom:28px;
-}
-
-.topbar h1{
-  font-family:"Poppins",sans-serif;
-  font-size:27px;
-  font-weight:800;
-  letter-spacing:-.6px;
-}
-
-.topbar p{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.admin{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  padding:10px 14px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  background:#fff;
-  box-shadow:var(--shadow);
-  font-size:12px;
-  font-weight:700;
-}
-
-.admin-avatar{
-  width:29px;
-  height:29px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:9px;
-  background:var(--primary-light);
-  color:var(--primary);
-}
-
-/* ================= CARDS ================= */
-
-.cards{
-  display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  gap:15px;
-  margin-bottom:25px;
-}
-
-.card{
-  position:relative;
-  min-height:118px;
-  padding:19px;
-  overflow:hidden;
-  border:1px solid var(--border);
-  border-radius:15px;
-  background:#fff;
-  box-shadow:var(--shadow);
-}
-
-.card::after{
-  content:"";
-  position:absolute;
-  right:-22px;
-  bottom:-35px;
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  background:var(--primary-light);
-  opacity:.45;
-}
-
-.card p{
-  margin-bottom:10px;
-  color:var(--muted);
-  font-size:10px;
-  font-weight:700;
-  text-transform:uppercase;
-  letter-spacing:.45px;
-}
-
-.card h2{
-  font-family:"Poppins",sans-serif;
-  font-size:26px;
-  font-weight:800;
-}
-
-.card-icon{
-  position:absolute;
-  right:15px;
-  top:15px;
-  width:31px;
-  height:31px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:9px;
-  background:var(--primary-light);
-  font-size:14px;
-}
-
-/* ================= SECTIONS ================= */
-
-.section-box,
-.users-box,
-.links-box,
-.videos-box,
-.withdrawals-box{
-  margin-bottom:25px;
-  padding:23px;
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  background:#fff;
-  box-shadow:var(--shadow);
-}
-
-.users-header,
-.jobs-header,
-.links-header,
-.videos-header,
-.withdrawals-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-  flex-wrap:wrap;
-  margin-bottom:8px;
-}
-
-.users-header h2,
-.jobs-header h2,
-.links-header h2,
-.videos-header h2,
-.withdrawals-header h2{
-  font-family:"Poppins",sans-serif;
-  font-size:17px;
-  font-weight:800;
-}
-
-.users-info,
-.jobs-info,
-.links-info,
-.videos-info,
-.withdrawals-info{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:18px;
-  color:var(--muted);
-  font-size:10px;
-}
-
-.live-status{
-  display:flex;
-  align-items:center;
-  gap:6px;
-}
-
-.live-dot{
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  background:#22c55e;
-  animation:pulse 1.5s infinite;
-}
-
-@keyframes pulse{
-  0%,100%{opacity:1}
-  50%{opacity:.35}
-}
-
-/* ================= BUTTONS ================= */
-
-button{
-  padding:9px 12px;
-  border-radius:8px;
-  font-size:10px;
-  font-weight:700;
-  cursor:pointer;
-  transition:.18s;
-}
-
-button:hover:not(:disabled){
-  transform:translateY(-1px);
-}
-
-.refresh{
-  background:#eef2ff;
-  color:#4338ca;
-}
-
-.refresh:hover{
-  background:#e0e7ff;
-}
-
-.approve,
-.restore,
-.activate-job,
-.activate-link,
-.activate-video{
-  background:var(--green);
-  color:white;
-}
-
-.reset,
-.edit-link,
-.edit-video{
-  background:var(--blue);
-  color:white;
-}
-
-.suspend,
-.delete-link,
-.delete-video,
-.delete-job,
-.reject{
-  background:var(--red);
-  color:white;
-}
-
-.pause-job,
-.pause-link,
-.pause-video{
-  background:var(--orange);
-  color:white;
-}
-
-.action,
-.job-action,
-.link-action,
-.video-action,
-.withdrawal-action{
-  margin-right:4px;
-  margin-bottom:4px;
-  padding:7px 9px;
-  border-radius:7px;
-  font-size:9px;
-}
-
-/* ================= SEARCH ================= */
-
-.search-bar{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  margin-bottom:17px;
-  padding:10px 13px;
-  border:1px solid var(--border);
-  border-radius:10px;
-  background:#fafbfc;
-}
-
-.search-icon{
-  color:#64748b;
-  font-size:13px;
-}
-
-.search-bar input{
-  width:100%;
-  border:0;
-  outline:none;
-  background:transparent;
-  color:var(--text);
-  font-size:12px;
-}
-
-.search-bar input::placeholder{
-  color:#a0a8b5;
-}
-
-/* ================= TABLE ================= */
-
-.jobs-table-wrapper,
-.links-table-wrapper,
-.videos-table-wrapper,
-.withdrawals-table-wrapper{
-  overflow-x:auto;
-  border:1px solid var(--border);
-  border-radius:10px;
-}
-
-table{
-  width:100%;
-  min-width:1100px;
-  border-collapse:collapse;
-}
-
-th,
-td{
-  padding:12px 10px;
-  text-align:left;
-  vertical-align:top;
-  border-bottom:1px solid #edf0f4;
-  font-size:11px;
-}
-
-th{
-  color:#687386;
-  background:#fafbfc;
-  font-size:9px;
-  font-weight:800;
-  text-transform:uppercase;
-  letter-spacing:.35px;
-  white-space:nowrap;
-}
-
-tbody tr:hover{
-  background:#fafcff;
-}
-
-tbody tr:last-child td{
-  border-bottom:0;
-}
-
-.empty{
-  padding:35px!important;
-  text-align:center!important;
-  color:var(--muted);
-}
-
-.error{
-  color:var(--red);
-}
-
-.password-protected{
-  display:inline-flex;
-  align-items:center;
-  gap:5px;
-  padding:5px 8px;
-  border-radius:7px;
-  background:#f1f5f9;
-  color:#64748b;
-  font-size:9px;
-  font-weight:700;
-  white-space:nowrap;
-}
-
-.status{
-  display:inline-flex;
-  align-items:center;
-  padding:4px 8px;
-  border-radius:20px;
-  font-size:9px;
-  font-weight:800;
-  text-transform:capitalize;
-  white-space:nowrap;
-}
-
-.pending{
-  background:var(--orange-light);
-  color:#9a6700;
-}
-
-.approved,
-.active,
-.available{
-  background:var(--green-light);
-  color:#15803d;
-}
-
-.suspended,
-.paused,
-.inactive,
-.closed,
-.rejected{
-  background:var(--red-light);
-  color:#b91c1c;
-}
-
-.completed{
-  background:#e0e7ff;
-  color:#4338ca;
-}
-
-.silver{
-  color:#64748b;
-  font-weight:700;
-}
-
-.gold{
-  color:#d97706;
-  font-weight:800;
-}
-
-.job-title,
-.link-name,
-.video-title{
-  font-weight:800;
-}
-
-.reward{
-  color:#16a34a;
-  font-weight:800;
-}
-
-.category{
-  display:inline-block;
-  padding:4px 8px;
-  border-radius:20px;
-  background:#eef2ff;
-  color:#4338ca;
-  font-size:9px;
-  font-weight:700;
-}
-
-.slot{
-  display:inline-block;
-  padding:5px 8px;
-  border-radius:20px;
-  background:#e0f2fe;
-  color:#0369a1;
-  font-size:9px;
-  font-weight:800;
-}
-
-.job-url,
-.link-url,
-.video-url{
-  display:inline-block;
-  max-width:220px;
-  color:#2563eb;
-  font-weight:600;
-  word-break:break-all;
-}
-
-.video-thumbnail{
-  display:block;
-  width:85px;
-  height:52px;
-  object-fit:cover;
-  border-radius:7px;
-  background:#e5e7eb;
-}
-
-.video-placeholder{
-  width:85px;
-  height:52px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:7px;
-  background:#e5e7eb;
-  color:#64748b;
-  font-size:18px;
-}
-
-/* ================= FORMS ================= */
-
-.job-form,
-.link-form,
-.video-form{
-  margin-bottom:20px;
-  padding:18px;
-  border:1px solid var(--border);
-  border-radius:13px;
-  background:#f8fafc;
-}
-
-.job-form h3,
-.link-form h3,
-.video-form h3{
-  margin-bottom:16px;
-  font-size:13px;
-  font-weight:800;
-}
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:13px;
-}
-
-.form-group{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-
-.form-group.full{
-  grid-column:1/-1;
-}
-
-.form-group label{
-  color:#596579;
-  font-size:10px;
-  font-weight:800;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select{
-  width:100%;
-  padding:10px 11px;
-  border:1px solid #dce2ea;
-  border-radius:9px;
-  outline:none;
-  background:#fff;
-  color:var(--text);
-  font-size:11px;
-}
-
-.form-group textarea{
-  min-height:85px;
-  resize:vertical;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 3px rgba(91,33,182,.07);
-}
-
-.create-job,
-.create-link,
-.create-video{
-  margin-top:14px;
-  background:var(--green);
-  color:white;
-}
-
-.cancel-edit{
-  display:none;
-  margin-top:14px;
-  margin-left:7px;
-  background:#64748b;
-  color:white;
-}
-
-/* ================= WITHDRAWAL CONTROL ================= */
-
-.withdrawal-control{
-  margin:0 0 20px;
-  padding:18px;
-  border:1px solid var(--border);
-  border-radius:14px;
-  background:linear-gradient(135deg,#faf9ff,#f8fafc);
-}
-
-.withdrawal-control-top{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px;
-  flex-wrap:wrap;
-}
-
-.withdrawal-control-title{
-  display:flex;
-  align-items:center;
-  gap:11px;
-}
-
-.withdrawal-control-icon{
-  width:40px;
-  height:40px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:11px;
-  background:var(--primary-light);
-  color:var(--primary);
-  font-size:18px;
-}
-
-.withdrawal-control-title strong{
-  display:block;
-  font-size:13px;
-  font-weight:800;
-}
-
-.withdrawal-control-title small{
-  display:block;
-  margin-top:3px;
-  color:var(--muted);
-  font-size:10px;
-}
-
-.withdrawal-switch{
-  position:relative;
-  width:54px;
-  height:30px;
-  flex-shrink:0;
-}
-
-.withdrawal-switch input{
-  display:none;
-}
-
-.switch-slider{
-  position:absolute;
-  inset:0;
-  border-radius:30px;
-  background:#cbd5e1;
-  cursor:pointer;
-  transition:.25s;
-}
-
-.switch-slider::before{
-  content:"";
-  position:absolute;
-  width:22px;
-  height:22px;
-  left:4px;
-  top:4px;
-  border-radius:50%;
-  background:white;
-  box-shadow:0 2px 5px rgba(0,0,0,.18);
-  transition:.25s;
-}
-
-.withdrawal-switch input:checked + .switch-slider{
-  background:#16a34a;
-}
-
-.withdrawal-switch input:checked + .switch-slider::before{
-  transform:translateX(24px);
-}
-
-.withdrawal-status-row{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-top:15px;
-  padding-top:13px;
-  border-top:1px solid var(--border);
-  flex-wrap:wrap;
-}
-
-.withdrawal-status-message{
-  color:var(--muted);
-  font-size:10px;
-}
-
-.withdrawal-status-message strong{
-  color:var(--text);
-}
-
-.withdrawal-status-pill{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  padding:6px 10px;
-  border-radius:20px;
-  font-size:9px;
-  font-weight:800;
-}
-
-.withdrawal-status-pill.on{
-  background:var(--green-light);
-  color:#15803d;
-}
-
-.withdrawal-status-pill.off{
-  background:var(--red-light);
-  color:#b91c1c;
-}
-
-.status-dot{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:currentColor;
-}
-
-/* ================= AUTO REFRESH ================= */
-
-.withdrawal-tools{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.auto-refresh{
-  display:flex;
-  align-items:center;
-  gap:5px;
-  color:var(--muted);
-  font-size:10px;
-}
-
-/* ================= RESPONSIVE ================= */
-
-@media(max-width:1250px){
-  .cards{
-    grid-template-columns:repeat(3,1fr);
-  }
-}
-
-@media(max-width:900px){
-  .sidebar{
-    width:75px;
-    padding:18px 10px;
-  }
-
-  .logo{
-    padding:5px 0 25px;
-    text-align:center;
-    font-size:0;
-  }
-
-  .logo::before{
-    content:"J";
-    display:block;
-    font-family:"Poppins",sans-serif;
-    font-size:25px;
-    color:#a78bfa;
-  }
-
-  .sidebar-label,
-  .sidebar-footer{
-    display:none;
-  }
-
-  .nav a{
-    justify-content:center;
-    padding:12px 8px;
-    font-size:0;
-  }
-
-  .nav a::first-letter{
-    font-size:17px;
-  }
-
-  .nav a.active::before{
-    left:-10px;
-  }
-
-  .main{
-    margin-left:75px;
-    padding:22px;
-  }
-}
-
-@media(max-width:700px){
-  .cards{
-    grid-template-columns:repeat(2,1fr);
-  }
-
-  .topbar{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-
-  .topbar h1{
-    font-size:23px;
-  }
-
-  .section-box,
-  .users-box,
-  .links-box,
-  .videos-box,
-  .withdrawals-box{
-    padding:16px;
-  }
-
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-
-  .form-group.full{
-    grid-column:auto;
-  }
-
-  .withdrawal-control-top{
-    align-items:flex-start;
-  }
-}
-
-@media(max-width:480px){
-  .main{
-    padding:15px;
-  }
-
-  .cards{
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-  }
-
-  .card{
-    min-height:100px;
-    padding:14px;
-  }
-
-  .card h2{
-    font-size:21px;
-  }
-
-  .admin{
-    width:100%;
-  }
-
-  .login-box{
-    padding:30px 22px;
-  }
-}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="description" content="Jovia Network Admin Dashboard">
+  <title>Jovia Network | Admin Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    *{
+      box-sizing:border-box;
+      margin:0;
+      padding:0;
+    }
+
+    :root{
+      --purple:#3b0758;
+      --purple-dark:#260038;
+      --purple-light:#68108e;
+      --gold:#ffc400;
+      --gold-dark:#ff9d00;
+      --bg:#f7f4f9;
+      --white:#ffffff;
+      --text:#24152c;
+      --muted:#77707b;
+      --border:#e9e3ec;
+      --green:#16a34a;
+      --red:#dc2626;
+      --blue:#2563eb;
+      --shadow:0 12px 35px rgba(59,7,88,.08);
+    }
+
+    body{
+      font-family:Poppins,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+    }
+
+    button,
+    input,
+    select{
+      font:inherit;
+    }
+
+    button{
+      cursor:pointer;
+    }
+
+    /* =========================
+       LOGIN
+    ========================= */
+
+    .login-screen{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:
+        radial-gradient(circle at top right,rgba(255,196,0,.15),transparent 35%),
+        linear-gradient(135deg,#260038,#3b0758 55%,#68108e);
+    }
+
+    .login-card{
+      width:100%;
+      max-width:430px;
+      background:#fff;
+      border-radius:24px;
+      padding:34px 28px;
+      box-shadow:0 25px 70px rgba(0,0,0,.25);
+    }
+
+    .login-logo{
+      width:70px;
+      height:70px;
+      border-radius:20px;
+      background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 20px;
+      font-size:28px;
+      font-weight:800;
+      color:var(--purple-dark);
+    }
+
+    .login-card h1{
+      text-align:center;
+      color:var(--purple);
+      font-size:25px;
+      margin-bottom:7px;
+    }
+
+    .login-card .subtitle{
+      text-align:center;
+      color:var(--muted);
+      font-size:13px;
+      margin-bottom:28px;
+    }
+
+    .field{
+      margin-bottom:17px;
+    }
+
+    .field label{
+      display:block;
+      font-size:13px;
+      font-weight:600;
+      margin-bottom:7px;
+    }
+
+    .field input,
+    .field select{
+      width:100%;
+      height:48px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:0 14px;
+      outline:none;
+      background:#fff;
+      color:var(--text);
+      transition:.2s;
+    }
+
+    .field input:focus,
+    .field select:focus{
+      border-color:var(--purple-light);
+      box-shadow:0 0 0 3px rgba(104,16,142,.08);
+    }
+
+    .login-btn{
+      width:100%;
+      height:50px;
+      border:0;
+      border-radius:12px;
+      background:linear-gradient(135deg,var(--purple),var(--purple-light));
+      color:#fff;
+      font-weight:700;
+      margin-top:6px;
+    }
+
+    .login-btn:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .login-error{
+      background:#fff1f2;
+      border:1px solid #fecdd3;
+      color:#be123c;
+      padding:11px 13px;
+      border-radius:10px;
+      font-size:13px;
+      margin-bottom:15px;
+      display:none;
+    }
+
+    /* =========================
+       APP
+    ========================= */
+
+    .app{
+      display:none;
+      min-height:100vh;
+    }
+
+    .sidebar{
+      width:255px;
+      position:fixed;
+      left:0;
+      top:0;
+      bottom:0;
+      background:linear-gradient(180deg,#260038,#3b0758);
+      color:#fff;
+      z-index:1000;
+      padding:22px 15px;
+      transition:.25s ease;
+      overflow-y:auto;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:5px 8px 25px;
+    }
+
+    .brand-icon{
+      width:43px;
+      height:43px;
+      border-radius:13px;
+      background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+      color:var(--purple-dark);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+    }
+
+    .brand-text strong{
+      display:block;
+      font-size:16px;
+    }
+
+    .brand-text span{
+      font-size:10px;
+      opacity:.65;
+    }
+
+    .nav-title{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      opacity:.5;
+      padding:15px 10px 8px;
+    }
+
+    .nav-btn{
+      width:100%;
+      border:0;
+      background:transparent;
+      color:#fff;
+      text-align:left;
+      padding:12px 13px;
+      border-radius:11px;
+      margin-bottom:4px;
+      display:flex;
+      align-items:center;
+      gap:11px;
+      font-size:13px;
+      transition:.2s;
+    }
+
+    .nav-btn:hover,
+    .nav-btn.active{
+      background:rgba(255,255,255,.12);
+    }
+
+    .nav-icon{
+      width:24px;
+      text-align:center;
+      font-size:16px;
+    }
+
+    .logout-btn{
+      margin-top:20px;
+      color:#ffccd2;
+    }
+
+    .main{
+      margin-left:255px;
+      min-height:100vh;
+      transition:.25s ease;
+    }
+
+    .topbar{
+      height:75px;
+      background:#fff;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 28px;
+      position:sticky;
+      top:0;
+      z-index:900;
+    }
+
+    .mobile-menu{
+      display:none;
+      width:42px;
+      height:42px;
+      border:0;
+      border-radius:10px;
+      background:#f4edf7;
+      color:var(--purple);
+      font-size:20px;
+    }
+
+    .page-title h2{
+      font-size:21px;
+      color:var(--purple);
+    }
+
+    .page-title p{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .admin-pill{
+      background:#f7f0fa;
+      color:var(--purple);
+      padding:8px 13px;
+      border-radius:20px;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    .content{
+      padding:25px 28px 50px;
+    }
+
+    /* =========================
+       SECTIONS
+    ========================= */
+
+    .section{
+      display:none;
+    }
+
+    .section.active{
+      display:block;
+    }
+
+    .section-heading{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      margin-bottom:18px;
+    }
+
+    .section-heading h3{
+      color:var(--purple);
+      font-size:18px;
+    }
+
+    .section-heading p{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:3px;
+    }
+
+    .refresh-btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--purple);
+      border-radius:9px;
+      padding:9px 13px;
+      font-size:12px;
+      font-weight:600;
+    }
+
+    /* =========================
+       STAT CARDS
+    ========================= */
+
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(5,1fr);
+      gap:15px;
+      margin-bottom:25px;
+    }
+
+    .stat-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:17px;
+      padding:19px;
+      box-shadow:var(--shadow);
+      min-width:0;
+    }
+
+    .stat-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    .stat-icon{
+      width:38px;
+      height:38px;
+      border-radius:11px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#f6eff9;
+      color:var(--purple);
+      font-weight:700;
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    .stat-value{
+      font-size:25px;
+      font-weight:800;
+      color:var(--purple);
+    }
+
+    /* =========================
+       WITHDRAWAL CONTROL
+    ========================= */
+
+    .withdrawal-card{
+      background:linear-gradient(135deg,#fff,#fbf5ff);
+      border:1px solid #e8d8ef;
+      border-radius:18px;
+      padding:20px;
+      margin-bottom:25px;
+      box-shadow:var(--shadow);
+    }
+
+    .withdrawal-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:20px;
+    }
+
+    .withdrawal-info{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      min-width:0;
+    }
+
+    .withdrawal-icon{
+      width:48px;
+      height:48px;
+      flex:0 0 48px;
+      border-radius:14px;
+      background:#fff3c4;
+      color:#a66c00;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:21px;
+    }
+
+    .withdrawal-info h4{
+      color:var(--purple);
+      font-size:15px;
+      margin-bottom:3px;
+    }
+
+    .withdrawal-info p{
+      color:var(--muted);
+      font-size:11px;
+      line-height:1.5;
+    }
+
+    .switch-area{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-shrink:0;
+    }
+
+    .switch-status{
+      font-size:11px;
+      font-weight:700;
+      min-width:30px;
+      text-align:right;
+    }
+
+    .switch-status.on{
+      color:var(--green);
+    }
+
+    .switch-status.off{
+      color:var(--red);
+    }
+
+    .switch{
+      position:relative;
+      width:54px;
+      height:30px;
+      display:inline-block;
+    }
+
+    .switch input{
+      opacity:0;
+      width:0;
+      height:0;
+    }
+
+    .slider{
+      position:absolute;
+      inset:0;
+      background:#d1d5db;
+      border-radius:30px;
+      transition:.2s;
+      cursor:pointer;
+    }
+
+    .slider:before{
+      content:"";
+      position:absolute;
+      width:22px;
+      height:22px;
+      left:4px;
+      top:4px;
+      background:#fff;
+      border-radius:50%;
+      transition:.2s;
+      box-shadow:0 2px 5px rgba(0,0,0,.2);
+    }
+
+    .switch input:checked + .slider{
+      background:var(--green);
+    }
+
+    .switch input:checked + .slider:before{
+      transform:translateX(24px);
+    }
+
+    /* =========================
+       TABLES
+    ========================= */
+
+    .panel{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:17px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      margin-bottom:25px;
+    }
+
+    .panel-header{
+      padding:18px 20px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .panel-header h4{
+      color:var(--purple);
+      font-size:15px;
+    }
+
+    .table-wrap{
+      width:100%;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+    }
+
+    table{
+      width:100%;
+      min-width:850px;
+      border-collapse:collapse;
+    }
+
+    th,
+    td{
+      padding:13px 15px;
+      border-bottom:1px solid #f0edf2;
+      text-align:left;
+      white-space:nowrap;
+      font-size:11px;
+    }
+
+    th{
+      color:#746b79;
+      background:#fcfbfd;
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.3px;
+    }
+
+    td{
+      color:#3c3440;
+    }
+
+    tr:last-child td{
+      border-bottom:0;
+    }
+
+    .empty{
+      padding:35px 20px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    /* =========================
+       BADGES
+    ========================= */
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:5px 9px;
+      border-radius:20px;
+      font-size:10px;
+      font-weight:700;
+    }
+
+    .badge.active,
+    .badge.approved,
+    .badge.completed,
+    .badge.on{
+      background:#dcfce7;
+      color:#15803d;
+    }
+
+    .badge.pending{
+      background:#fef3c7;
+      color:#a16207;
+    }
+
+    .badge.suspended,
+    .badge.rejected,
+    .badge.off{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .badge.gold{
+      background:#fff1b8;
+      color:#9a6700;
+    }
+
+    .badge.silver{
+      background:#edf0f2;
+      color:#52606d;
+    }
+
+    /* =========================
+       ACTIONS
+    ========================= */
+
+    .actions{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+
+    .action-btn{
+      border:0;
+      border-radius:7px;
+      padding:6px 9px;
+      font-size:10px;
+      font-weight:600;
+    }
+
+    .action-btn.approve{
+      background:#dcfce7;
+      color:#15803d;
+    }
+
+    .action-btn.reset{
+      background:#e0e7ff;
+      color:#3730a3;
+    }
+
+    .action-btn.suspend{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .action-btn.activate{
+      background:#dcfce7;
+      color:#15803d;
+    }
+
+    .action-btn.delete{
+      background:#fee2e2;
+      color:#b91c1c;
+    }
+
+    .action-btn.edit{
+      background:#f3e8ff;
+      color:#7e22ce;
+    }
+
+    /* =========================
+       GRID / FORMS
+    ========================= */
+
+    .two-col{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:20px;
+    }
+
+    .form-panel{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:17px;
+      padding:20px;
+      box-shadow:var(--shadow);
+    }
+
+    .form-panel h4{
+      color:var(--purple);
+      font-size:15px;
+      margin-bottom:17px;
+    }
+
+    .primary-btn{
+      background:linear-gradient(135deg,var(--purple),var(--purple-light));
+      color:#fff;
+      border:0;
+      border-radius:10px;
+      padding:11px 16px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .gold-btn{
+      background:linear-gradient(135deg,var(--gold),var(--gold-dark));
+      color:#3a2600;
+      border:0;
+      border-radius:10px;
+      padding:11px 16px;
+      font-size:12px;
+      font-weight:700;
+    }
+
+    /* =========================
+       TOAST
+    ========================= */
+
+    .toast{
+      position:fixed;
+      right:25px;
+      bottom:25px;
+      z-index:3000;
+      max-width:360px;
+      background:#24152c;
+      color:#fff;
+      border-radius:12px;
+      padding:13px 16px;
+      font-size:12px;
+      box-shadow:0 15px 40px rgba(0,0,0,.25);
+      transform:translateY(120px);
+      opacity:0;
+      pointer-events:none;
+      transition:.25s;
+    }
+
+    .toast.show{
+      transform:translateY(0);
+      opacity:1;
+    }
+
+    .toast.success{
+      border-left:4px solid var(--green);
+    }
+
+    .toast.error{
+      border-left:4px solid var(--red);
+    }
+
+    /* =========================
+       LOADING
+    ========================= */
+
+    .loading{
+      padding:35px;
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .spinner{
+      width:24px;
+      height:24px;
+      border:3px solid #eee;
+      border-top-color:var(--purple);
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+      margin:0 auto 10px;
+    }
+
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+
+    /* =========================
+       MOBILE OVERLAY
+    ========================= */
+
+    .sidebar-overlay{
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.45);
+      z-index:999;
+    }
+
+    /* =========================
+       TABLET
+    ========================= */
+
+    @media(max-width:1100px){
+      .stats{
+        grid-template-columns:repeat(3,1fr);
+      }
+    }
+
+    /* =========================
+       MOBILE
+    ========================= */
+
+    @media(max-width:768px){
+
+      .sidebar{
+        transform:translateX(-100%);
+        width:270px;
+        box-shadow:15px 0 40px rgba(0,0,0,.2);
+      }
+
+      .sidebar.open{
+        transform:translateX(0);
+      }
+
+      .sidebar-overlay.show{
+        display:block;
+      }
+
+      .main{
+        margin-left:0;
+      }
+
+      .topbar{
+        height:68px;
+        padding:0 15px;
+        gap:10px;
+      }
+
+      .mobile-menu{
+        display:block;
+        flex:0 0 42px;
+      }
+
+      .page-title{
+        flex:1;
+        min-width:0;
+      }
+
+      .page-title h2{
+        font-size:16px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+
+      .page-title p{
+        font-size:9px;
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+
+      .admin-pill{
+        display:none;
+      }
+
+      .content{
+        padding:18px 13px 35px;
+      }
+
+      .stats{
+        grid-template-columns:repeat(2,1fr);
+        gap:10px;
+        margin-bottom:18px;
+      }
+
+      .stat-card{
+        padding:14px;
+        border-radius:14px;
+      }
+
+      .stat-icon{
+        width:33px;
+        height:33px;
+        font-size:13px;
+      }
+
+      .stat-value{
+        font-size:21px;
+      }
+
+      .stat-label{
+        font-size:9px;
+      }
+
+      .withdrawal-card{
+        padding:15px;
+        border-radius:14px;
+      }
+
+      .withdrawal-row{
+        align-items:flex-start;
+      }
+
+      .withdrawal-info{
+        gap:10px;
+      }
+
+      .withdrawal-icon{
+        width:40px;
+        height:40px;
+        flex-basis:40px;
+        font-size:17px;
+      }
+
+      .withdrawal-info h4{
+        font-size:13px;
+      }
+
+      .withdrawal-info p{
+        font-size:9px;
+      }
+
+      .switch-area{
+        gap:6px;
+      }
+
+      .switch{
+        width:48px;
+        height:27px;
+      }
+
+      .slider:before{
+        width:19px;
+        height:19px;
+      }
+
+      .switch input:checked + .slider:before{
+        transform:translateX(21px);
+      }
+
+      .section-heading{
+        align-items:flex-start;
+        flex-direction:column;
+        margin-bottom:13px;
+      }
+
+      .section-heading h3{
+        font-size:16px;
+      }
+
+      .refresh-btn{
+        width:100%;
+      }
+
+      .panel{
+        border-radius:14px;
+      }
+
+      .panel-header{
+        padding:14px;
+      }
+
+      .panel-header h4{
+        font-size:13px;
+      }
+
+      .two-col{
+        grid-template-columns:1fr;
+      }
+
+      .toast{
+        left:13px;
+        right:13px;
+        bottom:15px;
+        max-width:none;
+      }
+    }
+
+    @media(max-width:400px){
+      .stats{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .stat-value{
+        font-size:18px;
+      }
+
+      .withdrawal-row{
+        flex-direction:column;
+      }
+
+      .switch-area{
+        width:100%;
+        justify-content:space-between;
+        padding-left:50px;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+  <!-- =========================
+       LOGIN SCREEN
+  ========================= -->
 
-<div id="loginScreen">
-  <div class="login-box">
+  <div class="login-screen" id="loginScreen">
 
-    <div class="login-badge">◆</div>
+    <div class="login-card">
 
-    <div class="login-brand">
-      <div class="login-logo">Jovia<span>Network</span></div>
-      <p class="login-subtitle">Secure Administrator Portal</p>
+      <div class="login-logo">J</div>
+
+      <h1>Jovia Network</h1>
+      <div class="subtitle">Administrator Dashboard</div>
+
+      <div class="login-error" id="loginError"></div>
+
+      <form onsubmit="adminLogin(event)">
+
+        <div class="field">
+          <label for="adminUsername">Username</label>
+          <input
+            type="text"
+            id="adminUsername"
+            autocomplete="username"
+            placeholder="Enter admin username"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="adminPassword">Password</label>
+          <input
+            type="password"
+            id="adminPassword"
+            autocomplete="current-password"
+            placeholder="Enter admin password"
+            required
+          >
+        </div>
+
+        <button class="login-btn" id="loginBtn" type="submit">
+          Login to Dashboard
+        </button>
+
+      </form>
+
     </div>
+  </div>
 
-    <div id="loginError" class="login-error"></div>
 
-    <form id="adminLoginForm" onsubmit="adminLogin(event)">
+  <!-- =========================
+       ADMIN APP
+  ========================= -->
 
-      <div class="login-group">
-        <label>Administrator Username</label>
-        <input
-          type="text"
-          id="adminUsername"
-          placeholder="Enter admin username"
-          autocomplete="username"
-          required
-        >
+  <div class="app" id="app">
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+
+      <div class="brand">
+        <div class="brand-icon">J</div>
+
+        <div class="brand-text">
+          <strong>Jovia Network</strong>
+          <span>ADMIN PANEL</span>
+        </div>
       </div>
 
-      <div class="login-group">
-        <label>Password</label>
-        <input
-          type="password"
-          id="adminPassword"
-          placeholder="Enter password"
-          autocomplete="current-password"
-          required
-        >
-      </div>
+      <div class="nav-title">Main</div>
 
-      <button type="submit" class="login-button" id="loginButton">
-        Sign in to Dashboard
+      <button class="nav-btn active" onclick="showSection('dashboard',this)">
+        <span class="nav-icon">▦</span>
+        Dashboard
       </button>
 
-      <div id="loginLoading" class="login-loading">
-        Authenticating administrator...
-      </div>
+      <button class="nav-btn" onclick="showSection('users',this)">
+        <span class="nav-icon">♙</span>
+        Users
+      </button>
 
-    </form>
+      <button class="nav-btn" onclick="showSection('withdrawals',this)">
+        <span class="nav-icon">₦</span>
+        Withdrawals
+      </button>
 
-  </div>
-</div>
+      <div class="nav-title">Content</div>
 
+      <button class="nav-btn" onclick="showSection('jobs',this)">
+        <span class="nav-icon">▣</span>
+        Jobs
+      </button>
 
-<!-- ================= DASHBOARD ================= -->
+      <button class="nav-btn" onclick="showSection('links',this)">
+        <span class="nav-icon">↗</span>
+        Links
+      </button>
 
-<div id="dashboardScreen">
+      <button class="nav-btn" onclick="showSection('videos',this)">
+        <span class="nav-icon">▶</span>
+        Videos
+      </button>
 
-  <aside class="sidebar">
+      <div class="nav-title">Account</div>
 
-    <div class="logo">
-      Jovia<span>Network</span>
-    </div>
+      <button class="nav-btn logout-btn" onclick="adminLogout()">
+        <span class="nav-icon">↪</span>
+        Logout
+      </button>
 
-    <div class="sidebar-label">Management</div>
-
-    <nav class="nav">
-
-      <a href="#dashboard" class="active" onclick="setActiveNav(this)">
-        📊 <span>Dashboard</span>
-      </a>
-
-      <a href="#users" onclick="setActiveNav(this)">
-        👥 <span>Users</span>
-      </a>
-
-      <a href="#jobs" onclick="setActiveNav(this)">
-        💼 <span>Jobs</span>
-      </a>
-
-      <a href="#videos" onclick="setActiveNav(this)">
-        🎬 <span>Videos</span>
-      </a>
-
-      <a href="#links" onclick="setActiveNav(this)">
-        🔗 <span>Links</span>
-      </a>
-
-      <a href="#withdrawals" onclick="setActiveNav(this)">
-        💸 <span>Withdrawals</span>
-        <span
-          id="navPendingCount"
-          style="
-            background:#f59e0b;
-            color:white;
-            padding:2px 6px;
-            border-radius:10px;
-            font-size:8px;
-            margin-left:auto;
-          "
-        >0</span>
-      </a>
-
-      <div class="nav-divider"></div>
-
-      <a href="#" class="logout-link" onclick="adminLogout(event)">
-        🚪 <span>Logout</span>
-      </a>
-
-    </nav>
-
-    <div class="sidebar-footer">
-      <strong>Jovia Network</strong><br>
-      Administrator Control Center<br>
-      Secure management portal
-    </div>
-
-  </aside>
+    </aside>
 
 
-  <main class="main">
+    <!-- MAIN -->
+    <main class="main">
 
-    <!-- TOPBAR -->
+      <header class="topbar">
 
-    <div class="topbar">
+        <button class="mobile-menu" onclick="toggleSidebar()" aria-label="Open menu">
+          ☰
+        </button>
 
-      <div>
-        <h1>Admin Dashboard</h1>
-        <p>Monitor users, earnings, jobs, content and withdrawals.</p>
-      </div>
-
-      <div class="admin">
-        <div class="admin-avatar">👤</div>
-        <span id="adminName">Administrator</span>
-      </div>
-
-    </div>
-
-
-    <!-- STAT CARDS -->
-
-    <section class="cards" id="dashboard">
-
-      <div class="card">
-        <div class="card-icon">👥</div>
-        <p>Total Users</p>
-        <h2 id="totalUsers">0</h2>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">⏳</div>
-        <p>Pending Accounts</p>
-        <h2 id="pendingUsers">0</h2>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">✓</div>
-        <p>Approved Accounts</p>
-        <h2 id="approvedUsers">0</h2>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">◆</div>
-        <p>Gold Members</p>
-        <h2 id="goldUsers">0</h2>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">◇</div>
-        <p>Silver Members</p>
-        <h2 id="silverUsers">0</h2>
-      </div>
-
-      <div class="card">
-        <div class="card-icon">₦</div>
-        <p>Pending Withdrawals</p>
-        <h2 id="pendingWithdrawalsCard">0</h2>
-      </div>
-
-    </section>
-
-
-    <!-- ================= USERS ================= -->
-
-    <section class="users-box" id="users">
-
-      <div class="users-header">
-        <h2>Registered Users</h2>
-        <button class="refresh" onclick="loadUsers()">↻ Refresh</button>
-      </div>
-
-      <div class="search-bar">
-        <span class="search-icon">⌕</span>
-        <input
-          type="text"
-          id="searchUsers"
-          placeholder="Search by name, username, email, phone or package..."
-          oninput="filterUsers()"
-        >
-      </div>
-
-      <div class="users-info">
-
-        <div class="live-status">
-          <span class="live-dot"></span>
-          <span>Live data</span>
+        <div class="page-title">
+          <h2 id="pageTitle">Dashboard</h2>
+          <p>Manage your Jovia Network platform</p>
         </div>
 
-        <div>
-          Last updated:
-          <span id="lastUpdated">Waiting...</span>
+        <div class="admin-pill">
+          Administrator
         </div>
 
-      </div>
-
-      <div class="jobs-table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Password</th>
-              <th>Package</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody id="usersTable">
-            <tr>
-              <td colspan="10" class="empty">Loading users...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-    </section>
+      </header>
 
 
-    <!-- ================= JOBS ================= -->
+      <div class="content">
 
-    <section class="section-box" id="jobs">
+        <!-- =========================
+             DASHBOARD
+        ========================= -->
 
-      <div class="jobs-header">
-        <h2>💼 Jobs Management</h2>
-        <button class="refresh" onclick="loadAdminJobs()">↻ Refresh Jobs</button>
-      </div>
+        <section class="section active" id="section-dashboard">
 
-      <div class="search-bar">
-        <span class="search-icon">⌕</span>
-        <input
-          type="text"
-          id="searchJobs"
-          placeholder="Search jobs by title or category..."
-          oninput="filterJobs()"
-        >
-      </div>
-
-      <div class="jobs-info">
-        <div>
-          Total Jobs:
-          <strong id="totalJobs">0</strong>
-        </div>
-      </div>
-
-      <div class="job-form">
-
-        <h3>＋ Create New Job</h3>
-
-        <form id="createJobForm" onsubmit="createJob(event)">
-
-          <div class="form-grid">
-
-            <div class="form-group">
-              <label>Daily Job Slot</label>
-              <select id="jobSlot" required>
-                <option value="1">Job 1</option>
-                <option value="2">Job 2</option>
-                <option value="3">Job 3</option>
-              </select>
+          <div class="section-heading">
+            <div>
+              <h3>Dashboard Overview</h3>
+              <p>Monitor your platform activity and settings.</p>
             </div>
 
-            <div class="form-group">
-              <label>Job Title</label>
-              <input type="text" id="jobTitle" required>
+            <button class="refresh-btn" onclick="loadDashboard()">
+              ↻ Refresh
+            </button>
+          </div>
+
+
+          <div class="stats">
+
+            <div class="stat-card">
+              <div class="stat-top">
+                <div class="stat-icon">♙</div>
+              </div>
+              <div class="stat-label">Total Users</div>
+              <div class="stat-value" id="totalUsers">0</div>
             </div>
 
-            <div class="form-group">
-              <label>Category</label>
-              <input type="text" id="jobCategory" value="General" required>
+            <div class="stat-card">
+              <div class="stat-top">
+                <div class="stat-icon">⏳</div>
+              </div>
+              <div class="stat-label">Pending Accounts</div>
+              <div class="stat-value" id="pendingUsers">0</div>
             </div>
 
-            <div class="form-group">
-              <label>Reward (₦)</label>
-              <input type="number" id="jobReward" min="0" required>
+            <div class="stat-card">
+              <div class="stat-top">
+                <div class="stat-icon">✓</div>
+              </div>
+              <div class="stat-label">Approved Accounts</div>
+              <div class="stat-value" id="approvedUsers">0</div>
             </div>
 
-            <div class="form-group full">
-              <label>Job URL</label>
-              <input
-                type="url"
-                id="jobUrl"
-                placeholder="https://example.com"
-                required
-              >
+            <div class="stat-card">
+              <div class="stat-top">
+                <div class="stat-icon">G</div>
+              </div>
+              <div class="stat-label">Gold Members</div>
+              <div class="stat-value" id="goldMembers">0</div>
             </div>
 
-            <div class="form-group full">
-              <label>Description</label>
-              <textarea id="jobDescription" required></textarea>
-            </div>
-
-            <div class="form-group">
-              <label>Duration</label>
-              <input type="text" id="jobDuration" value="Flexible" required>
-            </div>
-
-            <div class="form-group">
-              <label>Status</label>
-              <select id="jobStatus">
-                <option value="active">Available</option>
-                <option value="inactive">Paused</option>
-              </select>
+            <div class="stat-card">
+              <div class="stat-top">
+                <div class="stat-icon">S</div>
+              </div>
+              <div class="stat-label">Silver Members</div>
+              <div class="stat-value" id="silverMembers">0</div>
             </div>
 
           </div>
 
-          <button type="submit" class="create-job" id="createJobButton">
-            ＋ Create Job
-          </button>
 
-        </form>
+          <!-- REGULAR WITHDRAWAL CONTROL -->
 
-      </div>
+          <div class="withdrawal-card">
 
-      <div class="jobs-table-wrapper">
+            <div class="withdrawal-row">
 
-        <table>
+              <div class="withdrawal-info">
 
-          <thead>
-            <tr>
-              <th>Slot</th>
-              <th>ID</th>
-              <th>Title</th>
-              <th>Category</th>
-              <th>URL</th>
-              <th>Description</th>
-              <th>Reward</th>
-              <th>Duration</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+                <div class="withdrawal-icon">₦</div>
 
-          <tbody id="jobsTable">
-            <tr>
-              <td colspan="11" class="empty">Loading jobs...</td>
-            </tr>
-          </tbody>
+                <div>
+                  <h4>Regular Withdrawals</h4>
 
-        </table>
-
-      </div>
-
-    </section>
-
-
-    <!-- ================= VIDEOS ================= -->
-
-    <section class="videos-box" id="videos">
-
-      <div class="videos-header">
-        <h2>🎬 Video Management</h2>
-        <button class="refresh" onclick="loadAdminVideos()">↻ Refresh Videos</button>
-      </div>
-
-      <div class="search-bar">
-        <span class="search-icon">⌕</span>
-        <input
-          type="text"
-          id="searchVideos"
-          placeholder="Search videos by title..."
-          oninput="filterVideos()"
-        >
-      </div>
-
-      <div class="videos-info">
-        <div>
-          Total Videos:
-          <strong id="totalVideos">0</strong>
-        </div>
-      </div>
-
-      <div class="video-form" id="videoFormBox">
-
-        <h3 id="videoFormTitle">＋ Upload New Video</h3>
-
-        <form id="videoForm" onsubmit="saveVideo(event)">
-
-          <div class="form-grid">
-
-            <div class="form-group">
-              <label>Video Title *</label>
-              <input type="text" id="videoTitle" required>
-            </div>
-
-            <div class="form-group">
-              <label>Category</label>
-              <input type="text" id="videoCategory" value="General" required>
-            </div>
-
-            <div
-              class="form-group full"
-              style="
-                background:white;
-                border:2px dashed #7c3aed;
-                padding:15px;
-                border-radius:10px;
-              "
-            >
-
-              <label style="font-size:12px;color:#6d28d9">
-                📤 UPLOAD VIDEO FILE
-              </label>
-
-              <input
-                type="file"
-                id="videoFile"
-                accept="video/*"
-                style="margin-top:8px"
-              >
-
-              <div id="uploadProgress" style="display:none;margin-top:10px">
-
-                <div
-                  style="
-                    background:#e5e7eb;
-                    height:8px;
-                    border-radius:10px;
-                    overflow:hidden;
-                  "
-                >
-                  <div
-                    id="progressBar"
-                    style="
-                      background:#7c3aed;
-                      height:8px;
-                      width:0%;
-                    "
-                  ></div>
-                </div>
-
-                <div
-                  style="
-                    font-size:10px;
-                    margin-top:5px;
-                    color:#6d28d9;
-                  "
-                >
-                  Uploading...
-                  <span id="progressText">0%</span>
+                  <p>
+                    Control whether members can make regular wallet withdrawals.
+                    Affiliate withdrawals remain unaffected.
+                  </p>
                 </div>
 
               </div>
 
-              <div
-                id="uploadedVideoPreview"
-                style="display:none;margin-top:10px"
-              >
+              <div class="switch-area">
 
-                <video
-                  id="previewPlayer"
-                  controls
-                  style="
-                    width:100%;
-                    max-width:300px;
-                    border-radius:8px;
-                  "
-                ></video>
-
-                <div
-                  style="
-                    font-size:10px;
-                    color:#16a34a;
-                    margin-top:5px;
-                  "
+                <span
+                  class="switch-status on"
+                  id="regularWithdrawalStatus"
                 >
-                  ✓ Ready:
-                  <span id="previewUrl"></span>
-                </div>
+                  ON
+                </span>
+
+                <label class="switch">
+
+                  <input
+                    type="checkbox"
+                    id="regularWithdrawalSwitch"
+                    onchange="toggleRegularWithdrawals(this.checked)"
+                  >
+
+                  <span class="slider"></span>
+
+                </label>
 
               </div>
 
             </div>
 
-            <div class="form-group full">
-              <label>Video URL</label>
-              <input
-                type="url"
-                id="videoUrl"
-                placeholder="Auto-filled after upload or paste URL"
+          </div>
+
+
+          <!-- RECENT USERS -->
+
+          <div class="panel">
+
+            <div class="panel-header">
+              <h4>Recent Users</h4>
+
+              <button
+                class="refresh-btn"
+                onclick="showSectionByName('users')"
               >
+                View All
+              </button>
             </div>
 
-            <div class="form-group full">
-              <label>Description</label>
-              <textarea id="videoDescription"></textarea>
-            </div>
+            <div class="table-wrap">
 
-            <div class="form-group">
-              <label>Thumbnail URL</label>
-              <input
-                type="url"
-                id="videoThumbnail"
-                placeholder="https://example.com/image.jpg"
-              >
-            </div>
+              <table>
 
-            <div class="form-group">
-              <label>Reward (₦)</label>
-              <input
-                type="number"
-                id="videoReward"
-                min="0"
-                value="0"
-              >
-            </div>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Package</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                  </tr>
+                </thead>
 
-            <div class="form-group">
-              <label>Status</label>
-              <select id="videoStatus">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                <tbody id="recentUsersTable">
+                  <tr>
+                    <td colspan="5">
+                      <div class="loading">
+                        <div class="spinner"></div>
+                        Loading users...
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+
+              </table>
+
             </div>
 
           </div>
 
-          <button
-            type="submit"
-            class="create-video"
-            id="saveVideoButton"
-          >
-            ＋ Upload & Save Video
-          </button>
-
-          <button
-            type="button"
-            class="cancel-edit"
-            id="cancelVideoEditButton"
-            onclick="cancelVideoEdit()"
-          >
-            Cancel Edit
-          </button>
-
-        </form>
-
-      </div>
-
-      <div class="videos-table-wrapper">
-
-        <table>
-
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Preview</th>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Video URL</th>
-              <th>Description</th>
-              <th>Reward</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody id="videosTable">
-            <tr>
-              <td colspan="10" class="empty">Loading videos...</td>
-            </tr>
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </section>
+        </section>
 
 
-    <!-- ================= LINKS ================= -->
+        <!-- =========================
+             USERS
+        ========================= -->
 
-    <section class="links-box" id="links">
+        <section class="section" id="section-users">
 
-      <div class="links-header">
-        <h2>🔗 Links Management</h2>
-        <button class="refresh" onclick="loadAdminLinks()">↻ Refresh Links</button>
-      </div>
-
-      <div class="search-bar">
-        <span class="search-icon">⌕</span>
-        <input
-          type="text"
-          id="searchLinks"
-          placeholder="Search links by name, category or URL..."
-          oninput="filterLinks()"
-        >
-      </div>
-
-      <div class="links-info">
-        <div>
-          Total Links:
-          <strong id="totalLinks">0</strong>
-        </div>
-      </div>
-
-      <div class="link-form" id="linkFormBox">
-
-        <h3 id="linkFormTitle">＋ Add New Link</h3>
-
-        <form id="linkForm" onsubmit="saveLink(event)">
-
-          <div class="form-grid">
-
-            <div class="form-group">
-              <label>Link Name</label>
-              <input type="text" id="linkName" required>
-            </div>
-
-            <div class="form-group">
-              <label>Category</label>
-              <input type="text" id="linkCategory" value="General" required>
-            </div>
-
-            <div class="form-group full">
-              <label>URL</label>
-              <input type="url" id="linkUrl" required>
-            </div>
-
-            <div class="form-group full">
-              <label>Description</label>
-              <textarea id="linkDescription"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label>Status</label>
-              <select id="linkStatus">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-
-          </div>
-
-          <button
-            type="submit"
-            class="create-link"
-            id="saveLinkButton"
-          >
-            ＋ Add Link
-          </button>
-
-          <button
-            type="button"
-            class="cancel-edit"
-            id="cancelEditButton"
-            onclick="cancelLinkEdit()"
-          >
-            Cancel Edit
-          </button>
-
-        </form>
-
-      </div>
-
-      <div class="links-table-wrapper">
-
-        <table>
-
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>URL</th>
-              <th>Description</th>
-              <th>Category</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody id="linksTable">
-            <tr>
-              <td colspan="8" class="empty">Loading links...</td>
-            </tr>
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </section>
-
-
-    <!-- ================= WITHDRAWALS ================= -->
-
-    <section class="withdrawals-box" id="withdrawals">
-
-      <div class="withdrawals-header">
-
-        <h2>💸 Withdrawals</h2>
-
-        <div class="withdrawal-tools">
-
-          <span style="font-size:10px;color:#64748b">
-            Auto:
-            <span id="withdrawalTimer">10s</span>
-          </span>
-
-          <label class="auto-refresh">
-            <input
-              type="checkbox"
-              id="withdrawalAutoRefresh"
-              checked
-            >
-            Auto refresh
-          </label>
-
-          <button
-            class="refresh"
-            onclick="loadAdminWithdrawals()"
-          >
-            ↻ Refresh
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <!-- PROFESSIONAL WITHDRAWAL SWITCH -->
-
-      <div class="withdrawal-control">
-
-        <div class="withdrawal-control-top">
-
-          <div class="withdrawal-control-title">
-
-            <div class="withdrawal-control-icon">
-              ₦
-            </div>
+          <div class="section-heading">
 
             <div>
-              <strong>Regular Withdrawals</strong>
-              <small>
-                Control whether members can submit regular wallet withdrawals.
-              </small>
+              <h3>Users</h3>
+              <p>Manage Jovia Network member accounts.</p>
+            </div>
+
+            <button class="refresh-btn" onclick="loadUsers()">
+              ↻ Refresh Users
+            </button>
+
+          </div>
+
+          <div class="panel">
+
+            <div class="table-wrap">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Password</th>
+                    <th>Package</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody id="usersTable">
+                  <tr>
+                    <td colspan="10">
+                      <div class="loading">
+                        <div class="spinner"></div>
+                        Loading users...
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+
+              </table>
+
             </div>
 
           </div>
 
-          <label class="withdrawal-switch">
+        </section>
 
-            <input
-              type="checkbox"
-              id="regularWithdrawalSwitch"
-              onchange="toggleRegularWithdrawals(this.checked)"
-            >
 
-            <span class="switch-slider"></span>
+        <!-- =========================
+             WITHDRAWALS
+        ========================= -->
 
-          </label>
+        <section class="section" id="section-withdrawals">
 
-        </div>
+          <div class="section-heading">
 
-        <div class="withdrawal-status-row">
+            <div>
+              <h3>Withdrawals</h3>
+              <p>Review member withdrawal requests.</p>
+            </div>
 
-          <div
-            id="withdrawalStatusText"
-            class="withdrawal-status-message"
-          >
-            Checking withdrawal availability...
+            <button class="refresh-btn" onclick="loadAdminWithdrawals()">
+              ↻ Refresh
+            </button>
+
           </div>
 
-          <div
-            id="withdrawalStatusBadge"
-            class="withdrawal-status-pill off"
-          >
-            <span class="status-dot"></span>
-            <span>Checking...</span>
+          <div class="withdrawal-card">
+
+            <div class="withdrawal-row">
+
+              <div class="withdrawal-info">
+
+                <div class="withdrawal-icon">₦</div>
+
+                <div>
+                  <h4>Regular Withdrawal Status</h4>
+                  <p id="withdrawalSettingText">
+                    Loading current status...
+                  </p>
+                </div>
+
+              </div>
+
+              <div class="switch-area">
+
+                <span
+                  class="switch-status on"
+                  id="regularWithdrawalStatus2"
+                >
+                  ON
+                </span>
+
+                <label class="switch">
+
+                  <input
+                    type="checkbox"
+                    id="regularWithdrawalSwitch2"
+                    onchange="toggleRegularWithdrawalsFromWithdrawals(this.checked)"
+                  >
+
+                  <span class="slider"></span>
+
+                </label>
+
+              </div>
+
+            </div>
+
           </div>
 
-        </div>
+
+          <div class="panel">
+
+            <div class="table-wrap">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>User</th>
+                    <th>Username</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Bank</th>
+                    <th>Account</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+
+                <tbody id="withdrawalsTable">
+
+                  <tr>
+                    <td colspan="8">
+                      <div class="loading">
+                        <div class="spinner"></div>
+                        Loading withdrawals...
+                      </div>
+                    </td>
+                  </tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- =========================
+             JOBS
+        ========================= -->
+
+        <section class="section" id="section-jobs">
+
+          <div class="section-heading">
+
+            <div>
+              <h3>Jobs</h3>
+              <p>Manage available jobs on the platform.</p>
+            </div>
+
+            <button class="refresh-btn" onclick="loadJobs()">
+              ↻ Refresh
+            </button>
+
+          </div>
+
+          <div class="panel">
+
+            <div class="table-wrap">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Reward</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody id="jobsTable">
+
+                  <tr>
+                    <td colspan="6">
+                      <div class="loading">
+                        <div class="spinner"></div>
+                        Loading jobs...
+                      </div>
+                    </td>
+                  </tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- =========================
+             LINKS
+        ========================= -->
+
+        <section class="section" id="section-links">
+
+          <div class="section-heading">
+
+            <div>
+              <h3>Links</h3>
+              <p>Manage platform links and resources.</p>
+            </div>
+
+            <button class="refresh-btn" onclick="loadLinks()">
+              ↻ Refresh
+            </button>
+
+          </div>
+
+          <div class="panel">
+
+            <div class="table-wrap">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>URL</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody id="linksTable">
+
+                  <tr>
+                    <td colspan="5">
+                      <div class="loading">
+                        <div class="spinner"></div>
+                        Loading links...
+                      </div>
+                    </td>
+                  </tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- =========================
+             VIDEOS
+        ========================= -->
+
+        <section class="section" id="section-videos">
+
+          <div class="section-heading">
+
+            <div>
+              <h3>Videos</h3>
+              <p>Manage member video content and rewards.</p>
+            </div>
+
+            <button class="refresh-btn" onclick="loadVideos()">
+              ↻ Refresh
+            </button>
+
+          </div>
+
+          <div class="panel">
+
+            <div class="table-wrap">
+
+              <table>
+
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Reward</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody id="videosTable">
+
+                  <tr>
+                    <td colspan="5">
+                      <div class="loading">
+                        <div class="spinner"></div>
+                        Loading videos...
+                      </div>
+                    </td>
+                  </tr>
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
 
       </div>
+    </main>
+
+  </div>
 
 
-      <div class="search-bar">
+  <!-- TOAST -->
 
-        <span class="search-icon">⌕</span>
-
-        <input
-          type="text"
-          id="searchWithdrawals"
-          placeholder="Search by username, bank, account name, amount or status..."
-          oninput="filterWithdrawals()"
-        >
-
-      </div>
-
-
-      <div class="withdrawals-info">
-
-        <div class="live-status">
-          <span class="live-dot"></span>
-          Live
-        </div>
-
-        <div>
-          Last:
-          <span id="withdrawalsLastUpdated">Waiting...</span>
-          &nbsp;|&nbsp;
-          Total:
-          <strong id="totalWithdrawals">0</strong>
-          &nbsp;|&nbsp;
-          Pending:
-          <strong id="pendingWithdrawalsCount">0</strong>
-        </div>
-
-      </div>
-
-
-      <div class="withdrawals-table-wrapper">
-
-        <table class="withdrawals-table">
-
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Bank Name</th>
-              <th>Account Name</th>
-              <th>Account Number</th>
-              <th>Amount</th>
-              <th>Type</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody id="withdrawalsTable">
-
-            <tr>
-              <td colspan="9" class="empty">
-                Loading withdrawals...
-              </td>
-            </tr>
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </section>
-
-  </main>
-
-</div>
+  <div class="toast" id="toast"></div>
 
 
 <script>
-/* =========================================================
-   STATE
-========================================================= */
 
-let adminAuthenticated=false;
+/* =====================================================
+   BASIC HELPERS
+===================================================== */
 
-let userRefreshTimer=null;
-let jobRefreshTimer=null;
-let linkRefreshTimer=null;
-let videoRefreshTimer=null;
-let withdrawalRefreshTimer=null;
-let withdrawalTimer=null;
-
-let usersCache=new Map();
-let linksCache=new Map();
-let jobsCache=new Map();
-let videosCache=new Map();
-let withdrawalsCache=new Map();
-
-let editingLinkId=null;
-let editingVideoId=null;
-
-let rawUsers=[];
-let rawJobs=[];
-let rawLinks=[];
-let rawVideos=[];
-let rawWithdrawals=[];
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function escapeHTML(v){
-  const d=document.createElement("div");
-  d.textContent=v??"";
-  return d.innerHTML;
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
-function safeUrl(v){
-  try{
-    const u=new URL(String(v||"").trim());
 
-    if(u.protocol!=="http:" && u.protocol!=="https:"){
-      return "#";
+function showToast(message,type="success"){
+  const toast=document.getElementById("toast");
+
+  toast.textContent=message;
+  toast.className="toast show "+type;
+
+  clearTimeout(window.toastTimer);
+
+  window.toastTimer=setTimeout(()=>{
+    toast.className="toast";
+  },3500);
+}
+
+
+async function apiFetch(url,options={}){
+  const response=await fetch(url,{
+    credentials:"include",
+    ...options,
+    headers:{
+      "Content-Type":"application/json",
+      ...(options.headers||{})
     }
-
-    return u.href;
-  }catch{
-    return "#";
-  }
-}
-
-function formatNaira(v){
-  return "₦"+Number(v||0).toLocaleString("en-NG");
-}
-
-function formatDate(v){
-  if(!v)return "-";
-
-  const r=String(v);
-
-  let d;
-
-  if(r.includes(" ")&&!r.includes("T")){
-    d=new Date(r.replace(" ","T")+"Z");
-  }else{
-    d=new Date(r);
-  }
-
-  if(Number.isNaN(d.getTime()))return r;
-
-  return d.toLocaleString("en-NG",{
-    dateStyle:"medium",
-    timeStyle:"short"
   });
-}
 
-function setActiveNav(link){
-  document.querySelectorAll(".nav a").forEach(
-    item=>item.classList.remove("active")
-  );
-
-  link.classList.add("active");
-}
-
-
-/* =========================================================
-   LOGIN / SESSION
-========================================================= */
-
-function stopTimers(){
-
-  if(userRefreshTimer)clearInterval(userRefreshTimer);
-  if(jobRefreshTimer)clearInterval(jobRefreshTimer);
-  if(linkRefreshTimer)clearInterval(linkRefreshTimer);
-  if(videoRefreshTimer)clearInterval(videoRefreshTimer);
-  if(withdrawalRefreshTimer)clearInterval(withdrawalRefreshTimer);
-  if(withdrawalTimer)clearInterval(withdrawalTimer);
-
-  userRefreshTimer=null;
-  jobRefreshTimer=null;
-  linkRefreshTimer=null;
-  videoRefreshTimer=null;
-  withdrawalRefreshTimer=null;
-  withdrawalTimer=null;
-}
-
-function showLogin(message=""){
-
-  adminAuthenticated=false;
-
-  stopTimers();
-
-  document.getElementById("dashboardScreen").style.display="none";
-  document.getElementById("loginScreen").style.display="flex";
-
-  const error=document.getElementById("loginError");
-
-  if(message){
-    error.textContent=message;
-    error.style.display="block";
-  }else{
-    error.textContent="";
-    error.style.display="none";
-  }
-}
-
-function showDashboard(admin){
-
-  adminAuthenticated=true;
-
-  document.getElementById("loginScreen").style.display="none";
-  document.getElementById("dashboardScreen").style.display="block";
-
-  document.getElementById("adminName").textContent=
-    admin.username||"Administrator";
-
-  loadDashboardSummary();
-  loadRegularWithdrawalSetting();
-  loadUsers();
-  loadAdminJobs();
-  loadAdminLinks();
-  loadAdminVideos();
-
-  setTimeout(
-    ()=>loadAdminWithdrawals(),
-    500
-  );
-
-  userRefreshTimer=setInterval(
-    loadUsers,
-    5000
-  );
-
-  jobRefreshTimer=setInterval(
-    loadAdminJobs,
-    10000
-  );
-
-  linkRefreshTimer=setInterval(
-    loadAdminLinks,
-    15000
-  );
-
-  videoRefreshTimer=setInterval(
-    loadAdminVideos,
-    15000
-  );
-
-  withdrawalRefreshTimer=setInterval(
-    ()=>{
-      const checkbox=document.getElementById(
-        "withdrawalAutoRefresh"
-      );
-
-      if(checkbox&&checkbox.checked){
-        loadAdminWithdrawals();
-      }
-    },
-    10000
-  );
-
-  let seconds=10;
-
-  withdrawalTimer=setInterval(
-    ()=>{
-      seconds--;
-
-      const timer=document.getElementById(
-        "withdrawalTimer"
-      );
-
-      if(timer){
-        timer.textContent=seconds+"s";
-      }
-
-      if(seconds<=0){
-        seconds=10;
-      }
-    },
-    1000
-  );
-}
-
-async function checkAdminSession(){
+  let data={};
 
   try{
+    data=await response.json();
+  }catch{}
 
-    const response=await fetch(
-      "/api/admin/me",
-      {
-        method:"GET",
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
-
-    if(!response.ok){
-      showLogin();
-      return;
-    }
-
-    const data=await response.json();
-
-    if(!data.success||!data.admin){
-      showLogin();
-      return;
-    }
-
-    showDashboard(data.admin);
-
-  }catch{
-
-    showLogin(
-      "Unable to connect to the server."
+  if(!response.ok){
+    throw new Error(
+      data.message ||
+      `Request failed (${response.status})`
     );
   }
+
+  return data;
 }
+
+
+/* =====================================================
+   SIDEBAR
+===================================================== */
+
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("sidebarOverlay").classList.toggle("show");
+}
+
+
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("show");
+}
+
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+const titles={
+  dashboard:"Dashboard",
+  users:"Users",
+  withdrawals:"Withdrawals",
+  jobs:"Jobs",
+  links:"Links",
+  videos:"Videos"
+};
+
+
+function showSection(section,button){
+
+  document.querySelectorAll(".section").forEach(el=>{
+    el.classList.remove("active");
+  });
+
+  const target=document.getElementById(
+    "section-"+section
+  );
+
+  if(target){
+    target.classList.add("active");
+  }
+
+  document.querySelectorAll(".nav-btn").forEach(el=>{
+    el.classList.remove("active");
+  });
+
+  if(button){
+    button.classList.add("active");
+  }
+
+  document.getElementById("pageTitle").textContent=
+    titles[section] || "Dashboard";
+
+  closeSidebar();
+
+  if(section==="dashboard"){
+    loadDashboard();
+  }
+
+  if(section==="users"){
+    loadUsers();
+  }
+
+  if(section==="withdrawals"){
+    loadAdminWithdrawals();
+  }
+
+  if(section==="jobs"){
+    loadJobs();
+  }
+
+  if(section==="links"){
+    loadLinks();
+  }
+
+  if(section==="videos"){
+    loadVideos();
+  }
+}
+
+
+function showSectionByName(section){
+
+  const button=
+    [...document.querySelectorAll(".nav-btn")]
+    .find(btn =>
+      btn.getAttribute("onclick")?.includes(
+        `'${section}'`
+      )
+    );
+
+  showSection(section,button);
+}
+
+
+/* =====================================================
+   LOGIN
+===================================================== */
 
 async function adminLogin(event){
 
   event.preventDefault();
 
-  const username=document.getElementById(
-    "adminUsername"
-  ).value.trim();
+  const username=
+    document.getElementById("adminUsername").value.trim();
 
-  const password=document.getElementById(
-    "adminPassword"
-  ).value;
+  const password=
+    document.getElementById("adminPassword").value;
 
-  const button=document.getElementById(
-    "loginButton"
-  );
+  const error=
+    document.getElementById("loginError");
 
-  const loading=document.getElementById(
-    "loginLoading"
-  );
-
-  const error=document.getElementById(
-    "loginError"
-  );
+  const btn=
+    document.getElementById("loginBtn");
 
   error.style.display="none";
 
-  button.disabled=true;
-  button.textContent="Signing in...";
-  loading.style.display="block";
+  if(!username || !password){
+    error.textContent=
+      "Username and password are required.";
+    error.style.display="block";
+    return;
+  }
+
+  btn.disabled=true;
+  btn.textContent="Logging in...";
 
   try{
 
-    const response=await fetch(
+    const data=await apiFetch(
       "/api/admin/login",
       {
         method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
         body:JSON.stringify({
           username,
           password
@@ -2283,1319 +1842,1160 @@ async function adminLogin(event){
       }
     );
 
-    let data={};
-
-    try{
-      data=await response.json();
-    }catch{}
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||"Invalid administrator credentials."
+        data.message ||
+        "Login failed."
       );
     }
 
-    document.getElementById(
-      "adminLoginForm"
-    ).reset();
+    document.getElementById("loginScreen").style.display="none";
+    document.getElementById("app").style.display="block";
 
-    showDashboard(
-      data.admin||{
-        username
-      }
-    );
+    await initializeDashboard();
 
-  }catch(errorObject){
+  }catch(error){
+
+    console.error("ADMIN LOGIN ERROR:",error);
+
+    error=document.getElementById("loginError");
 
     error.textContent=
-      errorObject.message||
-      "Unable to sign in.";
+      error?.message ||
+      "Login failed. Please check your details.";
 
     error.style.display="block";
 
   }finally{
 
-    button.disabled=false;
-    button.textContent="Sign in to Dashboard";
-    loading.style.display="none";
+    btn.disabled=false;
+    btn.textContent="Login to Dashboard";
   }
 }
 
-async function adminLogout(event){
 
-  if(event){
-    event.preventDefault();
-  }
+/* =====================================================
+   SESSION CHECK
+===================================================== */
 
-  if(!confirm("Sign out of the administrator dashboard?")){
-    return;
-  }
-
-  try{
-    await fetch(
-      "/api/admin/logout",
-      {
-        method:"POST",
-        credentials:"include"
-      }
-    );
-  }catch{}
-
-  showLogin("You have been signed out.");
-}
-
-function handleUnauthorized(){
-
-  if(!adminAuthenticated){
-    return;
-  }
-
-  showLogin(
-    "Your administrator session has expired. Please sign in again."
-  );
-}
-
-
-/* =========================================================
-   DASHBOARD SUMMARY
-========================================================= */
-
-async function loadDashboardSummary(){
-
-  if(!adminAuthenticated)return;
+async function checkAdminSession(){
 
   try{
 
-    const response=await fetch(
-      "/api/admin/dashboard?t="+Date.now(),
-      {
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
+    const response=
+      await fetch(
+        "/api/admin/me",
+        {
+          credentials:"include"
+        }
+      );
 
-    if(response.status===401){
-      handleUnauthorized();
-      return;
+    if(!response.ok){
+      return false;
     }
 
     const data=await response.json();
 
-    if(!data.success){
-      return;
+    if(data.success){
+
+      document.getElementById("loginScreen").style.display="none";
+      document.getElementById("app").style.display="block";
+
+      await initializeDashboard();
+
+      return true;
     }
 
-    document.getElementById("totalUsers").textContent=
-      Number(data.users||0);
+  }catch(error){
 
-    document.getElementById("pendingUsers").textContent=
-      Number(data.pendingUsers||0);
+    console.log(
+      "No existing admin session."
+    );
 
-    document.getElementById("approvedUsers").textContent=
-      Number(data.activeUsers||0);
+  }
 
-    document.getElementById("totalVideos").textContent=
-      Number(data.videos||0);
-
-    const pending=
-      Number(data.withdrawals?.pending||0);
-
-    document.getElementById(
-      "pendingWithdrawalsCard"
-    ).textContent=pending;
-
-    document.getElementById(
-      "navPendingCount"
-    ).textContent=pending;
-
-    if(
-      typeof data.regularWithdrawalsEnabled!=="undefined"
-    ){
-      updateWithdrawalToggleUI(
-        Boolean(data.regularWithdrawalsEnabled)
-      );
-    }
-
-  }catch{}
+  return false;
 }
 
 
-/* =========================================================
-   REGULAR WITHDRAWAL SWITCH
-========================================================= */
+/* =====================================================
+   INITIAL LOAD
+===================================================== */
+
+async function initializeDashboard(){
+
+  try{
+
+    await Promise.allSettled([
+      loadDashboard(),
+      loadRegularWithdrawalSetting(),
+      loadUsers(),
+      loadJobs(),
+      loadLinks(),
+      loadVideos(),
+      loadAdminWithdrawals()
+    ]);
+
+  }catch(error){
+
+    console.error(
+      "DASHBOARD INITIALIZATION ERROR:",
+      error
+    );
+
+  }
+}
+
+
+/* =====================================================
+   DASHBOARD
+===================================================== */
+
+async function loadDashboard(){
+
+  try{
+
+    const data=
+      await apiFetch(
+        "/api/admin/dashboard"
+      );
+
+    if(!data.success){
+      throw new Error(
+        data.message ||
+        "Unable to load dashboard."
+      );
+    }
+
+    const d=data;
+
+    setText(
+      "totalUsers",
+      d.totalUsers ??
+      d.users?.total ??
+      0
+    );
+
+    setText(
+      "pendingUsers",
+      d.pendingUsers ??
+      d.users?.pending ??
+      0
+    );
+
+    setText(
+      "approvedUsers",
+      d.approvedUsers ??
+      d.users?.approved ??
+      0
+    );
+
+    setText(
+      "goldMembers",
+      d.goldMembers ??
+      d.members?.gold ??
+      0
+    );
+
+    setText(
+      "silverMembers",
+      d.silverMembers ??
+      d.members?.silver ??
+      0
+    );
+
+    if(
+      typeof d.regularWithdrawalsEnabled !==
+      "undefined"
+    ){
+
+      updateWithdrawalSwitches(
+        Boolean(
+          d.regularWithdrawalsEnabled
+        )
+      );
+
+    }else if(
+      d.withdrawals &&
+      typeof d.withdrawals.regularEnabled !==
+      "undefined"
+    ){
+
+      updateWithdrawalSwitches(
+        Boolean(
+          d.withdrawals.regularEnabled
+        )
+      );
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "DASHBOARD LOAD ERROR:",
+      error
+    );
+
+    showToast(
+      "Unable to load dashboard: "+
+      error.message,
+      "error"
+    );
+  }
+}
+
+
+/* =====================================================
+   REGULAR WITHDRAWAL SETTING
+===================================================== */
 
 async function loadRegularWithdrawalSetting(){
 
   try{
 
-    const response=await fetch(
-      "/api/admin/settings/regular-withdrawals?t="+Date.now(),
-      {
-        method:"GET",
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
-
-    if(response.status===401){
-      handleUnauthorized();
-      return;
-    }
-
-    if(!response.ok){
-      throw new Error(
-        "Unable to load withdrawal setting."
+    const data=
+      await apiFetch(
+        "/api/admin/settings/regular-withdrawals"
       );
-    }
-
-    const data=await response.json();
 
     if(!data.success){
       throw new Error(
-        data.message||
+        data.message ||
         "Unable to load withdrawal setting."
       );
     }
 
-    updateWithdrawalToggleUI(
+    updateWithdrawalSwitches(
       Boolean(data.enabled)
     );
 
   }catch(error){
 
-    const badge=document.getElementById(
-      "withdrawalStatusBadge"
+    console.error(
+      "WITHDRAWAL SETTING ERROR:",
+      error
     );
 
-    const text=document.getElementById(
-      "withdrawalStatusText"
+    showToast(
+      "Unable to load withdrawal setting.",
+      "error"
     );
-
-    if(badge){
-      badge.className=
-        "withdrawal-status-pill off";
-
-      badge.innerHTML=
-        '<span class="status-dot"></span><span>Unavailable</span>';
-    }
-
-    if(text){
-      text.textContent=
-        "Unable to read the current withdrawal setting.";
-    }
   }
 }
 
-function updateWithdrawalToggleUI(enabled){
 
-  const checkbox=document.getElementById(
-    "regularWithdrawalSwitch"
-  );
+function updateWithdrawalSwitches(enabled){
 
-  const badge=document.getElementById(
-    "withdrawalStatusBadge"
-  );
+  const switches=[
+    document.getElementById(
+      "regularWithdrawalSwitch"
+    ),
+    document.getElementById(
+      "regularWithdrawalSwitch2"
+    )
+  ];
 
-  const text=document.getElementById(
-    "withdrawalStatusText"
-  );
+  switches.forEach(sw=>{
+    if(sw){
+      sw.checked=enabled;
+    }
+  });
 
-  if(checkbox){
-    checkbox.checked=Boolean(enabled);
-  }
+  const statuses=[
+    document.getElementById(
+      "regularWithdrawalStatus"
+    ),
+    document.getElementById(
+      "regularWithdrawalStatus2"
+    )
+  ];
 
-  if(badge){
+  statuses.forEach(status=>{
 
-    badge.className=
-      "withdrawal-status-pill "+
-      (enabled?"on":"off");
+    if(!status)return;
 
-    badge.innerHTML=
-      '<span class="status-dot"></span>'+
-      '<span>'+
-      (
-        enabled
-          ?"REGULAR WITHDRAWALS ON"
-          :"REGULAR WITHDRAWALS OFF"
-      )+
-      '</span>';
-  }
+    status.textContent=
+      enabled ? "ON" : "OFF";
+
+    status.className=
+      "switch-status "+
+      (enabled ? "on" : "off");
+  });
+
+  const text=
+    document.getElementById(
+      "withdrawalSettingText"
+    );
 
   if(text){
 
-    text.innerHTML=enabled
-      ?"<strong>Members can currently submit regular withdrawals.</strong> Affiliate withdrawals remain available."
-      :"<strong>Regular withdrawal requests are blocked.</strong> Affiliate withdrawals are not affected.";
+    text.textContent=
+      enabled
+      ? "Regular withdrawals are currently available to members."
+      : "Regular withdrawals are currently unavailable to members.";
   }
 }
 
+
 async function toggleRegularWithdrawals(enabled){
 
-  const checkbox=document.getElementById(
-    "regularWithdrawalSwitch"
-  );
+  const switches=[
+    document.getElementById(
+      "regularWithdrawalSwitch"
+    ),
+    document.getElementById(
+      "regularWithdrawalSwitch2"
+    )
+  ];
 
-  const previous=!enabled;
+  const previous=
+    switches.find(Boolean)?.checked;
 
-  const message=enabled
-    ?"Turn ON regular withdrawals? Members will be able to submit regular withdrawal requests."
-    :"Turn OFF regular withdrawals? New regular withdrawal requests will be blocked.";
-
-  if(!confirm(message)){
-
-    if(checkbox){
-      checkbox.checked=previous;
+  switches.forEach(sw=>{
+    if(sw){
+      sw.disabled=true;
     }
-
-    return;
-  }
-
-  if(checkbox){
-    checkbox.disabled=true;
-  }
+  });
 
   try{
 
-    const response=await fetch(
-      "/api/admin/settings/regular-withdrawals",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          enabled:Boolean(enabled)
-        })
-      }
-    );
+    const data=
+      await apiFetch(
+        "/api/admin/settings/regular-withdrawals",
+        {
+          method:"POST",
+          body:JSON.stringify({
+            enabled
+          })
+        }
+      );
 
-    let data={};
-
-    try{
-      data=await response.json();
-    }catch{}
-
-    if(response.status===401){
-      handleUnauthorized();
-      return;
-    }
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||
-        "Unable to update withdrawal setting."
+        data.message ||
+        "Unable to update setting."
       );
     }
 
-    updateWithdrawalToggleUI(
+    updateWithdrawalSwitches(
       Boolean(data.enabled)
     );
 
     showToast(
-      data.message||
+      data.message ||
       (
         enabled
-          ?"Regular withdrawals are now ON."
-          :"Regular withdrawals are now OFF."
+        ? "Regular withdrawals are now ON."
+        : "Regular withdrawals are now OFF."
       ),
-      enabled
-        ?"success"
-        :"warning"
+      "success"
     );
 
   }catch(error){
 
-    updateWithdrawalToggleUI(previous);
+    console.error(
+      "WITHDRAWAL TOGGLE ERROR:",
+      error
+    );
 
-    alert(
-      error.message||
-      "Unable to update withdrawal setting."
+    if(
+      typeof previous !==
+      "undefined"
+    ){
+      updateWithdrawalSwitches(
+        Boolean(previous)
+      );
+    }
+
+    showToast(
+      error.message ||
+      "Unable to update withdrawal setting.",
+      "error"
     );
 
   }finally{
 
-    if(checkbox){
-      checkbox.disabled=false;
-    }
+    switches.forEach(sw=>{
+      if(sw){
+        sw.disabled=false;
+      }
+    });
+
   }
 }
 
 
-/* =========================================================
-   TOAST
-========================================================= */
+function toggleRegularWithdrawalsFromWithdrawals(
+  enabled
+){
+  toggleRegularWithdrawals(enabled);
+}
 
-function showToast(message,type="success"){
 
-  let toast=document.getElementById(
-    "adminToast"
-  );
+/* =====================================================
+   USERS
+===================================================== */
 
-  if(!toast){
+async function loadUsers(){
 
-    toast=document.createElement("div");
+  const table=
+    document.getElementById(
+      "usersTable"
+    );
 
-    toast.id="adminToast";
+  try{
 
-    toast.style.cssText=`
-      position:fixed;
-      right:24px;
-      bottom:24px;
-      z-index:99999;
-      max-width:360px;
-      padding:13px 16px;
-      border-radius:12px;
-      color:white;
-      font-size:11px;
-      font-weight:700;
-      box-shadow:0 12px 35px rgba(15,23,42,.18);
-      transition:.25s;
+    const data=
+      await apiFetch(
+        "/api/admin/users"
+      );
+
+    const users=
+      data.users ||
+      data.data ||
+      [];
+
+    renderUsers(users);
+
+    renderRecentUsers(users);
+
+  }catch(error){
+
+    console.error(
+      "USERS LOAD ERROR:",
+      error
+    );
+
+    table.innerHTML=`
+      <tr>
+        <td colspan="10">
+          <div class="empty">
+            Unable to load users.<br>
+            ${escapeHtml(error.message)}
+          </div>
+        </td>
+      </tr>
     `;
 
-    document.body.appendChild(toast);
-  }
-
-  toast.style.background=
-    type==="warning"
-      ?"#d97706"
-      :"#16a34a";
-
-  toast.textContent=message;
-
-  toast.style.opacity="1";
-
-  clearTimeout(
-    window.__joviaToastTimer
-  );
-
-  window.__joviaToastTimer=
-    setTimeout(
-      ()=>{
-        toast.style.opacity="0";
-      },
-      3000
+    showToast(
+      "Unable to load users.",
+      "error"
     );
-}
-
-
-/* =========================================================
-   FILTERS
-========================================================= */
-
-function filterUsers(){
-
-  const query=
-    document.getElementById(
-      "searchUsers"
-    ).value
-    .toLowerCase()
-    .trim();
-
-  if(!query){
-    renderUsersTable(rawUsers);
-    return;
   }
-
-  const filtered=rawUsers.filter(
-    user=>`
-      ${user.full_name||""}
-      ${user.username||""}
-      ${user.email||""}
-      ${user.phone||""}
-      ${user.package||""}
-      ${user.account_status||""}
-    `.toLowerCase().includes(query)
-  );
-
-  renderUsersTable(filtered);
 }
 
-function filterWithdrawals(){
 
-  const query=
+function renderUsers(users){
+
+  const table=
     document.getElementById(
-      "searchWithdrawals"
-    ).value
-    .toLowerCase()
-    .trim();
-
-  if(!query){
-    renderWithdrawalsTable(rawWithdrawals);
-    return;
-  }
-
-  const filtered=rawWithdrawals.filter(
-    withdrawal=>`
-      ${withdrawal.username||""}
-      ${withdrawal.user_name||""}
-      ${withdrawal.bank_name||""}
-      ${withdrawal.account_name||""}
-      ${withdrawal.account_number||""}
-      ${withdrawal.amount||""}
-      ${withdrawal.status||""}
-      ${withdrawal.withdrawal_type||""}
-      ${withdrawal.type||""}
-    `.toLowerCase().includes(query)
-  );
-
-  renderWithdrawalsTable(filtered);
-}
-
-function filterJobs(){
-
-  const query=
-    document.getElementById(
-      "searchJobs"
-    ).value
-    .toLowerCase()
-    .trim();
-
-  if(!query){
-    renderJobsTable(rawJobs);
-    return;
-  }
-
-  const filtered=rawJobs.filter(
-    job=>`
-      ${job.title||""}
-      ${job.category||""}
-      ${job.description||""}
-    `.toLowerCase().includes(query)
-  );
-
-  renderJobsTable(filtered);
-}
-
-function filterVideos(){
-
-  const query=
-    document.getElementById(
-      "searchVideos"
-    ).value
-    .toLowerCase()
-    .trim();
-
-  if(!query){
-    renderVideosTable(rawVideos);
-    return;
-  }
-
-  const filtered=rawVideos.filter(
-    video=>`
-      ${video.title||""}
-      ${video.category||""}
-      ${video.description||""}
-    `.toLowerCase().includes(query)
-  );
-
-  renderVideosTable(filtered);
-}
-
-function filterLinks(){
-
-  const query=
-    document.getElementById(
-      "searchLinks"
-    ).value
-    .toLowerCase()
-    .trim();
-
-  if(!query){
-    renderLinksTable(rawLinks);
-    return;
-  }
-
-  const filtered=rawLinks.filter(
-    link=>`
-      ${link.name||""}
-      ${link.category||""}
-      ${link.url||""}
-    `.toLowerCase().includes(query)
-  );
-
-  renderLinksTable(filtered);
-}
-
-
-/* =========================================================
-   USERS
-========================================================= */
-
-function renderUsersTable(users){
-
-  const table=document.getElementById(
-    "usersTable"
-  );
+      "usersTable"
+    );
 
   if(!users.length){
 
-    table.innerHTML=
-      `<tr>
-        <td colspan="10" class="empty">
-          No users found.
+    table.innerHTML=`
+      <tr>
+        <td colspan="10">
+          <div class="empty">
+            No users found.
+          </div>
         </td>
-      </tr>`;
+      </tr>
+    `;
 
     return;
   }
 
-  table.innerHTML=users.map(
-    user=>{
+  table.innerHTML=
+    users.map(user=>{
 
       const status=
         String(
-          user.account_status||"pending"
+          user.account_status ||
+          user.status ||
+          "pending"
         ).toLowerCase();
 
       const packageName=
-        user.package||"-";
+        user.package ||
+        user.plan ||
+        "—";
 
       const packageClass=
         String(packageName).toLowerCase()==="gold"
-          ?"gold"
-          :"silver";
-
-      let buttons="";
-
-      if(status==="pending"){
-
-        buttons+=`
-          <button
-            class="action approve"
-            onclick="updateStatus(${Number(user.id)},'approved')"
-          >
-            Approve
-          </button>
-        `;
-      }
-
-      if(
-        status==="approved"||
-        status==="active"
-      ){
-
-        buttons+=`
-          <button
-            class="action suspend"
-            onclick="confirmSuspend(${Number(user.id)})"
-          >
-            Suspend
-          </button>
-        `;
-      }
-
-      if(status==="suspended"){
-
-        buttons+=`
-          <button
-            class="action restore"
-            onclick="updateStatus(${Number(user.id)},'approved')"
-          >
-            Restore
-          </button>
-        `;
-      }
-
-      buttons+=`
-        <button
-          class="action reset"
-          onclick="resetPassword(${Number(user.id)})"
-        >
-          Reset Password
-        </button>
-      `;
+        ? "gold"
+        : "silver";
 
       return `
         <tr>
 
           <td>
             <strong>
-              ${escapeHTML(user.full_name||"-")}
+              ${escapeHtml(user.full_name || "—")}
             </strong>
           </td>
 
           <td>
-            ${escapeHTML(user.username||"-")}
+            ${escapeHtml(user.username || "—")}
           </td>
 
           <td>
-            ${escapeHTML(user.email||"-")}
+            ${escapeHtml(user.email || "—")}
           </td>
 
           <td>
-            ${escapeHTML(user.phone||"-")}
+            ${escapeHtml(user.phone || "—")}
           </td>
 
           <td>
-            <span class="password-protected">
-              🔒 Protected
-            </span>
-          </td>
-
-          <td class="${packageClass}">
-            ${escapeHTML(packageName)}
-          </td>
-
-          <td>
-            ${formatNaira(user.package_amount||0)}
-          </td>
-
-          <td>
-            <span class="status ${escapeHTML(status)}">
-              ${escapeHTML(status)}
+            <span class="badge">
+              Protected
             </span>
           </td>
 
           <td>
-            ${escapeHTML(formatDate(user.created_at))}
+            <span class="badge ${packageClass}">
+              ${escapeHtml(packageName)}
+            </span>
           </td>
 
           <td>
-            ${buttons}
+            ₦${formatMoney(
+              user.package_amount ||
+              user.amount ||
+              0
+            )}
+          </td>
+
+          <td>
+            <span class="badge ${statusClass(status)}">
+              ${escapeHtml(status)}
+            </span>
+          </td>
+
+          <td>
+            ${formatDate(
+              user.created_at
+            )}
+          </td>
+
+          <td>
+            <div class="actions">
+
+              ${
+                status!=="active" &&
+                status!=="approved"
+                ? `
+                  <button
+                    class="action-btn approve"
+                    onclick="approveUser(${Number(user.id)})"
+                  >
+                    Approve
+                  </button>
+                `
+                : ""
+              }
+
+              <button
+                class="action-btn reset"
+                onclick="resetUserPassword(${Number(user.id)})"
+              >
+                Reset Password
+              </button>
+
+              ${
+                status==="active" ||
+                status==="approved"
+                ? `
+                  <button
+                    class="action-btn suspend"
+                    onclick="changeUserStatus(${Number(user.id)},'suspended')"
+                  >
+                    Suspend
+                  </button>
+                `
+                : `
+                  <button
+                    class="action-btn activate"
+                    onclick="changeUserStatus(${Number(user.id)},'active')"
+                  >
+                    Activate
+                  </button>
+                `
+              }
+
+            </div>
           </td>
 
         </tr>
       `;
-    }
-  ).join("");
+
+    }).join("");
 }
 
-async function loadUsers(){
 
-  if(!adminAuthenticated)return;
+function renderRecentUsers(users){
 
-  const table=document.getElementById(
-    "usersTable"
-  );
-
-  try{
-
-    const response=await fetch(
-      "/api/admin/users?t="+Date.now(),
-      {
-        cache:"no-store",
-        credentials:"include"
-      }
+  const table=
+    document.getElementById(
+      "recentUsersTable"
     );
 
-    if(response.status===401){
-      handleUnauthorized();
-      return;
-    }
+  const recent=
+    users.slice(0,8);
 
-    const data=await response.json();
+  if(!recent.length){
 
-    if(!data.success){
-      throw new Error(
-        data.message||
-        "Unable to load users."
-      );
-    }
-
-    const users=data.users||[];
-
-    rawUsers=users;
-
-    usersCache=new Map(
-      users.map(
-        user=>[
-          Number(user.id),
-          user
-        ]
-      )
-    );
-
-    document.getElementById(
-      "totalUsers"
-    ).textContent=users.length;
-
-    document.getElementById(
-      "pendingUsers"
-    ).textContent=
-      users.filter(
-        user=>
-          String(
-            user.account_status
-          ).toLowerCase()==="pending"
-      ).length;
-
-    document.getElementById(
-      "approvedUsers"
-    ).textContent=
-      users.filter(
-        user=>{
-          const status=
-            String(
-              user.account_status||""
-            ).toLowerCase();
-
-          return(
-            status==="approved"||
-            status==="active"
-          );
-        }
-      ).length;
-
-    document.getElementById(
-      "goldUsers"
-    ).textContent=
-      users.filter(
-        user=>
-          String(
-            user.package||""
-          ).toLowerCase()==="gold"
-      ).length;
-
-    document.getElementById(
-      "silverUsers"
-    ).textContent=
-      users.filter(
-        user=>
-          String(
-            user.package||""
-          ).toLowerCase()==="silver"
-      ).length;
-
-    const search=
-      document.getElementById(
-        "searchUsers"
-      )?.value||"";
-
-    if(search.trim()){
-      filterUsers();
-    }else{
-      renderUsersTable(users);
-    }
-
-    document.getElementById(
-      "lastUpdated"
-    ).textContent=
-      new Date().toLocaleTimeString(
-        "en-NG"
-      );
-
-  }catch(error){
-
-    table.innerHTML=
-      `<tr>
-        <td colspan="10" class="empty error">
-          Unable to load users.
+    table.innerHTML=`
+      <tr>
+        <td colspan="5">
+          <div class="empty">
+            No users found.
+          </div>
         </td>
-      </tr>`;
-  }
-}
-
-async function resetPassword(id){
-
-  const user=usersCache.get(
-    Number(id)
-  );
-
-  if(!user)return;
-
-  const newPassword=prompt(
-    `New password for ${user.username}:\nMinimum 8 characters`
-  );
-
-  if(newPassword===null)return;
-
-  if(newPassword.length<8){
-
-    alert(
-      "Password must contain at least 8 characters."
-    );
+      </tr>
+    `;
 
     return;
   }
 
-  const confirmPassword=prompt(
-    "Confirm the new password:"
-  );
+  table.innerHTML=
+    recent.map(user=>{
 
-  if(newPassword!==confirmPassword){
+      const status=
+        String(
+          user.account_status ||
+          user.status ||
+          "pending"
+        ).toLowerCase();
 
-    alert(
-      "Passwords do not match."
-    );
+      const pkg=
+        user.package ||
+        "—";
 
-    return;
-  }
+      return `
+        <tr>
 
-  try{
+          <td>
+            ${escapeHtml(
+              user.full_name || "—"
+            )}
+          </td>
 
-    const response=await fetch(
-      `/api/admin/users/${Number(id)}/reset-password`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          newPassword
-        })
-      }
-    );
+          <td>
+            ${escapeHtml(
+              user.username || "—"
+            )}
+          </td>
 
-    const data=await response.json();
+          <td>
+            <span class="badge ${
+              String(pkg).toLowerCase()==="gold"
+              ? "gold"
+              : "silver"
+            }">
+              ${escapeHtml(pkg)}
+            </span>
+          </td>
 
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to reset password."
-      );
-    }
+          <td>
+            <span class="badge ${statusClass(status)}">
+              ${escapeHtml(status)}
+            </span>
+          </td>
 
-    alert(
-      data.message||
-      "Password reset successfully."
-    );
+          <td>
+            ${formatDate(
+              user.created_at
+            )}
+          </td>
 
-  }catch(error){
+        </tr>
+      `;
 
-    alert(error.message);
-  }
+    }).join("");
 }
 
-function confirmSuspend(id){
+
+/* =====================================================
+   USER ACTIONS
+===================================================== */
+
+async function approveUser(id){
 
   if(!confirm(
-    "Suspend this user?"
+    "Approve this user account?"
   )){
     return;
   }
 
-  updateStatus(
-    id,
-    "suspended"
-  );
+  try{
+
+    const data=
+      await apiFetch(
+        `/api/admin/users/${id}/status`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            status:"active"
+          })
+        }
+      );
+
+    if(!data.success){
+      throw new Error(
+        data.message ||
+        "Unable to approve user."
+      );
+    }
+
+    showToast(
+      "User approved successfully.",
+      "success"
+    );
+
+    await loadUsers();
+    await loadDashboard();
+
+  }catch(error){
+
+    showToast(
+      error.message ||
+      "Unable to approve user.",
+      "error"
+    );
+  }
 }
 
-async function updateStatus(id,status){
 
-  if(
-    status==="approved"&&
-    !confirm("Approve this user?")
-  ){
+async function changeUserStatus(id,status){
+
+  const action=
+    status==="active"
+    ? "activate"
+    : "suspend";
+
+  if(!confirm(
+    `Are you sure you want to ${action} this user?`
+  )){
     return;
   }
 
   try{
 
-    const response=await fetch(
-      `/api/admin/users/${Number(id)}/status`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          status
-        })
-      }
-    );
+    const data=
+      await apiFetch(
+        `/api/admin/users/${id}/status`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            status
+          })
+        }
+      );
 
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||
-        "Unable to update account."
+        data.message ||
+        "Unable to update user."
       );
     }
+
+    showToast(
+      `User ${action}d successfully.`,
+      "success"
+    );
 
     await loadUsers();
+    await loadDashboard();
 
   }catch(error){
 
-    alert(error.message);
+    showToast(
+      error.message ||
+      "Unable to update user.",
+      "error"
+    );
   }
 }
 
 
-/* =========================================================
-   JOBS
-========================================================= */
+async function resetUserPassword(id){
 
-async function createJob(event){
-
-  event.preventDefault();
-
-  const slot=Number(
-    document.getElementById(
-      "jobSlot"
-    ).value
-  );
-
-  const title=
-    document.getElementById(
-      "jobTitle"
-    ).value.trim();
-
-  const category=
-    document.getElementById(
-      "jobCategory"
-    ).value.trim();
-
-  const url=
-    document.getElementById(
-      "jobUrl"
-    ).value.trim();
-
-  const description=
-    document.getElementById(
-      "jobDescription"
-    ).value.trim();
-
-  const reward=Number(
-    document.getElementById(
-      "jobReward"
-    ).value
-  );
-
-  const duration=
-    document.getElementById(
-      "jobDuration"
-    ).value.trim();
-
-  const status=
-    document.getElementById(
-      "jobStatus"
-    ).value;
-
-  const button=
-    document.getElementById(
-      "createJobButton"
+  const password=
+    prompt(
+      "Enter the new password. Minimum 8 characters:"
     );
 
-  button.disabled=true;
-  button.textContent="Creating...";
+  if(password===null){
+    return;
+  }
+
+  if(password.length<8){
+
+    showToast(
+      "Password must be at least 8 characters.",
+      "error"
+    );
+
+    return;
+  }
 
   try{
 
-    const response=await fetch(
-      "/api/admin/jobs",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          slot,
-          job_slot:slot,
-          title,
-          name:title,
-          category,
-          url,
-          link:url,
-          job_url:url,
-          link_url:url,
-          description,
-          reward,
-          amount:reward,
-          duration:duration||"Flexible",
-          status
-        })
-      }
-    );
+    const data=
+      await apiFetch(
+        `/api/admin/users/${id}/reset-password`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            password
+          })
+        }
+      );
 
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||
-        "Unable to create job."
+        data.message ||
+        "Unable to reset password."
       );
     }
 
-    alert(
-      data.message||
-      "Job created successfully."
+    showToast(
+      "Password reset successfully.",
+      "success"
     );
-
-    document.getElementById(
-      "createJobForm"
-    ).reset();
-
-    document.getElementById(
-      "jobCategory"
-    ).value="General";
-
-    await loadAdminJobs();
 
   }catch(error){
 
-    alert(error.message);
-
-  }finally{
-
-    button.disabled=false;
-    button.textContent="＋ Create Job";
+    showToast(
+      error.message ||
+      "Unable to reset password.",
+      "error"
+    );
   }
 }
 
-async function loadAdminJobs(){
 
-  if(!adminAuthenticated)return;
+/* =====================================================
+   WITHDRAWALS
+===================================================== */
+
+async function loadAdminWithdrawals(){
+
+  const table=
+    document.getElementById(
+      "withdrawalsTable"
+    );
 
   try{
 
-    const response=await fetch(
-      "/api/admin/jobs?t="+Date.now(),
-      {
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
+    const data=
+      await apiFetch(
+        "/api/admin/withdrawals"
+      );
 
-    if(response.status===401){
-      handleUnauthorized();
+    const withdrawals=
+      data.withdrawals ||
+      data.data ||
+      [];
+
+    if(!withdrawals.length){
+
+      table.innerHTML=`
+        <tr>
+          <td colspan="8">
+            <div class="empty">
+              No withdrawal requests found.
+            </div>
+          </td>
+        </tr>
+      `;
+
       return;
     }
 
-    const data=await response.json();
+    table.innerHTML=
+      withdrawals.map(w=>{
 
-    const jobs=data.jobs||[];
+        const status=
+          String(
+            w.status ||
+            "pending"
+          ).toLowerCase();
 
-    rawJobs=jobs;
+        const type=
+          w.type ||
+          "regular";
 
-    jobsCache=new Map(
-      jobs.map(
-        job=>[
-          Number(job.id),
-          job
-        ]
-      )
+        return `
+          <tr>
+
+            <td>
+              ${escapeHtml(
+                w.full_name ||
+                w.name ||
+                "—"
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                w.username ||
+                "—"
+              )}
+            </td>
+
+            <td>
+              <span class="badge ${
+                String(type).toLowerCase()==="affiliate"
+                ? "gold"
+                : "silver"
+              }">
+                ${escapeHtml(type)}
+              </span>
+            </td>
+
+            <td>
+              ₦${formatMoney(
+                w.amount || 0
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                w.bank_name ||
+                w.bank ||
+                "—"
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                w.account_number ||
+                w.account ||
+                "—"
+              )}
+            </td>
+
+            <td>
+              <span class="badge ${statusClass(status)}">
+                ${escapeHtml(status)}
+              </span>
+            </td>
+
+            <td>
+              ${formatDate(
+                w.created_at
+              )}
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
+
+  }catch(error){
+
+    console.error(
+      "WITHDRAWALS LOAD ERROR:",
+      error
     );
 
-    document.getElementById(
-      "totalJobs"
-    ).textContent=jobs.length;
-
-    const search=
-      document.getElementById(
-        "searchJobs"
-      )?.value||"";
-
-    if(search.trim()){
-      filterJobs();
-    }else{
-      renderJobsTable(jobs);
-    }
-
-  }catch{
-
-    document.getElementById(
-      "jobsTable"
-    ).innerHTML=
-      `<tr>
-        <td colspan="11" class="empty error">
-          Unable to load jobs.
+    table.innerHTML=`
+      <tr>
+        <td colspan="8">
+          <div class="empty">
+            Unable to load withdrawals.<br>
+            ${escapeHtml(error.message)}
+          </div>
         </td>
-      </tr>`;
+      </tr>
+    `;
+
   }
 }
 
-function renderJobsTable(jobs){
+
+/* =====================================================
+   JOBS
+===================================================== */
+
+async function loadJobs(){
 
   const table=
     document.getElementById(
       "jobsTable"
     );
 
-  if(!jobs.length){
-
-    table.innerHTML=
-      `<tr>
-        <td colspan="11" class="empty">
-          No jobs found.
-        </td>
-      </tr>`;
-
-    return;
-  }
-
-  table.innerHTML=jobs.map(
-    job=>{
-
-      const status=
-        String(
-          job.status||"active"
-        ).toLowerCase();
-
-      const active=
-        status==="active"||
-        status==="available";
-
-      const statusClass=
-        active
-          ?"active"
-          :"paused";
-
-      let buttons=active
-        ?`
-          <button
-            class="job-action pause-job"
-            onclick="changeJobStatus(${Number(job.id)},'inactive')"
-          >
-            Pause
-          </button>
-        `
-        :`
-          <button
-            class="job-action activate-job"
-            onclick="changeJobStatus(${Number(job.id)},'active')"
-          >
-            Activate
-          </button>
-        `;
-
-      buttons+=`
-        <button
-          class="job-action delete-job"
-          onclick="deleteJob(${Number(job.id)})"
-        >
-          Delete
-        </button>
-      `;
-
-      const jobUrl=
-        job.url||
-        job.job_url||
-        job.link||
-        "-";
-
-      return `
-        <tr>
-
-          <td>
-            <span class="slot">
-              Job ${Number(
-                job.slot||
-                job.job_slot||
-                0
-              )}
-            </span>
-          </td>
-
-          <td>
-            #${Number(job.id)}
-          </td>
-
-          <td>
-            <strong>
-              ${escapeHTML(job.title||"-")}
-            </strong>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              job.category||
-              "General"
-            )}
-          </td>
-
-          <td>
-            <a
-              href="${escapeHTML(
-                safeUrl(jobUrl)
-              )}"
-              target="_blank"
-              class="job-url"
-            >
-              ${escapeHTML(jobUrl)}
-            </a>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              job.description||
-              "-"
-            )}
-          </td>
-
-          <td class="reward">
-            ${formatNaira(
-              job.reward||
-              job.amount||
-              0
-            )}
-          </td>
-
-          <td>
-            ${escapeHTML(
-              job.duration||
-              "-"
-            )}
-          </td>
-
-          <td>
-            <span class="status ${statusClass}">
-              ${escapeHTML(status)}
-            </span>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              formatDate(
-                job.created_at
-              )
-            )}
-          </td>
-
-          <td>
-            ${buttons}
-          </td>
-
-        </tr>
-      `;
-    }
-  ).join("");
-}
-
-async function changeJobStatus(id,status){
-
-  if(!confirm(
-    `Change job status to ${status}?`
-  )){
-    return;
-  }
-
   try{
 
-    const response=await fetch(
-      `/api/admin/jobs/${Number(id)}/status`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          status
-        })
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to change job status."
+    const data=
+      await apiFetch(
+        "/api/admin/jobs"
       );
+
+    const jobs=
+      data.jobs ||
+      data.data ||
+      [];
+
+    if(!jobs.length){
+
+      table.innerHTML=`
+        <tr>
+          <td colspan="6">
+            <div class="empty">
+              No jobs found.
+            </div>
+          </td>
+        </tr>
+      `;
+
+      return;
     }
 
-    await loadAdminJobs();
+    table.innerHTML=
+      jobs.map(job=>{
+
+        const status=
+          String(
+            job.status ||
+            "active"
+          ).toLowerCase();
+
+        return `
+          <tr>
+
+            <td>
+              ${escapeHtml(job.id)}
+            </td>
+
+            <td>
+              <strong>
+                ${escapeHtml(
+                  job.title ||
+                  job.name ||
+                  "—"
+                )}
+              </strong>
+            </td>
+
+            <td>
+              ${escapeHtml(
+                job.description ||
+                "—"
+              )}
+            </td>
+
+            <td>
+              ₦${formatMoney(
+                job.reward ||
+                job.amount ||
+                0
+              )}
+            </td>
+
+            <td>
+              <span class="badge ${statusClass(status)}">
+                ${escapeHtml(status)}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions">
+
+                ${
+                  status==="active"
+                  ? `
+                    <button
+                      class="action-btn suspend"
+                      onclick="changeJobStatus(${Number(job.id)},'inactive')"
+                    >
+                      Disable
+                    </button>
+                  `
+                  : `
+                    <button
+                      class="action-btn activate"
+                      onclick="changeJobStatus(${Number(job.id)},'active')"
+                    >
+                      Activate
+                    </button>
+                  `
+                }
+
+                <button
+                  class="action-btn delete"
+                  onclick="deleteJob(${Number(job.id)})"
+                >
+                  Delete
+                </button>
+
+              </div>
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
 
   }catch(error){
 
-    alert(error.message);
+    table.innerHTML=`
+      <tr>
+        <td colspan="6">
+          <div class="empty">
+            Unable to load jobs.
+          </div>
+        </td>
+      </tr>
+    `;
+
   }
 }
+
+
+async function changeJobStatus(id,status){
+
+  try{
+
+    const data=
+      await apiFetch(
+        `/api/admin/jobs/${id}/status`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            status
+          })
+        }
+      );
+
+    if(!data.success){
+      throw new Error(
+        data.message ||
+        "Unable to update job."
+      );
+    }
+
+    showToast(
+      "Job status updated.",
+      "success"
+    );
+
+    await loadJobs();
+
+  }catch(error){
+
+    showToast(
+      error.message ||
+      "Unable to update job.",
+      "error"
+    );
+  }
+}
+
 
 async function deleteJob(id){
 
@@ -3607,1662 +3007,613 @@ async function deleteJob(id){
 
   try{
 
-    const response=await fetch(
-      `/api/admin/jobs/${Number(id)}`,
-      {
-        method:"DELETE",
-        credentials:"include"
-      }
-    );
+    const data=
+      await apiFetch(
+        `/api/admin/jobs/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
 
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||
+        data.message ||
         "Unable to delete job."
       );
     }
 
-    await loadAdminJobs();
+    showToast(
+      "Job deleted.",
+      "success"
+    );
+
+    await loadJobs();
 
   }catch(error){
 
-    alert(error.message);
+    showToast(
+      error.message ||
+      "Unable to delete job.",
+      "error"
+    );
   }
 }
 
 
-/* =========================================================
-   VIDEOS
-========================================================= */
-
-async function saveVideo(event){
-
-  event.preventDefault();
-
-  const title=
-    document.getElementById(
-      "videoTitle"
-    ).value.trim();
-
-  const category=
-    document.getElementById(
-      "videoCategory"
-    ).value.trim();
-
-  let url=
-    document.getElementById(
-      "videoUrl"
-    ).value.trim();
-
-  const description=
-    document.getElementById(
-      "videoDescription"
-    ).value.trim();
-
-  const thumbnail=
-    document.getElementById(
-      "videoThumbnail"
-    ).value.trim();
-
-  const reward=Number(
-    document.getElementById(
-      "videoReward"
-    ).value
-  );
-
-  const status=
-    document.getElementById(
-      "videoStatus"
-    ).value;
-
-  const file=
-    document.getElementById(
-      "videoFile"
-    ).files[0];
-
-  if(!title){
-
-    alert("Enter a video title.");
-    return;
-  }
-
-  if(!url&&!file&&!editingVideoId){
-
-    alert(
-      "Upload a video file or enter a video URL."
-    );
-
-    return;
-  }
-
-  const button=
-    document.getElementById(
-      "saveVideoButton"
-    );
-
-  button.disabled=true;
-  button.textContent="Saving...";
-
-  try{
-
-    if(file){
-
-      document.getElementById(
-        "uploadProgress"
-      ).style.display="block";
-
-      const formData=new FormData();
-
-      formData.append(
-        "video",
-        file
-      );
-
-      const uploadResult=
-        await new Promise(
-          (resolve,reject)=>{
-
-            const xhr=
-              new XMLHttpRequest();
-
-            xhr.upload.onprogress=
-              event=>{
-
-                if(
-                  event.lengthComputable
-                ){
-
-                  const percent=
-                    Math.round(
-                      (
-                        event.loaded/
-                        event.total
-                      )*100
-                    );
-
-                  document.getElementById(
-                    "progressBar"
-                  ).style.width=
-                    percent+"%";
-
-                  document.getElementById(
-                    "progressText"
-                  ).textContent=
-                    percent+"%";
-                }
-              };
-
-            xhr.onload=()=>{
-
-              let data={};
-
-              try{
-                data=
-                  JSON.parse(
-                    xhr.responseText
-                  );
-              }catch{}
-
-              if(
-                xhr.status>=200&&
-                xhr.status<300
-              ){
-
-                resolve(data);
-
-              }else{
-
-                reject(
-                  new Error(
-                    data.message||
-                    "Video upload failed."
-                  )
-                );
-              }
-            };
-
-            xhr.onerror=()=>{
-              reject(
-                new Error(
-                  "Video upload failed."
-                )
-              );
-            };
-
-            xhr.open(
-              "POST",
-              "/api/admin/videos/upload"
-            );
-
-            xhr.withCredentials=true;
-
-            xhr.send(formData);
-          }
-        );
-
-      if(
-        !uploadResult.success&&
-        !uploadResult.url&&
-        !uploadResult.video_url
-      ){
-
-        throw new Error(
-          uploadResult.message||
-          "Video upload failed."
-        );
-      }
-
-      url=
-        uploadResult.url||
-        uploadResult.video_url||
-        "";
-
-      document.getElementById(
-        "videoUrl"
-      ).value=url;
-
-      document.getElementById(
-        "uploadedVideoPreview"
-      ).style.display="block";
-
-      document.getElementById(
-        "previewUrl"
-      ).textContent=url;
-
-      document.getElementById(
-        "previewPlayer"
-      ).src=url;
-    }
-
-
-    const endpoint=
-      editingVideoId
-        ?`/api/admin/videos/${Number(editingVideoId)}`
-        :"/api/admin/videos";
-
-    const method=
-      editingVideoId
-        ?"PUT"
-        :"POST";
-
-    const response=await fetch(
-      endpoint,
-      {
-        method,
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          title,
-          category:category||"General",
-          url,
-          video_url:url,
-          description,
-          thumbnail,
-          thumbnail_url:thumbnail,
-          reward,
-          status
-        })
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to save video."
-      );
-    }
-
-    alert(
-      data.message||
-      "Video saved successfully."
-    );
-
-    cancelVideoEdit();
-
-    await loadAdminVideos();
-
-  }catch(error){
-
-    alert(error.message);
-
-  }finally{
-
-    button.disabled=false;
-
-    button.textContent=
-      editingVideoId
-        ?"Update Video"
-        :"＋ Upload & Save Video";
-
-    document.getElementById(
-      "uploadProgress"
-    ).style.display="none";
-
-    document.getElementById(
-      "progressBar"
-    ).style.width="0%";
-  }
-}
-
-async function loadAdminVideos(){
-
-  if(!adminAuthenticated)return;
-
-  try{
-
-    const response=await fetch(
-      "/api/admin/videos?t="+Date.now(),
-      {
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
-
-    if(response.status===401){
-      handleUnauthorized();
-      return;
-    }
-
-    const data=await response.json();
-
-    const videos=data.videos||[];
-
-    rawVideos=videos;
-
-    videosCache=new Map(
-      videos.map(
-        video=>[
-          Number(video.id),
-          video
-        ]
-      )
-    );
-
-    document.getElementById(
-      "totalVideos"
-    ).textContent=videos.length;
-
-    const search=
-      document.getElementById(
-        "searchVideos"
-      )?.value||"";
-
-    if(search.trim()){
-      filterVideos();
-    }else{
-      renderVideosTable(videos);
-    }
-
-  }catch{
-
-    document.getElementById(
-      "videosTable"
-    ).innerHTML=
-      `<tr>
-        <td colspan="10" class="empty error">
-          Unable to load videos.
-        </td>
-      </tr>`;
-  }
-}
-
-function renderVideosTable(videos){
-
-  const table=
-    document.getElementById(
-      "videosTable"
-    );
-
-  if(!videos.length){
-
-    table.innerHTML=
-      `<tr>
-        <td colspan="10" class="empty">
-          No videos found.
-        </td>
-      </tr>`;
-
-    return;
-  }
-
-  table.innerHTML=videos.map(
-    video=>{
-
-      const status=
-        String(
-          video.status||"active"
-        ).toLowerCase();
-
-      const active=
-        status==="active";
-
-      const videoUrl=
-        video.video_url||
-        video.url||
-        "";
-
-      const thumbnail=
-        video.thumbnail_url||
-        video.thumbnail||
-        "";
-
-      const thumbnailUrl=
-        safeUrl(thumbnail);
-
-      const thumbnailHTML=
-        thumbnailUrl!=="#"
-          ?`
-            <img
-              class="video-thumbnail"
-              src="${escapeHTML(
-                thumbnailUrl
-              )}"
-              alt=""
-            >
-          `
-          :`
-            <div class="video-placeholder">
-              🎬
-            </div>
-          `;
-
-      let buttons=active
-        ?`
-          <button
-            class="video-action pause-video"
-            onclick="changeVideoStatus(${Number(video.id)},'inactive')"
-          >
-            Disable
-          </button>
-        `
-        :`
-          <button
-            class="video-action activate-video"
-            onclick="changeVideoStatus(${Number(video.id)},'active')"
-          >
-            Activate
-          </button>
-        `;
-
-      buttons+=`
-        <button
-          class="video-action edit-video"
-          onclick="editVideo(${Number(video.id)})"
-        >
-          Edit
-        </button>
-
-        <button
-          class="video-action delete-video"
-          onclick="deleteVideo(${Number(video.id)})"
-        >
-          Delete
-        </button>
-      `;
-
-      return `
-        <tr>
-
-          <td>
-            #${Number(video.id)}
-          </td>
-
-          <td>
-            ${thumbnailHTML}
-
-            <br>
-
-            <a
-              href="${escapeHTML(
-                safeUrl(videoUrl)
-              )}"
-              target="_blank"
-              style="
-                font-size:9px;
-                color:#2563eb;
-                font-weight:700;
-              "
-            >
-              ▶ Watch
-            </a>
-          </td>
-
-          <td>
-            <strong>
-              ${escapeHTML(
-                video.title||"-"
-              )}
-            </strong>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              video.category||
-              "General"
-            )}
-          </td>
-
-          <td>
-            <a
-              href="${escapeHTML(
-                safeUrl(videoUrl)
-              )}"
-              target="_blank"
-              class="video-url"
-            >
-              ${escapeHTML(videoUrl)}
-            </a>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              video.description||
-              "-"
-            )}
-          </td>
-
-          <td class="reward">
-            ${formatNaira(
-              video.reward||0
-            )}
-          </td>
-
-          <td>
-            <span
-              class="status ${
-                active
-                  ?"approved"
-                  :"rejected"
-              }"
-            >
-              ${escapeHTML(status)}
-            </span>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              formatDate(
-                video.created_at
-              )
-            )}
-          </td>
-
-          <td>
-            ${buttons}
-          </td>
-
-        </tr>
-      `;
-    }
-  ).join("");
-}
-
-function editVideo(id){
-
-  const video=
-    videosCache.get(
-      Number(id)
-    );
-
-  if(!video)return;
-
-  editingVideoId=
-    Number(id);
-
-  document.getElementById(
-    "videoTitle"
-  ).value=
-    video.title||"";
-
-  document.getElementById(
-    "videoCategory"
-  ).value=
-    video.category||
-    "General";
-
-  document.getElementById(
-    "videoUrl"
-  ).value=
-    video.video_url||
-    video.url||
-    "";
-
-  document.getElementById(
-    "videoDescription"
-  ).value=
-    video.description||
-    "";
-
-  document.getElementById(
-    "videoThumbnail"
-  ).value=
-    video.thumbnail_url||
-    video.thumbnail||
-    "";
-
-  document.getElementById(
-    "videoReward"
-  ).value=
-    Number(video.reward||0);
-
-  document.getElementById(
-    "videoStatus"
-  ).value=
-    String(
-      video.status||
-      "active"
-    ).toLowerCase();
-
-  document.getElementById(
-    "videoFormTitle"
-  ).textContent=
-    "✎ Edit Video";
-
-  document.getElementById(
-    "saveVideoButton"
-  ).textContent=
-    "Update Video";
-
-  document.getElementById(
-    "cancelVideoEditButton"
-  ).style.display=
-    "inline-block";
-
-  document.getElementById(
-    "videoFormBox"
-  ).scrollIntoView({
-    behavior:"smooth"
-  });
-}
-
-function cancelVideoEdit(){
-
-  editingVideoId=null;
-
-  document.getElementById(
-    "videoForm"
-  ).reset();
-
-  document.getElementById(
-    "videoCategory"
-  ).value="General";
-
-  document.getElementById(
-    "videoReward"
-  ).value="0";
-
-  document.getElementById(
-    "videoStatus"
-  ).value="active";
-
-  document.getElementById(
-    "videoFormTitle"
-  ).textContent=
-    "＋ Upload New Video";
-
-  document.getElementById(
-    "saveVideoButton"
-  ).textContent=
-    "＋ Upload & Save Video";
-
-  document.getElementById(
-    "cancelVideoEditButton"
-  ).style.display=
-    "none";
-
-  document.getElementById(
-    "uploadedVideoPreview"
-  ).style.display=
-    "none";
-
-  document.getElementById(
-    "uploadProgress"
-  ).style.display=
-    "none";
-}
-
-async function changeVideoStatus(id,status){
-
-  if(!confirm(
-    `Change video status to ${status}?`
-  )){
-    return;
-  }
-
-  try{
-
-    const response=await fetch(
-      `/api/admin/videos/${Number(id)}/status`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          status
-        })
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to change video status."
-      );
-    }
-
-    await loadAdminVideos();
-
-  }catch(error){
-
-    alert(error.message);
-  }
-}
-
-async function deleteVideo(id){
-
-  if(!confirm(
-    "Delete this video permanently?"
-  )){
-    return;
-  }
-
-  try{
-
-    const response=await fetch(
-      `/api/admin/videos/${Number(id)}`,
-      {
-        method:"DELETE",
-        credentials:"include"
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to delete video."
-      );
-    }
-
-    if(
-      editingVideoId===
-      Number(id)
-    ){
-      cancelVideoEdit();
-    }
-
-    await loadAdminVideos();
-
-  }catch(error){
-
-    alert(error.message);
-  }
-}
-
-
-/* =========================================================
+/* =====================================================
    LINKS
-========================================================= */
+===================================================== */
 
-async function loadAdminLinks(){
-
-  if(!adminAuthenticated)return;
-
-  try{
-
-    const response=await fetch(
-      "/api/admin/links?t="+Date.now(),
-      {
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
-
-    if(response.status===401){
-      handleUnauthorized();
-      return;
-    }
-
-    const data=await response.json();
-
-    const links=data.links||[];
-
-    rawLinks=links;
-
-    linksCache=new Map(
-      links.map(
-        link=>[
-          Number(link.id),
-          link
-        ]
-      )
-    );
-
-    document.getElementById(
-      "totalLinks"
-    ).textContent=
-      links.length;
-
-    const search=
-      document.getElementById(
-        "searchLinks"
-      )?.value||"";
-
-    if(search.trim()){
-      filterLinks();
-    }else{
-      renderLinksTable(links);
-    }
-
-  }catch{
-
-    document.getElementById(
-      "linksTable"
-    ).innerHTML=
-      `<tr>
-        <td colspan="8" class="empty error">
-          Unable to load links.
-        </td>
-      </tr>`;
-  }
-}
-
-function renderLinksTable(links){
+async function loadLinks(){
 
   const table=
     document.getElementById(
       "linksTable"
     );
 
-  if(!links.length){
-
-    table.innerHTML=
-      `<tr>
-        <td colspan="8" class="empty">
-          No links found.
-        </td>
-      </tr>`;
-
-    return;
-  }
-
-  table.innerHTML=links.map(
-    link=>{
-
-      const status=
-        String(
-          link.status||
-          "active"
-        ).toLowerCase();
-
-      const active=
-        status==="active";
-
-      let buttons=active
-        ?`
-          <button
-            class="link-action pause-link"
-            onclick="changeLinkStatus(${Number(link.id)},'inactive')"
-          >
-            Disable
-          </button>
-        `
-        :`
-          <button
-            class="link-action activate-link"
-            onclick="changeLinkStatus(${Number(link.id)},'active')"
-          >
-            Activate
-          </button>
-        `;
-
-      buttons+=`
-        <button
-          class="link-action edit-link"
-          onclick="editLink(${Number(link.id)})"
-        >
-          Edit
-        </button>
-
-        <button
-          class="link-action delete-link"
-          onclick="deleteLink(${Number(link.id)})"
-        >
-          Delete
-        </button>
-      `;
-
-      return `
-        <tr>
-
-          <td>
-            #${Number(link.id)}
-          </td>
-
-          <td>
-            <strong>
-              ${escapeHTML(
-                link.name||"-"
-              )}
-            </strong>
-          </td>
-
-          <td>
-            <a
-              href="${escapeHTML(
-                safeUrl(link.url)
-              )}"
-              target="_blank"
-              class="link-url"
-            >
-              ${escapeHTML(
-                link.url||"-"
-              )}
-            </a>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              link.description||
-              "-"
-            )}
-          </td>
-
-          <td>
-            ${escapeHTML(
-              link.category||
-              "General"
-            )}
-          </td>
-
-          <td>
-            <span
-              class="status ${
-                active
-                  ?"approved"
-                  :"rejected"
-              }"
-            >
-              ${escapeHTML(status)}
-            </span>
-          </td>
-
-          <td>
-            ${escapeHTML(
-              formatDate(
-                link.created_at
-              )
-            )}
-          </td>
-
-          <td>
-            ${buttons}
-          </td>
-
-        </tr>
-      `;
-    }
-  ).join("");
-}
-
-async function saveLink(event){
-
-  event.preventDefault();
-
-  const name=
-    document.getElementById(
-      "linkName"
-    ).value.trim();
-
-  const url=
-    document.getElementById(
-      "linkUrl"
-    ).value.trim();
-
-  const description=
-    document.getElementById(
-      "linkDescription"
-    ).value.trim();
-
-  const category=
-    document.getElementById(
-      "linkCategory"
-    ).value.trim();
-
-  const status=
-    document.getElementById(
-      "linkStatus"
-    ).value;
-
-  const button=
-    document.getElementById(
-      "saveLinkButton"
-    );
-
-  button.disabled=true;
-  button.textContent="Saving...";
-
   try{
 
-    const endpoint=
-      editingLinkId
-        ?`/api/admin/links/${Number(editingLinkId)}`
-        :"/api/admin/links";
-
-    const method=
-      editingLinkId
-        ?"PUT"
-        :"POST";
-
-    const response=await fetch(
-      endpoint,
-      {
-        method,
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          name,
-          url,
-          description,
-          category:category||"General",
-          status
-        })
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to save link."
+    const data=
+      await apiFetch(
+        "/api/admin/links"
       );
-    }
 
-    alert(
-      data.message||
-      "Link saved successfully."
-    );
-
-    cancelLinkEdit();
-
-    await loadAdminLinks();
-
-  }catch(error){
-
-    alert(error.message);
-
-  }finally{
-
-    button.disabled=false;
-
-    button.textContent=
-      editingLinkId
-        ?"Update Link"
-        :"＋ Add Link";
-  }
-}
-
-function editLink(id){
-
-  const link=
-    linksCache.get(
-      Number(id)
-    );
-
-  if(!link)return;
-
-  editingLinkId=
-    Number(id);
-
-  document.getElementById(
-    "linkName"
-  ).value=
-    link.name||"";
-
-  document.getElementById(
-    "linkUrl"
-  ).value=
-    link.url||"";
-
-  document.getElementById(
-    "linkDescription"
-  ).value=
-    link.description||"";
-
-  document.getElementById(
-    "linkCategory"
-  ).value=
-    link.category||
-    "General";
-
-  document.getElementById(
-    "linkStatus"
-  ).value=
-    String(
-      link.status||
-      "active"
-    ).toLowerCase();
-
-  document.getElementById(
-    "linkFormTitle"
-  ).textContent=
-    "✎ Edit Link";
-
-  document.getElementById(
-    "saveLinkButton"
-  ).textContent=
-    "Update Link";
-
-  document.getElementById(
-    "cancelEditButton"
-  ).style.display=
-    "inline-block";
-
-  document.getElementById(
-    "linkFormBox"
-  ).scrollIntoView({
-    behavior:"smooth"
-  });
-}
-
-function cancelLinkEdit(){
-
-  editingLinkId=null;
-
-  document.getElementById(
-    "linkForm"
-  ).reset();
-
-  document.getElementById(
-    "linkCategory"
-  ).value="General";
-
-  document.getElementById(
-    "linkStatus"
-  ).value="active";
-
-  document.getElementById(
-    "linkFormTitle"
-  ).textContent=
-    "＋ Add New Link";
-
-  document.getElementById(
-    "saveLinkButton"
-  ).textContent=
-    "＋ Add Link";
-
-  document.getElementById(
-    "cancelEditButton"
-  ).style.display=
-    "none";
-}
-
-async function changeLinkStatus(id,status){
-
-  if(!confirm(
-    `Change link status to ${status}?`
-  )){
-    return;
-  }
-
-  try{
-
-    const response=await fetch(
-      `/api/admin/links/${Number(id)}/status`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({
-          status
-        })
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to change link status."
-      );
-    }
-
-    await loadAdminLinks();
-
-  }catch(error){
-
-    alert(error.message);
-  }
-}
-
-async function deleteLink(id){
-
-  if(!confirm(
-    "Delete this link permanently?"
-  )){
-    return;
-  }
-
-  try{
-
-    const response=await fetch(
-      `/api/admin/links/${Number(id)}`,
-      {
-        method:"DELETE",
-        credentials:"include"
-      }
-    );
-
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
-      throw new Error(
-        data.message||
-        "Unable to delete link."
-      );
-    }
-
-    if(
-      editingLinkId===
-      Number(id)
-    ){
-      cancelLinkEdit();
-    }
-
-    await loadAdminLinks();
-
-  }catch(error){
-
-    alert(error.message);
-  }
-}
-
-
-/* =========================================================
-   WITHDRAWALS
-========================================================= */
-
-async function loadAdminWithdrawals(){
-
-  if(!adminAuthenticated)return;
-
-  try{
-
-    const response=await fetch(
-      "/api/admin/withdrawals?t="+Date.now(),
-      {
-        cache:"no-store",
-        credentials:"include"
-      }
-    );
-
-    if(response.status===401){
-      handleUnauthorized();
-      return;
-    }
-
-    const data=await response.json();
-
-    if(!response.ok||data.success===false){
-      throw new Error(
-        data.message||
-        "Unable to load withdrawals."
-      );
-    }
-
-    const withdrawals=
-      data.withdrawals||
-      data.data||
+    const links=
+      data.links ||
+      data.data ||
       [];
 
-    rawWithdrawals=
-      withdrawals;
+    if(!links.length){
 
-    withdrawalsCache=
-      new Map(
-        withdrawals.map(
-          withdrawal=>[
-            Number(withdrawal.id),
-            withdrawal
-          ]
-        )
-      );
+      table.innerHTML=`
+        <tr>
+          <td colspan="5">
+            <div class="empty">
+              No links found.
+            </div>
+          </td>
+        </tr>
+      `;
 
-    document.getElementById(
-      "totalWithdrawals"
-    ).textContent=
-      withdrawals.length;
-
-    const pending=
-      withdrawals.filter(
-        withdrawal=>
-          String(
-            withdrawal.status
-          ).toLowerCase()==="pending"
-      ).length;
-
-    document.getElementById(
-      "pendingWithdrawalsCount"
-    ).textContent=
-      pending;
-
-    document.getElementById(
-      "pendingWithdrawalsCard"
-    ).textContent=
-      pending;
-
-    document.getElementById(
-      "navPendingCount"
-    ).textContent=
-      pending;
-
-    document.getElementById(
-      "withdrawalsLastUpdated"
-    ).textContent=
-      new Date().toLocaleTimeString(
-        "en-NG"
-      );
-
-    const search=
-      document.getElementById(
-        "searchWithdrawals"
-      )?.value||"";
-
-    if(search.trim()){
-      filterWithdrawals();
-    }else{
-      renderWithdrawalsTable(
-        withdrawals
-      );
+      return;
     }
 
-  }catch(error){
-
-    document.getElementById(
-      "withdrawalsTable"
-    ).innerHTML=
-      `<tr>
-        <td colspan="9" class="empty error">
-          ${escapeHTML(
-            error.message||
-            "Unable to load withdrawals."
-          )}
-        </td>
-      </tr>`;
-  }
-}
-
-function renderWithdrawalsTable(
-  withdrawals
-){
-
-  const table=
-    document.getElementById(
-      "withdrawalsTable"
-    );
-
-  if(!withdrawals.length){
-
     table.innerHTML=
-      `<tr>
-        <td colspan="9" class="empty">
-          No withdrawals found.
-        </td>
-      </tr>`;
-
-    return;
-  }
-
-  table.innerHTML=
-    withdrawals.map(
-      withdrawal=>{
-
-        const username=
-          withdrawal.username||
-          withdrawal.user_name||
-          "-";
-
-        const bankName=
-          withdrawal.bank_name||
-          withdrawal.bankName||
-          "-";
-
-        const accountName=
-          withdrawal.account_name||
-          withdrawal.accountName||
-          "-";
-
-        const accountNumber=
-          withdrawal.account_number||
-          withdrawal.accountNumber||
-          "-";
-
-        const type=
-          String(
-            withdrawal.withdrawal_type||
-            withdrawal.type||
-            "regular"
-          ).toLowerCase();
+      links.map(link=>{
 
         const status=
           String(
-            withdrawal.status||
-            "pending"
+            link.status ||
+            "active"
           ).toLowerCase();
-
-        let statusClass=
-          "pending";
-
-        if(
-          status==="approved"||
-          status==="paid"||
-          status==="completed"
-        ){
-          statusClass="approved";
-        }
-
-        if(
-          status==="rejected"||
-          status==="failed"
-        ){
-          statusClass="rejected";
-        }
-
-        const typeBadge=
-          type==="affiliate"
-            ?`
-              <span
-                class="badge type-affiliate"
-              >
-                Affiliate
-              </span>
-            `
-            :`
-              <span
-                class="badge type-regular"
-              >
-                Regular
-              </span>
-            `;
-
-        let actions="";
-
-        if(status==="pending"){
-
-          actions=`
-            <button
-              class="withdrawal-action approve"
-              onclick="approveWithdrawal(${Number(withdrawal.id)})"
-            >
-              ✓ Approve
-            </button>
-
-            <button
-              class="withdrawal-action reject"
-              onclick="rejectWithdrawal(${Number(withdrawal.id)})"
-            >
-              × Reject
-            </button>
-          `;
-
-        }else{
-
-          actions=`
-            <span
-              style="
-                color:#64748b;
-                font-size:9px;
-                font-weight:700;
-              "
-            >
-              ${escapeHTML(status)}
-            </span>
-          `;
-        }
 
         return `
           <tr>
 
             <td>
               <strong>
-                ${escapeHTML(
-                  String(username)
+                ${escapeHtml(
+                  link.name ||
+                  link.title ||
+                  "—"
                 )}
               </strong>
             </td>
 
             <td>
-              ${escapeHTML(
-                String(bankName)
+              ${escapeHtml(
+                link.url ||
+                "—"
               )}
             </td>
 
             <td>
-              ${escapeHTML(
-                String(accountName)
+              ${escapeHtml(
+                link.category ||
+                "General"
               )}
             </td>
 
             <td>
-              ${escapeHTML(
-                String(accountNumber)
-              )}
-            </td>
-
-            <td>
-              <strong>
-                ${formatNaira(
-                  withdrawal.amount
-                )}
-              </strong>
-            </td>
-
-            <td>
-              ${typeBadge}
-            </td>
-
-            <td>
-              <span
-                class="status ${statusClass}"
-              >
-                ${escapeHTML(status)}
+              <span class="badge ${statusClass(status)}">
+                ${escapeHtml(status)}
               </span>
             </td>
 
             <td>
-              ${escapeHTML(
-                formatDate(
-                  withdrawal.created_at
-                )
-              )}
-            </td>
+              <div class="actions">
 
-            <td>
-              ${actions}
+                ${
+                  status==="active"
+                  ? `
+                    <button
+                      class="action-btn suspend"
+                      onclick="changeLinkStatus(${Number(link.id)},'inactive')"
+                    >
+                      Disable
+                    </button>
+                  `
+                  : `
+                    <button
+                      class="action-btn activate"
+                      onclick="changeLinkStatus(${Number(link.id)},'active')"
+                    >
+                      Activate
+                    </button>
+                  `
+                }
+
+                <button
+                  class="action-btn delete"
+                  onclick="deleteLink(${Number(link.id)})"
+                >
+                  Delete
+                </button>
+
+              </div>
             </td>
 
           </tr>
         `;
-      }
-    ).join("");
+
+      }).join("");
+
+  }catch(error){
+
+    table.innerHTML=`
+      <tr>
+        <td colspan="5">
+          <div class="empty">
+            Unable to load links.
+          </div>
+        </td>
+      </tr>
+    `;
+
+  }
 }
 
-async function approveWithdrawal(id){
+
+async function changeLinkStatus(id,status){
+
+  try{
+
+    const data=
+      await apiFetch(
+        `/api/admin/links/${id}/status`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            status
+          })
+        }
+      );
+
+    if(!data.success){
+      throw new Error(
+        data.message ||
+        "Unable to update link."
+      );
+    }
+
+    showToast(
+      "Link status updated.",
+      "success"
+    );
+
+    await loadLinks();
+
+  }catch(error){
+
+    showToast(
+      error.message ||
+      "Unable to update link.",
+      "error"
+    );
+  }
+}
+
+
+async function deleteLink(id){
 
   if(!confirm(
-    `Approve withdrawal #${id} as PAID?`
+    "Delete this link?"
   )){
     return;
   }
 
   try{
 
-    const response=await fetch(
-      `/api/admin/withdrawals/${Number(id)}/approve`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({})
-      }
-    );
+    const data=
+      await apiFetch(
+        `/api/admin/links/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
 
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||
-        "Unable to approve withdrawal."
+        data.message ||
+        "Unable to delete link."
       );
     }
 
-    alert(
-      data.message||
-      "Withdrawal approved."
+    showToast(
+      "Link deleted.",
+      "success"
     );
 
-    await loadAdminWithdrawals();
-    await loadDashboardSummary();
+    await loadLinks();
 
   }catch(error){
 
-    alert(error.message);
+    showToast(
+      error.message ||
+      "Unable to delete link.",
+      "error"
+    );
   }
 }
 
-async function rejectWithdrawal(id){
+
+/* =====================================================
+   VIDEOS
+===================================================== */
+
+async function loadVideos(){
+
+  const table=
+    document.getElementById(
+      "videosTable"
+    );
+
+  try{
+
+    const data=
+      await apiFetch(
+        "/api/admin/videos"
+      );
+
+    const videos=
+      data.videos ||
+      data.data ||
+      [];
+
+    if(!videos.length){
+
+      table.innerHTML=`
+        <tr>
+          <td colspan="5">
+            <div class="empty">
+              No videos found.
+            </div>
+          </td>
+        </tr>
+      `;
+
+      return;
+    }
+
+    table.innerHTML=
+      videos.map(video=>{
+
+        const status=
+          String(
+            video.status ||
+            "active"
+          ).toLowerCase();
+
+        return `
+          <tr>
+
+            <td>
+              <strong>
+                ${escapeHtml(
+                  video.title ||
+                  "—"
+                )}
+              </strong>
+            </td>
+
+            <td>
+              ₦${formatMoney(
+                video.reward || 0
+              )}
+            </td>
+
+            <td>
+              ${escapeHtml(
+                video.duration ||
+                0
+              )} sec
+            </td>
+
+            <td>
+              <span class="badge ${statusClass(status)}">
+                ${escapeHtml(status)}
+              </span>
+            </td>
+
+            <td>
+              <div class="actions">
+
+                ${
+                  status==="active"
+                  ? `
+                    <button
+                      class="action-btn suspend"
+                      onclick="changeVideoStatus(${Number(video.id)},'inactive')"
+                    >
+                      Disable
+                    </button>
+                  `
+                  : `
+                    <button
+                      class="action-btn activate"
+                      onclick="changeVideoStatus(${Number(video.id)},'active')"
+                    >
+                      Activate
+                    </button>
+                  `
+                }
+
+                <button
+                  class="action-btn delete"
+                  onclick="deleteVideo(${Number(video.id)})"
+                >
+                  Delete
+                </button>
+
+              </div>
+            </td>
+
+          </tr>
+        `;
+
+      }).join("");
+
+  }catch(error){
+
+    table.innerHTML=`
+      <tr>
+        <td colspan="5">
+          <div class="empty">
+            Unable to load videos.
+          </div>
+        </td>
+      </tr>
+    `;
+
+  }
+}
+
+
+async function changeVideoStatus(id,status){
+
+  try{
+
+    const data=
+      await apiFetch(
+        `/api/admin/videos/${id}/status`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            status
+          })
+        }
+      );
+
+    if(!data.success){
+      throw new Error(
+        data.message ||
+        "Unable to update video."
+      );
+    }
+
+    showToast(
+      "Video status updated.",
+      "success"
+    );
+
+    await loadVideos();
+
+  }catch(error){
+
+    showToast(
+      error.message ||
+      "Unable to update video.",
+      "error"
+    );
+  }
+}
+
+
+async function deleteVideo(id){
 
   if(!confirm(
-    `Reject withdrawal #${id}?\n\nThe user's balance will be refunded if the server has not already refunded it.`
+    "Delete this video?"
   )){
     return;
   }
 
   try{
 
-    const response=await fetch(
-      `/api/admin/withdrawals/${Number(id)}/reject`,
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
-        },
-        credentials:"include",
-        body:JSON.stringify({})
-      }
-    );
+    const data=
+      await apiFetch(
+        `/api/admin/videos/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
 
-    const data=await response.json();
-
-    if(!response.ok||!data.success){
+    if(!data.success){
       throw new Error(
-        data.message||
-        "Unable to reject withdrawal."
+        data.message ||
+        "Unable to delete video."
       );
     }
 
-    alert(
-      data.message||
-      "Withdrawal rejected and refunded."
+    showToast(
+      "Video deleted.",
+      "success"
     );
 
-    await loadAdminWithdrawals();
-    await loadDashboardSummary();
+    await loadVideos();
 
   }catch(error){
 
-    alert(error.message);
+    showToast(
+      error.message ||
+      "Unable to delete video.",
+      "error"
+    );
   }
 }
 
 
-/* =========================================================
+/* =====================================================
+   HELPERS
+===================================================== */
+
+function setText(id,value){
+
+  const element=
+    document.getElementById(id);
+
+  if(element){
+    element.textContent=
+      String(value ?? 0);
+  }
+}
+
+
+function formatMoney(value){
+
+  const number=
+    Number(value || 0);
+
+  return number.toLocaleString(
+    "en-NG",
+    {
+      minimumFractionDigits:0,
+      maximumFractionDigits:2
+    }
+  );
+}
+
+
+function formatDate(value){
+
+  if(!value){
+    return "—";
+  }
+
+  const date=
+    new Date(
+      String(value).replace(" ","T")
+    );
+
+  if(Number.isNaN(date.getTime())){
+    return escapeHtml(value);
+  }
+
+  return date.toLocaleDateString(
+    "en-NG",
+    {
+      year:"numeric",
+      month:"short",
+      day:"numeric"
+    }
+  );
+}
+
+
+function statusClass(status){
+
+  status=
+    String(status || "")
+      .toLowerCase();
+
+  if(
+    status==="active" ||
+    status==="approved" ||
+    status==="completed" ||
+    status==="on"
+  ){
+    return "active";
+  }
+
+  if(status==="pending"){
+    return "pending";
+  }
+
+  if(
+    status==="suspended" ||
+    status==="rejected" ||
+    status==="inactive" ||
+    status==="off"
+  ){
+    return "suspended";
+  }
+
+  return "pending";
+}
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+async function adminLogout(){
+
+  if(!confirm(
+    "Are you sure you want to logout?"
+  )){
+    return;
+  }
+
+  try{
+
+    await fetch(
+      "/api/admin/logout",
+      {
+        method:"POST",
+        credentials:"include"
+      }
+    );
+
+  }catch(error){
+    console.log(error);
+  }
+
+  document.getElementById("app").style.display="none";
+  document.getElementById("loginScreen").style.display="flex";
+
+  document.getElementById("adminPassword").value="";
+
+  closeSidebar();
+
+  showToast(
+    "Logged out successfully.",
+    "success"
+  );
+}
+
+
+/* =====================================================
    START
-========================================================= */
+===================================================== */
 
 document.addEventListener(
   "DOMContentLoaded",
-  checkAdminSession
+  async ()=>{
+
+    await checkAdminSession();
+
+  }
 );
+
 </script>
 
 </body>
