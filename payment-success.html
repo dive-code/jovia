@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="description" content="Payment successful — your Jovia Network membership has been confirmed.">
+  <title>Payment Successful | Jovia Network</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --purple: #57158a; --purple-dark: #3d0d64; --purple-light: #7b2cbf;
+      --gold: #f5b51b; --gold-light: #ffd75a;
+      --dark: #17121d; --text: #27212d; --muted: #77717d;
+      --background: #f7f5f9; --white: #ffffff; --border: #e7e1eb;
+      --success: #14804a; --success-light: #1b9d5c; --success-bg: #effaf4; --success-border: #c9efd9;
+      --telegram: #229ed9; --telegram-dark: #168bc5;
+      --shadow: 0 25px 70px rgba(40, 18, 55, 0.10);
+      --shadow-small: 0 10px 30px rgba(40, 18, 55, 0.07);
+      --radius: 24px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      min-height: 100vh; font-family: "Manrope", sans-serif; color: var(--text);
+      background: radial-gradient(circle at 8% 8%, rgba(87, 21, 138, 0.055), transparent 28%), radial-gradient(circle at 92% 92%, rgba(245, 181, 27, 0.075), transparent 27%), var(--background);
+      display: flex; flex-direction: column; overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; } button { font-family: inherit; }
+    .page-decoration { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .circle { position: absolute; border-radius: 50%; filter: blur(2px); }
+    .circle-one { width: 460px; height: 460px; top: -250px; left: -190px; background: rgba(87, 21, 138, 0.055); }
+    .circle-two { width: 400px; height: 400px; right: -200px; bottom: -210px; background: rgba(245, 181, 27, 0.07); }
+    header {
+      position: relative; z-index: 10; width: 100%; padding: 20px 5%;
+      background: rgba(255, 255, 255, 0.90); border-bottom: 1px solid rgba(231, 225, 235, 0.85);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .nav { width: 100%; max-width: 1180px; margin: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .logo {
+      width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; border-radius: 14px;
+      background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: #fff; font-size: 22px; font-weight: 800;
+      box-shadow: 0 9px 24px rgba(87, 21, 138, 0.22);
+    }
+    .brand-text { line-height: 1.05; }
+    .brand-name { color: var(--dark); font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand-network { margin-top: 4px; color: var(--purple); font-size: 9px; font-weight: 800; letter-spacing: 2.1px; }
+    .home-link {
+      display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border: 1px solid transparent; border-radius: 10px;
+      color: var(--purple); font-size: 13px; font-weight: 800; transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+    .home-link:hover { background: rgba(87, 21, 138, 0.06); border-color: rgba(87, 21, 138, 0.08); transform: translateX(-2px); }
+    main { position: relative; z-index: 2; width: 100%; flex: 1; padding: 60px 20px 70px; }
+    .container { width: 100%; max-width: 760px; margin: auto; }
+    .success-card {
+      position: relative; width: 100%; padding: 46px 46px 40px; background: rgba(255, 255, 255, 0.97);
+      border: 1px solid rgba(231, 225, 235, 0.95); border-radius: 28px; box-shadow: var(--shadow); text-align: center; overflow: hidden;
+    }
+    .success-card::before {
+      content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+      background: linear-gradient(90deg, var(--purple), var(--purple-light), var(--gold));
+    }
+    .success-icon-wrap {
+      width: 94px; height: 94px; margin: 0 auto 23px; padding: 6px; border-radius: 50%;
+      background: rgba(20, 128, 74, 0.08); border: 1px solid rgba(20, 128, 74, 0.12);
+    }
+    .success-icon {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+      background: linear-gradient(135deg, var(--success-light), var(--success)); color: #fff; font-size: 36px; font-weight: 800;
+      box-shadow: 0 12px 30px rgba(20, 128, 74, 0.20);
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px; padding: 8px 13px; margin-bottom: 17px; border-radius: 50px;
+      background: rgba(20, 128, 74, 0.075); border: 1px solid rgba(20, 128, 74, 0.10); color: var(--success);
+      font-size: 10px; font-weight: 800; letter-spacing: 1.3px;
+    }
+    .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px rgba(20, 128, 74, 0.10); }
+    .success-card h1 { color: var(--dark); font-size: clamp(31px, 6vw, 45px); line-height: 1.08; letter-spacing: -1.8px; font-weight: 800; margin-bottom: 15px; }
+    .success-card h1 span { color: var(--purple); }
+    .subtitle { max-width: 540px; margin: 0 auto; color: var(--muted); font-size: 13px; line-height: 1.8; font-weight: 500; }
+    .membership-status {
+      display: inline-flex; align-items: center; gap: 9px; margin-top: 24px; padding: 10px 15px; border-radius: 50px;
+      background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); font-size: 11px; font-weight: 800;
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 4px rgba(20, 128, 74, 0.10); }
+    .details-box {
+      margin-top: 31px; padding: 22px; border: 1px solid var(--border); border-radius: 18px;
+      background: linear-gradient(135deg, #faf8fb, #fffdfb); text-align: left;
+    }
+    .details-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .details-icon {
+      width: 44px; height: 44px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: 13px;
+      background: rgba(87, 21, 138, 0.08); color: var(--purple); font-size: 19px; font-weight: 800;
+    }
+    .details-title { color: var(--dark); font-size: 14px; font-weight: 800; }
+    .details-subtitle { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 600; }
+    .benefits { display: grid; gap: 11px; list-style: none; }
+    .benefits li { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 11.5px; line-height: 1.5; font-weight: 600; }
+    .check {
+      width: 20px; height: 20px; min-width: 20px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+      background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); font-size: 10px; font-weight: 800;
+    }
+    .next-step {
+      margin-top: 25px; padding: 14px 16px; border-radius: 13px; background: rgba(87, 21, 138, 0.045);
+      border: 1px solid rgba(87, 21, 138, 0.08); color: var(--muted); font-size: 10.5px; line-height: 1.6; text-align: left;
+    }
+    .next-step strong { color: var(--purple); font-weight: 800; }
+    .actions { display: grid; gap: 11px; margin-top: 27px; }
+    .btn {
+      width: 100%; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 9px; border-radius: 13px;
+      font-size: 12px; font-weight: 800; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+    .btn-primary { color: #fff; background: linear-gradient(135deg, var(--purple), var(--purple-light)); box-shadow: 0 13px 28px rgba(87, 21, 138, 0.20); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 17px 32px rgba(87, 21, 138, 0.25); }
+    .btn-telegram { color: #fff; background: linear-gradient(135deg, var(--telegram), var(--telegram-dark)); box-shadow: 0 13px 28px rgba(34, 158, 217, 0.20); }
+    .btn-telegram:hover { transform: translateY(-1px); box-shadow: 0 17px 32px rgba(34, 158, 217, 0.27); }
+    .btn-secondary { color: var(--purple); background: #fff; border: 1px solid var(--border); }
+    .btn-secondary:hover { transform: translateY(-1px); background: #faf7fc; border-color: rgba(87, 21, 138, 0.20); }
+    .footer-note { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 22px; color: #98919e; font-size: 9.5px; font-weight: 600; line-height: 1.6; }
+    .footer-check { width: 17px; height: 17px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(20, 128, 74, 0.08); color: var(--success); font-size: 9px; font-weight: 800; }
+    footer { position: relative; z-index: 2; padding: 0 20px 28px; text-align: center; color: #98919e; font-size: 9.5px; font-weight: 500; }
+    footer strong { color: var(--purple); font-weight: 800; }
+    @media (max-width: 600px) {
+      header { padding: 16px; } .logo { width: 42px; height: 42px; border-radius: 12px; font-size: 20px; }
+      .brand-name { font-size: 15px; } .brand-network { font-size: 8px; } .home-link { padding: 8px 10px; font-size: 11px; }
+      main { padding: 37px 14px 48px; }
+      .success-card { padding: 35px 19px 27px; border-radius: 21px; }
+      .success-icon-wrap { width: 80px; height: 80px; margin-bottom: 20px; } .success-icon { font-size: 30px; }
+      .eyebrow { font-size: 9px; padding: 7px 11px; }
+      .success-card h1 { font-size: 31px; letter-spacing: -1.2px; }
+      .subtitle { font-size: 11.5px; line-height: 1.75; }
+      .membership-status { font-size: 10px; padding: 9px 13px; }
+      .details-box { padding: 17px; margin-top: 25px; } .details-title { font-size: 12.5px; } .benefits li { font-size: 10.5px; }
+      .next-step { font-size: 9.5px; } .btn { min-height: 52px; font-size: 11.5px; }
+      .circle-one { width: 280px; height: 280px; } .circle-two { width: 250px; height: 250px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="page-decoration" aria-hidden="true"><div class="circle circle-one"></div><div class="circle circle-two"></div></div>
+  <header>
+    <nav class="nav">
+      <a href="index.html" class="brand" aria-label="Jovia Network Home">
+        <div class="logo">J</div>
+        <div class="brand-text"><div class="brand-name">Jovia</div><div class="brand-network">NETWORK</div></div>
+      </a>
+      <a href="index.html" class="home-link"><span>←</span><span>Home</span></a>
+    </nav>
+  </header>
+  <main>
+    <div class="container">
+      <section class="success-card" aria-labelledby="successTitle">
+        <div class="success-icon-wrap"><div class="success-icon" aria-hidden="true">✓</div></div>
+        <div class="eyebrow"><span class="eyebrow-dot"></span>PAYMENT CONFIRMED</div>
+        <h1 id="successTitle">Payment <span>successful.</span></h1>
+        <p class="subtitle">Your Jovia Network membership payment has been successfully confirmed. Your account is ready for member dashboard access.</p>
+        <div class="membership-status"><span class="status-dot"></span>Membership Active</div>
+        <div class="details-box">
+          <div class="details-header">
+            <div class="details-icon" aria-hidden="true">◆</div>
+            <div><div class="details-title">Jovia Network Membership</div><div class="details-subtitle">Your membership benefits</div></div>
+          </div>
+          <ul class="benefits">
+            <li><span class="check">✓</span><span>Premium membership activated</span></li>
+            <li><span class="check">✓</span><span>Access to your Jovia member dashboard</span></li>
+            <li><span class="check">✓</span><span>Your membership information saved securely</span></li>
+            <li><span class="check">✓</span><span>Continue managing your Jovia Network account</span></li>
+          </ul>
+          <div class="next-step"><strong>Next step:</strong> Open your member dashboard or contact support on Telegram if you need assistance.</div>
+        </div>
+        <div class="actions">
+          <a href="dashboard.html" class="btn btn-primary"><span>Open Member Dashboard</span><span aria-hidden="true">→</span></a>
+          <a id="telegramBtn" href="https://t.me/customer_support_team0001" target="_blank" rel="noopener noreferrer" class="btn btn-telegram"><span>💬 Chat Support on Telegram</span></a>
+          <a href="index.html" class="btn btn-secondary"><span>Return to Jovia Network</span></a>
+        </div>
+        <div class="footer-note"><span class="footer-check" aria-hidden="true">✓</span><span>Your payment confirmation has been received.</span></div>
+      </section>
+    </div>
+  </main>
+  <footer>© <span id="year"></span> <strong>Jovia Network</strong>. All rights reserved.</footer>
+
+  <script>
+    // Year
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ===== HIDDEN AUTO-FILL LOGIC - NOT VISIBLE ON PAGE =====
+    try {
+      const params = new URLSearchParams(window.location.search);
+      
+      // Get from URL (Selar will fill these automatically)
+      const emailFromUrl = params.get('email');
+      const nameFromUrl = params.get('name');
+      const phoneFromUrl = params.get('phone') || params.get('phone_number');
+      const planFromUrl = params.get('plan');
+
+      // Save to localStorage (so dashboard knows)
+      if (emailFromUrl) localStorage.setItem("jovia_email", emailFromUrl);
+      if (nameFromUrl) localStorage.setItem("jovia_name", nameFromUrl);
+      if (phoneFromUrl) localStorage.setItem("jovia_phone", phoneFromUrl);
+      if (planFromUrl) localStorage.setItem("jovia_plan", planFromUrl);
+      
+      localStorage.setItem("jovia_premium", "true");
+      localStorage.setItem("jovia_access", "lifetime");
+      if (!localStorage.getItem("jovia_member_since")) {
+        localStorage.setItem("jovia_member_since", new Date().toISOString());
+      }
+
+      // Final values (from URL or localStorage fallback)
+      const finalEmail = emailFromUrl || localStorage.getItem("jovia_email") || "";
+      const finalName = nameFromUrl || localStorage.getItem("jovia_name") || "";
+      const finalPhone = phoneFromUrl || localStorage.getItem("jovia_phone") || "";
+      const finalPlan = planFromUrl || localStorage.getItem("jovia_plan") || "Premium";
+
+      // Build Telegram message (hidden - only appears when they click)
+      // This message will auto-appear in Telegram input box
+      const message = `Hi Jovia Support 👋\n\nI just completed payment, please confirm my account.\n\nName: ${finalName || 'Not provided'}\nEmail: ${finalEmail || 'Not provided'}\nPhone: ${finalPhone || 'Not provided'}\nPlan: ${finalPlan}\nStatus: Payment Successful - Membership Active\n\nThank you!`;
+
+      const telegramBtn = document.getElementById("telegramBtn");
+      if (telegramBtn) {
+        // Only add message if we have at least email or name
+        if (finalEmail || finalName || finalPhone) {
+          telegramBtn.href = `https://t.me/customer_support_team0001?text=${encodeURIComponent(message)}`;
+        } else {
+          // Fallback if no data yet - just normal link
+          telegramBtn.href = `https://t.me/customer_support_team0001`;
+        }
+      }
+    } catch (e) {
+      console.warn("Telegram auto-fill setup failed", e);
+    }
+  </script>
+</body>
+</html>
