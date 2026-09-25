@@ -79,7 +79,6 @@ button{font-family:inherit}
  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
  background-clip:text;
 }
-/* UPDATED CARD FOR SWIPE */
 .account-card{
  position:relative;overflow:hidden;
  background:linear-gradient(145deg,#2f1347 0%,#4a1f6e 50%,#5e2a85 100%);
@@ -224,7 +223,6 @@ button{font-family:inherit}
 }
 .nav-icon{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:20px;transition:0.2s}
 .nav.active{color:var(--purple);background:var(--purple-light)}
-.nav.active.nav-icon{color:var(--purple);transform:scale(1.1)}
 @media(max-width:390px){
 .app{padding-left:14px;padding-right:14px}
 .welcome h1{font-size:24px}
@@ -253,7 +251,6 @@ button{font-family:inherit}
 
     <section class="account-card" id="accountCard">
         <div class="swipe-wrapper" id="swipeWrapper">
-            <!-- SLIDE 1: WALLET -->
             <div class="swipe-slide">
                 <div class="account-top">
                     <div>
@@ -274,7 +271,6 @@ button{font-family:inherit}
                 </div>
                 <button class="account-button" id="paymentButton" onclick="activate()">Continue to Payment</button>
             </div>
-            <!-- SLIDE 2: AFFILIATE -->
             <div class="swipe-slide">
                 <div class="account-top">
                     <div>
@@ -357,10 +353,30 @@ button{font-family:inherit}
 </nav>
 
 <script>
+"use strict";
 let currentUser = null;
 let currentSlide = 0;
 const wrapper = document.getElementById('swipeWrapper');
 const card = document.getElementById('accountCard');
+
+// ===== FIX: SECURE PAYMENT VERIFICATION (NO WEBHOOK) =====
+function isPaymentVerifiedForCurrentUser(currentEmail) {
+  const paidEmail = (localStorage.getItem("jovia_paid_email") || "").toLowerCase().trim();
+  const verified = localStorage.getItem("jovia_payment_verified");
+  const paidPlan = localStorage.getItem("jovia_paid_plan");
+
+  if (!verified || verified!== "true") return {verified: false};
+  if (!paidEmail ||!currentEmail) return {verified: false};
+
+  // EMAIL MUST MATCH - stops Account B using Account A payment
+  if (paidEmail === currentEmail.toLowerCase().trim()) {
+    return {verified: true, plan: paidPlan || "Silver", paidEmail};
+  } else {
+    console.log("❌ Payment email mismatch:", paidEmail, "!=", currentEmail);
+    return {verified: false, mismatch: true, paidEmail, currentEmail};
+  }
+}
+
 function setSlide(i){
     currentSlide = i;
     wrapper.style.transform = `translateX(-${i*100}%)`;
@@ -387,6 +403,11 @@ async function loadUser(){
         else if(typeof data === "object" && (data.fullName || data.full_name || data.name || data.username || data.email || data.plan || data.package || data.id || data._id)){user = data;}
         if(!user){throw new Error("No member information was returned.");}
         currentUser = user;
+        // Save email for payment verification
+        const emailToSave = firstText(user.email, data.email);
+        if(emailToSave && emailToSave.includes("@")){
+          try{localStorage.setItem("jovia_email", emailToSave.toLowerCase());}catch{}
+        }
         displayUser(currentUser,data);
         loadWallet();
         loadReferrals();
@@ -398,6 +419,14 @@ async function loadUser(){
         document.getElementById("balance").textContent = "₦0";
         document.getElementById("welcomeBonus").textContent = "₦0";
         document.getElementById("referralLink").textContent = "Referral link unavailable";
+        // Still try to check local payment
+        const localEmail = localStorage.getItem("jovia_email")||"";
+        const check = isPaymentVerifiedForCurrentUser(localEmail);
+        if(check.verified){
+          document.getElementById("accountStatus").textContent="Active";
+          document.getElementById("paymentButton").textContent="Account Activated ✓";
+          document.getElementById("paymentButton").disabled=true;
+        }
     }
 }
 async function loadWallet(){
@@ -434,7 +463,16 @@ function displayUser(user,apiData){
     if(!fullName && user.email){fullName = String(user.email).split("@")[0];}
     document.getElementById("userName").textContent = fullName || "Member";
     const planValues = [user.plan,user.selectedPlan,user.selected_plan,user.membershipPlan,user.membership_plan,user.subscriptionPlan,user.subscription_plan,user.package,user.packageName,user.package_name,user.selectedPackage,user.selected_package,user.planName,user.plan_name,user.membership,user.tier,profile.plan,profile.package,profile.membershipPlan,apiData && apiData.plan,apiData && apiData.package,apiData && apiData.selectedPlan,apiData && apiData.selectedPackage];
-    const packageName = detectPackage(planValues);
+    let packageName = detectPackage(planValues);
+
+    // OVERRIDE WITH PAID PLAN IF VERIFIED
+    const currentEmail = firstText(user.email, apiData && apiData.email, localStorage.getItem("jovia_email"));
+    const paymentCheck = isPaymentVerifiedForCurrentUser(currentEmail);
+    if(paymentCheck.verified){
+      packageName = paymentCheck.plan;
+      console.log("✅ Using paid plan:", packageName);
+    }
+
     document.getElementById("planBadge").textContent = packageName.toUpperCase();
     document.getElementById("planBadge2").textContent = packageName.toUpperCase();
     const serverBonus = firstNumber(user.welcomeBonus,user.welcome_bonus,user.registrationBonus,user.registration_bonus,apiData && apiData.welcomeBonus,apiData && apiData.welcome_bonus);
@@ -444,7 +482,13 @@ function displayUser(user,apiData){
     const actualWallet = Number.isFinite(walletBalance)? walletBalance : 0;
     if(document.getElementById("balance").textContent==="₦0") document.getElementById("balance").textContent = money(actualWallet);
     document.getElementById("welcomeBonus").textContent = money(welcomeBonus);
-    const rawStatus = firstText(user.accountStatus,user.account_status,user.status,user.userStatus,user.user_status,apiData && apiData.accountStatus,apiData && apiData.account_status).toLowerCase();
+    let rawStatus = firstText(user.accountStatus,user.account_status,user.status,user.userStatus,user.user_status,apiData && apiData.accountStatus,apiData && apiData.account_status).toLowerCase();
+
+    // AUTO-UNLOCK IF PAYMENT VERIFIED FOR THIS EMAIL
+    if(paymentCheck.verified){
+      rawStatus = "active";
+    }
+
     let statusText = "Pending";
     if(rawStatus === "approved" || rawStatus === "active" || rawStatus === "activated"){statusText = "Active";}else if(rawStatus === "suspended"){statusText = "Suspended";}
     document.getElementById("accountStatus").textContent = statusText;
@@ -560,6 +604,13 @@ function openPage(page){window.location.href = page;}
 function activate(){
     if(!currentUser){return;}
     const status = firstText(currentUser.accountStatus,currentUser.account_status,currentUser.status,currentUser.userStatus,currentUser.user_status).toLowerCase();
+    // Allow re-check if payment was done but status not updated
+    const email = firstText(currentUser.email, localStorage.getItem("jovia_email"));
+    const check = isPaymentVerifiedForCurrentUser(email);
+    if(check.verified) {
+      location.reload();
+      return;
+    }
     if(status === "approved" || status === "active" || status === "activated"){return;}
     if(status === "suspended"){return;}
     window.location.href = "payment.html";
