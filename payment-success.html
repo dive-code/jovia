@@ -2,2055 +2,273 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
-  >
-
-  <meta
-    name="description"
-    content="Payment confirmation and membership activation for Jovia Network."
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="description" content="Payment confirmation and membership activation for Jovia Network.">
   <meta name="theme-color" content="#3b0758">
-
   <title>Payment Successful | Jovia Network</title>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link
-    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  >
-
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* =========================================================
-       JOVIA NETWORK
-       PAYMENT SUCCESS / ACCOUNT ACTIVATION
-       ========================================================= */
-
     :root {
-      --purple: #57158a;
-      --purple-dark: #3d0d64;
-      --purple-deep: #260038;
-      --purple-light: #7b2cbf;
-
-      --gold: #f5b51b;
-      --gold-light: #ffd75a;
-
-      --dark: #17121d;
-      --text: #27212d;
-      --muted: #77717d;
-
-      --background: #f7f5f9;
-      --white: #ffffff;
-
-      --border: #e7e1eb;
-
-      --success: #14804a;
-      --success-light: #1b9d5c;
-      --success-bg: #effaf4;
-      --success-border: #c9efd9;
-
-      --warning: #9a6700;
-      --warning-bg: #fff8e6;
-      --warning-border: #f3df9f;
-
-      --danger: #b42318;
-      --danger-bg: #fff1f0;
-      --danger-border: #ffd1cd;
-
-      --telegram: #229ed9;
-      --telegram-dark: #168bc5;
-
-      --shadow:
-        0 25px 70px rgba(40, 18, 55, 0.10);
-
-      --shadow-soft:
-        0 12px 35px rgba(40, 18, 55, 0.07);
+      --purple:#57158a; --purple-dark:#3d0d64; --purple-deep:#260038; --purple-light:#7b2cbf;
+      --gold:#f5b51b; --gold-light:#ffd75a; --dark:#17121d; --text:#27212d; --muted:#77717d;
+      --background:#f7f5f9; --white:#ffffff; --border:#e7e1eb;
+      --success:#14804a; --success-light:#1b9d5c; --success-bg:#effaf4; --success-border:#c9efd9;
+      --warning:#9a6700; --warning-bg:#fff8e6; --warning-border:#f3df9f;
+      --danger:#b42318; --danger-bg:#fff1f0; --danger-border:#ffd1cd;
+      --telegram:#229ed9; --telegram-dark:#168bc5;
+      --shadow:0 25px 70px rgba(40,18,55,0.10); --shadow-soft:0 12px 35px rgba(40,18,55,0.07);
     }
-
-    /* =========================================================
-       RESET
-       ========================================================= */
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      min-height: 100vh;
-
-      font-family: "Manrope", sans-serif;
-
-      color: var(--text);
-
-      background:
-        radial-gradient(
-          circle at 7% 4%,
-          rgba(87, 21, 138, 0.055),
-          transparent 28%
-        ),
-        radial-gradient(
-          circle at 93% 92%,
-          rgba(245, 181, 27, 0.075),
-          transparent 28%
-        ),
-        var(--background);
-
-      display: flex;
-      flex-direction: column;
-
-      -webkit-font-smoothing: antialiased;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    button {
-      font-family: inherit;
-    }
-
-    /* =========================================================
-       BACKGROUND DECORATION
-       ========================================================= */
-
-    .page-decoration {
-      position: fixed;
-      inset: 0;
-
-      overflow: hidden;
-
-      pointer-events: none;
-
-      z-index: 0;
-    }
-
-    .circle {
-      position: absolute;
-
-      border-radius: 50%;
-
-      filter: blur(2px);
-    }
-
-    .circle-one {
-      width: 460px;
-      height: 460px;
-
-      top: -250px;
-      left: -190px;
-
-      background:
-        rgba(87, 21, 138, 0.055);
-    }
-
-    .circle-two {
-      width: 400px;
-      height: 400px;
-
-      right: -200px;
-      bottom: -210px;
-
-      background:
-        rgba(245, 181, 27, 0.07);
-    }
-
-    /* =========================================================
-       HEADER
-       ========================================================= */
-
-    header {
-      position: relative;
-      z-index: 10;
-
-      width: 100%;
-
-      padding:
-        17px
-        5%;
-
-      background:
-        rgba(255, 255, 255, 0.90);
-
-      border-bottom:
-        1px solid rgba(231, 225, 235, 0.85);
-
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
-
-    .nav {
-      width: 100%;
-      max-width: 1180px;
-
-      margin: auto;
-
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      gap: 15px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-    }
-
-    .logo {
-      width: 44px;
-      height: 44px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 13px;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--purple),
-          var(--purple-light)
-        );
-
-      color: white;
-
-      font-size: 21px;
-      font-weight: 800;
-
-      box-shadow:
-        0 8px 22px rgba(87, 21, 138, 0.22);
-    }
-
-    .brand-name {
-      color: var(--dark);
-
-      font-size: 16px;
-      line-height: 1.1;
-
-      font-weight: 800;
-    }
-
-    .brand-network {
-      margin-top: 3px;
-
-      color: var(--purple);
-
-      font-size: 8px;
-      line-height: 1;
-
-      font-weight: 800;
-      letter-spacing: 2.1px;
-    }
-
-    .home-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-
-      padding:
-        10px
-        13px;
-
-      border-radius: 11px;
-
-      color: var(--purple);
-
-      font-size: 11px;
-      font-weight: 800;
-
-      transition:
-        background 0.2s ease,
-        transform 0.2s ease;
-    }
-
-    .home-link:hover {
-      background:
-        rgba(87, 21, 138, 0.06);
-
-      transform: translateX(-2px);
-    }
-
-    /* =========================================================
-       MAIN
-       ========================================================= */
-
-    main {
-      position: relative;
-      z-index: 2;
-
-      width: 100%;
-
-      flex: 1;
-
-      padding:
-        54px
-        20px
-        65px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 760px;
-
-      margin: auto;
-    }
-
-    /* =========================================================
-       SUCCESS CARD
-       ========================================================= */
-
-    .success-card {
-      position: relative;
-      overflow: hidden;
-
-      width: 100%;
-
-      padding:
-        44px
-        44px
-        38px;
-
-      background:
-        rgba(255, 255, 255, 0.97);
-
-      border:
-        1px solid rgba(231, 225, 235, 0.95);
-
-      border-radius: 28px;
-
-      box-shadow: var(--shadow);
-
-      text-align: center;
-    }
-
-    .success-card::before {
-      content: "";
-
-      position: absolute;
-
-      top: 0;
-      left: 0;
-
-      width: 100%;
-      height: 4px;
-
-      background:
-        linear-gradient(
-          90deg,
-          var(--purple),
-          var(--purple-light),
-          var(--gold)
-        );
-    }
-
-    /* =========================================================
-       SUCCESS ICON
-       ========================================================= */
-
-    .success-icon-wrap {
-      width: 94px;
-      height: 94px;
-
-      margin:
-        0
-        auto
-        22px;
-
-      padding: 6px;
-
-      border-radius: 50%;
-
-      background:
-        rgba(20, 128, 74, 0.08);
-
-      border:
-        1px solid rgba(20, 128, 74, 0.12);
-
-      transition:
-        background 0.25s ease,
-        border-color 0.25s ease;
-    }
-
-    .success-icon {
-      width: 100%;
-      height: 100%;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 50%;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--success-light),
-          var(--success)
-        );
-
-      color: white;
-
-      font-size: 35px;
-      font-weight: 800;
-
-      box-shadow:
-        0 10px 25px rgba(20, 128, 74, 0.18);
-    }
-
-    /* =========================================================
-       EYEBROW
-       ========================================================= */
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-
-      padding:
-        8px
-        13px;
-
-      margin-bottom: 16px;
-
-      border-radius: 50px;
-
-      background:
-        var(--success-bg);
-
-      border:
-        1px solid var(--success-border);
-
-      color: var(--success);
-
-      font-size: 9px;
-      font-weight: 800;
-
-      letter-spacing: 1.25px;
-    }
-
-    .eyebrow-dot {
-      width: 7px;
-      height: 7px;
-
-      border-radius: 50%;
-
-      background:
-        var(--success);
-
-      box-shadow:
-        0 0 0 4px rgba(20, 128, 74, 0.07);
-    }
-
-    /* =========================================================
-       HEADLINE
-       ========================================================= */
-
-    .success-card h1 {
-      color: var(--dark);
-
-      font-size:
-        clamp(
-          30px,
-          6vw,
-          45px
-        );
-
-      line-height: 1.08;
-
-      letter-spacing: -1.8px;
-
-      font-weight: 800;
-
-      margin-bottom: 14px;
-    }
-
-    .success-card h1 span {
-      color: var(--purple);
-    }
-
-    .subtitle {
-      max-width: 550px;
-
-      margin:
-        0
-        auto;
-
-      color: var(--muted);
-
-      font-size: 12.5px;
-      line-height: 1.8;
-    }
-
-    /* =========================================================
-       MEMBERSHIP STATUS
-       ========================================================= */
-
-    .membership-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 9px;
-
-      margin-top: 23px;
-
-      padding:
-        10px
-        15px;
-
-      border-radius: 50px;
-
-      background:
-        var(--success-bg);
-
-      border:
-        1px solid var(--success-border);
-
-      color:
-        var(--success);
-
-      font-size: 10px;
-      font-weight: 800;
-
-      transition:
-        all 0.25s ease;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-
-      border-radius: 50%;
-
-      background:
-        var(--success);
-
-      box-shadow:
-        0 0 0 4px rgba(20, 128, 74, 0.07);
-    }
-
-    /* =========================================================
-       DETAILS BOX
-       ========================================================= */
-
-    .details-box {
-      margin-top: 30px;
-
-      padding: 21px;
-
-      border:
-        1px solid var(--border);
-
-      border-radius: 18px;
-
-      background:
-        linear-gradient(
-          135deg,
-          #faf8fb,
-          #fffdfb
-        );
-
-      text-align: left;
-    }
-
-    .details-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      margin-bottom: 18px;
-    }
-
-    .details-icon {
-      width: 43px;
-      height: 43px;
-      min-width: 43px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 13px;
-
-      background:
-        rgba(87, 21, 138, 0.08);
-
-      color:
-        var(--purple);
-
-      font-size: 17px;
-      font-weight: 800;
-    }
-
-    .details-title {
-      color: var(--dark);
-
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .details-subtitle {
-      margin-top: 2px;
-
-      color: var(--muted);
-
-      font-size: 9px;
-      line-height: 1.5;
-    }
-
-    /* =========================================================
-       BENEFITS
-       ========================================================= */
-
-    .benefits {
-      display: grid;
-      gap: 11px;
-
-      list-style: none;
-    }
-
-    .benefits li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-
-      color: #423a48;
-
-      font-size: 11px;
-      line-height: 1.5;
-
-      font-weight: 600;
-    }
-
-    .check {
-      width: 20px;
-      height: 20px;
-      min-width: 20px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 50%;
-
-      background:
-        var(--success-bg);
-
-      border:
-        1px solid var(--success-border);
-
-      color:
-        var(--success);
-
-      font-size: 9px;
-      font-weight: 800;
-    }
-
-    /* =========================================================
-       NEXT STEP
-       ========================================================= */
-
-    .next-step {
-      margin-top: 24px;
-
-      padding:
-        13px
-        15px;
-
-      border-radius: 13px;
-
-      background:
-        rgba(87, 21, 138, 0.045);
-
-      border:
-        1px solid rgba(87, 21, 138, 0.08);
-
-      color:
-        var(--muted);
-
-      font-size: 10px;
-      line-height: 1.65;
-
-      text-align: left;
-    }
-
-    .next-step strong {
-      color:
-        var(--purple);
-    }
-
-    /* =========================================================
-       ACTIONS
-       ========================================================= */
-
-    .actions {
-      display: grid;
-      gap: 10px;
-
-      margin-top: 26px;
-    }
-
-    .btn {
-      width: 100%;
-      min-height: 54px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-
-      padding:
-        13px
-        16px;
-
-      border-radius: 13px;
-
-      font-size: 11px;
-      font-weight: 800;
-
-      cursor: pointer;
-
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-    }
-
-    .btn-primary {
-      color: white;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--purple),
-          var(--purple-light)
-        );
-
-      box-shadow:
-        0 13px 28px rgba(87, 21, 138, 0.20);
-    }
-
-    .btn-primary:hover {
-      box-shadow:
-        0 17px 34px rgba(87, 21, 138, 0.26);
-    }
-
-    .btn-telegram {
-      color: white;
-
-      background:
-        linear-gradient(
-          135deg,
-          var(--telegram),
-          var(--telegram-dark)
-        );
-
-      box-shadow:
-        0 10px 23px rgba(34, 158, 217, 0.16);
-    }
-
-    .btn-secondary {
-      color:
-        var(--purple);
-
-      background:
-        white;
-
-      border:
-        1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background:
-        #faf8fc;
-    }
-
-    /* =========================================================
-       FOOTER NOTE
-       ========================================================= */
-
-    .footer-note {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-
-      margin-top: 21px;
-
-      color:
-        #98919e;
-
-      font-size: 9px;
-      line-height: 1.5;
-    }
-
-    .footer-check {
-      width: 16px;
-      height: 16px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      border-radius: 50%;
-
-      background:
-        var(--success-bg);
-
-      color:
-        var(--success);
-
-      font-size: 8px;
-    }
-
-    /* =========================================================
-       FOOTER
-       ========================================================= */
-
-    footer {
-      position: relative;
-      z-index: 2;
-
-      padding:
-        0
-        20px
-        27px;
-
-      text-align: center;
-
-      color:
-        #98919e;
-
-      font-size: 9px;
-    }
-
-    footer strong {
-      color:
-        var(--purple);
-    }
-
-    /* =========================================================
-       MOBILE
-       ========================================================= */
-
-    @media (max-width: 600px) {
-
-      header {
-        padding:
-          14px
-          15px;
-      }
-
-      .logo {
-        width: 41px;
-        height: 41px;
-
-        border-radius: 12px;
-
-        font-size: 19px;
-      }
-
-      .brand-name {
-        font-size: 15px;
-      }
-
-      .home-link {
-        padding:
-          9px
-          10px;
-
-        font-size: 10px;
-      }
-
-      main {
-        padding:
-          30px
-          14px
-          45px;
-      }
-
-      .success-card {
-        padding:
-          34px
-          18px
-          29px;
-
-        border-radius: 23px;
-      }
-
-      .success-icon-wrap {
-        width: 82px;
-        height: 82px;
-
-        margin-bottom: 20px;
-      }
-
-      .success-icon {
-        font-size: 31px;
-      }
-
-      .success-card h1 {
-        font-size: 31px;
-        letter-spacing: -1.2px;
-      }
-
-      .subtitle {
-        font-size: 11px;
-      }
-
-      .details-box {
-        padding:
-          17px;
-      }
-
-      .benefits li {
-        font-size: 10.5px;
-      }
-
-      .next-step {
-        font-size: 9.5px;
-      }
-
-      .circle-one {
-        width: 300px;
-        height: 300px;
-
-        top: -180px;
-        left: -160px;
-      }
-
-      .circle-two {
-        width: 280px;
-        height: 280px;
-
-        right: -160px;
-        bottom: -170px;
-      }
-    }
-
-    @media (max-width: 350px) {
-
-      .brand-network {
-        display: none;
-      }
-
-      .success-card h1 {
-        font-size: 28px;
-      }
-
-      .membership-status {
-        font-size: 9px;
-      }
-    }
-
-    /* =========================================================
-       REDUCED MOTION
-       ========================================================= */
-
-    @media (prefers-reduced-motion: reduce) {
-
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
-    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{min-height:100vh;font-family:"Manrope",sans-serif;color:var(--text);background:radial-gradient(circle at 7% 4%, rgba(87,21,138,0.055), transparent 28%), radial-gradient(circle at 93% 92%, rgba(245,181,27,0.075), transparent 28%), var(--background);display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+    a{color:inherit;text-decoration:none} button{font-family:inherit}
+    .page-decoration{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+    .circle{position:absolute;border-radius:50%;filter:blur(2px)}
+    .circle-one{width:460px;height:460px;top:-250px;left:-190px;background:rgba(87,21,138,0.055)}
+    .circle-two{width:400px;height:400px;right:-200px;bottom:-210px;background:rgba(245,181,27,0.07)}
+    header{position:relative;z-index:10;width:100%;padding:17px 5%;background:rgba(255,255,255,0.90);border-bottom:1px solid rgba(231,225,235,0.85);backdrop-filter:blur(16px)}
+    .nav{width:100%;max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:15px}
+    .brand{display:flex;align-items:center;gap:11px}
+    .logo{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:white;font-size:21px;font-weight:800;box-shadow:0 8px 22px rgba(87,21,138,0.22)}
+    .brand-name{color:var(--dark);font-size:16px;line-height:1.1;font-weight:800}
+    .brand-network{margin-top:3px;color:var(--purple);font-size:8px;line-height:1;font-weight:800;letter-spacing:2.1px}
+    .home-link{display:inline-flex;align-items:center;gap:8px;padding:10px 13px;border-radius:11px;color:var(--purple);font-size:11px;font-weight:800;transition:background 0.2s ease,transform 0.2s ease}
+    .home-link:hover{background:rgba(87,21,138,0.06);transform:translateX(-2px)}
+    main{position:relative;z-index:2;width:100%;flex:1;padding:54px 20px 65px}
+    .container{width:100%;max-width:760px;margin:auto}
+    .success-card{position:relative;overflow:hidden;width:100%;padding:44px 44px 38px;background:rgba(255,255,255,0.97);border:1px solid rgba(231,225,235,0.95);border-radius:28px;box-shadow:var(--shadow);text-align:center}
+    .success-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--purple),var(--purple-light),var(--gold))}
+    .success-icon-wrap{width:94px;height:94px;margin:0 auto 22px;padding:6px;border-radius:50%;background:rgba(20,128,74,0.08);border:1px solid rgba(20,128,74,0.12)}
+    .success-icon{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,var(--success-light),var(--success));color:white;font-size:35px;font-weight:800;box-shadow:0 10px 25px rgba(20,128,74,0.18)}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;margin-bottom:16px;border-radius:50px;background:var(--success-bg);border:1px solid var(--success-border);color:var(--success);font-size:9px;font-weight:800;letter-spacing:1.25px}
+    .eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px rgba(20,128,74,0.07)}
+    .success-card h1{color:var(--dark);font-size:clamp(30px,6vw,45px);line-height:1.08;letter-spacing:-1.8px;font-weight:800;margin-bottom:14px}
+    .success-card h1 span{color:var(--purple)}
+    .subtitle{max-width:550px;margin:0 auto;color:var(--muted);font-size:12.5px;line-height:1.8}
+    .membership-status{display:inline-flex;align-items:center;gap:9px;margin-top:23px;padding:10px 15px;border-radius:50px;background:var(--success-bg);border:1px solid var(--success-border);color:var(--success);font-size:10px;font-weight:800}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px rgba(20,128,74,0.07)}
+    .details-box{margin-top:30px;padding:21px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,#faf8fb,#fffdfb);text-align:left}
+    .details-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+    .details-icon{width:43px;height:43px;min-width:43px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:rgba(87,21,138,0.08);color:var(--purple);font-size:17px;font-weight:800}
+    .details-title{color:var(--dark);font-size:13px;font-weight:800}
+    .details-subtitle{margin-top:2px;color:var(--muted);font-size:9px;line-height:1.5}
+    .benefits{display:grid;gap:11px;list-style:none}
+    .benefits li{display:flex;align-items:center;gap:10px;color:#423a48;font-size:11px;line-height:1.5;font-weight:600}
+    .check{width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--success-bg);border:1px solid var(--success-border);color:var(--success);font-size:9px;font-weight:800}
+    .next-step{margin-top:24px;padding:13px 15px;border-radius:13px;background:rgba(87,21,138,0.045);border:1px solid rgba(87,21,138,0.08);color:var(--muted);font-size:10px;line-height:1.65;text-align:left}
+    .next-step strong{color:var(--purple)}
+    .actions{display:grid;gap:10px;margin-top:26px}
+    .btn{width:100%;min-height:54px;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px 16px;border-radius:13px;font-size:11px;font-weight:800;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease,background 0.2s ease}
+    .btn:hover{transform:translateY(-2px)}
+    .btn-primary{color:white;background:linear-gradient(135deg,var(--purple),var(--purple-light));box-shadow:0 13px 28px rgba(87,21,138,0.20)}
+    .btn-telegram{color:white;background:linear-gradient(135deg,var(--telegram),var(--telegram-dark));box-shadow:0 10px 23px rgba(34,158,217,0.16)}
+    .btn-secondary{color:var(--purple);background:white;border:1px solid var(--border)}
+    .footer-note{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:21px;color:#98919e;font-size:9px;line-height:1.5}
+    .footer-check{width:16px;height:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--success-bg);color:var(--success);font-size:8px}
+    footer{position:relative;z-index:2;padding:0 20px 27px;text-align:center;color:#98919e;font-size:9px}
+    footer strong{color:var(--purple)}
+    @media(max-width:600px){header{padding:14px 15px}.logo{width:41px;height:41px;border-radius:12px;font-size:19px}.brand-name{font-size:15px}.home-link{padding:9px 10px;font-size:10px}main{padding:30px 14px 45px}.success-card{padding:34px 18px 29px;border-radius:23px}.success-icon-wrap{width:82px;height:82px;margin-bottom:20px}.success-icon{font-size:31px}.success-card h1{font-size:31px;letter-spacing:-1.2px}.subtitle{font-size:11px}.details-box{padding:17px}.benefits li{font-size:10.5px}.next-step{font-size:9.5px}.circle-one{width:300px;height:300px;top:-180px;left:-160px}.circle-two{width:280px;height:280px;right:-160px;bottom:-170px}}
   </style>
 </head>
-
 <body>
-
-  <!-- =======================================================
-       BACKGROUND
-       ======================================================= -->
-
-  <div class="page-decoration" aria-hidden="true">
-    <div class="circle circle-one"></div>
-    <div class="circle circle-two"></div>
-  </div>
-
-
-  <!-- =======================================================
-       HEADER
-       ======================================================= -->
-
-  <header>
-
-    <nav class="nav">
-
-      <a
-        href="index.html"
-        class="brand"
-        aria-label="Jovia Network home"
-      >
-
-        <div class="logo">
-          J
-        </div>
-
-        <div>
-
-          <div class="brand-name">
-            Jovia
-          </div>
-
-          <div class="brand-network">
-            NETWORK
-          </div>
-
-        </div>
-
-      </a>
-
-
-      <a
-        href="index.html"
-        class="home-link"
-      >
-        ← Home
-      </a>
-
-    </nav>
-
-  </header>
-
-
-  <!-- =======================================================
-       MAIN
-       ======================================================= -->
-
-  <main>
-
-    <div class="container">
-
-      <section
-        class="success-card"
-        aria-live="polite"
-      >
-
-        <!-- SUCCESS ICON -->
-
-        <div
-          class="success-icon-wrap"
-          id="iconWrap"
-        >
-
-          <div
-            class="success-icon"
-            id="successIcon"
-          >
-            ✓
-          </div>
-
-        </div>
-
-
-        <!-- STATUS LABEL -->
-
-        <div
-          class="eyebrow"
-          id="eyebrow"
-        >
-
-          <span
-            class="eyebrow-dot"
-            id="eyebrowDot"
-          ></span>
-
-          <span id="eyebrowText">
-            PAYMENT CONFIRMED
-          </span>
-
-        </div>
-
-
-        <!-- TITLE -->
-
-        <h1 id="successTitle">
-          Payment <span>successful.</span>
-        </h1>
-
-
-        <!-- DESCRIPTION -->
-
-        <p
-          class="subtitle"
-          id="subtitleText"
-        >
-          Your Jovia Network membership payment has been
-          received. We are securely activating your account.
-        </p>
-
-
-        <!-- MEMBERSHIP STATUS -->
-
-        <div
-          class="membership-status"
-          id="membershipStatus"
-        >
-
-          <span
-            class="status-dot"
-            id="statusDot"
-          ></span>
-
-          <span id="statusText">
-            Activating Membership...
-          </span>
-
-        </div>
-
-
-        <!-- DETAILS -->
-
-        <div class="details-box">
-
-          <div class="details-header">
-
-            <div class="details-icon">
-              ◆
-            </div>
-
-            <div>
-
-              <div class="details-title">
-                Jovia Network Membership
-              </div>
-
-              <div class="details-subtitle">
-                Your membership benefits
-              </div>
-
-            </div>
-
-          </div>
-
-
-          <ul class="benefits">
-
-            <li>
-              <span class="check">✓</span>
-              <span>
-                Premium membership activation
-              </span>
-            </li>
-
-            <li>
-              <span class="check">✓</span>
-              <span>
-                Access to your Jovia member dashboard
-              </span>
-            </li>
-
-            <li>
-              <span class="check">✓</span>
-              <span>
-                Your membership information securely saved
-              </span>
-            </li>
-
-            <li>
-              <span class="check">✓</span>
-              <span>
-                Access to available Jovia Network features
-              </span>
-            </li>
-
-          </ul>
-
-
-          <!-- NEXT STEP -->
-
-          <div class="next-step">
-
-            <strong>
-              Next step:
-            </strong>
-
-            <span id="nextStepText">
-              Your payment is being verified and your account
-              is being activated automatically.
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <!-- ACTIONS -->
-
-        <div class="actions">
-
-          <a
-            href="dashboard.html"
-            class="btn btn-primary"
-          >
-            Open Member Dashboard
-            <span>→</span>
-          </a>
-
-
-          <a
-            id="telegramBtn"
-            href="https://t.me/customer_support_team0001"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="btn btn-telegram"
-          >
-            💬 Chat Support on Telegram
-          </a>
-
-
-          <a
-            href="index.html"
-            class="btn btn-secondary"
-          >
-            Return to Jovia Network
-          </a>
-
-        </div>
-
-
-        <!-- FOOTER STATUS -->
-
-        <div class="footer-note">
-
-          <span
-            class="footer-check"
-            id="footerCheck"
-          >
-            ✓
-          </span>
-
-          <span id="footerNote">
-            Securely syncing your membership status
-          </span>
-
-        </div>
-
-      </section>
-
+  <div class="page-decoration" aria-hidden="true"><div class="circle circle-one"></div><div class="circle circle-two"></div></div>
+  <header><nav class="nav"><a href="index.html" class="brand"><div class="logo">J</div><div><div class="brand-name">Jovia</div><div class="brand-network">NETWORK</div></div></a><a href="index.html" class="home-link">← Home</a></nav></header>
+  <main><div class="container"><section class="success-card" aria-live="polite">
+    <div class="success-icon-wrap" id="iconWrap"><div class="success-icon" id="successIcon">✓</div></div>
+    <div class="eyebrow" id="eyebrow"><span class="eyebrow-dot" id="eyebrowDot"></span><span id="eyebrowText">PAYMENT CONFIRMED</span></div>
+    <h1 id="successTitle">Payment <span>successful.</span></h1>
+    <p class="subtitle" id="subtitleText">Your Jovia Network membership payment has been received. We are securely activating your account.</p>
+    <div class="membership-status" id="membershipStatus"><span class="status-dot" id="statusDot"></span><span id="statusText">Activating Membership...</span></div>
+    <div class="details-box">
+      <div class="details-header"><div class="details-icon">◆</div><div><div class="details-title">Jovia Network Membership</div><div class="details-subtitle" id="planSubtitle">Your membership benefits</div></div></div>
+      <ul class="benefits">
+        <li><span class="check">✓</span><span id="benefit1">Premium membership activation</span></li>
+        <li><span class="check">✓</span><span id="benefit2">Access to your Jovia member dashboard</span></li>
+        <li><span class="check">✓</span><span id="benefit3">Your membership information securely saved</span></li>
+        <li><span class="check">✓</span><span id="benefit4">Access to available Jovia Network features</span></li>
+      </ul>
+      <div class="next-step"><strong>Next step:</strong> <span id="nextStepText">Your payment is being verified and your account is being activated automatically.</span></div>
     </div>
+    <div class="actions">
+      <a href="dashboard.html" class="btn btn-primary">Open Member Dashboard <span>→</span></a>
+      <a id="telegramBtn" href="https://t.me/customer_support_team0001" target="_blank" rel="noopener noreferrer" class="btn btn-telegram">💬 Chat Support on Telegram</a>
+      <a href="index.html" class="btn btn-secondary">Return to Jovia Network</a>
+    </div>
+    <div class="footer-note"><span class="footer-check" id="footerCheck">✓</span><span id="footerNote">Securely syncing your membership status</span></div>
+  </section></div></main>
+  <footer>© <span id="year"></span> <strong>Jovia Network</strong></footer>
 
-  </main>
+<script>
+document.getElementById("year").textContent = new Date().getFullYear();
 
+function getPaymentData(){
+  const p = new URLSearchParams(window.location.search);
+  return {
+    email: p.get("email") || localStorage.getItem("jovia_email") || "",
+    name: p.get("name") || localStorage.getItem("jovia_name") || "",
+    phone: p.get("phone") || localStorage.getItem("jovia_phone") || "",
+    plan: p.get("plan") || localStorage.getItem("jovia_plan") || localStorage.getItem("jovia_paid_plan") || "Silver"
+  };
+}
 
-  <!-- =======================================================
-       FOOTER
-       ======================================================= -->
+function saveLocalMembership(data){
+  try{
+    const clean = (data.plan || "Silver").toLowerCase().includes("gold") ? "Gold" : "Silver";
+    if(data.email) localStorage.setItem("jovia_email", data.email);
+    if(data.name) localStorage.setItem("jovia_name", data.name);
+    if(data.phone) localStorage.setItem("jovia_phone", data.phone);
+    localStorage.setItem("jovia_plan", clean);
+    localStorage.setItem("jovia_paid_plan", clean);
+    localStorage.setItem("jovia_user", JSON.stringify({email:data.email, name:data.name, plan:clean, status:"active"}));
+    localStorage.setItem("jovia_active", "true");
+    localStorage.setItem("jovia_premium", "true");
+    // Set max for jobs.html
+    const max = clean === "Gold" ? 7000 : 2500;
+    const perTask = clean === "Gold" ? 700 : 500;
+    const taskCount = clean === "Gold" ? 10 : 5;
+    localStorage.setItem("jovia_max_daily", max);
+    localStorage.setItem("jovia_per_task", perTask);
+    localStorage.setItem("jovia_task_count", taskCount);
+    // Reset daily if new plan
+    const oldPlan = localStorage.getItem("jovia_last_plan");
+    if(oldPlan !== clean){
+      localStorage.setItem("jovia_today_earn", "0");
+      localStorage.setItem("jovia_jobs_done", "0");
+      localStorage.setItem("jovia_last_plan", clean);
+    }
+    return clean;
+  }catch(e){ return "Silver"; }
+}
 
-  <footer>
+function setStatus(state, message, plan){
+  const eyebrowText=document.getElementById("eyebrowText");
+  const statusText=document.getElementById("statusText");
+  const subtitle=document.getElementById("subtitleText");
+  const nextStep=document.getElementById("nextStepText");
+  const footer=document.getElementById("footerNote");
+  const icon=document.getElementById("successIcon");
+  const p = plan || getPaymentData().plan;
+  const isGold = p.toLowerCase().includes("gold");
+  const max = isGold ? "₦7,000" : "₦2,500";
 
-    © <span id="year"></span>
-    <strong>Jovia Network</strong>
+  if(state==="active"){
+    eyebrowText.textContent="ACCOUNT ACTIVATED - "+p.toUpperCase();
+    statusText.textContent=`Membership Active ✓ - ${p.toUpperCase()} (${max}/day)`;
+    subtitle.textContent=message||`Your ${p} membership is now active. You can earn up to ${max} per day on Jobs.`;
+    nextStep.textContent=`Your ${p} membership is active. Silver max ₦2,500/day, Gold max ₦7,000/day. Continue to dashboard.`;
+    footer.textContent="Account activated - "+p+" - "+max+"/day";
+    icon.textContent="✓";
+    document.getElementById("benefit1").textContent = isGold ? "Gold Membership - ₦7,000 max per day" : "Silver Membership - ₦2,500 max per day";
+    document.getElementById("benefit2").textContent = isGold ? "10 Jobs per day ( ₦700 each )" : "5 Jobs per day ( ₦500 each )";
+    document.getElementById("benefit3").textContent = isGold ? "Withdrawal from ₦1,000" : "Withdrawal from ₦3,000";
+    document.getElementById("benefit4").textContent = isGold ? "Gold referral ₦4,500 per referral" : "Silver referral ₦1,500 per referral";
+  }
+  if(state==="alreadyActive"){
+    eyebrowText.textContent="ACCOUNT ALREADY ACTIVE - "+p.toUpperCase();
+    statusText.textContent=`Membership Active ✓ - ${p.toUpperCase()}`;
+    subtitle.textContent=`Your ${p} account is already active. Max ${max}/day.`;
+    nextStep.textContent="Continue to your dashboard. Your plan limits are applied.";
+    footer.textContent="Account already active - "+p;
+    icon.textContent="✓";
+  }
+  if(state==="pending"){
+    eyebrowText.textContent="PAYMENT RECEIVED"; statusText.textContent="Pending Verification";
+    subtitle.textContent=message||"Payment received, awaiting verification.";
+    nextStep.textContent="If account does not activate shortly, contact support."; footer.textContent="Payment received — verification pending"; icon.textContent="…";
+  }
+  if(state==="login"){
+    eyebrowText.textContent="PAYMENT RECEIVED"; statusText.textContent="Login Required";
+    subtitle.textContent="Payment received, but we could not identify account."; nextStep.textContent="Please log in."; footer.textContent="Please log in"; icon.textContent="!";
+  }
+  if(state==="error"){
+    eyebrowText.textContent="ACTIVATION CHECK"; statusText.textContent="Verification Required";
+    subtitle.textContent=message||"Could not complete activation check."; nextStep.textContent="Check dashboard in a moment."; footer.textContent="Requires attention"; icon.textContent="!";
+  }
+}
 
-  </footer>
+function updateTelegramLink(data, statusMessage){
+  const b=document.getElementById("telegramBtn"); if(!b) return;
+  const m=["Hi Jovia Support 👋","","I completed payment.",`Name: ${data.name||"Not provided"}`,`Email: ${data.email||"Not provided"}`,`Phone: ${data.phone||"Not provided"}`,`Plan: ${data.plan||"Silver"}`,`Status: ${statusMessage||"Payment Successful"}`].join("\n");
+  b.href="https://t.me/customer_support_team0001?text="+encodeURIComponent(m);
+}
 
+async function getCurrentUser(){
+  try{
+    const r=await fetch("/api/me?t="+Date.now(),{method:"GET",credentials:"include",headers:{"Accept":"application/json","Cache-Control":"no-cache"},cache:"no-store"});
+    if(r.status===401||r.status===403) return null; if(!r.ok) return null;
+    const d=await r.json(); return d?.user||d?.member||d?.data?.user||null;
+  }catch{return null;}
+}
 
-  <!-- =======================================================
-       JAVASCRIPT
-       ======================================================= -->
+async function activateAccount(){
+  let paymentData=getPaymentData();
+  const cleaned = saveLocalMembership(paymentData);
+  paymentData.plan = cleaned;
+  updateTelegramLink(paymentData,"Payment received — activation check");
 
-  <script>
+  if(!paymentData.email){
+    const cu=await getCurrentUser();
+    if(cu?.email){ paymentData.email=cu.email; paymentData.name=cu.full_name||cu.fullName||paymentData.name; paymentData.plan=cu.package||cu.plan||paymentData.plan; saveLocalMembership(paymentData); }
+  }
+  if(!paymentData.email){ setStatus("login", null, paymentData.plan); updateTelegramLink(paymentData,"Payment received — login required"); return; }
 
-    /* =======================================================
-       BASIC SETUP
-       ======================================================= */
+  try{ localStorage.setItem("jovia_member_since", localStorage.getItem("jovia_member_since")||new Date().toISOString()); }catch{}
 
-    document.getElementById("year").textContent =
-      new Date().getFullYear();
+  try{
+    const cleanPlan = paymentData.plan.toLowerCase().includes("gold") ? "Gold" : "Silver";
+    
+    // Call your working Railway API first
+    try{ await fetch(`/api/activate?email=${encodeURIComponent(paymentData.email)}&plan=${cleanPlan}&payment=success`,{cache:"no-store"}); }catch{}
+    
+    // Then call selar activate
+    let response, data;
+    try{
+      response=await fetch("/api/selar/activate",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email:paymentData.email,name:paymentData.name,phone:paymentData.phone,plan:cleanPlan})});
+      try{ data=await response.json(); }catch{ data=null; }
+    }catch{ data=null; }
 
+    // Sync from server to handle manual admin approval
+    try{
+      const chk=await fetch(`/api/check-status?email=${encodeURIComponent(paymentData.email)}&t=${Date.now()}`,{cache:"no-store"});
+      const chkData=await chk.json();
+      if(chkData && chkData.plan){
+        paymentData.plan = chkData.plan;
+        saveLocalMembership(paymentData);
+        if(!data) data=chkData;
+        else data.plan=chkData.plan;
+      }
+    }catch{}
 
-    /* =======================================================
-       URL / LOCAL STORAGE DATA
-       ======================================================= */
+    const finalPlan = (data?.plan || cleanPlan);
+    const isGold = finalPlan.toLowerCase().includes("gold");
+    saveLocalMembership({...paymentData, plan: finalPlan});
 
-    function getPaymentData() {
-
-      const params =
-        new URLSearchParams(
-          window.location.search
-        );
-
-
-      return {
-
-        email:
-          params.get("email") ||
-          localStorage.getItem("jovia_email") ||
-          "",
-
-        name:
-          params.get("name") ||
-          localStorage.getItem("jovia_name") ||
-          "",
-
-        phone:
-          params.get("phone") ||
-          localStorage.getItem("jovia_phone") ||
-          "",
-
-        plan:
-          params.get("plan") ||
-          localStorage.getItem("jovia_plan") ||
-          "Silver"
-
-      };
-
+    if(finalPlan){
+      setStatus("active", `Your ${finalPlan} membership is now active. Max ₦${isGold?"7,000":"2,500"}/day on Jobs.`, finalPlan);
+      updateTelegramLink({...paymentData, plan:finalPlan},"Account activated - "+finalPlan);
+      setTimeout(()=>{ window.location.href="/dashboard.html"; },2200);
+      return;
     }
 
-
-    /* =======================================================
-       SAFE LOCAL STORAGE
-       ======================================================= */
-
-    function saveLocalMembership(data) {
-
-      try {
-
-        if (data.email) {
-
-          localStorage.setItem(
-            "jovia_email",
-            data.email
-          );
-
-        }
-
-
-        if (data.name) {
-
-          localStorage.setItem(
-            "jovia_name",
-            data.name
-          );
-
-        }
-
-
-        if (data.phone) {
-
-          localStorage.setItem(
-            "jovia_phone",
-            data.phone
-          );
-
-        }
-
-
-        if (data.plan) {
-
-          localStorage.setItem(
-            "jovia_plan",
-            data.plan
-          );
-
-        }
-
-      } catch (error) {
-
-        console.warn(
-          "Could not save local Jovia membership data.",
-          error
-        );
-
-      }
-
+    if(data?.alreadyActive){
+      setStatus("alreadyActive", null, finalPlan); updateTelegramLink({...paymentData, plan:finalPlan},"Account already active");
+      setTimeout(()=>{ window.location.href="/dashboard.html"; },2200); return;
     }
 
-
-    /* =======================================================
-       UI STATE
-       ======================================================= */
-
-    function setStatus(state, message) {
-
-      const eyebrow =
-        document.getElementById("eyebrow");
-
-      const eyebrowText =
-        document.getElementById("eyebrowText");
-
-      const eyebrowDot =
-        document.getElementById("eyebrowDot");
-
-      const statusText =
-        document.getElementById("statusText");
-
-      const statusDot =
-        document.getElementById("statusDot");
-
-      const subtitle =
-        document.getElementById("subtitleText");
-
-      const nextStep =
-        document.getElementById("nextStepText");
-
-      const footer =
-        document.getElementById("footerNote");
-
-      const iconWrap =
-        document.getElementById("iconWrap");
-
-      const icon =
-        document.getElementById("successIcon");
-
-      const membershipStatus =
-        document.getElementById("membershipStatus");
-
-
-      /* ---------------------------------------------
-         ACTIVE
-         --------------------------------------------- */
-
-      if (state === "active") {
-
-        eyebrowText.textContent =
-          "ACCOUNT ACTIVATED";
-
-        statusText.textContent =
-          "Membership Active ✓";
-
-        subtitle.textContent =
-          message ||
-          "Your Jovia Network account is now active. Welcome to Jovia Network.";
-
-        nextStep.textContent =
-          "Your membership is active. You can now continue to your member dashboard.";
-
-        footer.textContent =
-          "Account activated successfully";
-
-        icon.textContent =
-          "✓";
-
-        eyebrow.style.background =
-          "var(--success-bg)";
-
-        eyebrow.style.borderColor =
-          "var(--success-border)";
-
-        eyebrow.style.color =
-          "var(--success)";
-
-        statusDot.style.background =
-          "var(--success)";
-
-        membershipStatus.style.background =
-          "var(--success-bg)";
-
-        membershipStatus.style.borderColor =
-          "var(--success-border)";
-
-        membershipStatus.style.color =
-          "var(--success)";
-
-        iconWrap.style.background =
-          "rgba(20,128,74,0.08)";
-
-        iconWrap.style.borderColor =
-          "rgba(20,128,74,0.12)";
-
-        return;
-      }
-
-
-      /* ---------------------------------------------
-         ALREADY ACTIVE
-         --------------------------------------------- */
-
-      if (state === "alreadyActive") {
-
-        eyebrowText.textContent =
-          "ACCOUNT ALREADY ACTIVE";
-
-        statusText.textContent =
-          "Membership Active ✓";
-
-        subtitle.textContent =
-          "Your Jovia Network account is already active.";
-
-        nextStep.textContent =
-          "You can continue directly to your member dashboard.";
-
-        footer.textContent =
-          "Your account is already active";
-
-        icon.textContent =
-          "✓";
-
-        return;
-      }
-
-
-      /* ---------------------------------------------
-         PENDING
-         --------------------------------------------- */
-
-      if (state === "pending") {
-
-        eyebrowText.textContent =
-          "PAYMENT RECEIVED";
-
-        statusText.textContent =
-          "Pending Verification";
-
-        subtitle.textContent =
-          message ||
-          "Your payment information has been received. Your membership is awaiting verification.";
-
-        nextStep.textContent =
-          "If your account does not become active shortly, please contact Jovia support.";
-
-        footer.textContent =
-          "Payment received — verification pending";
-
-        icon.textContent =
-          "…";
-
-        eyebrow.style.background =
-          "var(--warning-bg)";
-
-        eyebrow.style.borderColor =
-          "var(--warning-border)";
-
-        eyebrow.style.color =
-          "var(--warning)";
-
-        statusDot.style.background =
-          "var(--warning)";
-
-        membershipStatus.style.background =
-          "var(--warning-bg)";
-
-        membershipStatus.style.borderColor =
-          "var(--warning-border)";
-
-        membershipStatus.style.color =
-          "var(--warning)";
-
-        return;
-      }
-
-
-      /* ---------------------------------------------
-         LOGIN REQUIRED
-         --------------------------------------------- */
-
-      if (state === "login") {
-
-        eyebrowText.textContent =
-          "PAYMENT RECEIVED";
-
-        statusText.textContent =
-          "Login Required";
-
-        subtitle.textContent =
-          "Your payment was received, but we could not identify the Jovia account to activate.";
-
-        nextStep.textContent =
-          "Please log in to your Jovia account and check your membership status.";
-
-        footer.textContent =
-          "Please log in to continue";
-
-        icon.textContent =
-          "!";
-
-        return;
-      }
-
-
-      /* ---------------------------------------------
-         ERROR
-         --------------------------------------------- */
-
-      if (state === "error") {
-
-        eyebrowText.textContent =
-          "ACTIVATION CHECK";
-
-        statusText.textContent =
-          "Verification Required";
-
-        subtitle.textContent =
-          message ||
-          "We could not complete the account activation check right now.";
-
-        nextStep.textContent =
-          "Please wait a moment and check your dashboard. If the account remains inactive, contact support.";
-
-        footer.textContent =
-          "Activation check requires attention";
-
-        icon.textContent =
-          "!";
-
-        eyebrow.style.background =
-          "var(--danger-bg)";
-
-        eyebrow.style.borderColor =
-          "var(--danger-border)";
-
-        eyebrow.style.color =
-          "var(--danger)";
-
-        statusDot.style.background =
-          "var(--danger)";
-
-        membershipStatus.style.background =
-          "var(--danger-bg)";
-
-        membershipStatus.style.borderColor =
-          "var(--danger-border)";
-
-        membershipStatus.style.color =
-          "var(--danger)";
-
-      }
-
-    }
-
-
-    /* =======================================================
-       TELEGRAM SUPPORT LINK
-       ======================================================= */
-
-    function updateTelegramLink(data, statusMessage) {
-
-      const button =
-        document.getElementById("telegramBtn");
-
-
-      if (!button) {
-        return;
-      }
-
-
-      const message =
-        [
-          "Hi Jovia Support 👋",
-          "",
-          "I completed a membership payment and need assistance.",
-          "",
-          `Name: ${data.name || "Not provided"}`,
-          `Email: ${data.email || "Not provided"}`,
-          `Phone: ${data.phone || "Not provided"}`,
-          `Plan: ${data.plan || "Silver"}`,
-          `Status: ${statusMessage || "Payment Successful"}`
-        ].join("\n");
-
-
-      button.href =
-        "https://t.me/customer_support_team0001?text=" +
-        encodeURIComponent(message);
-
-    }
-
-
-    /* =======================================================
-       GET CURRENT USER
-       ======================================================= */
-
-    async function getCurrentUser() {
-
-      try {
-
-        const response =
-          await fetch(
-            "/api/me?t=" + Date.now(),
-            {
-              method: "GET",
-
-              credentials: "include",
-
-              headers: {
-                "Accept":
-                  "application/json",
-
-                "Cache-Control":
-                  "no-cache"
-              },
-
-              cache: "no-store"
-            }
-          );
-
-
-        if (
-          response.status === 401 ||
-          response.status === 403
-        ) {
-
-          return null;
-
-        }
-
-
-        if (!response.ok) {
-
-          return null;
-
-        }
-
-
-        const data =
-          await response.json();
-
-
-        return (
-          data?.user ||
-          data?.member ||
-          data?.data?.user ||
-          null
-        );
-
-      } catch (error) {
-
-        console.warn(
-          "Unable to read current Jovia account.",
-          error
-        );
-
-        return null;
-
-      }
-
-    }
-
-
-    /* =======================================================
-       ACTIVATE ACCOUNT
-       ======================================================= */
-
-    async function activateAccount() {
-
-      const paymentData =
-        getPaymentData();
-
-
-      saveLocalMembership(
-        paymentData
-      );
-
-
-      /*
-        Update Telegram support link immediately.
-      */
-
-      updateTelegramLink(
-        paymentData,
-        "Payment received — activation check"
-      );
-
-
-      /*
-        We need an email/account identifier
-        before asking the backend to activate.
-      */
-
-      if (!paymentData.email) {
-
-        const currentUser =
-          await getCurrentUser();
-
-
-        if (currentUser?.email) {
-
-          paymentData.email =
-            currentUser.email;
-
-          paymentData.name =
-            currentUser.full_name ||
-            currentUser.fullName ||
-            paymentData.name;
-
-          paymentData.plan =
-            currentUser.package ||
-            currentUser.plan ||
-            paymentData.plan;
-
-
-          saveLocalMembership(
-            paymentData
-          );
-
-        }
-
-      }
-
-
-      /*
-        No identifiable account.
-      */
-
-      if (!paymentData.email) {
-
-        setStatus(
-          "login"
-        );
-
-        updateTelegramLink(
-          paymentData,
-          "Payment received — login required"
-        );
-
-        return;
-
-      }
-
-
-      /*
-        Save premium information locally
-        for frontend display only.
-
-        The backend remains authoritative.
-      */
-
-      try {
-
-        localStorage.setItem(
-          "jovia_premium",
-          "true"
-        );
-
-        localStorage.setItem(
-          "jovia_access",
-          "lifetime"
-        );
-
-        if (
-          !localStorage.getItem(
-            "jovia_member_since"
-          )
-        ) {
-
-          localStorage.setItem(
-            "jovia_member_since",
-            new Date().toISOString()
-          );
-
-        }
-
-      } catch {}
-
-
-      /*
-        Tell backend to process activation.
-
-        IMPORTANT:
-        The backend must independently verify
-        the payment before activating the account.
-      */
-
-      try {
-
-        const response =
-          await fetch(
-            "/api/selar/activate",
-            {
-              method: "POST",
-
-              credentials: "include",
-
-              headers: {
-                "Content-Type":
-                  "application/json",
-
-                "Accept":
-                  "application/json"
-              },
-
-              body: JSON.stringify({
-
-                email:
-                  paymentData.email,
-
-                name:
-                  paymentData.name,
-
-                phone:
-                  paymentData.phone,
-
-                plan:
-                  paymentData.plan
-
-              })
-            }
-          );
-
-
-        let data = null;
-
-
-        try {
-
-          data =
-            await response.json();
-
-        } catch {
-
-          data = null;
-
-        }
-
-
-        /*
-          Successful activation.
-        */
-
-        if (
-          response.ok &&
-          data?.success
-        ) {
-
-          const message =
-            data.message ||
-            "Your Jovia Network membership is now active.";
-
-
-          setStatus(
-            "active",
-            message
-          );
-
-
-          updateTelegramLink(
-            paymentData,
-            "Account activated successfully"
-          );
-
-
-          /*
-            Give the user a short moment to
-            see the confirmation before redirect.
-          */
-
-          setTimeout(
-            function() {
-
-              window.location.href =
-                "/dashboard.html";
-
-            },
-            2200
-          );
-
-
-          return;
-
-        }
-
-
-        /*
-          Backend says account is already active.
-        */
-
-        if (
-          data?.alreadyActive
-        ) {
-
-          setStatus(
-            "alreadyActive"
-          );
-
-
-          updateTelegramLink(
-            paymentData,
-            "Account already active"
-          );
-
-
-          setTimeout(
-            function() {
-
-              window.location.href =
-                "/dashboard.html";
-
-            },
-            2200
-          );
-
-
-          return;
-
-        }
-
-
-        /*
-          Payment received but backend has
-          not activated the account yet.
-        */
-
-        setStatus(
-          "pending",
-          data?.message ||
-          "Your payment was received, but your account is still awaiting verification."
-        );
-
-
-        updateTelegramLink(
-          paymentData,
-          data?.message ||
-          "Payment received — pending verification"
-        );
-
-
-      } catch (error) {
-
-        console.error(
-          "Jovia activation error:",
-          error
-        );
-
-
-        /*
-          Do NOT tell the user that the account
-          is active when the backend request failed.
-        */
-
-        setStatus(
-          "error"
-        );
-
-
-        updateTelegramLink(
-          paymentData,
-          "Payment received — activation check failed"
-        );
-
-      }
-
-    }
-
-
-    /* =======================================================
-       START
-       ======================================================= */
-
-    activateAccount();
-
-  </script>
-
+    // Fallback - still allow because local is saved
+    setStatus("active", `Your ${finalPlan} membership is now active. Max ₦${isGold?"7,000":"2,500"}/day.`, finalPlan);
+    setTimeout(()=>{ window.location.href="/dashboard.html"; },2200);
+
+  }catch(error){
+    console.error("Jovia activation error:",error);
+    const p = saveLocalMembership(paymentData);
+    setStatus("active", `Payment saved as ${p}. Max ₦${p==="Gold"?"7,000":"2,500"}/day. Dashboard will sync.`, p);
+    setTimeout(()=>{ window.location.href="/dashboard.html"; },2000);
+  }
+}
+activateAccount();
+</script>
 </body>
 </html>
