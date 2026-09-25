@@ -4,1121 +4,1845 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#321047">
+<meta name="description" content="Jovia Network withdrawal page">
 <title>Jovia Network | Withdraw</title>
 
 <style>
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
 }
 
 :root{
-    --purple:#321047;
-    --purple-dark:#260b36;
-    --purple-light:#54166f;
-    --gold:#f7b500;
-    --gold-light:#ffd84a;
-    --gold-soft:#fff7df;
-    --bg:#f7f6fa;
-    --text:#24192b;
-    --muted:#817986;
-    --muted-light:#aaa3ae;
-    --white:#fff;
-    --border:#ebe7ef;
-    --success:#208a55;
-    --success-bg:#edf9f2;
-    --danger:#c83c3c;
-    --danger-bg:#fff0f0;
-    --shadow:0 8px 30px rgba(40,20,50,.045);
+  --purple:#321047;
+  --purple-dark:#22082f;
+  --purple-deep:#180520;
+  --purple-light:#5a1c76;
+
+  --gold:#f7b500;
+  --gold-light:#ffd84a;
+  --gold-soft:#fff8df;
+
+  --bg:#f7f6fa;
+  --text:#24192b;
+  --muted:#817986;
+  --white:#fff;
+  --border:#ebe7ef;
+
+  --success:#208a55;
+  --success-bg:#edf9f2;
+
+  --danger:#c83c3c;
+  --danger-bg:#fff0f0;
+
+  --blue:#4169a1;
+  --blue-bg:#eef4ff;
+
+  --shadow:0 10px 35px rgba(40,20,50,.055);
 }
 
 html{
-    scroll-behavior:smooth;
+  scroll-behavior:smooth;
 }
 
 body{
-    min-height:100vh;
-    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Arial,
+    sans-serif;
+
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      rgba(82,20,105,.07),
+      transparent 34%
+    ),
+    var(--bg);
+
+  color:var(--text);
 }
 
 button,
 input,
 select{
-    font:inherit;
+  font:inherit;
 }
 
 button{
-    cursor:pointer;
-    -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
 
 button:disabled{
-    cursor:not-allowed;
+  cursor:not-allowed;
 }
 
-.app{
-    width:100%;
-    max-width:680px;
-    min-height:100vh;
-    margin:0 auto;
-    padding:20px 18px 118px;
-}
 
 /* =========================================================
-   TOP BAR
+   APP
 ========================================================= */
 
+.app{
+  width:100%;
+  max-width:720px;
+  min-height:100vh;
+  margin:0 auto;
+  padding:16px 18px 120px;
+}
+
+
+/* =========================================================
+   STICKY TOP HEADER
+========================================================= */
+
+.topbar-wrap{
+  position:sticky;
+  top:0;
+  z-index:300;
+
+  width:100%;
+
+  padding-top:0;
+  padding-bottom:14px;
+
+  background:
+    linear-gradient(
+      to bottom,
+      var(--bg) 0%,
+      rgba(247,246,250,.96) 78%,
+      rgba(247,246,250,0) 100%
+    );
+}
+
 .topbar{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:30px;
+  position:relative;
+
+  min-height:72px;
+
+  padding:9px 10px;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  border:1px solid rgba(235,231,239,.95);
+  border-radius:21px;
+
+  background:rgba(255,255,255,.94);
+
+  box-shadow:
+    0 8px 28px rgba(40,20,50,.045);
+
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+
+  transition:
+    box-shadow .2s ease,
+    transform .2s ease;
 }
 
-.logo-area{
-    display:flex;
-    align-items:center;
-    gap:11px;
+.topbar.scrolled{
+  box-shadow:
+    0 12px 35px rgba(40,20,50,.11);
 }
 
-.logo{
-    width:46px;
-    height:46px;
-    border-radius:15px;
-    background:var(--white);
-    border:1px solid var(--border);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:var(--purple);
-    font-size:23px;
-    font-weight:900;
-    box-shadow:0 7px 20px rgba(48,20,65,.06);
-}
-
-.logo-name{
-    color:var(--purple);
-    font-size:18px;
-    font-weight:900;
-    letter-spacing:-.3px;
-}
-
-.logo-sub{
-    display:block;
-    margin-top:2px;
-    color:#958d99;
-    font-size:8px;
-    font-weight:700;
-    letter-spacing:2px;
+.topbar-left{
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
 .back-btn{
-    width:43px;
-    height:43px;
-    border:1px solid var(--border);
-    border-radius:50%;
-    background:var(--white);
-    color:var(--purple);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:20px;
-    transition:.2s ease;
-    box-shadow:0 5px 15px rgba(40,20,50,.035);
-}
+  width:43px;
+  height:43px;
 
-.back-btn:hover{
-    border-color:#d8c9df;
-    transform:translateX(-2px);
+  flex-shrink:0;
+
+  border:1px solid var(--border);
+  border-radius:13px;
+
+  background:#faf9fc;
+  color:var(--purple);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:20px;
+  font-weight:800;
+
+  transition:.2s ease;
 }
 
 .back-btn:active{
-    transform:scale(.96);
+  transform:scale(.95);
 }
 
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.brand-mark{
+  position:relative;
+
+  width:43px;
+  height:43px;
+
+  flex-shrink:0;
+
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      145deg,
+      var(--purple),
+      var(--purple-light)
+    );
+
+  color:#fff;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:20px;
+  font-weight:950;
+
+  box-shadow:
+    0 8px 18px rgba(50,16,71,.18);
+}
+
+.brand-mark:after{
+  content:"";
+
+  position:absolute;
+
+  right:6px;
+  top:6px;
+
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+
+  background:var(--gold);
+
+  box-shadow:
+    0 0 0 3px rgba(247,181,0,.12);
+}
+
+.brand-text{
+  line-height:1.05;
+}
+
+.brand-name{
+  color:var(--purple);
+  font-size:15px;
+  font-weight:950;
+  letter-spacing:-.3px;
+}
+
+.brand-sub{
+  display:block;
+
+  margin-top:5px;
+
+  color:#958d99;
+
+  font-size:7px;
+  font-weight:900;
+
+  letter-spacing:2.2px;
+}
+
+.header-page{
+  display:flex;
+  align-items:center;
+  gap:7px;
+
+  padding:0 5px;
+
+  color:var(--muted);
+
+  font-size:8px;
+  font-weight:900;
+
+  letter-spacing:1.3px;
+
+  text-transform:uppercase;
+}
+
+.header-page-dot{
+  width:5px;
+  height:5px;
+
+  border-radius:50%;
+
+  background:var(--gold);
+}
+
+
 /* =========================================================
-   PAGE HEADING
+   PAGE INTRO
 ========================================================= */
 
 .page-heading{
-    margin-bottom:20px;
+  margin:4px 2px 20px;
 }
 
 .page-label{
-    margin-bottom:7px;
-    color:var(--muted);
-    font-size:10px;
-    font-weight:900;
-    letter-spacing:1.7px;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+
+  margin-bottom:9px;
+
+  color:#927f99;
+
+  font-size:8px;
+  font-weight:950;
+
+  letter-spacing:2px;
+}
+
+.page-label:before{
+  content:"";
+
+  width:18px;
+  height:2px;
+
+  border-radius:10px;
+
+  background:var(--gold);
 }
 
 .page-heading h1{
-    color:var(--purple);
-    font-size:30px;
-    line-height:1.12;
-    font-weight:900;
-    letter-spacing:-.8px;
+  color:var(--purple);
+
+  font-size:31px;
+  line-height:1.08;
+
+  letter-spacing:-1px;
+
+  font-weight:950;
 }
 
 .page-heading p{
-    max-width:520px;
-    margin-top:8px;
-    color:var(--muted);
-    font-size:12px;
-    line-height:1.65;
+  max-width:560px;
+
+  margin-top:9px;
+
+  color:var(--muted);
+
+  font-size:11px;
+  line-height:1.65;
 }
 
+
 /* =========================================================
-   BALANCE CARD
+   DISABLED BANNER
+========================================================= */
+
+.withdrawal-disabled-banner{
+  display:none;
+
+  margin-bottom:18px;
+
+  padding:14px 16px;
+
+  border:1px solid #f0cccc;
+  border-radius:15px;
+
+  background:var(--danger-bg);
+  color:var(--danger);
+
+  font-size:10.5px;
+  font-weight:800;
+
+  text-align:center;
+
+  line-height:1.55;
+}
+
+
+/* =========================================================
+   BALANCE HERO
 ========================================================= */
 
 .balance-card{
-    position:relative;
-    overflow:hidden;
-    min-height:164px;
-    margin-bottom:20px;
-    padding:25px;
-    border-radius:27px;
-    background:
-        linear-gradient(
-            135deg,
-            var(--purple) 0%,
-            #421153 60%,
-            #511666 100%
-        );
-    color:#fff;
-    box-shadow:0 20px 40px rgba(50,16,71,.18);
+  position:relative;
+
+  overflow:hidden;
+
+  min-height:177px;
+
+  margin-bottom:20px;
+
+  padding:25px;
+
+  border-radius:27px;
+
+  background:
+    radial-gradient(
+      circle at 92% 0%,
+      rgba(255,216,74,.13),
+      transparent 27%
+    ),
+    linear-gradient(
+      135deg,
+      var(--purple-deep) 0%,
+      var(--purple) 48%,
+      #54166a 100%
+    );
+
+  color:#fff;
+
+  box-shadow:
+    0 20px 45px rgba(50,16,71,.20);
 }
 
 .balance-card:before{
-    content:"";
-    position:absolute;
-    width:250px;
-    height:250px;
-    right:-105px;
-    top:-115px;
-    border-radius:50%;
-    background:rgba(255,190,0,.12);
+  content:"";
+
+  position:absolute;
+
+  width:220px;
+  height:220px;
+
+  right:-115px;
+  top:-125px;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  border-radius:50%;
 }
 
 .balance-card:after{
-    content:"";
-    position:absolute;
-    width:185px;
-    height:185px;
-    left:-120px;
-    bottom:-125px;
-    border:1px solid rgba(255,255,255,.09);
-    border-radius:50%;
-}
+  content:"";
 
-.balance-glow{
-    position:absolute;
-    width:90px;
-    height:90px;
-    right:45px;
-    bottom:-55px;
-    border-radius:50%;
-    background:rgba(255,216,74,.08);
+  position:absolute;
+
+  width:150px;
+  height:150px;
+
+  right:-70px;
+  bottom:-100px;
+
+  border:1px solid rgba(255,255,255,.05);
+
+  border-radius:50%;
 }
 
 .balance-content{
-    position:relative;
-    z-index:2;
+  position:relative;
+  z-index:2;
 }
 
 .balance-top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  gap:10px;
 }
 
 .balance-label{
-    color:rgba(255,255,255,.66);
-    font-size:9px;
-    font-weight:900;
-    letter-spacing:1.5px;
+  color:rgba(255,255,255,.62);
+
+  font-size:8px;
+  font-weight:950;
+
+  letter-spacing:1.7px;
 }
 
 .balance-badge{
-    display:flex;
-    align-items:center;
-    gap:5px;
-    padding:5px 8px;
-    border:1px solid rgba(255,255,255,.1);
-    border-radius:20px;
-    background:rgba(255,255,255,.07);
-    color:rgba(255,255,255,.72);
-    font-size:8px;
-    font-weight:800;
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+  padding:6px 9px;
+
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+
+  background:rgba(255,255,255,.07);
+
+  color:rgba(255,255,255,.78);
+
+  font-size:8px;
+  font-weight:850;
 }
 
 .balance-dot{
-    width:5px;
-    height:5px;
-    border-radius:50%;
-    background:#65d89a;
+  width:6px;
+  height:6px;
+
+  border-radius:50%;
+
+  background:#65d89a;
+
+  box-shadow:
+    0 0 0 3px rgba(101,216,154,.1);
 }
 
 .balance{
-    margin-top:8px;
-    color:#fff;
-    font-size:40px;
-    line-height:1;
-    font-weight:900;
-    letter-spacing:-1.6px;
+  margin-top:11px;
+
+  color:#fff;
+
+  font-size:41px;
+  line-height:1;
+
+  letter-spacing:-1.3px;
+
+  font-weight:950;
 }
 
 .balance-note{
-    margin-top:12px;
-    color:rgba(255,255,255,.58);
-    font-size:10px;
+  margin-top:13px;
+
+  color:rgba(255,255,255,.57);
+
+  font-size:9.5px;
 }
 
+
 /* =========================================================
-   MAIN CARD
+   WITHDRAW CARD
 ========================================================= */
 
 .withdraw-card{
-    margin-bottom:22px;
-    padding:21px;
-    border:1px solid var(--border);
-    border-radius:24px;
-    background:var(--white);
-    box-shadow:var(--shadow);
+  margin-bottom:26px;
+
+  padding:21px;
+
+  border:1px solid var(--border);
+  border-radius:24px;
+
+  background:rgba(255,255,255,.96);
+
+  box-shadow:var(--shadow);
 }
 
 .card-header{
-    display:flex;
-    align-items:flex-start;
-    gap:12px;
-    margin-bottom:20px;
+  display:flex;
+  align-items:flex-start;
+
+  gap:12px;
+
+  margin-bottom:20px;
 }
 
 .card-icon{
-    width:39px;
-    height:39px;
-    flex-shrink:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:12px;
-    background:#f4ecf8;
-    color:var(--purple);
-    font-size:17px;
-    font-weight:900;
+  width:40px;
+  height:40px;
+
+  flex-shrink:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:13px;
+
+  background:#f4ecf8;
+  color:var(--purple);
+
+  font-size:17px;
+  font-weight:950;
 }
 
 .card-title{
-    color:var(--purple);
-    font-size:16px;
-    font-weight:900;
+  color:var(--purple);
+
+  font-size:16px;
+  font-weight:950;
 }
 
 .card-subtitle{
-    margin-top:4px;
-    color:var(--muted);
-    font-size:10.5px;
-    line-height:1.55;
+  margin-top:4px;
+
+  color:var(--muted);
+
+  font-size:10.5px;
+  line-height:1.5;
 }
 
+
 /* =========================================================
-   MESSAGE
+   FORM MESSAGE
 ========================================================= */
 
 .form-message{
-    display:none;
-    position:relative;
-    margin-bottom:16px;
-    padding:12px 13px 12px 38px;
-    border-radius:13px;
-    font-size:10.5px;
-    line-height:1.5;
-    font-weight:700;
-}
+  display:none;
 
-.form-message:before{
-    position:absolute;
-    left:13px;
-    top:50%;
-    transform:translateY(-50%);
-    font-size:14px;
+  position:relative;
+
+  margin-bottom:16px;
+
+  padding:12px 13px;
+
+  border-radius:13px;
+
+  font-size:10.5px;
+  line-height:1.5;
+
+  font-weight:750;
 }
 
 .form-message.success{
-    display:block;
-    background:var(--success-bg);
-    border:1px solid #ccebd8;
-    color:var(--success);
-}
+  display:block;
 
-.form-message.success:before{
-    content:"✓";
+  background:var(--success-bg);
+
+  border:1px solid #ccebd8;
+
+  color:var(--success);
 }
 
 .form-message.error{
-    display:block;
-    background:var(--danger-bg);
-    border:1px solid #f0cccc;
-    color:var(--danger);
+  display:block;
+
+  background:var(--danger-bg);
+
+  border:1px solid #f0cccc;
+
+  color:var(--danger);
 }
 
-.form-message.error:before{
-    content:"!";
-}
 
 /* =========================================================
    FORM
 ========================================================= */
 
 .form-group{
-    margin-bottom:16px;
+  margin-bottom:16px;
 }
 
-.form-group label{
-    display:block;
-    margin-bottom:7px;
-    color:var(--purple);
-    font-size:10.5px;
-    font-weight:900;
-}
+.form-group label,
+.withdraw-type-label{
+  display:block;
 
-.input-wrap{
-    position:relative;
-}
+  margin-bottom:7px;
 
-.input-wrap span{
-    position:absolute;
-    left:14px;
-    top:50%;
-    transform:translateY(-50%);
-    color:#8d8492;
-    font-size:13px;
-    font-weight:900;
-    pointer-events:none;
+  color:var(--purple);
+
+  font-size:10.5px;
+  font-weight:900;
 }
 
 .form-control{
-    width:100%;
-    min-height:47px;
-    padding:13px 14px;
-    border:1px solid var(--border);
-    border-radius:13px;
-    outline:none;
-    background:#fbfafc;
-    color:var(--text);
-    font-size:12px;
-    transition:border-color .2s,box-shadow .2s,background .2s;
-}
+  width:100%;
+  min-height:48px;
 
-.form-control.with-prefix{
-    padding-left:34px;
-}
+  padding:13px 14px;
 
-.form-control:hover{
-    border-color:#ddd4e2;
+  border:1px solid var(--border);
+  border-radius:13px;
+
+  outline:none;
+
+  background:#fbfafc;
+  color:var(--text);
+
+  font-size:12px;
+
+  transition:.2s ease;
 }
 
 .form-control:focus{
-    border-color:#bca8c7;
-    background:#fff;
-    box-shadow:0 0 0 3px rgba(84,22,111,.06);
-}
+  border-color:#bca8c7;
 
-.form-control::placeholder{
-    color:var(--muted-light);
+  background:#fff;
+
+  box-shadow:
+    0 0 0 3px rgba(84,22,111,.06);
 }
 
 select.form-control{
-    appearance:none;
-    -webkit-appearance:none;
-    padding-right:40px;
-    background-image:
-        linear-gradient(
-            45deg,
-            transparent 50%,
-            #8d8492 50%
-        ),
-        linear-gradient(
-            135deg,
-            #8d8492 50%,
-            transparent 50%
-        );
-    background-position:
-        calc(100% - 17px) 20px,
-        calc(100% - 12px) 20px;
-    background-size:5px 5px,5px 5px;
-    background-repeat:no-repeat;
+  appearance:auto;
 }
 
+
 /* =========================================================
-   WITHDRAWAL TYPE
+   WITHDRAW TYPE
 ========================================================= */
 
 .withdraw-type-box{
-    margin-bottom:18px;
-    padding:13px;
-    border:1px solid #e6deeb;
-    border-radius:16px;
-    background:#faf8fc;
-}
+  margin-bottom:18px;
 
-.withdraw-type-label{
-    display:block;
-    margin-bottom:8px;
-    color:var(--purple);
-    font-size:10.5px;
-    font-weight:900;
-}
+  padding:13px;
 
-.withdraw-type-select{
-    width:100%;
+  border:1px solid #e6deeb;
+  border-radius:16px;
+
+  background:#faf8fc;
 }
 
 .type-balance{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    margin-top:8px;
-    padding:9px 10px;
-    border-radius:11px;
-    background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:10px;
+
+  margin-top:8px;
+
+  padding:10px;
+
+  border-radius:11px;
+
+  background:#fff;
 }
 
 .type-balance span{
-    color:var(--muted);
-    font-size:9px;
+  color:var(--muted);
+
+  font-size:9px;
 }
 
 .type-balance strong{
-    color:var(--purple);
-    font-size:10px;
-    font-weight:900;
+  color:var(--purple);
+
+  font-size:10px;
+  font-weight:950;
 }
 
-.withdraw-type-note{
-    margin-top:7px;
-    color:var(--muted);
-    font-size:8.5px;
-    line-height:1.5;
-}
 
 /* =========================================================
-   QUICK AMOUNTS
+   AMOUNTS
 ========================================================= */
 
 .amount-label{
-    margin-top:9px;
-    margin-bottom:7px;
-    color:var(--muted);
-    font-size:9px;
-    font-weight:700;
+  margin:9px 0 7px;
+
+  color:var(--muted);
+
+  font-size:9px;
+  font-weight:700;
 }
 
 .amount-options{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
+  display:grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap:8px;
 }
 
 .amount-btn{
-    min-height:40px;
-    border:1px solid var(--border);
-    border-radius:11px;
-    background:#faf9fc;
-    color:var(--purple);
-    font-size:10.5px;
-    font-weight:900;
-    transition:.2s ease;
+  min-height:41px;
+
+  border:1px solid var(--border);
+  border-radius:11px;
+
+  background:#faf9fc;
+
+  color:var(--purple);
+
+  font-size:10.5px;
+  font-weight:900;
+
+  transition:.18s ease;
 }
 
-.amount-btn:hover{
-    border-color:#cdbbd5;
-    background:#fff;
+.amount-btn:active{
+  transform:scale(.97);
 }
 
 .amount-btn.active{
-    border-color:#e5c35b;
-    background:var(--gold-soft);
-    color:#8c6100;
+  border-color:#e5c35b;
+
+  background:var(--gold-soft);
+
+  color:#8c6100;
 }
+
 
 /* =========================================================
    DIVIDER
 ========================================================= */
 
 .section-divider{
-    height:1px;
-    margin:20px 0;
-    background:var(--border);
+  height:1px;
+
+  margin:20px 0;
+
+  background:var(--border);
 }
 
+
+/* =========================================================
+   BANK
+========================================================= */
+
 .bank-heading{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    margin-bottom:15px;
+  display:flex;
+  align-items:center;
+
+  gap:8px;
+
+  margin-bottom:15px;
 }
 
 .bank-heading-icon{
-    width:29px;
-    height:29px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:9px;
-    background:#f4ecf8;
-    color:var(--purple);
-    font-size:13px;
+  width:30px;
+  height:30px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:9px;
+
+  background:#f4ecf8;
+
+  color:var(--purple);
+
+  font-size:13px;
 }
 
 .bank-title{
-    color:var(--purple);
-    font-size:13px;
-    font-weight:900;
+  color:var(--purple);
+
+  font-size:13px;
+  font-weight:950;
 }
 
+
 /* =========================================================
-   SUBMIT BUTTON
+   WITHDRAW BUTTON
 ========================================================= */
 
 .withdraw-button{
-    position:relative;
-    width:100%;
-    min-height:50px;
-    margin-top:5px;
-    border:0;
-    border-radius:14px;
-    background:linear-gradient(
-        135deg,
-        #f7b500,
-        #ffda55
+  position:relative;
+
+  width:100%;
+  min-height:51px;
+
+  margin-top:5px;
+
+  border:0;
+  border-radius:14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f7b500,
+      #ffda55
     );
-    color:var(--purple);
-    font-size:12px;
-    font-weight:900;
-    box-shadow:0 8px 18px rgba(247,181,0,.18);
-    transition:.2s ease;
+
+  color:var(--purple);
+
+  font-size:12px;
+  font-weight:950;
+
+  box-shadow:
+    0 9px 20px rgba(247,181,0,.18);
+
+  transition:.2s ease;
 }
 
-.withdraw-button:hover:not(:disabled){
-    transform:translateY(-1px);
-    box-shadow:0 11px 23px rgba(247,181,0,.23);
-}
-
-.withdraw-button:active:not(:disabled){
-    transform:translateY(0);
+.withdraw-button:not(:disabled):active{
+  transform:translateY(1px);
 }
 
 .withdraw-button:disabled{
-    opacity:.65;
-    box-shadow:none;
+  opacity:.55;
 }
 
+
 /* =========================================================
-   INFO BOX
+   INFO
 ========================================================= */
 
 .info-box{
-    margin-top:14px;
-    padding:13px 14px;
-    border:1px dashed #d9d0df;
-    border-radius:15px;
-    background:#faf9fc;
+  margin-top:14px;
+
+  padding:13px 14px;
+
+  border:1px dashed #d9d0df;
+  border-radius:15px;
+
+  background:#faf9fc;
 }
 
 .info-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:15px;
-    padding:7px 0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:15px;
+
+  padding:7px 0;
 }
 
 .info-row:not(:last-child){
-    border-bottom:1px solid #eeeaf1;
+  border-bottom:1px solid #eeeaf1;
 }
 
 .info-row span{
-    color:var(--muted);
-    font-size:9.5px;
+  color:var(--muted);
+
+  font-size:9.5px;
 }
 
 .info-row strong{
-    color:var(--purple);
-    font-size:9.5px;
-    font-weight:900;
-    text-align:right;
-}
+  color:var(--purple);
 
-/* =========================================================
-   SECURITY
-========================================================= */
+  font-size:9.5px;
+  font-weight:900;
+
+  text-align:right;
+}
 
 .security-note{
-    display:flex;
-    align-items:flex-start;
-    gap:9px;
-    margin-top:13px;
-    padding:10px 11px;
-    border-radius:12px;
-    background:#f8f5fa;
+  display:flex;
+  align-items:flex-start;
+
+  gap:9px;
+
+  margin-top:13px;
+
+  padding:10px 11px;
+
+  border-radius:12px;
+
+  background:#f8f5fa;
+
+  color:var(--muted);
+
+  font-size:9px;
+  line-height:1.5;
 }
 
-.security-icon{
-    flex-shrink:0;
-    color:var(--purple);
-    font-size:13px;
-}
-
-.security-note p{
-    color:var(--muted);
-    font-size:9px;
-    line-height:1.55;
-}
 
 /* =========================================================
-   HISTORY
+   PREMIUM WITHDRAWAL HISTORY
 ========================================================= */
 
 .history-section{
-    margin-top:26px;
+  margin-top:28px;
+}
+
+.history-shell{
+  overflow:hidden;
+
+  border:1px solid var(--border);
+  border-radius:24px;
+
+  background:rgba(255,255,255,.97);
+
+  box-shadow:
+    0 10px 35px rgba(40,20,50,.045);
+}
+
+.history-top{
+  padding:18px 18px 15px;
+
+  border-bottom:1px solid #f0edf2;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #fbf8fc
+    );
 }
 
 .history-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    margin-bottom:12px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+
+  gap:15px;
+}
+
+.history-heading-wrap{
+  min-width:0;
+}
+
+.history-eyebrow{
+  display:flex;
+  align-items:center;
+  gap:6px;
+
+  margin-bottom:6px;
+
+  color:#998f9d;
+
+  font-size:7px;
+  font-weight:950;
+
+  letter-spacing:1.7px;
+}
+
+.history-eyebrow-dot{
+  width:5px;
+  height:5px;
+
+  border-radius:50%;
+
+  background:var(--gold);
 }
 
 .history-head h2{
-    color:var(--purple);
-    font-size:16px;
-    font-weight:900;
+  color:var(--purple);
+
+  font-size:17px;
+  font-weight:950;
+
+  letter-spacing:-.3px;
 }
 
-.history-head span{
-    color:#9a6900;
-    font-size:9px;
-    font-weight:900;
-    letter-spacing:1px;
+.history-head p{
+  margin-top:5px;
+
+  color:var(--muted);
+
+  font-size:9.5px;
+  line-height:1.45;
+}
+
+.history-count{
+  min-width:48px;
+
+  padding:8px 9px;
+
+  border:1px solid #e9e1ed;
+  border-radius:12px;
+
+  background:#f9f6fb;
+
+  color:var(--purple);
+
+  text-align:center;
+}
+
+.history-count strong{
+  display:block;
+
+  font-size:14px;
+  line-height:1;
+
+  font-weight:950;
+}
+
+.history-count span{
+  display:block;
+
+  margin-top:4px;
+
+  color:var(--muted);
+
+  font-size:6.5px;
+  font-weight:900;
+
+  letter-spacing:.7px;
+
+  text-transform:uppercase;
 }
 
 .history-list{
-    display:flex;
-    flex-direction:column;
-    gap:9px;
+  display:flex;
+  flex-direction:column;
+
+  gap:0;
 }
 
 .history-item{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    padding:13px;
-    border:1px solid var(--border);
-    border-radius:17px;
-    background:var(--white);
-    box-shadow:0 4px 14px rgba(40,20,50,.025);
+  position:relative;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  gap:12px;
+
+  padding:15px 16px;
+
+  background:#fff;
+
+  transition:
+    background .18s ease;
+}
+
+.history-item:not(:last-child){
+  border-bottom:1px solid #f0edf2;
+}
+
+.history-item:hover{
+  background:#fdfbfe;
+}
+
+.history-item:before{
+  content:"";
+
+  position:absolute;
+
+  left:0;
+  top:13px;
+  bottom:13px;
+
+  width:3px;
+
+  border-radius:0 5px 5px 0;
+
+  background:#d9d1df;
+}
+
+.history-item.status-pending:before{
+  background:var(--gold);
+}
+
+.history-item.status-processing:before{
+  background:var(--blue);
+}
+
+.history-item.status-approved:before,
+.history-item.status-completed:before{
+  background:var(--success);
+}
+
+.history-item.status-rejected:before,
+.history-item.status-failed:before{
+  background:var(--danger);
 }
 
 .history-left{
-    min-width:0;
-    display:flex;
-    align-items:center;
-    gap:10px;
+  min-width:0;
+
+  display:flex;
+  align-items:center;
+
+  gap:11px;
 }
 
 .history-icon{
-    width:39px;
-    height:39px;
-    flex-shrink:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:12px;
-    background:#f4ecf8;
-    color:var(--purple);
-    font-size:17px;
-    font-weight:900;
+  width:43px;
+  height:43px;
+
+  flex-shrink:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:14px;
+
+  background:#f5eef8;
+
+  color:var(--purple);
+
+  font-size:18px;
+  font-weight:950;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(50,16,71,.025);
+}
+
+.history-icon.affiliate{
+  background:#fff8df;
+  color:#9b6d00;
+}
+
+.history-main{
+  min-width:0;
 }
 
 .history-name{
-    overflow:hidden;
-    color:var(--purple);
-    font-size:10.5px;
-    font-weight:900;
-    text-overflow:ellipsis;
-    white-space:nowrap;
+  overflow:hidden;
+
+  color:var(--purple);
+
+  font-size:10.5px;
+  font-weight:950;
+
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.history-meta{
+  display:flex;
+  align-items:center;
+
+  flex-wrap:wrap;
+
+  gap:5px;
+
+  margin-top:5px;
 }
 
 .history-type{
-    display:inline-block;
-    margin-top:4px;
-    padding:3px 6px;
-    border-radius:20px;
-    background:#f4ecf8;
-    color:var(--purple);
-    font-size:7px;
-    font-weight:900;
+  display:inline-flex;
+  align-items:center;
+
+  padding:4px 7px;
+
+  border-radius:20px;
+
+  background:#f4ecf8;
+
+  color:var(--purple);
+
+  font-size:6.8px;
+  font-weight:950;
+
+  letter-spacing:.3px;
 }
 
 .history-type.affiliate{
-    background:var(--gold-soft);
-    color:#8d6200;
+  background:#fff8df;
+  color:#906500;
 }
 
-.history-type.regular{
-    background:#f1edff;
-    color:#6245a5;
+.history-account{
+  color:#918894;
+
+  font-size:7.5px;
+  font-weight:700;
 }
 
 .history-date{
-    margin-top:4px;
-    color:var(--muted);
-    font-size:8.5px;
+  margin-top:5px;
+
+  color:var(--muted);
+
+  font-size:8.2px;
 }
 
 .history-right{
-    flex-shrink:0;
-    text-align:right;
+  flex-shrink:0;
+
+  text-align:right;
 }
 
 .history-amount{
-    color:#a66f00;
-    font-size:11.5px;
-    font-weight:900;
+  color:#9b6b00;
+
+  font-size:12px;
+  font-weight:950;
+
+  white-space:nowrap;
 }
 
 .history-status{
-    display:inline-block;
-    margin-top:4px;
-    padding:4px 7px;
-    border-radius:20px;
-    background:var(--gold-soft);
-    color:#8d6200;
-    font-size:7.5px;
-    font-weight:900;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+
+  margin-top:5px;
+
+  padding:5px 8px;
+
+  border-radius:20px;
+
+  background:var(--gold-soft);
+
+  color:#8d6200;
+
+  font-size:7px;
+  font-weight:950;
+
+  text-transform:capitalize;
 }
 
-.history-status.approved{
-    background:var(--success-bg);
-    color:var(--success);
+.history-status:before{
+  content:"";
+
+  width:4px;
+  height:4px;
+
+  border-radius:50%;
+
+  background:currentColor;
 }
 
-.history-status.rejected{
-    background:var(--danger-bg);
-    color:var(--danger);
+.history-status.approved,
+.history-status.completed{
+  background:var(--success-bg);
+  color:var(--success);
+}
+
+.history-status.rejected,
+.history-status.failed{
+  background:var(--danger-bg);
+  color:var(--danger);
 }
 
 .history-status.processing{
-    background:#f1edff;
-    color:#6245a5;
+  background:var(--blue-bg);
+  color:var(--blue);
+}
+
+.history-footer{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding:13px;
+
+  border-top:1px solid #f0edf2;
+
+  background:#fbfafc;
+
+  color:#9a919e;
+
+  font-size:7.5px;
+  font-weight:800;
+
+  letter-spacing:.4px;
 }
 
 .empty-history{
-    padding:22px 15px;
-    border:1px solid var(--border);
-    border-radius:17px;
-    background:#fff;
-    color:var(--muted);
-    font-size:10px;
-    text-align:center;
+  padding:34px 20px;
+
+  background:#fff;
+
+  color:var(--muted);
+
+  text-align:center;
 }
 
-/* =========================================================
-   LOADING
-========================================================= */
+.empty-history-icon{
+  width:50px;
+  height:50px;
 
-.loading{
-    position:relative;
-    overflow:hidden;
+  margin:0 auto 11px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:16px;
+
+  background:#f5eef8;
+
+  color:var(--purple);
+
+  font-size:21px;
+  font-weight:950;
 }
 
-.loading:after{
-    content:"";
-    position:absolute;
-    inset:0;
-    transform:translateX(-100%);
-    background:linear-gradient(
-        90deg,
-        transparent,
-        rgba(255,255,255,.55),
-        transparent
-    );
-    animation:shimmer 1.3s infinite;
+.empty-history strong{
+  display:block;
+
+  color:var(--purple);
+
+  font-size:11px;
+  font-weight:950;
 }
 
-@keyframes shimmer{
-    100%{
-        transform:translateX(100%);
-    }
+.empty-history span{
+  display:block;
+
+  margin-top:5px;
+
+  font-size:8.5px;
+  line-height:1.5;
 }
+
+.history-loading{
+  padding:28px 20px;
+
+  color:var(--muted);
+
+  font-size:9px;
+
+  text-align:center;
+}
+
+.history-loading-dot{
+  display:inline-block;
+
+  width:7px;
+  height:7px;
+
+  margin-right:6px;
+
+  border-radius:50%;
+
+  background:var(--gold);
+}
+
 
 /* =========================================================
    MODAL
 ========================================================= */
 
 .modal-overlay{
-    position:fixed;
-    inset:0;
-    z-index:500;
-    display:none;
-    align-items:flex-end;
-    justify-content:center;
-    padding:18px;
-    background:rgba(24,10,32,.52);
-    backdrop-filter:blur(7px);
+  position:fixed;
+
+  inset:0;
+
+  z-index:500;
+
+  display:none;
+
+  align-items:flex-end;
+  justify-content:center;
+
+  padding:18px;
+
+  background:rgba(24,10,32,.52);
+
+  backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(7px);
 }
 
 .modal-overlay.show{
-    display:flex;
+  display:flex;
 }
 
 .modal{
-    width:100%;
-    max-width:430px;
-    padding:21px;
-    border:1px solid rgba(255,255,255,.5);
-    border-radius:24px;
-    background:#fff;
-    box-shadow:0 25px 70px rgba(20,5,30,.28);
-    animation:modalUp .22s ease;
-}
+  width:100%;
+  max-width:430px;
 
-@keyframes modalUp{
-    from{
-        opacity:0;
-        transform:translateY(15px);
-    }
+  padding:21px;
 
-    to{
-        opacity:1;
-        transform:translateY(0);
-    }
-}
+  border:1px solid rgba(255,255,255,.5);
+  border-radius:24px;
 
-.modal-icon{
-    width:46px;
-    height:46px;
-    margin-bottom:13px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border-radius:14px;
-    background:var(--gold-soft);
-    color:#956900;
-    font-size:20px;
-    font-weight:900;
+  background:#fff;
+
+  box-shadow:
+    0 25px 70px rgba(20,5,30,.28);
 }
 
 .modal h3{
-    color:var(--purple);
-    font-size:17px;
-    font-weight:900;
+  color:var(--purple);
+
+  font-size:17px;
+  font-weight:950;
 }
 
 .modal-description{
-    margin-top:6px;
-    color:var(--muted);
-    font-size:10.5px;
-    line-height:1.55;
+  margin-top:6px;
+
+  color:var(--muted);
+
+  font-size:10.5px;
 }
 
 .confirm-details{
-    margin-top:15px;
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:14px;
-    background:#faf9fc;
+  margin-top:15px;
+
+  padding:12px;
+
+  border:1px solid var(--border);
+  border-radius:14px;
+
+  background:#faf9fc;
 }
 
 .confirm-row{
-    display:flex;
-    align-items:flex-start;
-    justify-content:space-between;
-    gap:15px;
-    padding:6px 0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+
+  gap:15px;
+
+  padding:6px 0;
 }
 
 .confirm-row:not(:last-child){
-    border-bottom:1px solid #eeeaf1;
+  border-bottom:1px solid #eeeaf1;
 }
 
 .confirm-row span{
-    color:var(--muted);
-    font-size:9px;
+  color:var(--muted);
+
+  font-size:9px;
 }
 
 .confirm-row strong{
-    max-width:62%;
-    color:var(--purple);
-    font-size:9px;
-    font-weight:900;
-    text-align:right;
-    word-break:break-word;
+  max-width:62%;
+
+  color:var(--purple);
+
+  font-size:9px;
+  font-weight:900;
+
+  text-align:right;
+
+  word-break:break-word;
 }
 
 .modal-actions{
-    display:grid;
-    grid-template-columns:1fr 1.4fr;
-    gap:9px;
-    margin-top:16px;
+  display:grid;
+
+  grid-template-columns:1fr 1.4fr;
+
+  gap:9px;
+
+  margin-top:16px;
 }
 
 .modal-btn{
-    min-height:45px;
-    border-radius:12px;
-    font-size:10.5px;
-    font-weight:900;
+  min-height:45px;
+
+  border-radius:12px;
+
+  font-size:10.5px;
+  font-weight:900;
 }
 
 .modal-cancel{
-    border:1px solid var(--border);
-    background:#faf9fc;
-    color:var(--purple);
+  border:1px solid var(--border);
+
+  background:#faf9fc;
+
+  color:var(--purple);
 }
 
 .modal-confirm{
-    border:0;
-    background:linear-gradient(
-        135deg,
-        #f7b500,
-        #ffda55
+  border:0;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f7b500,
+      #ffda55
     );
-    color:var(--purple);
+
+  color:var(--purple);
 }
+
+.modal-btn:disabled{
+  opacity:.6;
+}
+
 
 /* =========================================================
    BOTTOM NAV
 ========================================================= */
 
 .bottom-nav{
-    position:fixed;
-    z-index:100;
-    left:50%;
-    bottom:0;
-    transform:translateX(-50%);
-    width:100%;
-    max-width:680px;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    padding:9px 12px 12px;
-    border-top:1px solid rgba(235,231,239,.95);
-    background:rgba(255,255,255,.96);
-    backdrop-filter:blur(18px);
-    -webkit-backdrop-filter:blur(18px);
+  position:fixed;
+
+  z-index:400;
+
+  left:50%;
+  bottom:0;
+
+  transform:translateX(-50%);
+
+  width:100%;
+  max-width:720px;
+
+  display:grid;
+
+  grid-template-columns:
+    repeat(4,1fr);
+
+  padding:9px 12px 12px;
+
+  border-top:1px solid rgba(235,231,239,.95);
+
+  background:rgba(255,255,255,.96);
+
+  box-shadow:
+    0 -8px 25px rgba(40,20,50,.035);
+
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
 }
 
 .nav{
-    border:0;
-    background:none;
-    color:#88818c;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    font-size:9px;
-    font-weight:800;
-    transition:.2s ease;
+  min-height:48px;
+
+  border:0;
+
+  background:none;
+
+  color:#88818c;
+
+  display:flex;
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:4px;
+
+  font-size:9px;
+  font-weight:800;
 }
 
 .nav-icon{
-    width:38px;
-    height:29px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:19px;
+  width:38px;
+  height:29px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:19px;
 }
 
 .nav.active{
-    color:var(--purple);
+  color:var(--purple);
 }
 
-.nav.active .nav-icon{
-    color:#a06d00;
-}
 
 /* =========================================================
-   RESPONSIVE
+   MOBILE
 ========================================================= */
 
-@media(max-width:480px){
+@media(max-width:600px){
 
-    .app{
-        padding:18px 15px 116px;
-    }
+  .app{
+    padding:10px 14px 116px;
+  }
 
-    .topbar{
-        margin-bottom:27px;
-    }
+  .topbar-wrap{
+    padding-bottom:12px;
+  }
 
-    .page-heading h1{
-        font-size:27px;
-    }
+  .topbar{
+    min-height:68px;
 
-    .balance-card{
-        min-height:155px;
-        padding:22px;
-        border-radius:24px;
-    }
+    padding:8px;
 
-    .balance{
-        font-size:36px;
-    }
+    border-radius:19px;
+  }
 
-    .withdraw-card{
-        padding:18px;
-        border-radius:21px;
-    }
+  .back-btn{
+    width:41px;
+    height:41px;
+
+    border-radius:12px;
+  }
+
+  .brand-mark{
+    width:40px;
+    height:40px;
+
+    border-radius:13px;
+
+    font-size:19px;
+  }
+
+  .brand-name{
+    font-size:14px;
+  }
+
+  .brand-sub{
+    font-size:6.5px;
+    letter-spacing:1.8px;
+  }
+
+  .header-page{
+    font-size:7px;
+    padding-right:3px;
+  }
+
+  .page-heading{
+    margin-bottom:18px;
+  }
+
+  .page-heading h1{
+    font-size:28px;
+  }
+
+  .page-heading p{
+    font-size:10.5px;
+  }
+
+  .balance-card{
+    min-height:158px;
+
+    padding:22px;
+
+    border-radius:24px;
+  }
+
+  .balance{
+    font-size:36px;
+  }
+
+  .withdraw-card{
+    padding:18px;
+
+    border-radius:21px;
+  }
+
+  .card-header{
+    gap:9px;
+  }
+
+  .card-title{
+    font-size:15px;
+  }
+
+  .card-subtitle{
+    font-size:10px;
+  }
+
+  .history-shell{
+    border-radius:21px;
+  }
+
+  .history-top{
+    padding:16px 15px 14px;
+  }
+
+  .history-item{
+    padding:14px 13px;
+  }
+
+  .history-name{
+    max-width:150px;
+  }
+
+  .history-amount{
+    font-size:11px;
+  }
+
+  .modal-overlay{
+    padding:10px;
+  }
+
+  .modal{
+    padding:18px;
+
+    border-radius:21px;
+  }
 }
+
+
+@media(max-width:420px){
+
+  .header-page{
+    display:none;
+  }
+
+  .topbar{
+    justify-content:flex-start;
+  }
+
+  .topbar-left{
+    width:100%;
+  }
+
+  .brand{
+    flex:1;
+  }
+
+  .page-heading h1{
+    font-size:26px;
+  }
+
+  .balance{
+    font-size:34px;
+  }
+
+  .amount-options{
+    gap:6px;
+  }
+
+  .amount-btn{
+    font-size:9.5px;
+  }
+
+  .history-item{
+    align-items:flex-start;
+
+    padding:13px 11px;
+  }
+
+  .history-left{
+    align-items:flex-start;
+  }
+
+  .history-icon{
+    width:40px;
+    height:40px;
+  }
+
+  .history-name{
+    max-width:125px;
+  }
+
+  .history-account{
+    font-size:7px;
+  }
+}
+
 
 @media(max-width:360px){
 
-    .page-heading h1{
-        font-size:25px;
-    }
+  .app{
+    padding-left:11px;
+    padding-right:11px;
+  }
 
-    .balance{
-        font-size:33px;
-    }
+  .brand-name{
+    font-size:13px;
+  }
 
-    .amount-options{
-        gap:6px;
-    }
+  .back-btn{
+    width:39px;
+    height:39px;
+  }
 
-    .amount-btn{
-        font-size:9.5px;
-    }
+  .brand-mark{
+    width:38px;
+    height:38px;
+  }
 
-    .modal-actions{
-        grid-template-columns:1fr;
-    }
-}
+  .page-heading h1{
+    font-size:24px;
+  }
 
-/* =========================================================
-   REDUCED MOTION
-========================================================= */
+  .balance-card{
+    padding:20px;
+  }
 
-@media(prefers-reduced-motion:reduce){
+  .balance{
+    font-size:31px;
+  }
 
-    *,
-    *::before,
-    *::after{
-        animation-duration:.01ms!important;
-        animation-iteration-count:1!important;
-        transition-duration:.01ms!important;
-        scroll-behavior:auto!important;
-    }
+  .amount-options{
+    grid-template-columns:1fr;
+  }
+
+  .amount-btn{
+    min-height:42px;
+  }
+
+  .history-left{
+    gap:7px;
+  }
+
+  .history-icon{
+    width:35px;
+    height:35px;
+  }
+
+  .history-name{
+    max-width:105px;
+  }
+
+  .history-date{
+    font-size:7.5px;
+  }
+
+  .history-status{
+    font-size:7px;
+  }
+
+  .history-amount{
+    font-size:10px;
+  }
 }
 </style>
 </head>
@@ -1127,836 +1851,1042 @@ select.form-control{
 
 <div class="app">
 
-<header class="topbar">
+<!-- =====================================================
+     STICKY HEADER
+===================================================== -->
 
-    <div class="logo-area">
+<div class="topbar-wrap">
 
-        <div class="logo">
-            J
+<header class="topbar" id="topbar">
+
+  <div class="topbar-left">
+
+    <button
+      class="back-btn"
+      type="button"
+      onclick="history.back()"
+      aria-label="Go back"
+    >
+      ←
+    </button>
+
+    <div class="brand">
+
+      <div class="brand-mark">
+        J
+      </div>
+
+      <div class="brand-text">
+
+        <div class="brand-name">
+          Jovia
         </div>
 
-        <div>
-            <div class="logo-name">
-                Jovia
-            </div>
+        <span class="brand-sub">
+          NETWORK
+        </span>
 
-            <span class="logo-sub">
-                NETWORK
-            </span>
-        </div>
+      </div>
 
     </div>
 
-    <button
-        class="back-btn"
-        type="button"
-        onclick="goBack()"
-        aria-label="Go back"
-    >
-        ←
-    </button>
+  </div>
+
+  <div class="header-page">
+
+    <span class="header-page-dot"></span>
+
+    Wallet
+
+  </div>
 
 </header>
 
+</div>
+
+
+<!-- =====================================================
+     PAGE INTRO
+===================================================== -->
 
 <section class="page-heading">
 
-    <div class="page-label">
-        WALLET
-    </div>
+  <div class="page-label">
+    WALLET
+  </div>
 
-    <h1>
-        Withdraw Funds
-    </h1>
+  <h1>
+    Withdraw Funds
+  </h1>
 
-    <p>
-        Select the earnings source you want to withdraw from and enter your bank details.
-    </p>
+  <p>
+    Select your earnings source, enter your bank details,
+    and submit your withdrawal request securely.
+  </p>
 
 </section>
 
+
+<!-- =====================================================
+     DISABLED BANNER
+===================================================== -->
+
+<div
+  id="withdrawalDisabledBanner"
+  class="withdrawal-disabled-banner"
+>
+  ⛔ Regular withdrawals are currently unavailable.
+  <br>
+  Affiliate withdrawals remain available.
+</div>
+
+
+<!-- =====================================================
+     BALANCE
+===================================================== -->
 
 <section class="balance-card">
 
-    <div class="balance-glow"></div>
+  <div class="balance-content">
 
-    <div class="balance-content">
+    <div class="balance-top">
 
-        <div class="balance-top">
+      <div class="balance-label">
+        SELECTED BALANCE
+      </div>
 
-            <div class="balance-label">
-                SELECTED BALANCE
-            </div>
+      <div class="balance-badge">
 
-            <div class="balance-badge">
-                <span class="balance-dot"></span>
-                Available
-            </div>
+        <span class="balance-dot"></span>
 
-        </div>
+        Available
 
-        <div
-            class="balance"
-            id="walletBalance"
-        >
-            ₦0
-        </div>
-
-        <div
-            class="balance-note"
-            id="balanceNote"
-        >
-            Regular earnings available for withdrawal.
-        </div>
+      </div>
 
     </div>
 
+    <div
+      class="balance"
+      id="walletBalance"
+    >
+      ₦0
+    </div>
+
+    <div
+      class="balance-note"
+      id="balanceNote"
+    >
+      Regular earnings available for withdrawal.
+    </div>
+
+  </div>
+
 </section>
 
+
+<!-- =====================================================
+     WITHDRAWAL CARD
+===================================================== -->
 
 <section class="withdraw-card">
 
-    <div class="card-header">
+  <div class="card-header">
 
-        <div class="card-icon">
-            ↓
-        </div>
+    <div class="card-icon">
+      ↓
+    </div>
 
-        <div>
+    <div>
 
-            <div class="card-title">
-                Withdrawal Details
-            </div>
+      <div class="card-title">
+        Withdrawal Details
+      </div>
 
-            <div class="card-subtitle">
-                Select whether you are withdrawing from your regular earnings or affiliate earnings.
-            </div>
-
-        </div>
+      <div class="card-subtitle">
+        Choose your earnings source and provide the bank
+        account where you want your funds sent.
+      </div>
 
     </div>
 
-
-    <div
-        id="formMessage"
-        class="form-message"
-        role="alert"
-        aria-live="polite"
-    ></div>
+  </div>
 
 
-    <!-- =================================================
-         WITHDRAWAL TYPE
-    ================================================== -->
-
-    <div class="withdraw-type-box">
-
-        <label
-            class="withdraw-type-label"
-            for="withdrawalType"
-        >
-            Withdrawal Type
-        </label>
-
-        <select
-            id="withdrawalType"
-            class="form-control withdraw-type-select"
-        >
-
-            <option value="regular">
-                Regular Earnings
-            </option>
-
-            <option value="affiliate">
-                Affiliate Earnings
-            </option>
-
-        </select>
-
-        <div class="type-balance">
-
-            <span id="typeBalanceLabel">
-                Regular available balance
-            </span>
-
-            <strong id="typeBalance">
-                ₦0
-            </strong>
-
-        </div>
-
-        <div class="withdraw-type-note">
-            Your withdrawal source is recorded with the request. The server must verify that the selected source has sufficient funds.
-        </div>
-
-    </div>
+  <div
+    id="formMessage"
+    class="form-message"
+    role="alert"
+  ></div>
 
 
-    <!-- =================================================
-         AMOUNT
-    ================================================== -->
+  <!-- WITHDRAWAL TYPE -->
 
-    <div class="form-group">
+  <div class="withdraw-type-box">
 
-        <label for="amount">
-            Withdrawal Amount
-        </label>
-
-        <div class="input-wrap">
-
-            <span>
-                ₦
-            </span>
-
-            <input
-                id="amount"
-                class="form-control with-prefix"
-                type="number"
-                inputmode="numeric"
-                min="30000"
-                step="1"
-                placeholder="Enter amount"
-                autocomplete="off"
-            >
-
-        </div>
-
-        <div class="amount-label">
-            Quick select
-        </div>
-
-        <div class="amount-options">
-
-            <button
-                id="quickAmount1"
-                type="button"
-                class="amount-btn"
-            >
-                ₦30,000
-            </button>
-
-            <button
-                id="quickAmount2"
-                type="button"
-                class="amount-btn"
-            >
-                ₦50,000
-            </button>
-
-            <button
-                id="quickAmount3"
-                type="button"
-                class="amount-btn"
-            >
-                ₦100,000
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <div class="section-divider"></div>
-
-
-    <div class="bank-heading">
-
-        <div class="bank-heading-icon">
-            ▣
-        </div>
-
-        <div class="bank-title">
-            Bank Account
-        </div>
-
-    </div>
-
-
-    <div class="form-group">
-
-        <label for="accountName">
-            Account Name
-        </label>
-
-        <input
-            id="accountName"
-            class="form-control"
-            type="text"
-            placeholder="Enter account name"
-            autocomplete="name"
-            maxlength="100"
-        >
-
-    </div>
-
-
-    <div class="form-group">
-
-        <label for="bankName">
-            Bank Name
-        </label>
-
-        <select
-            id="bankName"
-            class="form-control"
-        >
-
-            <option value="">
-                Select your bank
-            </option>
-
-            <option value="Access Bank">Access Bank</option>
-            <option value="Citibank Nigeria">Citibank Nigeria</option>
-            <option value="Ecobank Nigeria">Ecobank Nigeria</option>
-            <option value="Fidelity Bank">Fidelity Bank</option>
-            <option value="First Bank of Nigeria">First Bank of Nigeria</option>
-            <option value="First City Monument Bank">First City Monument Bank</option>
-            <option value="Globus Bank">Globus Bank</option>
-            <option value="Guaranty Trust Bank">Guaranty Trust Bank</option>
-            <option value="Jaiz Bank">Jaiz Bank</option>
-            <option value="Keystone Bank">Keystone Bank</option>
-            <option value="Kuda Bank">Kuda Bank</option>
-            <option value="Lotus Bank">Lotus Bank</option>
-            <option value="Moniepoint">Moniepoint</option>
-            <option value="Opay">Opay</option>
-            <option value="PalmPay">PalmPay</option>
-            <option value="Polaris Bank">Polaris Bank</option>
-            <option value="Premium Trust Bank">Premium Trust Bank</option>
-            <option value="Providus Bank">Providus Bank</option>
-            <option value="Stanbic IBTC Bank">Stanbic IBTC Bank</option>
-            <option value="Sterling Bank">Sterling Bank</option>
-            <option value="Taj Bank">Taj Bank</option>
-            <option value="Titan Trust Bank">Titan Trust Bank</option>
-            <option value="Union Bank">Union Bank</option>
-            <option value="United Bank for Africa">United Bank for Africa</option>
-            <option value="Unity Bank">Unity Bank</option>
-            <option value="Wema Bank">Wema Bank</option>
-            <option value="Zenith Bank">Zenith Bank</option>
-
-        </select>
-
-    </div>
-
-
-    <div class="form-group">
-
-        <label for="accountNumber">
-            Account Number
-        </label>
-
-        <input
-            id="accountNumber"
-            class="form-control"
-            type="text"
-            inputmode="numeric"
-            maxlength="10"
-            pattern="[0-9]{10}"
-            placeholder="Enter 10-digit account number"
-            autocomplete="off"
-        >
-
-    </div>
-
-
-    <button
-        type="button"
-        class="withdraw-button"
-        id="withdrawButton"
-        onclick="submitWithdrawal()"
+    <label
+      class="withdraw-type-label"
+      for="withdrawalType"
     >
-        Request Withdrawal
-    </button>
+      Withdrawal Type
+    </label>
 
+    <select
+      id="withdrawalType"
+      class="form-control"
+    >
 
-    <div class="info-box">
+      <option value="regular">
+        Regular Earnings
+      </option>
 
-        <div class="info-row">
+      <option value="affiliate">
+        Affiliate Earnings
+      </option>
 
-            <span>
-                Selected balance
-            </span>
+    </select>
 
-            <strong id="infoBalance">
-                ₦0
-            </strong>
+    <div class="type-balance">
 
-        </div>
+      <span id="typeBalanceLabel">
+        Regular available balance
+      </span>
 
-        <div class="info-row">
-
-            <span>
-                Withdrawal type
-            </span>
-
-            <strong id="infoWithdrawalType">
-                Regular Earnings
-            </strong>
-
-        </div>
-
-        <div class="info-row">
-
-            <span>
-                Minimum withdrawal
-            </span>
-
-            <strong id="minimumWithdrawal">
-                ₦30,000
-            </strong>
-
-        </div>
-
-        <div class="info-row">
-
-            <span>
-                Processing
-            </span>
-
-            <strong>
-                Pending review
-            </strong>
-
-        </div>
+      <strong id="typeBalance">
+        ₦0
+      </strong>
 
     </div>
 
+  </div>
 
-    <div class="security-note">
 
-        <div class="security-icon">
-            🔒
-        </div>
+  <!-- AMOUNT -->
 
-        <p>
-            Your withdrawal source and bank details are securely submitted for processing. Please ensure all information is correct before confirming.
-        </p>
+  <div class="form-group">
+
+    <label for="amount">
+      Withdrawal Amount
+    </label>
+
+    <input
+      id="amount"
+      class="form-control"
+      type="number"
+      min="30000"
+      inputmode="numeric"
+      placeholder="Enter amount"
+    >
+
+    <div class="amount-label">
+      Quick select
+    </div>
+
+    <div class="amount-options">
+
+      <button
+        id="quickAmount1"
+        type="button"
+        class="amount-btn"
+      >
+        ₦30,000
+      </button>
+
+      <button
+        id="quickAmount2"
+        type="button"
+        class="amount-btn"
+      >
+        ₦50,000
+      </button>
+
+      <button
+        id="quickAmount3"
+        type="button"
+        class="amount-btn"
+      >
+        ₦100,000
+      </button>
 
     </div>
+
+  </div>
+
+
+  <div class="section-divider"></div>
+
+
+  <!-- BANK -->
+
+  <div class="bank-heading">
+
+    <div class="bank-heading-icon">
+      ▣
+    </div>
+
+    <div class="bank-title">
+      Bank Account
+    </div>
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label for="accountName">
+      Account Name
+    </label>
+
+    <input
+      id="accountName"
+      class="form-control"
+      type="text"
+      autocomplete="name"
+      placeholder="Enter account name"
+    >
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label for="bankName">
+      Bank Name
+    </label>
+
+    <select
+      id="bankName"
+      class="form-control"
+    >
+
+      <option value="">
+        Select your bank
+      </option>
+
+      <option>Access Bank</option>
+      <option>GTB</option>
+      <option>First Bank</option>
+      <option>UBA</option>
+      <option>Zenith Bank</option>
+      <option>Kuda Bank</option>
+      <option>Opay</option>
+      <option>Moniepoint</option>
+      <option>PalmPay</option>
+      <option>Ecobank</option>
+      <option>Wema Bank</option>
+      <option>Union Bank</option>
+      <option>Stanbic IBTC</option>
+      <option>Sterling Bank</option>
+      <option>Fidelity Bank</option>
+
+    </select>
+
+  </div>
+
+
+  <div class="form-group">
+
+    <label for="accountNumber">
+      Account Number
+    </label>
+
+    <input
+      id="accountNumber"
+      class="form-control"
+      type="text"
+      inputmode="numeric"
+      autocomplete="off"
+      maxlength="10"
+      placeholder="Enter 10-digit account number"
+    >
+
+  </div>
+
+
+  <button
+    type="button"
+    class="withdraw-button"
+    id="withdrawButton"
+    onclick="submitWithdrawal()"
+  >
+    Request Withdrawal
+  </button>
+
+
+  <!-- INFO -->
+
+  <div class="info-box">
+
+    <div class="info-row">
+
+      <span>
+        Selected balance
+      </span>
+
+      <strong id="infoBalance">
+        ₦0
+      </strong>
+
+    </div>
+
+    <div class="info-row">
+
+      <span>
+        Withdrawal type
+      </span>
+
+      <strong id="infoWithdrawalType">
+        Regular Earnings
+      </strong>
+
+    </div>
+
+    <div class="info-row">
+
+      <span>
+        Minimum withdrawal
+      </span>
+
+      <strong id="minimumWithdrawal">
+        ₦30,000
+      </strong>
+
+    </div>
+
+    <div class="info-row">
+
+      <span>
+        Processing
+      </span>
+
+      <strong>
+        Pending review
+      </strong>
+
+    </div>
+
+  </div>
+
+
+  <div class="security-note">
+
+    <span>🔒</span>
+
+    <span>
+      Your withdrawal request is securely submitted for review.
+      Never share your password or login details with anyone.
+    </span>
+
+  </div>
 
 </section>
 
 
+<!-- =====================================================
+     PREMIUM WITHDRAWAL HISTORY
+===================================================== -->
+
 <section class="history-section">
 
-    <div class="history-head">
+  <div class="history-shell">
 
-        <h2>
+    <div class="history-top">
+
+      <div class="history-head">
+
+        <div class="history-heading-wrap">
+
+          <div class="history-eyebrow">
+
+            <span class="history-eyebrow-dot"></span>
+
+            TRANSACTION ACTIVITY
+
+          </div>
+
+          <h2>
             Withdrawal History
-        </h2>
+          </h2>
 
-        <span>
-            RECENT
-        </span>
+          <p>
+            Your latest withdrawal requests and their current status.
+          </p>
 
-    </div>
-
-    <div
-        class="history-list"
-        id="historyList"
-    >
-
-        <div class="empty-history loading">
-            Loading withdrawal history...
         </div>
 
+        <div class="history-count">
+
+          <strong id="historyCount">
+            0
+          </strong>
+
+          <span>
+            Requests
+          </span>
+
+        </div>
+
+      </div>
+
     </div>
+
+
+    <div
+      class="history-list"
+      id="historyList"
+    >
+
+      <div class="history-loading">
+
+        <span class="history-loading-dot"></span>
+
+        Loading withdrawal history...
+
+      </div>
+
+    </div>
+
+
+    <div class="history-footer">
+
+      Showing your 10 most recent withdrawal requests
+
+    </div>
+
+  </div>
 
 </section>
 
 </div>
 
 
+<!-- =====================================================
+     BOTTOM NAV
+===================================================== -->
+
 <nav class="bottom-nav">
 
-    <button
-        class="nav"
-        type="button"
-        onclick="openPage('dashboard.html')"
-    >
-        <div class="nav-icon">
-            ⌂
-        </div>
-        Home
-    </button>
+  <button
+    class="nav"
+    type="button"
+    onclick="location.href='dashboard.html'"
+  >
+    <div class="nav-icon">
+      ⌂
+    </div>
 
-    <button
-        class="nav"
-        type="button"
-        onclick="openPage('jobs.html')"
-    >
-        <div class="nav-icon">
-            ◆
-        </div>
-        Jobs
-    </button>
+    Home
+  </button>
 
-    <button
-        class="nav"
-        type="button"
-        onclick="openPage('history.html')"
-    >
-        <div class="nav-icon">
-            ◷
-        </div>
-        History
-    </button>
+  <button
+    class="nav"
+    type="button"
+    onclick="location.href='jobs.html'"
+  >
+    <div class="nav-icon">
+      ◆
+    </div>
 
-    <button
-        class="nav active"
-        type="button"
-        onclick="openPage('withdraw.html')"
-    >
-        <div class="nav-icon">
-            ↓
-        </div>
-        Withdraw
-    </button>
+    Jobs
+  </button>
+
+  <button
+    class="nav"
+    type="button"
+    onclick="location.href='history.html'"
+  >
+    <div class="nav-icon">
+      ◷
+    </div>
+
+    History
+  </button>
+
+  <button
+    class="nav active"
+    type="button"
+    onclick="location.href='withdraw.html'"
+  >
+    <div class="nav-icon">
+      ↓
+    </div>
+
+    Withdraw
+  </button>
 
 </nav>
 
 
+<!-- =====================================================
+     CONFIRM MODAL
+===================================================== -->
+
 <div
-    class="modal-overlay"
-    id="confirmModal"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="confirmTitle"
+  class="modal-overlay"
+  id="confirmModal"
 >
 
-    <div class="modal">
+  <div class="modal">
 
-        <div class="modal-icon">
-            ↓
-        </div>
+    <h3>
+      Confirm Withdrawal
+    </h3>
 
-        <h3 id="confirmTitle">
-            Confirm Withdrawal
-        </h3>
+    <p class="modal-description">
+      Please review your withdrawal details below.
+    </p>
 
-        <p class="modal-description">
-            Please review the withdrawal details below before submitting your request.
-        </p>
+    <div class="confirm-details">
 
-        <div class="confirm-details">
+      <div class="confirm-row">
 
-            <div class="confirm-row">
+        <span>
+          Withdrawal Type
+        </span>
 
-                <span>
-                    Withdrawal Type
-                </span>
+        <strong id="confirmType">
+          Regular
+        </strong>
 
-                <strong id="confirmType">
-                    Regular Earnings
-                </strong>
+      </div>
 
-            </div>
+      <div class="confirm-row">
 
-            <div class="confirm-row">
+        <span>
+          Amount
+        </span>
 
-                <span>
-                    Amount
-                </span>
+        <strong id="confirmAmount">
+          ₦0
+        </strong>
 
-                <strong id="confirmAmount">
-                    ₦0
-                </strong>
+      </div>
 
-            </div>
+      <div class="confirm-row">
 
-            <div class="confirm-row">
+        <span>
+          Account
+        </span>
 
-                <span>
-                    Account
-                </span>
+        <strong id="confirmAccount">
+          —
+        </strong>
 
-                <strong id="confirmAccount">
-                    —
-                </strong>
+      </div>
 
-            </div>
+      <div class="confirm-row">
 
-            <div class="confirm-row">
+        <span>
+          Bank
+        </span>
 
-                <span>
-                    Bank
-                </span>
+        <strong id="confirmBank">
+          —
+        </strong>
 
-                <strong id="confirmBank">
-                    —
-                </strong>
+      </div>
 
-            </div>
+      <div class="confirm-row">
 
-            <div class="confirm-row">
+        <span>
+          Account Number
+        </span>
 
-                <span>
-                    Account Number
-                </span>
+        <strong id="confirmNumber">
+          —
+        </strong>
 
-                <strong id="confirmNumber">
-                    —
-                </strong>
-
-            </div>
-
-        </div>
-
-        <div class="modal-actions">
-
-            <button
-                type="button"
-                class="modal-btn modal-cancel"
-                onclick="closeConfirmModal()"
-            >
-                Cancel
-            </button>
-
-            <button
-                type="button"
-                class="modal-btn modal-confirm"
-                id="confirmWithdrawButton"
-                onclick="confirmWithdrawal()"
-            >
-                Confirm Withdrawal
-            </button>
-
-        </div>
+      </div>
 
     </div>
+
+    <div class="modal-actions">
+
+      <button
+        type="button"
+        class="modal-btn modal-cancel"
+        onclick="closeConfirmModal()"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        class="modal-btn modal-confirm"
+        id="confirmWithdrawButton"
+        onclick="confirmWithdrawal()"
+      >
+        Confirm Withdrawal
+      </button>
+
+    </div>
+
+  </div>
 
 </div>
 
 
 <script>
 
-/* =========================================================
-   STATE
-========================================================= */
-
 let currentUser = null;
 
 let walletBalance = 0;
+
 let affiliateBalance = 0;
 
 let pendingWithdrawal = null;
 
 let loadingUser = false;
+
 let submittingWithdrawal = false;
 
+let regularWithdrawalsEnabled = true;
 
-/* =========================================================
-   WITHDRAWAL MINIMUMS
-========================================================= */
 
 const MIN_WITHDRAWAL = {
-
-    regular: 30000,
-
-    affiliate: 20000
-
+  regular:30000,
+  affiliate:20000
 };
 
 
 /* =========================================================
-   GET MINIMUM WITHDRAWAL
+   BASIC HELPERS
 ========================================================= */
+
+function money(amount){
+
+  const number = Number(amount);
+
+  if(!Number.isFinite(number)){
+    return "₦0";
+  }
+
+  return "₦" + number.toLocaleString("en-NG");
+
+}
+
 
 function getMinimumWithdrawal(type){
 
-    return type === "affiliate"
-        ? MIN_WITHDRAWAL.affiliate
-        : MIN_WITHDRAWAL.regular;
+  return type === "affiliate"
+    ? MIN_WITHDRAWAL.affiliate
+    : MIN_WITHDRAWAL.regular;
 
 }
 
-
-/* =========================================================
-   GET SELECTED BALANCE
-========================================================= */
 
 function getSelectedBalance(){
 
-    const type =
-        document.getElementById(
-            "withdrawalType"
-        ).value;
+  const type =
+    document.getElementById(
+      "withdrawalType"
+    ).value;
 
-    if(type === "affiliate"){
-        return affiliateBalance;
-    }
-
-    return walletBalance;
+  return type === "affiliate"
+    ? affiliateBalance
+    : walletBalance;
 
 }
 
-
-/* =========================================================
-   GET TYPE LABEL
-========================================================= */
 
 function getWithdrawalTypeLabel(type){
 
-    if(type === "affiliate"){
-        return "Affiliate Earnings";
-    }
-
-    return "Regular Earnings";
+  return type === "affiliate"
+    ? "Affiliate Earnings"
+    : "Regular Earnings";
 
 }
 
 
 /* =========================================================
-   UPDATE QUICK AMOUNTS
+   STICKY HEADER EFFECT
+========================================================= */
+
+function updateTopbar(){
+
+  const topbar =
+    document.getElementById(
+      "topbar"
+    );
+
+  if(!topbar) return;
+
+  if(window.scrollY > 8){
+
+    topbar.classList.add("scrolled");
+
+  }else{
+
+    topbar.classList.remove("scrolled");
+
+  }
+
+}
+
+window.addEventListener(
+  "scroll",
+  updateTopbar,
+  {passive:true}
+);
+
+
+/* =========================================================
+   WITHDRAWAL AVAILABILITY
+========================================================= */
+
+function updateWithdrawalAvailability(){
+
+  const type =
+    document.getElementById(
+      "withdrawalType"
+    ).value;
+
+
+  const banner =
+    document.getElementById(
+      "withdrawalDisabledBanner"
+    );
+
+
+  const button =
+    document.getElementById(
+      "withdrawButton"
+    );
+
+
+  if(
+    type === "regular" &&
+    !regularWithdrawalsEnabled
+  ){
+
+    if(banner){
+      banner.style.display = "block";
+    }
+
+    if(button){
+
+      button.disabled = true;
+
+      button.textContent =
+        "Regular Withdrawals Disabled ⛔";
+
+    }
+
+  }else{
+
+    if(banner){
+      banner.style.display = "none";
+    }
+
+    if(button){
+
+      button.disabled = false;
+
+      button.textContent =
+        "Request Withdrawal";
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   QUICK AMOUNTS
 ========================================================= */
 
 function updateQuickAmounts(type){
 
-    const amounts =
-        type === "affiliate"
-        ? [20000,30000,50000]
-        : [30000,50000,100000];
+  const amounts =
+    type === "affiliate"
+      ? [20000,30000,50000]
+      : [30000,50000,100000];
 
 
-    const buttons = [
+  [
+    "quickAmount1",
+    "quickAmount2",
+    "quickAmount3"
+  ].forEach(function(id,index){
 
-        document.getElementById(
-            "quickAmount1"
-        ),
+    const button =
+      document.getElementById(id);
 
-        document.getElementById(
-            "quickAmount2"
-        ),
-
-        document.getElementById(
-            "quickAmount3"
-        )
-
-    ];
+    if(!button) return;
 
 
-    buttons.forEach(
-        function(button,index){
-
-            if(!button){
-                return;
-            }
+    button.textContent =
+      money(amounts[index]);
 
 
-            const amount =
-                amounts[index];
+    button.onclick =
+      function(){
 
+        setAmount(
+          amounts[index],
+          button
+        );
 
-            button.textContent =
-                money(amount);
+      };
 
-
-            button.onclick =
-                function(){
-
-                    setAmount(
-                        amount,
-                        button
-                    );
-
-                };
-
-        }
-    );
+  });
 
 }
 
 
 /* =========================================================
-   UPDATE BALANCE DISPLAY
+   BALANCE UI
 ========================================================= */
 
 function updateBalance(){
 
-    const type =
-        document.getElementById(
-            "withdrawalType"
-        ).value;
-
-    const selectedBalance =
-        getSelectedBalance();
-
-    const minimumWithdrawal =
-        getMinimumWithdrawal(
-            type
-        );
-
-
+  const type =
     document.getElementById(
-        "walletBalance"
-    ).textContent =
-        money(selectedBalance);
+      "withdrawalType"
+    ).value;
 
 
-    document.getElementById(
-        "infoBalance"
-    ).textContent =
-        money(selectedBalance);
+  const selectedBalance =
+    getSelectedBalance();
 
 
-    document.getElementById(
-        "typeBalance"
-    ).textContent =
-        money(selectedBalance);
+  const minimum =
+    getMinimumWithdrawal(type);
 
 
-    document.getElementById(
-        "infoWithdrawalType"
-    ).textContent =
-        getWithdrawalTypeLabel(type);
+  document.getElementById(
+    "walletBalance"
+  ).textContent =
+    money(selectedBalance);
 
 
-    document.getElementById(
-        "typeBalanceLabel"
-    ).textContent =
-        type === "affiliate"
-        ? "Affiliate available balance"
-        : "Regular available balance";
+  document.getElementById(
+    "infoBalance"
+  ).textContent =
+    money(selectedBalance);
 
 
-    document.getElementById(
-        "balanceNote"
-    ).textContent =
-        type === "affiliate"
-        ? "Affiliate earnings available for withdrawal."
-        : "Regular earnings available for withdrawal.";
+  document.getElementById(
+    "typeBalance"
+  ).textContent =
+    money(selectedBalance);
 
 
-    /*
-     * Keep the browser's numeric input
-     * minimum synchronized with the
-     * selected withdrawal type.
-     */
-
-    document.getElementById(
-        "amount"
-    ).min =
-        minimumWithdrawal;
+  document.getElementById(
+    "infoWithdrawalType"
+  ).textContent =
+    getWithdrawalTypeLabel(type);
 
 
-    /*
-     * Update displayed minimum.
-     */
-
-    document.getElementById(
-        "minimumWithdrawal"
-    ).textContent =
-        money(
-            minimumWithdrawal
-        );
+  document.getElementById(
+    "typeBalanceLabel"
+  ).textContent =
+    type === "affiliate"
+      ? "Affiliate available balance"
+      : "Regular available balance";
 
 
-    /*
-     * Update quick-select buttons.
-     */
+  document.getElementById(
+    "balanceNote"
+  ).textContent =
+    type === "affiliate"
+      ? "Affiliate earnings available for withdrawal."
+      : "Regular earnings available for withdrawal.";
 
-    updateQuickAmounts(
-        type
-    );
+
+  document.getElementById(
+    "amount"
+  ).min =
+    minimum;
+
+
+  document.getElementById(
+    "minimumWithdrawal"
+  ).textContent =
+    money(minimum);
+
+
+  updateQuickAmounts(type);
+
+  updateWithdrawalAvailability();
+
+}
+
+
+/* =========================================================
+   CHECK REGULAR WITHDRAWAL STATUS
+========================================================= */
+
+async function checkRegularWithdrawalStatus(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/wallet?t=" +
+        Date.now(),
+        {
+          credentials:"include",
+          cache:"no-store"
+        }
+      );
+
+
+    if(
+      response.status === 401 ||
+      response.status === 403
+    ){
+
+      return;
+
+    }
+
+
+    if(!response.ok){
+
+      regularWithdrawalsEnabled = true;
+
+      updateWithdrawalAvailability();
+
+      return;
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if(
+      typeof data.regularWithdrawalsEnabled ===
+      "boolean"
+    ){
+
+      regularWithdrawalsEnabled =
+        data.regularWithdrawalsEnabled;
+
+    }
+    else if(
+      typeof data.wallet?.regularWithdrawalsEnabled ===
+      "boolean"
+    ){
+
+      regularWithdrawalsEnabled =
+        data.wallet.regularWithdrawalsEnabled;
+
+    }
+
+
+    updateWithdrawalAvailability();
+
+
+  }catch(error){
+
+    regularWithdrawalsEnabled = true;
+
+    updateWithdrawalAvailability();
+
+  }
 
 }
 
@@ -1967,234 +2897,118 @@ function updateBalance(){
 
 async function loadUser(){
 
-    if(loadingUser){
-        return;
+  if(loadingUser) return;
+
+  loadingUser = true;
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/me?t=" +
+        Date.now(),
+        {
+          credentials:"include",
+          cache:"no-store"
+        }
+      );
+
+
+    if(
+      response.status === 401 ||
+      response.status === 403
+    ){
+
+      location.href =
+        "login.html";
+
+      return;
+
     }
 
-    loadingUser = true;
 
-    try{
+    if(!response.ok){
 
-        const response =
-            await fetch(
-                "/api/me?t=" +
-                Date.now(),
-                {
-                    method:"GET",
-                    credentials:"include",
-                    cache:"no-store",
-                    headers:{
-                        "Accept":"application/json",
-                        "Cache-Control":"no-cache"
-                    }
-                }
-            );
-
-
-        let data = null;
-
-        try{
-
-            data =
-                await response.json();
-
-        }catch(error){
-
-            console.error(
-                "Invalid /api/me response:",
-                error
-            );
-
-        }
-
-
-        if(
-            response.status === 401 ||
-            response.status === 403
-        ){
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        if(
-            !response.ok ||
-            !data
-        ){
-
-            throw new Error(
-                "Unable to load your account."
-            );
-
-        }
-
-
-        let user = null;
-
-
-        if(
-            data.user &&
-            typeof data.user === "object"
-        ){
-
-            user =
-                data.user;
-
-        }
-
-        else if(
-            data.data &&
-            data.data.user &&
-            typeof data.data.user === "object"
-        ){
-
-            user =
-                data.data.user;
-
-        }
-
-        else if(
-            data.member &&
-            typeof data.member === "object"
-        ){
-
-            user =
-                data.member;
-
-        }
-
-        else if(
-            typeof data === "object"
-        ){
-
-            user =
-                data;
-
-        }
-
-
-        if(!user){
-
-            throw new Error(
-                "Member information unavailable."
-            );
-
-        }
-
-
-        currentUser =
-            user;
-
-
-        /*
-         * REGULAR BALANCE
-         */
-
-        walletBalance =
-            getNumber(
-                user.walletBalance,
-                user.wallet_balance,
-                user.balance,
-                user.wallet,
-                data.walletBalance,
-                data.wallet_balance,
-                data.balance
-            );
-
-
-        /*
-         * AFFILIATE BALANCE
-         */
-
-        affiliateBalance =
-            getNumber(
-                user.affiliateBalance,
-                user.affiliate_balance,
-                user.affiliateWalletBalance,
-                user.affiliate_wallet_balance,
-                user.referralBalance,
-                user.referral_balance,
-                data.affiliateBalance,
-                data.affiliate_balance
-            );
-
-
-        if(
-            !Number.isFinite(walletBalance) ||
-            walletBalance < 0
-        ){
-
-            walletBalance =
-                0;
-
-        }
-
-
-        if(
-            !Number.isFinite(affiliateBalance) ||
-            affiliateBalance < 0
-        ){
-
-            affiliateBalance =
-                0;
-
-        }
-
-
-        updateBalance();
-
-
-        const savedAccountName =
-            user.accountName ||
-            user.account_name ||
-            user.bankAccountName ||
-            user.bank_account_name ||
-            "";
-
-
-        if(
-            savedAccountName &&
-            !document.getElementById(
-                "accountName"
-            ).value
-        ){
-
-            document.getElementById(
-                "accountName"
-            ).value =
-                String(savedAccountName);
-
-        }
-
-
-        await loadWithdrawalHistory();
-
-
-    }catch(error){
-
-        console.error(
-            "Withdrawal account error:",
-            error
-        );
-
-
-        showMessage(
-            error.message ||
-            "Unable to load your account balance. Please refresh the page.",
-            "error"
-        );
-
-
-    }finally{
-
-        loadingUser =
-            false;
+      throw new Error(
+        "Unable to load account."
+      );
 
     }
+
+
+    const data =
+      await response.json();
+
+
+    const user =
+      data.user ||
+      data.data?.user ||
+      data.member ||
+      data;
+
+
+    currentUser = user;
+
+
+    walletBalance =
+      Number(
+        user.walletBalance ??
+        user.wallet_balance ??
+        user.balance ??
+        0
+      ) || 0;
+
+
+    affiliateBalance =
+      Number(
+        user.affiliateBalance ??
+        user.affiliate_balance ??
+        0
+      ) || 0;
+
+
+    if(
+      typeof user.regularWithdrawalsEnabled ===
+      "boolean"
+    ){
+
+      regularWithdrawalsEnabled =
+        user.regularWithdrawalsEnabled;
+
+    }
+
+
+    if(
+      typeof data.regularWithdrawalsEnabled ===
+      "boolean"
+    ){
+
+      regularWithdrawalsEnabled =
+        data.regularWithdrawalsEnabled;
+
+    }
+
+
+    updateBalance();
+
+    await loadWithdrawalHistory();
+
+
+  }catch(error){
+
+    showMessage(
+      error.message ||
+      "Unable to load account. Please refresh.",
+      "error"
+    );
+
+
+  }finally{
+
+    loadingUser = false;
+
+  }
 
 }
 
@@ -2204,259 +3018,212 @@ async function loadUser(){
 ========================================================= */
 
 document
-    .getElementById("withdrawalType")
-    .addEventListener(
-        "change",
-        function(){
+  .getElementById(
+    "withdrawalType"
+  )
+  .addEventListener(
+    "change",
+    function(){
 
-            document
-                .getElementById(
-                    "amount"
-                )
-                .value = "";
-
-
-            document
-                .querySelectorAll(
-                    ".amount-btn"
-                )
-                .forEach(
-                    function(btn){
-
-                        btn.classList.remove(
-                            "active"
-                        );
-
-                    }
-                );
+      document.getElementById(
+        "amount"
+      ).value = "";
 
 
-            clearMessage();
+      document
+        .querySelectorAll(
+          ".amount-btn"
+        )
+        .forEach(function(button){
 
-            updateBalance();
+          button.classList.remove(
+            "active"
+          );
 
-        }
-    );
+        });
+
+
+      clearMessage();
+
+      updateBalance();
+
+    }
+  );
 
 
 /* =========================================================
-   QUICK AMOUNT
+   AMOUNT
 ========================================================= */
 
-function setAmount(
-    amount,
-    button
-){
+function setAmount(amount,button){
 
-    const input =
-        document.getElementById(
-            "amount"
-        );
+  document.getElementById(
+    "amount"
+  ).value = amount;
 
 
-    input.value =
-        amount;
+  document
+    .querySelectorAll(
+      ".amount-btn"
+    )
+    .forEach(function(item){
+
+      item.classList.remove(
+        "active"
+      );
+
+    });
 
 
-    document
-        .querySelectorAll(
-            ".amount-btn"
-        )
-        .forEach(
-            function(btn){
+  if(button){
 
-                btn.classList.remove(
-                    "active"
-                );
+    button.classList.add(
+      "active"
+    );
 
-            }
-        );
-
-
-    if(button){
-
-        button.classList.add(
-            "active"
-        );
-
-    }
+  }
 
 }
 
 
+document
+  .getElementById(
+    "amount"
+  )
+  .addEventListener(
+    "input",
+    function(){
+
+      document
+        .querySelectorAll(
+          ".amount-btn"
+        )
+        .forEach(function(button){
+
+          button.classList.remove(
+            "active"
+          );
+
+        });
+
+    }
+  );
+
+
 /* =========================================================
-   AMOUNT INPUT
+   ACCOUNT NUMBER
 ========================================================= */
 
 document
-    .getElementById("amount")
-    .addEventListener(
-        "input",
-        function(){
+  .getElementById(
+    "accountNumber"
+  )
+  .addEventListener(
+    "input",
+    function(){
 
-            document
-                .querySelectorAll(
-                    ".amount-btn"
-                )
-                .forEach(
-                    function(btn){
+      this.value =
+        this.value
+          .replace(/\D/g,"")
+          .slice(0,10);
 
-                        btn.classList.remove(
-                            "active"
-                        );
-
-                    }
-                );
-
-        }
-    );
+    }
+  );
 
 
 /* =========================================================
-   ACCOUNT NUMBER INPUT
-========================================================= */
-
-document
-    .getElementById("accountNumber")
-    .addEventListener(
-        "input",
-        function(){
-
-            this.value =
-                this.value
-                    .replace(/\D/g,"")
-                    .slice(0,10);
-
-        }
-    );
-
-
-/* =========================================================
-   ACCOUNT NAME INPUT
-========================================================= */
-
-document
-    .getElementById("accountName")
-    .addEventListener(
-        "input",
-        function(){
-
-            this.value =
-                this.value
-                    .replace(/\s{2,}/g," ")
-                    .slice(0,100);
-
-        }
-    );
-
-
-/* =========================================================
-   OPEN CONFIRMATION MODAL
+   CONFIRM MODAL
 ========================================================= */
 
 function openConfirmModal(){
 
-    if(!pendingWithdrawal){
-        return;
-    }
+  if(!pendingWithdrawal) return;
 
 
-    document.getElementById(
-        "confirmType"
-    ).textContent =
-        getWithdrawalTypeLabel(
-            pendingWithdrawal.withdrawalType
-        );
+  document.getElementById(
+    "confirmType"
+  ).textContent =
+    getWithdrawalTypeLabel(
+      pendingWithdrawal.withdrawalType
+    );
 
 
-    document.getElementById(
-        "confirmAmount"
-    ).textContent =
-        money(
-            pendingWithdrawal.amount
-        );
+  document.getElementById(
+    "confirmAmount"
+  ).textContent =
+    money(
+      pendingWithdrawal.amount
+    );
 
 
-    document.getElementById(
-        "confirmAccount"
-    ).textContent =
-        pendingWithdrawal.accountName;
+  document.getElementById(
+    "confirmAccount"
+  ).textContent =
+    pendingWithdrawal.accountName;
 
 
-    document.getElementById(
-        "confirmBank"
-    ).textContent =
-        pendingWithdrawal.bankName;
+  document.getElementById(
+    "confirmBank"
+  ).textContent =
+    pendingWithdrawal.bankName;
 
 
-    document.getElementById(
-        "confirmNumber"
-    ).textContent =
-        "****" +
-        pendingWithdrawal.accountNumber.slice(-4);
+  document.getElementById(
+    "confirmNumber"
+  ).textContent =
+    "****" +
+    pendingWithdrawal.accountNumber.slice(-4);
 
 
-    document
-        .getElementById(
-            "confirmModal"
-        )
-        .classList.add(
-            "show"
-        );
+  document
+    .getElementById(
+      "confirmModal"
+    )
+    .classList.add("show");
 
 
-    document.body.style.overflow =
-        "hidden";
+  document.body.style.overflow =
+    "hidden";
 
 }
 
-
-/* =========================================================
-   CLOSE CONFIRMATION MODAL
-========================================================= */
 
 function closeConfirmModal(){
 
-    if(submittingWithdrawal){
-        return;
-    }
+  if(submittingWithdrawal){
+    return;
+  }
 
 
-    document
-        .getElementById(
-            "confirmModal"
-        )
-        .classList.remove(
-            "show"
-        );
+  document
+    .getElementById(
+      "confirmModal"
+    )
+    .classList.remove("show");
 
 
-    document.body.style.overflow =
-        "";
+  document.body.style.overflow =
+    "";
 
 }
 
 
-/* =========================================================
-   BACKDROP CLICK
-========================================================= */
-
 document
-    .getElementById("confirmModal")
-    .addEventListener(
-        "click",
-        function(event){
+  .getElementById(
+    "confirmModal"
+  )
+  .addEventListener(
+    "click",
+    function(event){
 
-            if(
-                event.target === this
-            ){
+      if(event.target === this){
 
-                closeConfirmModal();
+        closeConfirmModal();
 
-            }
+      }
 
-        }
-    );
+    }
+  );
 
 
 /* =========================================================
@@ -2465,220 +3232,180 @@ document
 
 async function submitWithdrawal(){
 
-    clearMessage();
+  clearMessage();
 
 
-    if(!currentUser){
+  const withdrawalType =
+    document.getElementById(
+      "withdrawalType"
+    ).value;
 
-        showMessage(
-            "Your account is still loading. Please wait a moment and try again.",
-            "error"
-        );
 
-        return;
+  if(
+    withdrawalType === "regular" &&
+    !regularWithdrawalsEnabled
+  ){
 
-    }
+    showMessage(
+      "Regular withdrawals are currently unavailable. Please try again later.",
+      "error"
+    );
 
+    return;
 
-    const withdrawalType =
-        document.getElementById(
-            "withdrawalType"
-        ).value;
+  }
 
 
-    if(
-        withdrawalType !== "regular" &&
-        withdrawalType !== "affiliate"
-    ){
+  if(!currentUser){
 
-        showMessage(
-            "Please select a valid withdrawal type.",
-            "error"
-        );
+    showMessage(
+      "Account still loading. Please wait a moment.",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    const selectedBalance =
-        getSelectedBalance();
+  const selectedBalance =
+    getSelectedBalance();
 
 
-    const minimumWithdrawal =
-        getMinimumWithdrawal(
-            withdrawalType
-        );
+  const minimumWithdrawal =
+    getMinimumWithdrawal(
+      withdrawalType
+    );
 
 
-    const amount =
-        Number(
-            document.getElementById(
-                "amount"
-            ).value
-        );
+  const amount =
+    Number(
+      document.getElementById(
+        "amount"
+      ).value
+    );
 
 
-    const accountName =
-        document.getElementById(
-            "accountName"
-        ).value.trim();
+  const accountName =
+    document.getElementById(
+      "accountName"
+    ).value.trim();
 
 
-    const bankName =
-        document.getElementById(
-            "bankName"
-        ).value;
+  const bankName =
+    document.getElementById(
+      "bankName"
+    ).value;
 
 
-    const accountNumber =
-        document.getElementById(
-            "accountNumber"
-        ).value.trim();
+  const accountNumber =
+    document.getElementById(
+      "accountNumber"
+    ).value.trim();
 
 
-    if(
-        !Number.isFinite(amount) ||
-        amount <= 0
-    ){
+  if(
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ){
 
-        showMessage(
-            "Enter a valid withdrawal amount.",
-            "error"
-        );
+    showMessage(
+      "Enter a valid withdrawal amount.",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    if(
-        !Number.isInteger(amount)
-    ){
+  if(amount < minimumWithdrawal){
 
-        showMessage(
-            "Withdrawal amount must be a whole number.",
-            "error"
-        );
+    showMessage(
+      "Minimum withdrawal for " +
+      getWithdrawalTypeLabel(
+        withdrawalType
+      ) +
+      " is " +
+      money(minimumWithdrawal) +
+      ".",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    if(
-        amount < minimumWithdrawal
-    ){
+  if(amount > selectedBalance){
 
-        showMessage(
-            "Minimum withdrawal for " +
-            getWithdrawalTypeLabel(
-                withdrawalType
-            ) +
-            " is " +
-            money(
-                minimumWithdrawal
-            ) +
-            ".",
-            "error"
-        );
+    showMessage(
+      withdrawalType === "affiliate"
+        ? "Insufficient affiliate balance."
+        : "Insufficient regular balance.",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    if(
-        amount > selectedBalance
-    ){
+  if(
+    !accountName ||
+    accountName.length < 2
+  ){
 
-        showMessage(
-            withdrawalType === "affiliate"
-            ? "Insufficient affiliate balance."
-            : "Insufficient regular balance.",
-            "error"
-        );
+    showMessage(
+      "Please enter a valid account name.",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    if(!accountName){
+  if(!bankName){
 
-        showMessage(
-            "Please enter the account name.",
-            "error"
-        );
+    showMessage(
+      "Please select your bank.",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    if(
-        accountName.length < 2
-    ){
+  if(!/^\d{10}$/.test(accountNumber)){
 
-        showMessage(
-            "Please enter a valid account name.",
-            "error"
-        );
+    showMessage(
+      "Account number must be exactly 10 digits.",
+      "error"
+    );
 
-        return;
+    return;
 
-    }
+  }
 
 
-    if(!bankName){
+  pendingWithdrawal = {
 
-        showMessage(
-            "Please select your bank.",
-            "error"
-        );
+    amount,
 
-        return;
+    withdrawalType,
 
-    }
+    accountName,
 
+    bankName,
 
-    if(
-        !/^\d{10}$/.test(
-            accountNumber
-        )
-    ){
+    accountNumber
 
-        showMessage(
-            "Account number must contain exactly 10 digits.",
-            "error"
-        );
+  };
 
-        return;
 
-    }
-
-
-    pendingWithdrawal = {
-
-        amount:
-            amount,
-
-        withdrawalType:
-            withdrawalType,
-
-        accountName:
-            accountName,
-
-        bankName:
-            bankName,
-
-        accountNumber:
-            accountNumber
-
-    };
-
-
-    openConfirmModal();
+  openConfirmModal();
 
 }
 
@@ -2689,674 +3416,819 @@ async function submitWithdrawal(){
 
 async function confirmWithdrawal(){
 
-    if(
-        !pendingWithdrawal ||
-        submittingWithdrawal
-    ){
+  if(
+    !pendingWithdrawal ||
+    submittingWithdrawal
+  ){
 
-        return;
+    return;
 
-    }
-
-
-    const button =
-        document.getElementById(
-            "confirmWithdrawButton"
-        );
+  }
 
 
-    const mainButton =
-        document.getElementById(
-            "withdrawButton"
-        );
+  const confirmButton =
+    document.getElementById(
+      "confirmWithdrawButton"
+    );
 
 
-    submittingWithdrawal =
-        true;
+  const mainButton =
+    document.getElementById(
+      "withdrawButton"
+    );
 
 
-    button.disabled =
-        true;
+  submittingWithdrawal = true;
 
 
-    mainButton.disabled =
-        true;
+  confirmButton.disabled = true;
+
+  mainButton.disabled = true;
 
 
-    button.textContent =
-        "Submitting...";
+  confirmButton.textContent =
+    "Submitting...";
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/withdrawals",
+        {
+          method:"POST",
+
+          credentials:"include",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+
+            amount:
+              pendingWithdrawal.amount,
+
+            type:
+              pendingWithdrawal.withdrawalType,
+
+            withdrawalType:
+              pendingWithdrawal.withdrawalType,
+
+            accountName:
+              pendingWithdrawal.accountName,
+
+            bankName:
+              pendingWithdrawal.bankName,
+
+            accountNumber:
+              pendingWithdrawal.accountNumber
+
+          })
+
+        }
+      );
+
+
+    let data = null;
 
 
     try{
 
-        const response =
-            await fetch(
-                "/api/withdrawals",
-                {
-                    method:"POST",
-
-                    credentials:"include",
-
-                    headers:{
-                        "Content-Type":
-                            "application/json",
-
-                        "Accept":
-                            "application/json"
-                    },
-
-                    body:
-                        JSON.stringify({
-
-                            amount:
-                                pendingWithdrawal.amount,
-
-                            withdrawalType:
-                                pendingWithdrawal.withdrawalType,
-
-                            accountName:
-                                pendingWithdrawal.accountName,
-
-                            bankName:
-                                pendingWithdrawal.bankName,
-
-                            accountNumber:
-                                pendingWithdrawal.accountNumber
-
-                        })
-                }
-            );
-
-
-        let data = null;
-
-
-        try{
-
-            data =
-                await response.json();
-
-        }catch(error){
-
-            data = null;
-
-        }
-
-
-        if(
-            response.status === 401 ||
-            response.status === 403
-        ){
-
-            window.location.href =
-                "login.html";
-
-            return;
-
-        }
-
-
-        if(!response.ok){
-
-            throw new Error(
-                data?.message ||
-                "Unable to submit withdrawal."
-            );
-
-        }
-
-
-        /*
-         * REGULAR BALANCE
-         */
-
-        const returnedBalance =
-            getNumber(
-                data?.walletBalance,
-                data?.wallet_balance,
-                data?.balance,
-                data?.user?.walletBalance,
-                data?.user?.wallet_balance
-            );
-
-
-        if(
-            Number.isFinite(
-                returnedBalance
-            ) &&
-            returnedBalance >= 0
-        ){
-
-            walletBalance =
-                returnedBalance;
-
-        }
-
-
-        /*
-         * AFFILIATE BALANCE
-         */
-
-        const returnedAffiliateBalance =
-            getNumber(
-                data?.affiliateBalance,
-                data?.affiliate_balance,
-                data?.affiliateWalletBalance,
-                data?.affiliate_wallet_balance,
-                data?.user?.affiliateBalance,
-                data?.user?.affiliate_balance
-            );
-
-
-        if(
-            Number.isFinite(
-                returnedAffiliateBalance
-            ) &&
-            returnedAffiliateBalance >= 0
-        ){
-
-            affiliateBalance =
-                returnedAffiliateBalance;
-
-        }
-
-
-        /*
-         * If backend returned neither balance,
-         * reload the account.
-         */
-
-        if(
-            !Number.isFinite(
-                returnedBalance
-            ) &&
-            !Number.isFinite(
-                returnedAffiliateBalance
-            )
-        ){
-
-            await loadUser();
-
-        }
-
-
-        updateBalance();
-
-
-        document
-            .getElementById(
-                "confirmModal"
-            )
-            .classList.remove(
-                "show"
-            );
-
-
-        document.body.style.overflow =
-            "";
-
-
-        document.getElementById(
-            "amount"
-        ).value = "";
-
-
-        document.getElementById(
-            "accountNumber"
-        ).value = "";
-
-
-        document
-            .querySelectorAll(
-                ".amount-btn"
-            )
-            .forEach(
-                function(btn){
-
-                    btn.classList.remove(
-                        "active"
-                    );
-
-                }
-            );
-
-
-        pendingWithdrawal =
-            null;
-
-
-        showMessage(
-            data?.message ||
-            "Your withdrawal request has been submitted successfully.",
-            "success"
-        );
-
-
-        await loadWithdrawalHistory();
-
+      data =
+        await response.json();
 
     }catch(error){
 
-        console.error(
-            "Withdrawal submission error:",
-            error
-        );
-
-
-        document
-            .getElementById(
-                "confirmModal"
-            )
-            .classList.remove(
-                "show"
-            );
-
-
-        document.body.style.overflow =
-            "";
-
-
-        showMessage(
-            error.message ||
-            "Unable to submit withdrawal. Please try again.",
-            "error"
-        );
-
-
-    }finally{
-
-        submittingWithdrawal =
-            false;
-
-
-        button.disabled =
-            false;
-
-
-        mainButton.disabled =
-            false;
-
-
-        button.textContent =
-            "Confirm Withdrawal";
+      data = null;
 
     }
+
+
+    if(
+      response.status === 403 &&
+      pendingWithdrawal.withdrawalType ===
+      "regular"
+    ){
+
+      regularWithdrawalsEnabled = false;
+
+      updateWithdrawalAvailability();
+
+
+      showMessage(
+        data?.message ||
+        "Regular withdrawals are currently unavailable. Please try again later.",
+        "error"
+      );
+
+
+      closeConfirmModal();
+
+      return;
+
+    }
+
+
+    if(response.status === 401){
+
+      location.href =
+        "login.html";
+
+      return;
+
+    }
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data?.message ||
+        "Unable to submit withdrawal."
+      );
+
+    }
+
+
+    const returnedBalance =
+      Number(
+        data?.walletBalance ??
+        data?.wallet_balance ??
+        data?.user?.walletBalance ??
+        data?.user?.wallet_balance
+      );
+
+
+    if(
+      Number.isFinite(returnedBalance) &&
+      returnedBalance >= 0
+    ){
+
+      walletBalance =
+        returnedBalance;
+
+    }
+
+
+    const returnedAffiliateBalance =
+      Number(
+        data?.affiliateBalance ??
+        data?.affiliate_balance ??
+        data?.user?.affiliateBalance ??
+        data?.user?.affiliate_balance
+      );
+
+
+    if(
+      Number.isFinite(returnedAffiliateBalance) &&
+      returnedAffiliateBalance >= 0
+    ){
+
+      affiliateBalance =
+        returnedAffiliateBalance;
+
+    }
+
+
+    if(
+      !Number.isFinite(returnedBalance) &&
+      !Number.isFinite(returnedAffiliateBalance)
+    ){
+
+      await loadUser();
+
+    }
+
+
+    updateBalance();
+
+
+    document
+      .getElementById(
+        "confirmModal"
+      )
+      .classList.remove("show");
+
+
+    document.body.style.overflow =
+      "";
+
+
+    document.getElementById(
+      "amount"
+    ).value = "";
+
+
+    document.getElementById(
+      "accountNumber"
+    ).value = "";
+
+
+    document
+      .querySelectorAll(
+        ".amount-btn"
+      )
+      .forEach(function(button){
+
+        button.classList.remove(
+          "active"
+        );
+
+      });
+
+
+    pendingWithdrawal = null;
+
+
+    showMessage(
+      data?.message ||
+      "Withdrawal request submitted successfully.",
+      "success"
+    );
+
+
+    await loadWithdrawalHistory();
+
+
+  }catch(error){
+
+    document
+      .getElementById(
+        "confirmModal"
+      )
+      .classList.remove("show");
+
+
+    document.body.style.overflow =
+      "";
+
+
+    showMessage(
+      error.message ||
+      "Unable to submit withdrawal.",
+      "error"
+    );
+
+
+  }finally{
+
+    submittingWithdrawal = false;
+
+    confirmButton.disabled = false;
+
+    updateWithdrawalAvailability();
+
+    confirmButton.textContent =
+      "Confirm Withdrawal";
+
+  }
 
 }
 
 
 /* =========================================================
-   LOAD WITHDRAWAL HISTORY
+   PREMIUM WITHDRAWAL HISTORY
 ========================================================= */
 
 async function loadWithdrawalHistory(){
 
-    const list =
-        document.getElementById(
-            "historyList"
-        );
+  const list =
+    document.getElementById(
+      "historyList"
+    );
 
 
-    try{
-
-        const response =
-            await fetch(
-                "/api/withdrawals?t=" +
-                Date.now(),
-                {
-                    method:"GET",
-
-                    credentials:"include",
-
-                    cache:"no-store",
-
-                    headers:{
-                        "Accept":
-                            "application/json",
-
-                        "Cache-Control":
-                            "no-cache"
-                    }
-                }
-            );
+  const count =
+    document.getElementById(
+      "historyCount"
+    );
 
 
-        if(
-            response.status === 401 ||
-            response.status === 403
-        ){
+  try{
 
-            window.location.href =
-                "login.html";
-
-            return;
-
+    const response =
+      await fetch(
+        "/api/withdrawals?t=" +
+        Date.now(),
+        {
+          credentials:"include",
+          cache:"no-store"
         }
+      );
 
 
-        if(!response.ok){
+    if(response.status === 401){
 
-            throw new Error(
-                "Unable to load withdrawal history."
-            );
+      location.href =
+        "login.html";
 
-        }
+      return;
 
-
-        const data =
-            await response.json();
+    }
 
 
-        const withdrawals =
-            Array.isArray(
-                data?.withdrawals
+    if(!response.ok){
+
+      throw new Error(
+        "Unable to load history."
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    const withdrawals =
+      Array.isArray(
+        data.withdrawals
+      )
+        ? data.withdrawals
+
+        : Array.isArray(
+            data.data
+          )
+          ? data.data
+
+          : Array.isArray(
+              data.history
             )
-            ? data.withdrawals
+            ? data.history
+
             : [];
 
 
-        if(
-            !withdrawals.length
-        ){
+    if(count){
 
-            list.innerHTML = `
-                <div class="empty-history">
-                    No withdrawal requests yet.
-                </div>
-            `;
-
-            return;
-
-        }
-
-
-        list.innerHTML =
-            withdrawals
-                .slice(0,10)
-                .map(
-                    function(withdrawal){
-
-                        return createHistoryItem(
-                            withdrawal
-                        );
-
-                    }
-                )
-                .join("");
-
-
-    }catch(error){
-
-        console.error(
-            "Withdrawal history error:",
-            error
+      count.textContent =
+        Math.min(
+          withdrawals.length,
+          10
         );
 
+    }
 
-        list.innerHTML = `
-            <div class="empty-history">
-                Withdrawal history is unavailable right now.
-            </div>
+
+    if(!withdrawals.length){
+
+      list.innerHTML =
+        `
+        <div class="empty-history">
+
+          <div class="empty-history-icon">
+            ↓
+          </div>
+
+          <strong>
+            No withdrawals yet
+          </strong>
+
+          <span>
+            Your withdrawal requests will appear here
+            once you submit one.
+          </span>
+
+        </div>
         `;
 
+      return;
+
     }
+
+
+    list.innerHTML =
+      withdrawals
+        .slice(0,10)
+        .map(function(withdrawal){
+
+          const amount =
+            Number(
+              withdrawal.amount || 0
+            );
+
+
+          const status =
+            String(
+              withdrawal.status ||
+              "pending"
+            )
+            .toLowerCase()
+            .trim();
+
+
+          const type =
+            String(
+              withdrawal.withdrawal_type ||
+              withdrawal.withdrawalType ||
+              withdrawal.type ||
+              "regular"
+            )
+            .toLowerCase()
+            .trim();
+
+
+          const bank =
+            withdrawal.bank_name ||
+            withdrawal.bankName ||
+            "Bank";
+
+
+          const accountNumber =
+            String(
+              withdrawal.account_number ||
+              withdrawal.accountNumber ||
+              withdrawal.account_no ||
+              withdrawal.accountNo ||
+              ""
+            );
+
+
+          const date =
+            withdrawal.created_at ||
+            withdrawal.createdAt ||
+            withdrawal.date ||
+            "";
+
+
+          let formattedDate =
+            date;
+
+
+          try{
+
+            if(date){
+
+              const parsedDate =
+                new Date(date);
+
+
+              if(
+                !Number.isNaN(
+                  parsedDate.getTime()
+                )
+              ){
+
+                formattedDate =
+                  parsedDate.toLocaleString(
+                    "en-NG",
+                    {
+                      day:"numeric",
+                      month:"short",
+                      year:"numeric",
+                      hour:"numeric",
+                      minute:"2-digit"
+                    }
+                  );
+
+              }
+
+            }
+
+          }catch(error){}
+
+
+          const isAffiliate =
+            type === "affiliate";
+
+
+          const displayType =
+            isAffiliate
+              ? "Affiliate"
+              : "Regular";
+
+
+          const safeBank =
+            escapeHtml(
+              bank
+            );
+
+
+          const safeType =
+            escapeHtml(
+              displayType
+            );
+
+
+          const safeDate =
+            escapeHtml(
+              formattedDate ||
+              "Date unavailable"
+            );
+
+
+          const safeStatus =
+            escapeHtml(
+              formatStatus(status)
+            );
+
+
+          let maskedAccount = "";
+
+
+          if(
+            accountNumber.length >= 4
+          ){
+
+            maskedAccount =
+              "•••• " +
+              accountNumber.slice(-4);
+
+          }
+
+
+          const safeAccount =
+            escapeHtml(
+              maskedAccount
+            );
+
+
+          let statusClass =
+            normalizeStatusClass(
+              status
+            );
+
+
+          const itemClasses =
+            "history-item status-" +
+            statusClass;
+
+
+          return `
+
+            <div class="${itemClasses}">
+
+              <div class="history-left">
+
+                <div
+                  class="history-icon ${
+                    isAffiliate
+                      ? "affiliate"
+                      : ""
+                  }"
+                >
+                  ↓
+                </div>
+
+
+                <div class="history-main">
+
+                  <div class="history-name">
+                    ${safeBank}
+                  </div>
+
+
+                  <div class="history-meta">
+
+                    <span
+                      class="history-type ${
+                        isAffiliate
+                          ? "affiliate"
+                          : ""
+                      }"
+                    >
+                      ${safeType}
+                    </span>
+
+                    ${
+                      safeAccount
+                        ? `
+                          <span class="history-account">
+                            ${safeAccount}
+                          </span>
+                        `
+                        : ""
+                    }
+
+                  </div>
+
+
+                  <div class="history-date">
+                    ${safeDate}
+                  </div>
+
+                </div>
+
+              </div>
+
+
+              <div class="history-right">
+
+                <div class="history-amount">
+                  -${money(amount)}
+                </div>
+
+                <span
+                  class="history-status ${statusClass}"
+                >
+                  ${safeStatus}
+                </span>
+
+              </div>
+
+            </div>
+
+          `;
+
+        })
+        .join("");
+
+
+  }catch(error){
+
+    if(count){
+
+      count.textContent =
+        "—";
+
+    }
+
+
+    list.innerHTML =
+      `
+      <div class="empty-history">
+
+        <div class="empty-history-icon">
+          !
+        </div>
+
+        <strong>
+          History unavailable
+        </strong>
+
+        <span>
+          We couldn't load your withdrawal activity right now.
+          Please refresh and try again.
+        </span>
+
+      </div>
+      `;
+
+  }
 
 }
 
 
 /* =========================================================
-   CREATE HISTORY ITEM
+   HISTORY STATUS HELPERS
 ========================================================= */
 
-function createHistoryItem(
-    withdrawal
-){
+function normalizeStatusClass(status){
 
-    const amount =
-        getNumber(
-            withdrawal.amount
-        );
+  const value =
+    String(status || "pending")
+      .toLowerCase()
+      .trim();
 
 
-    const status =
-        String(
-            withdrawal.status ||
-            "pending"
-        )
-        .toLowerCase();
+  if(
+    value === "approved"
+  ){
 
+    return "approved";
 
-    /*
-     * Supports:
-     * withdrawalType
-     * withdrawal_type
-     * type
-     * source
-     */
+  }
 
-    let withdrawalType =
-        String(
-            withdrawal.withdrawalType ||
-            withdrawal.withdrawal_type ||
-            withdrawal.type ||
-            withdrawal.source ||
-            "regular"
-        )
-        .toLowerCase();
 
+  if(
+    value === "completed"
+  ){
 
-    if(
-        withdrawalType === "affiliate" ||
-        withdrawalType === "affiliate_earnings" ||
-        withdrawalType === "referral"
-    ){
+    return "completed";
 
-        withdrawalType =
-            "affiliate";
+  }
 
-    }else{
 
-        withdrawalType =
-            "regular";
+  if(
+    value === "rejected"
+  ){
 
-    }
+    return "rejected";
 
+  }
 
-    const withdrawalTypeLabel =
-        withdrawalType === "affiliate"
-        ? "Affiliate"
-        : "Regular";
 
+  if(
+    value === "failed"
+  ){
 
-    let statusClass = "";
+    return "failed";
 
+  }
 
-    if(
-        status === "approved" ||
-        status === "completed"
-    ){
 
-        statusClass =
-            "approved";
+  if(
+    value === "processing" ||
+    value === "in progress" ||
+    value === "in_progress"
+  ){
 
-    }
+    return "processing";
 
-    else if(
-        status === "rejected" ||
-        status === "failed"
-    ){
+  }
 
-        statusClass =
-            "rejected";
 
-    }
+  return "pending";
 
-    else if(
-        status === "processing"
-    ){
+}
 
-        statusClass =
-            "processing";
 
-    }
+function formatStatus(status){
 
+  const value =
+    String(status || "pending")
+      .toLowerCase()
+      .trim();
 
-    const date =
-        withdrawal.createdAt ||
-        withdrawal.created_at ||
-        withdrawal.date ||
-        "";
 
+  if(
+    value === "in_progress" ||
+    value === "in progress"
+  ){
 
-    const formattedDate =
-        formatDate(date);
+    return "Processing";
 
+  }
 
-    const bank =
-        escapeHTML(
-            withdrawal.bankName ||
-            withdrawal.bank_name ||
-            "Bank"
-        );
 
+  if(
+    value === "approved"
+  ){
 
-    const account =
-        escapeHTML(
-            String(
-                withdrawal.accountNumber ||
-                withdrawal.account_number ||
-                ""
-            )
-        );
+    return "Approved";
 
+  }
 
-    let statusText;
 
+  if(
+    value === "completed"
+  ){
 
-    if(
-        status === "completed"
-    ){
+    return "Completed";
 
-        statusText =
-            "Completed";
+  }
 
-    }
 
-    else if(
-        status === "approved"
-    ){
+  if(
+    value === "rejected"
+  ){
 
-        statusText =
-            "Approved";
+    return "Rejected";
 
-    }
+  }
 
-    else if(
-        status === "rejected"
-    ){
 
-        statusText =
-            "Rejected";
+  if(
+    value === "failed"
+  ){
 
-    }
+    return "Failed";
 
-    else if(
-        status === "failed"
-    ){
+  }
 
-        statusText =
-            "Failed";
 
-    }
+  if(
+    value === "processing"
+  ){
 
-    else if(
-        status === "processing"
-    ){
+    return "Processing";
 
-        statusText =
-            "Processing";
+  }
 
-    }
 
-    else{
+  return "Pending";
 
-        statusText =
-            "Pending";
+}
 
-    }
 
+/* =========================================================
+   ESCAPE HTML
+========================================================= */
 
-    const safeStatus =
-        escapeHTML(
-            statusText
-        );
+function escapeHtml(value){
 
-
-    const safeType =
-        escapeHTML(
-            withdrawalTypeLabel
-        );
-
-
-    const typeClass =
-        withdrawalType === "affiliate"
-        ? "affiliate"
-        : "regular";
-
-
-    return `
-        <div class="history-item">
-
-            <div class="history-left">
-
-                <div class="history-icon">
-                    ↓
-                </div>
-
-                <div>
-
-                    <div class="history-name">
-                        ${bank}
-                    </div>
-
-                    <span class="history-type ${typeClass}">
-                        ${safeType}
-                    </span>
-
-                    <div class="history-date">
-
-                        ${formattedDate}
-
-                        ${
-                            account
-                            ? " • ****" +
-                              account.slice(-4)
-                            : ""
-                        }
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="history-right">
-
-                <div class="history-amount">
-                    -${money(amount)}
-                </div>
-
-                <span
-                    class="history-status ${statusClass}"
-                >
-                    ${safeStatus}
-                </span>
-
-            </div>
-
-        </div>
-    `;
+  return String(value ?? "")
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 
 }
 
@@ -3366,321 +4238,59 @@ function createHistoryItem(
 ========================================================= */
 
 function showMessage(
-    message,
-    type
+  message,
+  type
 ){
 
-    const element =
-        document.getElementById(
-            "formMessage"
-        );
+  const element =
+    document.getElementById(
+      "formMessage"
+    );
 
 
-    element.textContent =
-        String(
-            message || ""
-        );
+  element.textContent =
+    String(
+      message || ""
+    );
 
 
-    element.className =
-        "form-message " +
-        type;
+  element.className =
+    "form-message " +
+    type;
 
 
-    element.style.display =
-        "block";
+  element.style.display =
+    "block";
 
 
-    element.scrollIntoView({
-        behavior:"smooth",
-        block:"nearest"
-    });
+  element.scrollIntoView({
+    behavior:"smooth",
+    block:"nearest"
+  });
 
 }
 
 
 function clearMessage(){
 
-    const element =
-        document.getElementById(
-            "formMessage"
-        );
-
-
-    element.textContent =
-        "";
-
-
-    element.className =
-        "form-message";
-
-
-    element.style.display =
-        "none";
-
-}
-
-
-/* =========================================================
-   MONEY FORMATTER
-========================================================= */
-
-function money(
-    amount
-){
-
-    const numericAmount =
-        Number(amount);
-
-
-    if(
-        !Number.isFinite(
-            numericAmount
-        )
-    ){
-
-        return "₦0";
-
-    }
-
-
-    return "₦" +
-        numericAmount.toLocaleString(
-            "en-NG",
-            {
-                minimumFractionDigits:0,
-                maximumFractionDigits:2
-            }
-        );
-
-}
-
-
-/* =========================================================
-   NUMBER HELPER
-========================================================= */
-
-function getNumber(){
-
-    const values =
-        Array.from(
-            arguments
-        );
-
-
-    for(
-        const value of values
-    ){
-
-        if(
-            value === undefined ||
-            value === null ||
-            value === ""
-        ){
-
-            continue;
-
-        }
-
-
-        const number =
-            Number(value);
-
-
-        if(
-            Number.isFinite(
-                number
-            )
-        ){
-
-            return number;
-
-        }
-
-    }
-
-
-    return 0;
-
-}
-
-
-/* =========================================================
-   DATE FORMATTER
-========================================================= */
-
-function formatDate(
-    value
-){
-
-    if(!value){
-
-        return "Date unavailable";
-
-    }
-
-
-    const date =
-        new Date(value);
-
-
-    if(
-        Number.isNaN(
-            date.getTime()
-        )
-    ){
-
-        return String(value);
-
-    }
-
-
-    return date.toLocaleString(
-        "en-NG",
-        {
-            day:"numeric",
-            month:"short",
-            year:"numeric",
-            hour:"numeric",
-            minute:"2-digit"
-        }
+  const element =
+    document.getElementById(
+      "formMessage"
     );
 
-}
+
+  element.textContent =
+    "";
 
 
-/* =========================================================
-   ESCAPE HTML
-========================================================= */
+  element.className =
+    "form-message";
 
-function escapeHTML(
-    value
-){
 
-    return String(
-        value ?? ""
-    )
-    .replace(
-        /&/g,
-        "&amp;"
-    )
-    .replace(
-        /</g,
-        "&lt;"
-    )
-    .replace(
-        />/g,
-        "&gt;"
-    )
-    .replace(
-        /"/g,
-        "&quot;"
-    )
-    .replace(
-        /'/g,
-        "&#039;"
-    );
+  element.style.display =
+    "none";
 
 }
-
-
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-function openPage(
-    page
-){
-
-    window.location.href =
-        page;
-
-}
-
-
-/* =========================================================
-   BACK
-========================================================= */
-
-function goBack(){
-
-    if(
-        document.referrer &&
-        document.referrer.includes(
-            window.location.host
-        )
-    ){
-
-        window.history.back();
-
-    }else{
-
-        window.location.href =
-            "dashboard.html";
-
-    }
-
-}
-
-
-/* =========================================================
-   ESCAPE KEY
-========================================================= */
-
-document.addEventListener(
-    "keydown",
-    function(event){
-
-        if(
-            event.key === "Escape"
-        ){
-
-            closeConfirmModal();
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   ENTER KEY
-========================================================= */
-
-document.addEventListener(
-    "keydown",
-    function(event){
-
-        if(
-            event.key !== "Enter"
-        ){
-
-            return;
-
-        }
-
-
-        const active =
-            document.activeElement;
-
-
-        if(
-            active &&
-            (
-                active.id === "amount" ||
-                active.id === "accountName" ||
-                active.id === "accountNumber"
-            )
-        ){
-
-            event.preventDefault();
-
-            submitWithdrawal();
-
-        }
-
-    }
-);
 
 
 /* =========================================================
@@ -3688,14 +4298,18 @@ document.addEventListener(
 ========================================================= */
 
 document.addEventListener(
-    "DOMContentLoaded",
-    function(){
+  "DOMContentLoaded",
+  async function(){
 
-        updateBalance();
+    updateTopbar();
 
-        loadUser();
+    updateBalance();
 
-    }
+    await checkRegularWithdrawalStatus();
+
+    await loadUser();
+
+  }
 );
 
 </script>
