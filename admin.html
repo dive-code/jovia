@@ -1047,7 +1047,6 @@
     </div>
   </div>
 
-
   <!-- =========================
        ADMIN APP
   ========================= -->
@@ -1111,7 +1110,6 @@
 
     </aside>
 
-
     <!-- MAIN -->
     <main class="main">
 
@@ -1132,7 +1130,6 @@
 
       </header>
 
-
       <div class="content">
 
         <!-- =========================
@@ -1151,7 +1148,6 @@
               ↻ Refresh
             </button>
           </div>
-
 
           <div class="stats">
 
@@ -1196,7 +1192,6 @@
             </div>
 
           </div>
-
 
           <!-- REGULAR WITHDRAWAL CONTROL -->
 
@@ -1246,7 +1241,6 @@
 
           </div>
 
-
           <!-- RECENT USERS -->
 
           <div class="panel">
@@ -1294,7 +1288,6 @@
           </div>
 
         </section>
-
 
         <!-- =========================
              USERS
@@ -1354,7 +1347,6 @@
           </div>
 
         </section>
-
 
         <!-- =========================
              WITHDRAWALS
@@ -1419,7 +1411,6 @@
 
           </div>
 
-
           <div class="panel">
 
             <div class="table-wrap">
@@ -1459,7 +1450,6 @@
           </div>
 
         </section>
-
 
         <!-- =========================
              JOBS
@@ -1518,7 +1508,6 @@
 
         </section>
 
-
         <!-- =========================
              LINKS
         ========================= -->
@@ -1574,7 +1563,6 @@
           </div>
 
         </section>
-
 
         <!-- =========================
              VIDEOS
@@ -1637,11 +1625,9 @@
 
   </div>
 
-
   <!-- TOAST -->
 
   <div class="toast" id="toast"></div>
-
 
 <script>
 
@@ -1658,7 +1644,6 @@ function escapeHtml(value){
     .replace(/'/g,"&#039;");
 }
 
-
 function showToast(message,type="success"){
   const toast=document.getElementById("toast");
 
@@ -1671,7 +1656,6 @@ function showToast(message,type="success"){
     toast.className="toast";
   },3500);
 }
-
 
 async function apiFetch(url,options={}){
   const response=await fetch(url,{
@@ -1699,7 +1683,6 @@ async function apiFetch(url,options={}){
   return data;
 }
 
-
 /* =====================================================
    SIDEBAR
 ===================================================== */
@@ -1709,12 +1692,10 @@ function toggleSidebar(){
   document.getElementById("sidebarOverlay").classList.toggle("show");
 }
 
-
 function closeSidebar(){
   document.getElementById("sidebar").classList.remove("open");
   document.getElementById("sidebarOverlay").classList.remove("show");
 }
-
 
 /* =====================================================
    NAVIGATION
@@ -1728,7 +1709,6 @@ const titles={
   links:"Links",
   videos:"Videos"
 };
-
 
 function showSection(section,button){
 
@@ -1782,7 +1762,6 @@ function showSection(section,button){
   }
 }
 
-
 function showSectionByName(section){
 
   const button=
@@ -1795,7 +1774,6 @@ function showSectionByName(section){
 
   showSection(section,button);
 }
-
 
 /* =====================================================
    LOGIN
@@ -1873,7 +1851,6 @@ async function adminLogin(event){
   }
 }
 
-
 /* =====================================================
    SESSION CHECK
 ===================================================== */
@@ -1917,7 +1894,6 @@ async function checkAdminSession(){
   return false;
 }
 
-
 /* =====================================================
    INITIAL LOAD
 ===================================================== */
@@ -1945,7 +1921,6 @@ async function initializeDashboard(){
 
   }
 }
-
 
 /* =====================================================
    DASHBOARD
@@ -2044,7 +2019,6 @@ async function loadDashboard(){
   }
 }
 
-
 /* =====================================================
    REGULAR WITHDRAWAL SETTING
 ===================================================== */
@@ -2082,7 +2056,6 @@ async function loadRegularWithdrawalSetting(){
     );
   }
 }
-
 
 function updateWithdrawalSwitches(enabled){
 
@@ -2135,7 +2108,6 @@ function updateWithdrawalSwitches(enabled){
       : "Regular withdrawals are currently unavailable to members.";
   }
 }
-
 
 async function toggleRegularWithdrawals(enabled){
 
@@ -2224,13 +2196,11 @@ async function toggleRegularWithdrawals(enabled){
   }
 }
 
-
 function toggleRegularWithdrawalsFromWithdrawals(
   enabled
 ){
   toggleRegularWithdrawals(enabled);
 }
-
 
 /* =====================================================
    USERS
@@ -2283,7 +2253,6 @@ async function loadUsers(){
     );
   }
 }
-
 
 function renderUsers(users){
 
@@ -2434,7 +2403,6 @@ function renderUsers(users){
     }).join("");
 }
 
-
 function renderRecentUsers(users){
 
   const table=
@@ -2517,7 +2485,6 @@ function renderRecentUsers(users){
     }).join("");
 }
 
-
 /* =====================================================
    USER ACTIONS
 ===================================================== */
@@ -2567,7 +2534,6 @@ async function approveUser(id){
     );
   }
 }
-
 
 async function changeUserStatus(id,status){
 
@@ -2619,7 +2585,6 @@ async function changeUserStatus(id,status){
     );
   }
 }
-
 
 async function resetUserPassword(id){
 
@@ -2676,7 +2641,6 @@ async function resetUserPassword(id){
     );
   }
 }
-
 
 /* =====================================================
    WITHDRAWALS
@@ -2817,7 +2781,6 @@ async function loadAdminWithdrawals(){
   }
 }
 
-
 /* =====================================================
    JOBS
 ===================================================== */
@@ -2956,7 +2919,6 @@ async function loadJobs(){
   }
 }
 
-
 async function changeJobStatus(id,status){
 
   try{
@@ -2995,7 +2957,6 @@ async function changeJobStatus(id,status){
     );
   }
 }
-
 
 async function deleteJob(id){
 
@@ -3038,7 +2999,6 @@ async function deleteJob(id){
     );
   }
 }
-
 
 /* =====================================================
    LINKS
@@ -3173,7 +3133,6 @@ async function loadLinks(){
   }
 }
 
-
 async function changeLinkStatus(id,status){
 
   try{
@@ -3212,7 +3171,6 @@ async function changeLinkStatus(id,status){
     );
   }
 }
-
 
 async function deleteLink(id){
 
@@ -3255,7 +3213,6 @@ async function deleteLink(id){
     );
   }
 }
-
 
 /* =====================================================
    VIDEOS
@@ -3388,7 +3345,6 @@ async function loadVideos(){
   }
 }
 
-
 async function changeVideoStatus(id,status){
 
   try{
@@ -3427,7 +3383,6 @@ async function changeVideoStatus(id,status){
     );
   }
 }
-
 
 async function deleteVideo(id){
 
@@ -3471,7 +3426,6 @@ async function deleteVideo(id){
   }
 }
 
-
 /* =====================================================
    HELPERS
 ===================================================== */
@@ -3487,7 +3441,6 @@ function setText(id,value){
   }
 }
 
-
 function formatMoney(value){
 
   const number=
@@ -3501,7 +3454,6 @@ function formatMoney(value){
     }
   );
 }
-
 
 function formatDate(value){
 
@@ -3527,7 +3479,6 @@ function formatDate(value){
     }
   );
 }
-
 
 function statusClass(status){
 
@@ -3559,7 +3510,6 @@ function statusClass(status){
 
   return "pending";
 }
-
 
 /* =====================================================
    LOGOUT
@@ -3599,7 +3549,6 @@ async function adminLogout(){
     "success"
   );
 }
-
 
 /* =====================================================
    START
