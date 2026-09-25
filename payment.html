@@ -2,222 +2,3157 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <meta name="description" content="Jovia Network membership activation and secure payment.">
+  <meta name="theme-color" content="#260038">
   <title>Jovia Network | Membership Payment</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{--purple-dark:#260038;--purple:#3b0758;--purple-2:#68108e;--purple-soft:#f6f0fa;--gold:#ffc400;--gold-dark:#f5b700;--bg:#fbf8ff;--white:#fff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1;--success:#16a34a;--success-bg:#edf9f2;--danger:#d92d20;--danger-bg:#fff1f0;--shadow-sm:0 8px 25px rgba(42,15,61,.06);--shadow-md:0 16px 40px rgba(42,15,61,.10)}
-    html{scroll-behavior:smooth}body{min-height:100vh;font-family:"Poppins",sans-serif;background:radial-gradient(circle at 50% -10%,rgba(104,16,142,.10),transparent 35%),linear-gradient(180deg,#fffaff 0%,var(--bg) 100%);color:var(--text);-webkit-font-smoothing:antialiased}
-    button,input{font-family:inherit}button{-webkit-tap-highlight-color:transparent}
-  .app{width:100%;max-width:720px;min-height:100vh;margin:0 auto;padding:18px 18px 50px}
-  .topbar{position:sticky;top:12px;z-index:100;display:flex;align-items:center;justify-content:space-between;margin-bottom:30px;padding:13px 15px;background:rgba(255,255,255,.88);border:1px solid rgba(236,230,241,.95);border-radius:19px;box-shadow:var(--shadow-sm);backdrop-filter:blur(18px)}
-  .logo-area{display:flex;align-items:center;gap:11px}.logo{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:linear-gradient(135deg,var(--purple-dark),var(--purple-2));color:white;font-size:20px;font-weight:900;box-shadow:0 8px 22px rgba(75,29,107,.28)}
-  .logo-name{color:var(--purple);font-size:16px;line-height:1.1;font-weight:800;letter-spacing:-0.3px}.logo-sub{display:block;margin-top:3px;color:var(--muted);font-size:8px;line-height:1;font-weight:800;letter-spacing:2.5px}
-  .secure-pill{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--purple-soft);border:1px solid var(--border);border-radius:999px;color:var(--purple);font-size:9px;font-weight:800;white-space:nowrap}.secure-icon{width:17px;height:17px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:white;color:var(--success);font-size:9px}
-  .page-title{padding:0 6px;margin-bottom:24px;text-align:center}.page-label{display:inline-flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:1.7px}.page-label::before,.page-label::after{content:"";width:20px;height:2px;border-radius:5px;background:var(--gold)}
-  .page-title h1{color:var(--purple);font-size:clamp(26px,7vw,34px);line-height:1.15;font-weight:900;letter-spacing:-1px}.page-title h1 span{background:linear-gradient(135deg,#8a5c00,var(--gold-dark));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-  .page-title p{max-width:500px;margin:10px auto 0;color:var(--muted);font-size:12px;line-height:1.7}
-  .message{display:none;padding:13px 15px;margin-bottom:18px;border-radius:14px;font-size:11px;line-height:1.6;font-weight:600}.message.error{display:block;background:var(--danger-bg);border:1px solid #ffd1cd;color:var(--danger)}.message.success{display:block;background:var(--success-bg);border:1px solid #c8efd7;color:#168246}
-  .account-card{position:relative;overflow:hidden;margin-bottom:22px;padding:25px;color:white;background:linear-gradient(145deg,#2f1347 0%,#4a1f6e 52%,#632b89 100%);border:1px solid rgba(255,255,255,.08);border-radius:26px;box-shadow:0 20px 50px rgba(42,15,61,.25),inset 0 1px 0 rgba(255,255,255,.10)}
-  .account-card::before{content:"";position:absolute;width:320px;height:320px;top:-120px;right:-100px;border-radius:50%;background:radial-gradient(circle,rgba(245,183,0,.18) 0%,rgba(245,183,0,0) 70%);pointer-events:none}
-  .account-head{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:19px}.account-title{color:rgba(255,255,255,.66);font-size:9px;font-weight:800;letter-spacing:1.3px}.account-status{padding:6px 10px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.14);border-radius:999px;font-size:8px;font-weight:800;white-space:nowrap}
-  .account-main{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:16px}.account-details{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12)}.account-item{min-width:0}.account-item label{display:block;margin-bottom:5px;color:rgba(255,255,255,.55);font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase}.account-item strong{display:block;color:white;font-size:12px;line-height:1.5;font-weight:700;word-break:break-word}
-  .card{margin-bottom:22px;padding:22px;background:white;border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-sm)}.card-title{color:var(--purple);font-size:15px;font-weight:800}.card-sub{margin-top:5px;margin-bottom:18px;color:var(--muted);font-size:10.5px;line-height:1.6}
-  .plans{display:grid;grid-template-columns:1fr 1fr;gap:12px}.plan{position:relative;cursor:pointer;padding:18px;background:white;border:1.5px solid var(--border);border-radius:18px;transition:transform.2s ease,border-color.2s ease,box-shadow.2s ease,background.2s ease}.plan:hover{transform:translateY(-2px);border-color:#d9cee3;box-shadow:0 12px 30px rgba(42,15,61,.08)}.plan.selected{background:linear-gradient(145deg,#fdfbff,#f6f0ff);border-color:var(--purple);box-shadow:0 12px 30px rgba(42,15,61,.10)}.plan:focus-visible{outline:3px solid rgba(245,183,0,.35);outline-offset:2px}.plan-badge{position:absolute;top:12px;right:12px;padding:5px 8px;background:var(--gold);border-radius:999px;color:#2a1a00;font-size:7px;font-weight:900}.plan-radio{width:18px;height:18px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:1.5px solid #d8cedd;border-radius:50%}.plan.selected.plan-radio{border-color:var(--purple)}.plan.selected.plan-radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--purple)}.plan-name{color:var(--purple);font-size:14px;font-weight:800}.plan-price{margin-top:4px;color:var(--purple);font-size:22px;line-height:1.2;font-weight:900;letter-spacing:-0.5px}.plan-price small{color:var(--muted);font-size:9px;font-weight:500;letter-spacing:0}.plan-desc{min-height:32px;margin:8px 0 12px;color:var(--muted);font-size:9.5px;line-height:1.55}.features{display:flex;flex-direction:column;gap:7px;list-style:none}.features li{display:flex;align-items:center;gap:7px;color:#4e4355;font-size:9.5px;line-height:1.4}.check{width:16px;height:16px;min-width:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#e9f8ef;color:var(--success);font-size:8px;font-weight:800}
-  .summary-box{margin-bottom:17px;padding:16px 17px;background:linear-gradient(135deg,#fdfbff,#f6f0ff);border:1px dashed #d9cfea;border-radius:18px}.summary-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px dashed #e8dff0}.summary-row:last-child{border-bottom:0}.summary-label{color:var(--muted);font-size:10px;font-weight:600}.summary-value{color:var(--purple);font-size:13px;font-weight:800;text-align:right}.total-row.summary-value{font-size:20px;font-weight:900}
-  .pay-button{width:100%;min-height:56px;display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 18px;border:0;border-radius:15px;background:linear-gradient(135deg,#ffc400 0%,#ffe06b 100%);color:#2a1a00;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 8px 22px rgba(255,196,0,.30);transition:transform.2s ease,box-shadow.2s ease,opacity.2s ease}.pay-button:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 13px 28px rgba(255,196,0,.42)}.pay-button:disabled{opacity:.65;cursor:not-allowed;transform:none}.pay-arrow{font-size:17px;line-height:1}
-  .security{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:15px}.sec-item{display:flex;align-items:center;gap:8px;padding:10px;background:var(--purple-soft);border:1px solid var(--border);border-radius:12px;color:var(--purple);font-size:9px;font-weight:600}.sec-item span{width:20px;height:20px;min-width:20px;display:flex;align-items:center;justify-content:center;background:white;border-radius:50%;color:var(--success);font-size:9px}
+    /* =========================================================
+       JOVIA NETWORK — PAYMENT PAGE
+       ========================================================= */
 
-    /* FIXED MODAL - JOVIA BRANDED, NO SELAR */
-    #selarModal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(15,5,25,.85);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}#selarModal.open{display:flex}
-    #selarBox{width:100%;max-width:420px;display:flex;flex-direction:column;overflow:hidden;background:white;border-radius:24px;box-shadow:0 25px 80px rgba(0,0,0,.45);animation:modalIn.22s ease-out}
-    @keyframes modalIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-   .modal-top{padding:28px 24px 0;text-align:center}.modal-icon{width:64px;height:64px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;border-radius:18px;background:linear-gradient(135deg,#260038,#68108e);color:white;font-size:28px}
-   .modal-top h3{font-size:18px;font-weight:900;color:var(--purple)}.modal-top p{margin-top:8px;color:var(--muted);font-size:11px;line-height:1.6}
-   .modal-actions{padding:20px 24px 24px;display:flex;flex-direction:column;gap:10px}
-   .btn-primary{width:100%;padding:15px;border:0;border-radius:14px;background:linear-gradient(135deg,#260038,#68108e);color:white;font-size:13px;font-weight:800;cursor:pointer}
-   .btn-secondary{width:100%;padding:13px;border:1px solid var(--border);border-radius:14px;background:white;color:#5a5268;font-size:11px;font-weight:700;cursor:pointer}
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
 
-    /* JOVIA LOADER - COVERS REDIRECT SO IT LOOKS LIKE JOVIA */
-    #joviaLoader{position:fixed;inset:0;z-index:100000;display:none;align-items:center;justify-content:center;background:#fbf8ff;padding:20px}#joviaLoader.show{display:flex}
-   .loader-card{background:white;max-width:380px;width:100%;padding:32px;border-radius:22px;text-align:center;box-shadow:0 16px 40px rgba(42,15,61,.1);border:1px solid #ece6f1}
-   .spinner{width:42px;height:42px;margin:0 auto 16px;border:3px solid #f0e6ff;border-top-color:#68108e;border-radius:50%;animation:spin.8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
+    :root{
+      --purple-dark:#260038;
+      --purple:#3b0758;
+      --purple-2:#68108e;
+      --purple-3:#8b35b4;
 
-    @media(max-width:520px){.app{padding:14px 14px 40px}.topbar{top:8px;margin-bottom:24px}.account-card{padding:21px;border-radius:23px}.card{padding:19px;border-radius:20px}}
-    @media(max-width:420px){.plans{grid-template-columns:1fr}.account-main,.account-details{grid-template-columns:1fr}}
+      --purple-soft:#f6f0fa;
+      --purple-soft-2:#fbf7ff;
+
+      --gold:#ffc400;
+      --gold-dark:#f5b700;
+      --gold-light:#ffe47a;
+
+      --bg:#fbf8ff;
+      --white:#ffffff;
+
+      --text:#1e1430;
+      --text-2:#4e4355;
+      --muted:#8a8196;
+
+      --border:#ece6f1;
+      --border-strong:#ddd1e7;
+
+      --success:#16a34a;
+      --success-bg:#edf9f2;
+
+      --danger:#d92d20;
+      --danger-bg:#fff1f0;
+
+      --shadow-sm:0 8px 25px rgba(42,15,61,.06);
+      --shadow-md:0 16px 40px rgba(42,15,61,.10);
+      --shadow-lg:0 25px 70px rgba(42,15,61,.18);
+    }
+
+    html{
+      scroll-behavior:smooth;
+    }
+
+    body{
+      min-height:100vh;
+      font-family:"Poppins",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(
+          circle at 50% -10%,
+          rgba(104,16,142,.12),
+          transparent 38%
+        ),
+        linear-gradient(
+          180deg,
+          #fffaff 0%,
+          var(--bg) 100%
+        );
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+    }
+
+    body.modal-open{
+      overflow:hidden;
+    }
+
+    button,
+    input{
+      font-family:inherit;
+    }
+
+    button{
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    button:focus-visible,
+    .plan:focus-visible{
+      outline:3px solid rgba(255,196,0,.45);
+      outline-offset:3px;
+    }
+
+    /* =========================================================
+       APP
+       ========================================================= */
+
+    .app{
+      width:100%;
+      max-width:760px;
+      min-height:100vh;
+      margin:0 auto;
+      padding:
+        18px
+        18px
+        calc(50px + env(safe-area-inset-bottom));
+    }
+
+    /* =========================================================
+       TOP BAR
+       ========================================================= */
+
+    .topbar{
+      position:sticky;
+      top:12px;
+      z-index:100;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:15px;
+
+      margin-bottom:34px;
+      padding:13px 15px;
+
+      background:rgba(255,255,255,.90);
+      border:1px solid rgba(236,230,241,.95);
+      border-radius:20px;
+
+      box-shadow:var(--shadow-sm);
+
+      backdrop-filter:blur(18px);
+      -webkit-backdrop-filter:blur(18px);
+    }
+
+    .logo-area{
+      display:flex;
+      align-items:center;
+      gap:11px;
+      min-width:0;
+    }
+
+    .logo{
+      width:45px;
+      height:45px;
+
+      flex:0 0 45px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      border-radius:14px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--purple-dark),
+          var(--purple-2)
+        );
+
+      color:#fff;
+      font-size:20px;
+      font-weight:900;
+
+      box-shadow:
+        0 8px 22px rgba(75,29,107,.28),
+        inset 0 1px 0 rgba(255,255,255,.15);
+    }
+
+    .logo-name{
+      color:var(--purple);
+      font-size:16px;
+      line-height:1.1;
+      font-weight:800;
+      letter-spacing:-.3px;
+    }
+
+    .logo-sub{
+      display:block;
+      margin-top:4px;
+
+      color:var(--muted);
+      font-size:7px;
+      line-height:1;
+      font-weight:800;
+      letter-spacing:2.5px;
+    }
+
+    .secure-pill{
+      display:flex;
+      align-items:center;
+      gap:6px;
+
+      padding:8px 12px;
+
+      background:var(--purple-soft);
+      border:1px solid var(--border);
+      border-radius:999px;
+
+      color:var(--purple);
+      font-size:9px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .secure-icon{
+      width:18px;
+      height:18px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      border-radius:50%;
+
+      background:#fff;
+      color:var(--success);
+
+      font-size:9px;
+      font-weight:900;
+    }
+
+    /* =========================================================
+       PAGE INTRO
+       ========================================================= */
+
+    .page-title{
+      padding:0 8px;
+      margin-bottom:27px;
+      text-align:center;
+    }
+
+    .page-label{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+
+      margin-bottom:10px;
+
+      color:var(--muted);
+      font-size:9px;
+      font-weight:800;
+      letter-spacing:1.8px;
+    }
+
+    .page-label::before,
+    .page-label::after{
+      content:"";
+
+      width:20px;
+      height:2px;
+
+      border-radius:5px;
+
+      background:var(--gold);
+    }
+
+    .page-title h1{
+      color:var(--purple);
+      font-size:clamp(27px,7vw,37px);
+      line-height:1.12;
+      font-weight:900;
+      letter-spacing:-1.3px;
+    }
+
+    .page-title h1 span{
+      background:
+        linear-gradient(
+          135deg,
+          #8a5c00,
+          var(--gold-dark)
+        );
+
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+
+    .page-title p{
+      max-width:520px;
+
+      margin:11px auto 0;
+
+      color:var(--muted);
+      font-size:11.5px;
+      line-height:1.75;
+    }
+
+    /* =========================================================
+       MESSAGE
+       ========================================================= */
+
+    .message{
+      display:none;
+
+      align-items:flex-start;
+      gap:10px;
+
+      padding:14px 15px;
+      margin-bottom:18px;
+
+      border-radius:15px;
+
+      font-size:10.5px;
+      line-height:1.6;
+      font-weight:600;
+    }
+
+    .message.show{
+      display:flex;
+    }
+
+    .message.error{
+      background:var(--danger-bg);
+      border:1px solid #ffd1cd;
+      color:var(--danger);
+    }
+
+    .message.success{
+      background:var(--success-bg);
+      border:1px solid #c8efd7;
+      color:#168246;
+    }
+
+    .message-icon{
+      width:21px;
+      height:21px;
+      min-width:21px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      border-radius:50%;
+
+      background:rgba(255,255,255,.75);
+
+      font-size:10px;
+      font-weight:900;
+    }
+
+    /* =========================================================
+       ACCOUNT CARD
+       ========================================================= */
+
+    .account-card{
+      position:relative;
+      overflow:hidden;
+
+      margin-bottom:22px;
+      padding:25px;
+
+      color:#fff;
+
+      background:
+        linear-gradient(
+          145deg,
+          #2f1347 0%,
+          #4a1f6e 52%,
+          #632b89 100%
+        );
+
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:27px;
+
+      box-shadow:
+        0 20px 50px rgba(42,15,61,.25),
+        inset 0 1px 0 rgba(255,255,255,.10);
+    }
+
+    .account-card::before{
+      content:"";
+
+      position:absolute;
+
+      width:340px;
+      height:340px;
+
+      top:-135px;
+      right:-110px;
+
+      border-radius:50%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(245,183,0,.18) 0%,
+          rgba(245,183,0,0) 70%
+        );
+
+      pointer-events:none;
+    }
+
+    .account-card::after{
+      content:"";
+
+      position:absolute;
+
+      width:180px;
+      height:180px;
+
+      left:-100px;
+      bottom:-110px;
+
+      border-radius:50%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(255,255,255,.08),
+          transparent 70%
+        );
+
+      pointer-events:none;
+    }
+
+    .account-head{
+      position:relative;
+      z-index:2;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      gap:12px;
+
+      margin-bottom:20px;
+    }
+
+    .account-title{
+      color:rgba(255,255,255,.65);
+      font-size:9px;
+      font-weight:800;
+      letter-spacing:1.4px;
+    }
+
+    .account-status{
+      padding:6px 10px;
+
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.14);
+
+      border-radius:999px;
+
+      color:#fff;
+
+      font-size:8px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .account-main{
+      position:relative;
+      z-index:2;
+
+      display:grid;
+      grid-template-columns:1fr 1fr;
+
+      gap:18px;
+    }
+
+    .account-details{
+      position:relative;
+      z-index:2;
+
+      display:grid;
+      grid-template-columns:1fr 1fr;
+
+      gap:18px;
+
+      margin-top:19px;
+      padding-top:19px;
+
+      border-top:1px solid rgba(255,255,255,.12);
+    }
+
+    .account-item{
+      min-width:0;
+    }
+
+    .account-item label{
+      display:block;
+
+      margin-bottom:6px;
+
+      color:rgba(255,255,255,.53);
+
+      font-size:8px;
+      font-weight:700;
+      letter-spacing:.9px;
+
+      text-transform:uppercase;
+    }
+
+    .account-item strong{
+      display:block;
+
+      color:#fff;
+
+      font-size:12px;
+      line-height:1.5;
+      font-weight:700;
+
+      word-break:break-word;
+    }
+
+    /* =========================================================
+       GENERAL CARD
+       ========================================================= */
+
+    .card{
+      margin-bottom:22px;
+      padding:23px;
+
+      background:#fff;
+
+      border:1px solid var(--border);
+      border-radius:23px;
+
+      box-shadow:var(--shadow-sm);
+    }
+
+    .card-title{
+      color:var(--purple);
+      font-size:15px;
+      font-weight:800;
+      letter-spacing:-.2px;
+    }
+
+    .card-sub{
+      margin-top:5px;
+      margin-bottom:18px;
+
+      color:var(--muted);
+
+      font-size:10.5px;
+      line-height:1.65;
+    }
+
+    /* =========================================================
+       PLAN CARDS
+       ========================================================= */
+
+    .plans{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:13px;
+    }
+
+    .plan{
+      position:relative;
+
+      cursor:pointer;
+
+      padding:19px;
+
+      background:#fff;
+
+      border:1.5px solid var(--border);
+      border-radius:19px;
+
+      transition:
+        transform .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+    }
+
+    .plan:hover{
+      transform:translateY(-2px);
+
+      border-color:#d9cee3;
+
+      box-shadow:
+        0 12px 30px rgba(42,15,61,.08);
+    }
+
+    .plan.selected{
+      background:
+        linear-gradient(
+          145deg,
+          #fdfbff,
+          #f5efff
+        );
+
+      border-color:var(--purple);
+
+      box-shadow:
+        0 14px 32px rgba(42,15,61,.11),
+        inset 0 0 0 1px rgba(104,16,142,.05);
+    }
+
+    .plan.selected::after{
+      content:"";
+
+      position:absolute;
+
+      top:0;
+      left:0;
+      right:0;
+
+      height:3px;
+
+      border-radius:20px 20px 0 0;
+
+      background:
+        linear-gradient(
+          90deg,
+          var(--purple),
+          var(--purple-3)
+        );
+    }
+
+    .plan-badge{
+      position:absolute;
+
+      top:12px;
+      right:12px;
+
+      padding:5px 8px;
+
+      background:var(--gold);
+
+      border-radius:999px;
+
+      color:#2a1a00;
+
+      font-size:7px;
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+
+    .plan-radio{
+      width:19px;
+      height:19px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      margin-bottom:12px;
+
+      border:1.5px solid #d8cedd;
+      border-radius:50%;
+
+      transition:.2s ease;
+    }
+
+    .plan.selected .plan-radio{
+      border-color:var(--purple);
+    }
+
+    .plan.selected .plan-radio::after{
+      content:"";
+
+      width:9px;
+      height:9px;
+
+      border-radius:50%;
+
+      background:var(--purple);
+    }
+
+    .plan-name{
+      color:var(--purple);
+      font-size:14px;
+      font-weight:800;
+    }
+
+    .plan-price{
+      margin-top:4px;
+
+      color:var(--purple);
+
+      font-size:22px;
+      line-height:1.2;
+      font-weight:900;
+
+      letter-spacing:-.7px;
+    }
+
+    .plan-price small{
+      color:var(--muted);
+      font-size:8.5px;
+      font-weight:500;
+      letter-spacing:0;
+    }
+
+    .plan-desc{
+      min-height:34px;
+
+      margin:8px 0 13px;
+
+      color:var(--muted);
+
+      font-size:9.5px;
+      line-height:1.55;
+    }
+
+    .features{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+
+      list-style:none;
+    }
+
+    .features li{
+      display:flex;
+      align-items:center;
+      gap:7px;
+
+      color:var(--text-2);
+
+      font-size:9.5px;
+      line-height:1.4;
+    }
+
+    .check{
+      width:17px;
+      height:17px;
+      min-width:17px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      border-radius:50%;
+
+      background:#e9f8ef;
+      color:var(--success);
+
+      font-size:8px;
+      font-weight:900;
+    }
+
+    /* =========================================================
+       PAYMENT SUMMARY
+       ========================================================= */
+
+    .summary-box{
+      margin-bottom:17px;
+      padding:16px 17px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #fdfbff,
+          #f6f0ff
+        );
+
+      border:1px dashed #d9cfea;
+      border-radius:18px;
+    }
+
+    .summary-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      gap:15px;
+
+      padding:11px 0;
+
+      border-bottom:1px dashed #e8dff0;
+    }
+
+    .summary-row:last-child{
+      border-bottom:0;
+      padding-bottom:2px;
+    }
+
+    .summary-label{
+      color:var(--muted);
+      font-size:10px;
+      font-weight:600;
+    }
+
+    .summary-value{
+      color:var(--purple);
+      font-size:13px;
+      font-weight:800;
+      text-align:right;
+    }
+
+    .total-row .summary-value{
+      font-size:21px;
+      font-weight:900;
+      letter-spacing:-.5px;
+    }
+
+    /* =========================================================
+       PAYMENT BUTTON
+       ========================================================= */
+
+    .pay-button{
+      width:100%;
+      min-height:57px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      gap:9px;
+
+      padding:15px 18px;
+
+      border:0;
+      border-radius:16px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #ffc400 0%,
+          #ffe06b 100%
+        );
+
+      color:#2a1a00;
+
+      font-size:13px;
+      font-weight:800;
+
+      cursor:pointer;
+
+      box-shadow:
+        0 8px 22px rgba(255,196,0,.30);
+
+      transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        opacity .2s ease;
+    }
+
+    .pay-button:hover:not(:disabled){
+      transform:translateY(-2px);
+
+      box-shadow:
+        0 13px 28px rgba(255,196,0,.42);
+    }
+
+    .pay-button:active:not(:disabled){
+      transform:translateY(0);
+    }
+
+    .pay-button:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    .pay-arrow{
+      font-size:17px;
+      line-height:1;
+    }
+
+    .button-spinner{
+      width:16px;
+      height:16px;
+
+      border:2px solid rgba(42,26,0,.25);
+      border-top-color:#2a1a00;
+
+      border-radius:50%;
+
+      animation:buttonSpin .7s linear infinite;
+    }
+
+    @keyframes buttonSpin{
+      to{
+        transform:rotate(360deg);
+      }
+    }
+
+    /* =========================================================
+       SECURITY FEATURES
+       ========================================================= */
+
+    .security{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+
+      gap:9px;
+
+      margin-top:15px;
+    }
+
+    .sec-item{
+      display:flex;
+      align-items:center;
+      gap:8px;
+
+      min-height:40px;
+
+      padding:9px 10px;
+
+      background:var(--purple-soft);
+      border:1px solid var(--border);
+      border-radius:12px;
+
+      color:var(--purple);
+
+      font-size:9px;
+      font-weight:600;
+    }
+
+    .sec-item span{
+      width:20px;
+      height:20px;
+      min-width:20px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      background:#fff;
+      border-radius:50%;
+
+      color:var(--success);
+
+      font-size:9px;
+      font-weight:900;
+    }
+
+    /* =========================================================
+       MODAL
+       ========================================================= */
+
+    #selarModal{
+      position:fixed;
+      inset:0;
+
+      z-index:99999;
+
+      display:none;
+      align-items:center;
+      justify-content:center;
+
+      padding:18px;
+
+      background:rgba(15,5,25,.86);
+
+      backdrop-filter:blur(10px);
+      -webkit-backdrop-filter:blur(10px);
+    }
+
+    #selarModal.open{
+      display:flex;
+    }
+
+    #selarBox{
+      width:100%;
+      max-width:430px;
+
+      display:flex;
+      flex-direction:column;
+
+      overflow:hidden;
+
+      background:#fff;
+
+      border-radius:26px;
+
+      box-shadow:
+        0 25px 80px rgba(0,0,0,.45);
+
+      animation:modalIn .22s ease-out;
+    }
+
+    @keyframes modalIn{
+      from{
+        opacity:0;
+        transform:translateY(14px) scale(.97);
+      }
+
+      to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+      }
+    }
+
+    .modal-accent{
+      height:5px;
+
+      background:
+        linear-gradient(
+          90deg,
+          var(--purple-dark),
+          var(--purple-2),
+          var(--gold)
+        );
+    }
+
+    .modal-top{
+      padding:27px 24px 0;
+
+      text-align:center;
+    }
+
+    .modal-icon{
+      width:65px;
+      height:65px;
+
+      margin:0 auto 15px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      border-radius:19px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--purple-dark),
+          var(--purple-2)
+        );
+
+      color:#fff;
+
+      font-size:27px;
+
+      box-shadow:
+        0 12px 25px rgba(59,7,88,.22);
+    }
+
+    .modal-top h3{
+      color:var(--purple);
+
+      font-size:19px;
+      font-weight:900;
+
+      letter-spacing:-.4px;
+    }
+
+    .modal-top p{
+      margin-top:9px;
+
+      color:var(--muted);
+
+      font-size:10.5px;
+      line-height:1.7;
+    }
+
+    .modal-amount{
+      display:inline-block;
+
+      margin-top:14px;
+      padding:9px 14px;
+
+      background:var(--purple-soft);
+
+      border:1px solid var(--border);
+      border-radius:999px;
+
+      color:var(--purple);
+
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .modal-actions{
+      padding:20px 24px 24px;
+
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .btn-primary{
+      width:100%;
+
+      min-height:51px;
+
+      padding:14px;
+
+      border:0;
+      border-radius:14px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--purple-dark),
+          var(--purple-2)
+        );
+
+      color:#fff;
+
+      font-size:12.5px;
+      font-weight:800;
+
+      cursor:pointer;
+
+      box-shadow:
+        0 10px 24px rgba(59,7,88,.22);
+
+      transition:
+        transform .2s ease,
+        opacity .2s ease;
+    }
+
+    .btn-primary:hover:not(:disabled){
+      transform:translateY(-1px);
+    }
+
+    .btn-primary:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+    }
+
+    .btn-secondary{
+      width:100%;
+
+      min-height:47px;
+
+      padding:13px;
+
+      border:1px solid var(--border);
+      border-radius:14px;
+
+      background:#fff;
+
+      color:#5a5268;
+
+      font-size:11px;
+      font-weight:700;
+
+      cursor:pointer;
+    }
+
+    .modal-note{
+      margin-top:3px;
+
+      color:var(--muted);
+
+      font-size:8.5px;
+      line-height:1.5;
+
+      text-align:center;
+    }
+
+    /* =========================================================
+       JOVIA LOADER
+       ========================================================= */
+
+    #joviaLoader{
+      position:fixed;
+      inset:0;
+
+      z-index:100000;
+
+      display:none;
+      align-items:center;
+      justify-content:center;
+
+      padding:20px;
+
+      background:#fbf8ff;
+    }
+
+    #joviaLoader.show{
+      display:flex;
+    }
+
+    .loader-card{
+      width:100%;
+      max-width:390px;
+
+      padding:32px 25px;
+
+      background:#fff;
+
+      border:1px solid var(--border);
+      border-radius:23px;
+
+      text-align:center;
+
+      box-shadow:var(--shadow-md);
+    }
+
+    .spinner{
+      width:43px;
+      height:43px;
+
+      margin:0 auto 17px;
+
+      border:3px solid #f0e6ff;
+      border-top-color:var(--purple-2);
+
+      border-radius:50%;
+
+      animation:spin .8s linear infinite;
+    }
+
+    @keyframes spin{
+      to{
+        transform:rotate(360deg);
+      }
+    }
+
+    .loader-card h3{
+      color:var(--purple);
+
+      font-size:17px;
+      font-weight:900;
+    }
+
+    .loader-card p{
+      margin-top:9px;
+
+      color:var(--muted);
+
+      font-size:10.5px;
+      line-height:1.7;
+    }
+
+    /* =========================================================
+       SUCCESS SCREEN
+       ========================================================= */
+
+    #successScreen{
+      position:fixed;
+      inset:0;
+
+      z-index:100001;
+
+      display:none;
+      align-items:center;
+      justify-content:center;
+
+      padding:20px;
+
+      background:
+        radial-gradient(
+          circle at 50% 0%,
+          rgba(104,16,142,.10),
+          transparent 40%
+        ),
+        #fbf8ff;
+    }
+
+    #successScreen.show{
+      display:flex;
+    }
+
+    .success-card{
+      width:100%;
+      max-width:420px;
+
+      padding:31px 25px;
+
+      background:#fff;
+
+      border:1px solid var(--border);
+      border-radius:24px;
+
+      text-align:center;
+
+      box-shadow:var(--shadow-md);
+
+      animation:successIn .25s ease-out;
+    }
+
+    @keyframes successIn{
+      from{
+        opacity:0;
+        transform:translateY(12px);
+      }
+
+      to{
+        opacity:1;
+        transform:translateY(0);
+      }
+    }
+
+    .success-icon{
+      width:66px;
+      height:66px;
+
+      margin:0 auto 16px;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      background:var(--success-bg);
+
+      border:1px solid #c8efd7;
+      border-radius:19px;
+
+      color:var(--success);
+
+      font-size:28px;
+      font-weight:900;
+    }
+
+    .success-card h2{
+      color:var(--purple);
+
+      font-size:21px;
+      font-weight:900;
+
+      letter-spacing:-.4px;
+    }
+
+    .success-card p{
+      margin-top:10px;
+
+      color:var(--muted);
+
+      font-size:10.5px;
+      line-height:1.75;
+    }
+
+    .success-plan{
+      display:inline-block;
+
+      margin-top:15px;
+      padding:8px 13px;
+
+      background:var(--purple-soft);
+
+      border:1px solid var(--border);
+      border-radius:999px;
+
+      color:var(--purple);
+
+      font-size:10px;
+      font-weight:800;
+    }
+
+    .success-button{
+      width:100%;
+
+      min-height:50px;
+
+      margin-top:20px;
+      padding:14px;
+
+      border:0;
+      border-radius:14px;
+
+      background:
+        linear-gradient(
+          135deg,
+          var(--purple-dark),
+          var(--purple-2)
+        );
+
+      color:#fff;
+
+      font-size:12px;
+      font-weight:800;
+
+      cursor:pointer;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+
+    @media(max-width:600px){
+
+      .app{
+        padding:
+          13px
+          13px
+          calc(40px + env(safe-area-inset-bottom));
+      }
+
+      .topbar{
+        top:7px;
+        margin-bottom:27px;
+        padding:11px 12px;
+        border-radius:18px;
+      }
+
+      .logo{
+        width:42px;
+        height:42px;
+        flex-basis:42px;
+      }
+
+      .logo-name{
+        font-size:15px;
+      }
+
+      .secure-pill{
+        padding:7px 9px;
+        font-size:8px;
+      }
+
+      .secure-icon{
+        width:17px;
+        height:17px;
+      }
+
+      .page-title{
+        margin-bottom:23px;
+      }
+
+      .page-title h1{
+        font-size:28px;
+      }
+
+      .page-title p{
+        font-size:10.5px;
+      }
+
+      .account-card{
+        padding:21px;
+        border-radius:23px;
+      }
+
+      .card{
+        padding:19px;
+        border-radius:20px;
+      }
+
+      .plan{
+        padding:17px;
+      }
+    }
+
+    @media(max-width:460px){
+
+      .plans{
+        grid-template-columns:1fr;
+      }
+
+      .plan-desc{
+        min-height:auto;
+      }
+
+      .account-main,
+      .account-details{
+        grid-template-columns:1fr;
+        gap:14px;
+      }
+
+      .account-details{
+        margin-top:17px;
+        padding-top:17px;
+      }
+
+      .security{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    @media(max-width:350px){
+
+      .secure-pill span:last-child{
+        display:none;
+      }
+
+      .page-title h1{
+        font-size:25px;
+      }
+
+      .card{
+        padding:17px;
+      }
+
+      .security{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce){
+
+      *,
+      *::before,
+      *::after{
+        scroll-behavior:auto!important;
+        animation-duration:.01ms!important;
+        animation-iteration-count:1!important;
+        transition-duration:.01ms!important;
+      }
+    }
   </style>
 </head>
+
 <body>
-<div class="app">
-<header class="topbar"><div class="logo-area"><div class="logo">J</div><div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div></div><div class="secure-pill"><span class="secure-icon">✓</span><span>Secure Checkout</span></div></header>
-<section class="page-title"><div class="page-label">MEMBERSHIP ACTIVATION</div><h1>Unlock your <span>JOVIA</span> membership</h1><p>Choose your membership package and continue to secure payment.</p></section>
-<div id="message" class="message" role="alert" aria-live="polite"></div>
-<div id="membershipArea">
-<section class="account-card"><div class="account-head"><div class="account-title">ACCOUNT INFORMATION</div><div class="account-status" id="accountStatus">Verified</div></div><div class="account-main"><div class="account-item"><label>Full name</label><strong id="userName">Loading...</strong></div><div class="account-item"><label>Username</label><strong id="userUsername">Loading...</strong></div></div><div class="account-details"><div class="account-item"><label>Email address</label><strong id="userEmail">Loading...</strong></div><div class="account-item"><label>Member ID</label><strong id="userMemberId">Loading...</strong></div></div></section>
-<section class="card"><div class="card-title">Choose your membership</div><div class="card-sub">Select the package you want to activate.</div><div class="plans">
-<div class="plan selected" id="silverPlan" role="button" tabindex="0" onclick="selectPlan('Silver')" onkeydown="handlePlanKey(event,'Silver')"><div class="plan-radio"></div><div class="plan-name">Silver</div><div class="plan-price">₦9,000<small> one-time</small></div><div class="plan-desc">A simple starting package for your Jovia journey.</div><ul class="features"><li><span class="check">✓</span>Dashboard access</li><li><span class="check">✓</span>Daily tasks</li><li><span class="check">✓</span>Withdrawal access</li><li><span class="check">✓</span>Referral earnings</li></ul></div>
-<div class="plan" id="goldPlan" role="button" tabindex="0" onclick="selectPlan('Gold')" onkeydown="handlePlanKey(event,'Gold')"><div class="plan-badge">POPULAR</div><div class="plan-radio"></div><div class="plan-name">Gold</div><div class="plan-price">₦15,000<small> one-time</small></div><div class="plan-desc">A higher-tier package for the full Jovia experience.</div><ul class="features"><li><span class="check">✓</span>Everything in Silver</li><li><span class="check">✓</span>Higher earning limit</li><li><span class="check">✓</span>Priority withdrawal</li><li><span class="check">✓</span>Gold status</li></ul></div>
-</div></section>
-<section class="card"><div class="card-title">Payment summary</div><div class="card-sub">Review your selected membership before continuing.</div><div class="summary-box"><div class="summary-row"><span class="summary-label">Selected package</span><span class="summary-value" id="summaryPackage">Silver membership</span></div><div class="summary-row total-row"><span class="summary-label">Total to pay</span><span class="summary-value" id="totalPrice">₦9,000</span></div></div><button type="button" class="pay-button" id="payButton" onclick="startPayment()"><span id="payButtonText">Continue to secure payment</span><span class="pay-arrow">→</span></button><div class="security"><div class="sec-item"><span>✓</span>256-bit SSL</div><div class="sec-item"><span>✓</span>Instant Activation</div><div class="sec-item"><span>✓</span>Verified Account</div><div class="sec-item"><span>✓</span>Auto Activation</div></div></section>
-</div>
-</div>
 
-<!-- JOVIA BRANDED MODAL - NO SELAR TEXT -->
-<div id="selarModal" aria-hidden="true">
-  <div id="selarBox">
-    <div class="modal-top">
-      <div class="modal-icon">🔒</div>
-      <h3 id="modalTitle">Secure Checkout</h3>
-      <p id="modalDesc">You are about to activate <strong id="modalPackage">Silver</strong> membership for <strong id="modalAmount">₦9,000</strong>.<br><br>Your payment is encrypted and your account will be activated automatically after payment. All on Jovia Network.</p>
+  <!-- =======================================================
+       MAIN APP
+       ======================================================= -->
+
+  <div class="app">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+
+      <div class="logo-area">
+
+        <div class="logo">J</div>
+
+        <div>
+          <div class="logo-name">Jovia</div>
+          <span class="logo-sub">NETWORK</span>
+        </div>
+
+      </div>
+
+      <div class="secure-pill">
+        <span class="secure-icon">✓</span>
+        <span>Secure Checkout</span>
+      </div>
+
+    </header>
+
+
+    <!-- PAGE INTRO -->
+    <section class="page-title">
+
+      <div class="page-label">
+        MEMBERSHIP ACTIVATION
+      </div>
+
+      <h1>
+        Unlock your <span>JOVIA</span> membership
+      </h1>
+
+      <p>
+        Choose your membership package and continue to secure payment.
+      </p>
+
+    </section>
+
+
+    <!-- MESSAGE -->
+    <div
+      id="message"
+      class="message"
+      role="alert"
+      aria-live="polite"
+    >
+      <span class="message-icon" id="messageIcon">!</span>
+      <span id="messageText"></span>
     </div>
-    <div class="modal-actions">
-      <button type="button" class="btn-primary" id="confirmPayBtn" onclick="confirmPay()">Pay <span id="modalAmountBtn">₦9,000</span> Securely →</button>
-      <button type="button" class="btn-secondary" onclick="closeSelar()">Cancel</button>
-      <p style="text-align:center;color:#8a8196;font-size:9px;margin-top:4px">🔒 Secured by Jovia • 256-bit encrypted checkout</p>
+
+
+    <!-- MEMBERSHIP AREA -->
+    <div id="membershipArea">
+
+      <!-- ===================================================
+           ACCOUNT INFORMATION
+           =================================================== -->
+
+      <section class="account-card">
+
+        <div class="account-head">
+
+          <div class="account-title">
+            ACCOUNT INFORMATION
+          </div>
+
+          <div
+            class="account-status"
+            id="accountStatus"
+          >
+            Loading
+          </div>
+
+        </div>
+
+
+        <div class="account-main">
+
+          <div class="account-item">
+
+            <label>
+              Full name
+            </label>
+
+            <strong id="userName">
+              Loading...
+            </strong>
+
+          </div>
+
+
+          <div class="account-item">
+
+            <label>
+              Username
+            </label>
+
+            <strong id="userUsername">
+              Loading...
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="account-details">
+
+          <div class="account-item">
+
+            <label>
+              Email address
+            </label>
+
+            <strong id="userEmail">
+              Loading...
+            </strong>
+
+          </div>
+
+
+          <div class="account-item">
+
+            <label>
+              Member ID
+            </label>
+
+            <strong id="userMemberId">
+              Loading...
+            </strong>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===================================================
+           MEMBERSHIP PLANS
+           =================================================== -->
+
+      <section class="card">
+
+        <div class="card-title">
+          Choose your membership
+        </div>
+
+        <div class="card-sub">
+          Select the package you want to activate.
+        </div>
+
+
+        <div class="plans">
+
+          <!-- SILVER -->
+          <div
+            class="plan selected"
+            id="silverPlan"
+            role="button"
+            tabindex="0"
+            aria-pressed="true"
+            onclick="selectPlan('Silver')"
+            onkeydown="handlePlanKey(event,'Silver')"
+          >
+
+            <div class="plan-radio"></div>
+
+            <div class="plan-name">
+              Silver
+            </div>
+
+            <div class="plan-price">
+              ₦9,000
+              <small>one-time</small>
+            </div>
+
+            <div class="plan-desc">
+              A simple starting package for your Jovia journey.
+            </div>
+
+            <ul class="features">
+
+              <li>
+                <span class="check">✓</span>
+                Dashboard access
+              </li>
+
+              <li>
+                <span class="check">✓</span>
+                Daily tasks
+              </li>
+
+              <li>
+                <span class="check">✓</span>
+                Withdrawal access
+              </li>
+
+              <li>
+                <span class="check">✓</span>
+                Referral earnings
+              </li>
+
+            </ul>
+
+          </div>
+
+
+          <!-- GOLD -->
+          <div
+            class="plan"
+            id="goldPlan"
+            role="button"
+            tabindex="0"
+            aria-pressed="false"
+            onclick="selectPlan('Gold')"
+            onkeydown="handlePlanKey(event,'Gold')"
+          >
+
+            <div class="plan-badge">
+              POPULAR
+            </div>
+
+            <div class="plan-radio"></div>
+
+            <div class="plan-name">
+              Gold
+            </div>
+
+            <div class="plan-price">
+              ₦15,000
+              <small>one-time</small>
+            </div>
+
+            <div class="plan-desc">
+              A higher-tier package for the full Jovia experience.
+            </div>
+
+            <ul class="features">
+
+              <li>
+                <span class="check">✓</span>
+                Everything in Silver
+              </li>
+
+              <li>
+                <span class="check">✓</span>
+                Higher earning limit
+              </li>
+
+              <li>
+                <span class="check">✓</span>
+                Priority withdrawal
+              </li>
+
+              <li>
+                <span class="check">✓</span>
+                Gold status
+              </li>
+
+            </ul>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <!-- ===================================================
+           PAYMENT SUMMARY
+           =================================================== -->
+
+      <section class="card">
+
+        <div class="card-title">
+          Payment summary
+        </div>
+
+        <div class="card-sub">
+          Review your selected membership before continuing.
+        </div>
+
+
+        <div class="summary-box">
+
+          <div class="summary-row">
+
+            <span class="summary-label">
+              Selected package
+            </span>
+
+            <span
+              class="summary-value"
+              id="summaryPackage"
+            >
+              Silver membership
+            </span>
+
+          </div>
+
+
+          <div class="summary-row total-row">
+
+            <span class="summary-label">
+              Total to pay
+            </span>
+
+            <span
+              class="summary-value"
+              id="totalPrice"
+            >
+              ₦9,000
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="pay-button"
+          id="payButton"
+          onclick="startPayment()"
+        >
+
+          <span id="payButtonText">
+            Continue with ₦9,000 payment
+          </span>
+
+          <span
+            class="pay-arrow"
+            id="payArrow"
+          >
+            →
+          </span>
+
+        </button>
+
+
+        <div class="security">
+
+          <div class="sec-item">
+            <span>✓</span>
+            Secure checkout
+          </div>
+
+          <div class="sec-item">
+            <span>✓</span>
+            Verified account
+          </div>
+
+          <div class="sec-item">
+            <span>✓</span>
+            Payment confirmation
+          </div>
+
+          <div class="sec-item">
+            <span>✓</span>
+            Jovia support
+          </div>
+
+        </div>
+
+      </section>
+
     </div>
+
   </div>
-</div>
 
-<!-- JOVIA LOADER - MAKES IT LOOK LIKE STILL ON JOVIA -->
-<div id="joviaLoader">
-  <div class="loader-card">
-    <div class="spinner"></div>
-    <h3 style="font-weight:900;color:#3b0758">Jovia Secure Checkout</h3>
-    <p style="color:#8a8196;font-size:11px;margin-top:10px;line-height:1.6">Connecting to secure payment gateway...<br>Please wait, do not close this page.<br><br>Amount: <strong id="loaderAmount">₦9,000</strong></p>
+
+  <!-- =======================================================
+       PAYMENT CONFIRMATION MODAL
+       ======================================================= -->
+
+  <div
+    id="selarModal"
+    aria-hidden="true"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+  >
+
+    <div id="selarBox">
+
+      <div class="modal-accent"></div>
+
+      <div class="modal-top">
+
+        <div class="modal-icon">
+          🔒
+        </div>
+
+        <h3 id="modalTitle">
+          Secure Checkout
+        </h3>
+
+        <p id="modalDesc">
+          You are about to continue with your selected Jovia membership.
+        </p>
+
+        <div class="modal-amount">
+          <span id="modalPackage">
+            Silver
+          </span>
+          &nbsp;•&nbsp;
+          <span id="modalAmount">
+            ₦9,000
+          </span>
+        </div>
+
+      </div>
+
+
+      <div class="modal-actions">
+
+        <button
+          type="button"
+          class="btn-primary"
+          id="confirmPayBtn"
+          onclick="confirmPay()"
+        >
+          Continue to secure payment →
+        </button>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          onclick="closeSelar()"
+        >
+          Cancel
+        </button>
+
+        <p class="modal-note">
+          You will be securely redirected to the payment page.
+          Keep this window open until the redirect is complete.
+        </p>
+
+      </div>
+
+    </div>
+
   </div>
-</div>
 
-<script>
-const PLAN_PRICES={Silver:9000,Gold:15000};
-const SELAR_LINKS={
-  Silver:"https://selar.com/d9wt157y87",
-  Gold:"https://selar.com/7q32107fz0"
-};
-let selectedPlan="Silver";let userEmailGlobal="";let finalSelarLink="";
 
-function $(id){return document.getElementById(id)}
-function money(amount){const n=Number(amount);if(!Number.isFinite(n))return "₦0";return "₦"+n.toLocaleString("en-NG")}
-function getToken(){return localStorage.getItem("token")||sessionStorage.getItem("token")||localStorage.getItem("jovia_token")||sessionStorage.getItem("jovia_token")||""}
-function firstText(...values){for(const v of values){if(v===undefined||v===null||typeof v==="object")continue;const t=String(v).trim();if(t)return t}return""}
-function detectPackage(values){for(const v of values){const t=String(v||"").toLowerCase();if(t.includes("gold"))return "Gold"}for(const v of values){const t=String(v||"").toLowerCase();if(t.includes("silver"))return "Silver"}return "Silver"}
-function showMessage(message,type="error"){const box=$("message");if(!box)return;box.textContent=message;box.className="message "+(type==="success"?"success":"error");box.style.display="block";window.scrollTo({top:0,behavior:"smooth"})}
-function hideMessage(){const box=$("message");if(!box)return;box.style.display="none";box.textContent=""}
+  <!-- =======================================================
+       JOVIA REDIRECT LOADER
+       ======================================================= -->
 
-function selectPlan(plan){
-  if(!PLAN_PRICES[plan])return;
-  selectedPlan=plan;
-  const amount=PLAN_PRICES[plan];
-  $("silverPlan").classList.toggle("selected",plan==="Silver");
-  $("goldPlan").classList.toggle("selected",plan==="Gold");
-  $("silverPlan").setAttribute("aria-pressed",plan==="Silver"?"true":"false");
-  $("goldPlan").setAttribute("aria-pressed",plan==="Gold"?"true":"false");
-  $("summaryPackage").textContent=plan+" membership";
-  $("totalPrice").textContent=money(amount);
-  $("payButtonText").textContent=`Continue with ${money(amount)} payment`;
-  try{localStorage.setItem("selected_package",plan)}catch{}
-}
-function handlePlanKey(e,plan){if(e.key==="Enter"||e.key===" "){e.preventDefault();selectPlan(plan)}}
+  <div id="joviaLoader">
 
-async function loadAccount(){
-  try{
-    const token=getToken();
-    const headers={"Accept":"application/json","Cache-Control":"no-cache"};
-    if(token)headers["Authorization"]="Bearer "+token;
-    const res=await fetch("/api/me?t="+Date.now(),{method:"GET",headers,credentials:"include",cache:"no-store"});
-    if(res.status===401||res.status===403){
-      $("userName").textContent="Guest";$("userUsername").textContent="-";$("userEmail").textContent="-";$("userMemberId").textContent="-";$("accountStatus").textContent="LOGIN REQUIRED";return;
+    <div class="loader-card">
+
+      <div class="spinner"></div>
+
+      <h3>
+        Jovia Secure Checkout
+      </h3>
+
+      <p>
+        Connecting you to the secure payment gateway...
+        <br>
+        Please wait and do not close this page.
+        <br><br>
+
+        Amount:
+        <strong id="loaderAmount">
+          ₦9,000
+        </strong>
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       PAYMENT SUCCESS SCREEN
+       ======================================================= -->
+
+  <div id="successScreen">
+
+    <div class="success-card">
+
+      <div class="success-icon">
+        ✓
+      </div>
+
+      <h2>
+        Payment Received
+      </h2>
+
+      <p id="successMessage">
+        Your payment information has been received.
+        Your membership activation will be processed shortly.
+      </p>
+
+      <div
+        class="success-plan"
+        id="successPlan"
+      >
+        Silver Membership
+      </div>
+
+      <button
+        type="button"
+        class="success-button"
+        onclick="goToDashboard()"
+      >
+        Go to Dashboard
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <script>
+    /* =========================================================
+       JOVIA PAYMENT PAGE JAVASCRIPT
+       ========================================================= */
+
+    "use strict";
+
+
+    /* =========================================================
+       CONFIGURATION
+       ========================================================= */
+
+    const PLAN_PRICES = {
+      Silver: 9000,
+      Gold: 15000
+    };
+
+
+    const SELAR_LINKS = {
+      Silver: "https://selar.com/d9wt157y87",
+      Gold: "https://selar.com/7q32107fz0"
+    };
+
+
+    /* =========================================================
+       STATE
+       ========================================================= */
+
+    let selectedPlan = "Silver";
+    let userEmailGlobal = "";
+    let finalSelarLink = "";
+    let paymentRedirecting = false;
+
+
+    /* =========================================================
+       HELPERS
+       ========================================================= */
+
+    function $(id){
+      return document.getElementById(id);
     }
-    let data=null;try{data=await res.json()}catch{data=null}
-    let user=data?.user||data?.data?.user||data?.member||(data?.fullName||data?.full_name||data?.username?data:null);
-    if(!user)throw new Error("Account info unavailable");
-    const profile=user.profile||{};
-    let fullName=firstText(user.fullName,user.fullname,user.full_name,user.displayName,user.display_name,user.memberName,user.name,profile.fullName,profile.full_name,profile.name);
-    if(!fullName){const first=firstText(user.firstName,user.first_name,profile.firstName,profile.first_name);const last=firstText(user.lastName,user.last_name,profile.lastName,profile.last_name);fullName=(first+" "+last).trim()}
-    if(!fullName)fullName=firstText(user.username,user.userName,user.user_name);
-    if(!fullName&&user.email)fullName=String(user.email).split("@")[0];
-    const username=firstText(user.username,user.userName,user.user_name,"-");
-    const email=firstText(user.email,"");
-    const memberId=firstText(user.id,user._id,user.userId,user.memberId,"-");
-    const status=firstText(user.accountStatus,user.account_status,user.status,"Verified");
-    $("userName").textContent=fullName||"Member";
-    $("userUsername").textContent=username;
-    $("userEmail").textContent=email||"-";
-    userEmailGlobal=email;
-    $("userMemberId").textContent=String(memberId).toUpperCase().slice(0,12);
-    $("accountStatus").textContent=status.toUpperCase();
-    if(email){try{localStorage.setItem("jovia_email",email)}catch{}}
-    const detected=detectPackage([user.plan,user.package,user.packageName,user.selectedPlan,profile.plan,data?.plan]);
-    selectPlan(detected);
-  }catch(e){
-    console.error(e);
-    $("userName").textContent="Member";$("userUsername").textContent="-";$("userEmail").textContent="-";$("userMemberId").textContent="-";$("accountStatus").textContent="ACCOUNT";
-  }
-}
 
-function openSelar(link){
-  finalSelarLink=link;
-  const plan=selectedPlan;
-  const amount=PLAN_PRICES[plan];
-  $("modalPackage").textContent=plan;
-  $("modalAmount").textContent=money(amount);
-  $("modalAmountBtn").textContent=money(amount);
-  $("modalTitle").textContent=`Pay ${money(amount)} for ${plan}?`;
-  $("loaderAmount").textContent=money(amount);
-  $("selarModal").classList.add("open");
-  $("selarModal").setAttribute("aria-hidden","false");
-  document.body.style.overflow="hidden";
-}
-function closeSelar(){
-  $("selarModal").classList.remove("open");
-  $("selarModal").setAttribute("aria-hidden","true");
-  document.body.style.overflow="";
-}
-function confirmPay(){
-  if(!finalSelarLink){showMessage("Payment link unavailable");return}
-  try{
-    localStorage.setItem("jovia_pending_payment",JSON.stringify({plan:selectedPlan,amount:PLAN_PRICES[selectedPlan],time:Date.now(),link:finalSelarLink}));
-  }catch{}
-  // Show Jovia loader - looks like still on Jovia, then redirect SAME TAB (not new tab)
-  $("selarModal").classList.remove("open");
-  $("joviaLoader").classList.add("show");
-  setTimeout(()=>{ window.location.href = finalSelarLink; }, 900);
-}
-function startPayment(){
-  hideMessage();
-  const button=$("payButton");
-  const email=userEmailGlobal||localStorage.getItem("jovia_email")||$("userEmail").textContent||"";
-  if(!email||email==="-"||!email.includes("@")){
-    showMessage("Your account email could not be verified. Please log in again.","error");return;
-  }
-  const baseLink=SELAR_LINKS[selectedPlan];
-  if(!baseLink){showMessage("This membership package is currently unavailable.","error");return}
-  const finalLink=baseLink+"?email="+encodeURIComponent(email)+"&username="+encodeURIComponent($("userUsername").textContent||"")+"&plan="+encodeURIComponent(selectedPlan);
-  button.disabled=true;
-  const orig=$("payButtonText").textContent;
-  $("payButtonText").textContent="Preparing secure checkout...";
-  setTimeout(()=>{openSelar(finalLink);button.disabled=false;$("payButtonText").textContent=orig},250);
-}
 
-$("selarModal").addEventListener("click",function(e){if(e.target===this)closeSelar()});
-document.addEventListener("keydown",function(e){if(e.key==="Escape"&&$("selarModal").classList.contains("open"))closeSelar()});
+    function money(amount){
 
-// Check if returning from Selar - show Jovia branded success
-(function checkReturn(){
-  const params=new URLSearchParams(window.location.search);
-  if(params.get("payment")==="success"||params.get("selar_success")){
-    const pending=localStorage.getItem("jovia_pending_payment");
-    let plan="Silver";
-    try{plan=JSON.parse(pending||"{}").plan||"Silver"}catch{plan=localStorage.getItem("selected_package")||"Silver"}
-    document.body.innerHTML=`<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:#fbf8ff;font-family:Poppins"><div style="background:white;max-width:400px;width:100%;padding:30px;border-radius:22px;text-align:center;box-shadow:0 16px 40px rgba(42,15,61,.10);border:1px solid #ece6f1"><div style="width:64px;height:64px;margin:0 auto 16px;display:flex;align-items:center;justify-content:center;background:#edf9f2;border-radius:18px;font-size:28px">✓</div><h2 style="font-weight:900;color:#3b0758">Payment Received!</h2><p style="color:#8a8196;font-size:11px;margin-top:10px;line-height:1.6">We received your ${plan} payment.<br>Your membership will be activated shortly.<br><br>If not activated within 5 minutes, contact support with your receipt.</p><button onclick="window.location.href='/dashboard.html'" style="width:100%;margin-top:20px;padding:14px;border:0;border-radius:12px;background:linear-gradient(135deg,#260038,#68108e);color:white;font-weight:800">Go to Dashboard</button></div></div>`;
-  }
-})();
+      const number = Number(amount);
 
-document.addEventListener("DOMContentLoaded",function(){selectPlan("Silver");loadAccount()});
-</script>
+      if(!Number.isFinite(number)){
+        return "₦0";
+      }
+
+      return "₦" + number.toLocaleString("en-NG");
+    }
+
+
+    function getToken(){
+
+      try{
+
+        return (
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("token") ||
+          localStorage.getItem("jovia_token") ||
+          sessionStorage.getItem("jovia_token") ||
+          ""
+        );
+
+      }catch{
+
+        return "";
+
+      }
+
+    }
+
+
+    function firstText(...values){
+
+      for(const value of values){
+
+        if(
+          value === undefined ||
+          value === null ||
+          typeof value === "object"
+        ){
+          continue;
+        }
+
+        const text = String(value).trim();
+
+        if(text){
+          return text;
+        }
+
+      }
+
+      return "";
+    }
+
+
+    function detectPackage(values){
+
+      for(const value of values){
+
+        const text = String(value || "").toLowerCase();
+
+        if(text.includes("gold")){
+          return "Gold";
+        }
+
+      }
+
+
+      for(const value of values){
+
+        const text = String(value || "").toLowerCase();
+
+        if(text.includes("silver")){
+          return "Silver";
+        }
+
+      }
+
+
+      return "Silver";
+    }
+
+
+    function showMessage(message,type="error"){
+
+      const box = $("message");
+      const text = $("messageText");
+      const icon = $("messageIcon");
+
+      if(!box || !text){
+        return;
+      }
+
+      text.textContent = message;
+
+      box.className = "message show " + (
+        type === "success"
+          ? "success"
+          : "error"
+      );
+
+      if(icon){
+
+        icon.textContent =
+          type === "success"
+            ? "✓"
+            : "!";
+
+      }
+
+      window.scrollTo({
+        top:0,
+        behavior:"smooth"
+      });
+
+    }
+
+
+    function hideMessage(){
+
+      const box = $("message");
+
+      if(!box){
+        return;
+      }
+
+      box.className = "message";
+
+      const text = $("messageText");
+
+      if(text){
+        text.textContent = "";
+      }
+
+    }
+
+
+    /* =========================================================
+       PLAN SELECTION
+       ========================================================= */
+
+    function selectPlan(plan){
+
+      if(!PLAN_PRICES[plan]){
+        return;
+      }
+
+      selectedPlan = plan;
+
+      const amount = PLAN_PRICES[plan];
+
+
+      $("silverPlan").classList.toggle(
+        "selected",
+        plan === "Silver"
+      );
+
+      $("goldPlan").classList.toggle(
+        "selected",
+        plan === "Gold"
+      );
+
+
+      $("silverPlan").setAttribute(
+        "aria-pressed",
+        plan === "Silver" ? "true" : "false"
+      );
+
+      $("goldPlan").setAttribute(
+        "aria-pressed",
+        plan === "Gold" ? "true" : "false"
+      );
+
+
+      $("summaryPackage").textContent =
+        plan + " membership";
+
+
+      $("totalPrice").textContent =
+        money(amount);
+
+
+      $("payButtonText").textContent =
+        `Continue with ${money(amount)} payment`;
+
+
+      $("modalPackage").textContent =
+        plan;
+
+
+      $("modalAmount").textContent =
+        money(amount);
+
+
+      $("loaderAmount").textContent =
+        money(amount);
+
+
+      try{
+
+        localStorage.setItem(
+          "selected_package",
+          plan
+        );
+
+      }catch{}
+
+    }
+
+
+    function handlePlanKey(event,plan){
+
+      if(
+        event.key === "Enter" ||
+        event.key === " "
+      ){
+
+        event.preventDefault();
+
+        selectPlan(plan);
+
+      }
+
+    }
+
+
+    /* =========================================================
+       ACCOUNT LOADING
+       ========================================================= */
+
+    async function loadAccount(){
+
+      try{
+
+        const token = getToken();
+
+        const headers = {
+          "Accept":"application/json",
+          "Cache-Control":"no-cache"
+        };
+
+
+        if(token){
+
+          headers["Authorization"] =
+            "Bearer " + token;
+
+        }
+
+
+        const response = await fetch(
+          "/api/me?t=" + Date.now(),
+          {
+            method:"GET",
+            headers,
+            credentials:"include",
+            cache:"no-store"
+          }
+        );
+
+
+        if(
+          response.status === 401 ||
+          response.status === 403
+        ){
+
+          setGuestState();
+
+          return;
+
+        }
+
+
+        if(!response.ok){
+
+          throw new Error(
+            "Unable to load account information."
+          );
+
+        }
+
+
+        let data = null;
+
+
+        try{
+
+          data = await response.json();
+
+        }catch{
+
+          data = null;
+
+        }
+
+
+        const user =
+          data?.user ||
+          data?.data?.user ||
+          data?.member ||
+          (
+            data?.fullName ||
+            data?.full_name ||
+            data?.username
+              ? data
+              : null
+          );
+
+
+        if(!user){
+
+          throw new Error(
+            "Account information unavailable."
+          );
+
+        }
+
+
+        const profile =
+          user.profile || {};
+
+
+        /* ---------------------------------------------
+           FULL NAME
+           --------------------------------------------- */
+
+        let fullName = firstText(
+          user.fullName,
+          user.fullname,
+          user.full_name,
+          user.displayName,
+          user.display_name,
+          user.memberName,
+          user.name,
+          profile.fullName,
+          profile.full_name,
+          profile.name
+        );
+
+
+        if(!fullName){
+
+          const firstName = firstText(
+            user.firstName,
+            user.first_name,
+            profile.firstName,
+            profile.first_name
+          );
+
+
+          const lastName = firstText(
+            user.lastName,
+            user.last_name,
+            profile.lastName,
+            profile.last_name
+          );
+
+
+          fullName =
+            (firstName + " " + lastName).trim();
+
+        }
+
+
+        if(!fullName){
+
+          fullName = firstText(
+            user.username,
+            user.userName,
+            user.user_name
+          );
+
+        }
+
+
+        if(!fullName && user.email){
+
+          fullName =
+            String(user.email).split("@")[0];
+
+        }
+
+
+        /* ---------------------------------------------
+           OTHER ACCOUNT DATA
+           --------------------------------------------- */
+
+        const username = firstText(
+          user.username,
+          user.userName,
+          user.user_name,
+          "-"
+        );
+
+
+        const email = firstText(
+          user.email,
+          ""
+        );
+
+
+        const memberId = firstText(
+          user.id,
+          user._id,
+          user.userId,
+          user.memberId,
+          "-"
+        );
+
+
+        const status = firstText(
+          user.accountStatus,
+          user.account_status,
+          user.status,
+          "Verified"
+        );
+
+
+        /* ---------------------------------------------
+           UPDATE UI
+           --------------------------------------------- */
+
+        $("userName").textContent =
+          fullName || "Member";
+
+
+        $("userUsername").textContent =
+          username;
+
+
+        $("userEmail").textContent =
+          email || "-";
+
+
+        $("userMemberId").textContent =
+          String(memberId)
+            .toUpperCase()
+            .slice(0,12);
+
+
+        $("accountStatus").textContent =
+          status.toUpperCase();
+
+
+        userEmailGlobal = email;
+
+
+        if(email){
+
+          try{
+
+            localStorage.setItem(
+              "jovia_email",
+              email
+            );
+
+          }catch{}
+
+        }
+
+
+        /* ---------------------------------------------
+           DETECT EXISTING PACKAGE
+           --------------------------------------------- */
+
+        const detectedPackage =
+          detectPackage([
+            user.plan,
+            user.package,
+            user.packageName,
+            user.selectedPlan,
+            profile.plan,
+            data?.plan
+          ]);
+
+
+        selectPlan(detectedPackage);
+
+
+      }catch(error){
+
+        console.error(
+          "JOVIA ACCOUNT LOAD ERROR:",
+          error
+        );
+
+
+        $("userName").textContent =
+          "Member";
+
+
+        $("userUsername").textContent =
+          "-";
+
+
+        $("userEmail").textContent =
+          "-";
+
+
+        $("userMemberId").textContent =
+          "-";
+
+
+        $("accountStatus").textContent =
+          "ACCOUNT";
+
+      }
+
+    }
+
+
+    /* =========================================================
+       GUEST STATE
+       ========================================================= */
+
+    function setGuestState(){
+
+      $("userName").textContent =
+        "Guest";
+
+
+      $("userUsername").textContent =
+        "-";
+
+
+      $("userEmail").textContent =
+        "-";
+
+
+      $("userMemberId").textContent =
+        "-";
+
+
+      $("accountStatus").textContent =
+        "LOGIN REQUIRED";
+
+    }
+
+
+    /* =========================================================
+       OPEN PAYMENT MODAL
+       ========================================================= */
+
+    function openSelar(link){
+
+      if(!link){
+
+        showMessage(
+          "Payment link is currently unavailable."
+        );
+
+        return;
+
+      }
+
+
+      finalSelarLink = link;
+
+
+      const plan =
+        selectedPlan;
+
+
+      const amount =
+        PLAN_PRICES[plan];
+
+
+      $("modalPackage").textContent =
+        plan;
+
+
+      $("modalAmount").textContent =
+        money(amount);
+
+
+      $("modalTitle").textContent =
+        `Confirm ${plan} membership`;
+
+
+      $("modalDesc").textContent =
+        `You are about to continue with your ${plan} membership payment. Your selected amount is shown below. You will be securely redirected to the payment page to complete the transaction.`;
+
+
+      $("loaderAmount").textContent =
+        money(amount);
+
+
+      $("selarModal").classList.add(
+        "open"
+      );
+
+
+      $("selarModal").setAttribute(
+        "aria-hidden",
+        "false"
+      );
+
+
+      document.body.classList.add(
+        "modal-open"
+      );
+
+
+      setTimeout(()=>{
+
+        $("confirmPayBtn")?.focus();
+
+      },50);
+
+    }
+
+
+    /* =========================================================
+       CLOSE PAYMENT MODAL
+       ========================================================= */
+
+    function closeSelar(){
+
+      if(paymentRedirecting){
+        return;
+      }
+
+
+      $("selarModal").classList.remove(
+        "open"
+      );
+
+
+      $("selarModal").setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+
+      document.body.classList.remove(
+        "modal-open"
+      );
+
+
+      finalSelarLink = "";
+
+    }
+
+
+    /* =========================================================
+       CONFIRM PAYMENT
+       ========================================================= */
+
+    function confirmPay(){
+
+      if(paymentRedirecting){
+        return;
+      }
+
+
+      if(!finalSelarLink){
+
+        showMessage(
+          "Payment link is unavailable. Please try again."
+        );
+
+        return;
+
+      }
+
+
+      paymentRedirecting = true;
+
+
+      const amount =
+        PLAN_PRICES[selectedPlan];
+
+
+      /* ---------------------------------------------
+         SAVE PENDING PAYMENT
+         --------------------------------------------- */
+
+      try{
+
+        localStorage.setItem(
+          "jovia_pending_payment",
+          JSON.stringify({
+            plan:selectedPlan,
+            amount:amount,
+            time:Date.now(),
+            link:finalSelarLink
+          })
+        );
+
+      }catch{}
+
+
+      /* ---------------------------------------------
+         DISABLE BUTTON
+         --------------------------------------------- */
+
+      const confirmButton =
+        $("confirmPayBtn");
+
+
+      if(confirmButton){
+
+        confirmButton.disabled = true;
+
+        confirmButton.textContent =
+          "Connecting securely...";
+
+      }
+
+
+      /* ---------------------------------------------
+         CLOSE MODAL
+         --------------------------------------------- */
+
+      $("selarModal").classList.remove(
+        "open"
+      );
+
+
+      $("selarModal").setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+
+      document.body.classList.remove(
+        "modal-open"
+      );
+
+
+      /* ---------------------------------------------
+         SHOW JOVIA LOADER
+         --------------------------------------------- */
+
+      $("joviaLoader").classList.add(
+        "show"
+      );
+
+
+      /* ---------------------------------------------
+         REDIRECT
+         --------------------------------------------- */
+
+      setTimeout(()=>{
+
+        window.location.href =
+          finalSelarLink;
+
+      },800);
+
+    }
+
+
+    /* =========================================================
+       START PAYMENT
+       ========================================================= */
+
+    function startPayment(){
+
+      if(paymentRedirecting){
+        return;
+      }
+
+
+      hideMessage();
+
+
+      const button =
+        $("payButton");
+
+
+      const email =
+        userEmailGlobal ||
+        localStorage.getItem("jovia_email") ||
+        $("userEmail").textContent ||
+        "";
+
+
+      /* ---------------------------------------------
+         VERIFY EMAIL
+         --------------------------------------------- */
+
+      if(
+        !email ||
+        email === "-" ||
+        !email.includes("@")
+      ){
+
+        showMessage(
+          "Your account email could not be verified. Please log in again.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      /* ---------------------------------------------
+         VERIFY PLAN
+         --------------------------------------------- */
+
+      const baseLink =
+        SELAR_LINKS[selectedPlan];
+
+
+      if(!baseLink){
+
+        showMessage(
+          "This membership package is currently unavailable.",
+          "error"
+        );
+
+        return;
+
+      }
+
+
+      /* ---------------------------------------------
+         USERNAME
+         --------------------------------------------- */
+
+      const username =
+        $("userUsername").textContent || "";
+
+
+      /* ---------------------------------------------
+         CREATE PAYMENT URL
+         --------------------------------------------- */
+
+      let finalLink;
+
+
+      try{
+
+        const separator =
+          baseLink.includes("?")
+            ? "&"
+            : "?";
+
+
+        finalLink =
+          baseLink +
+          separator +
+          "email=" +
+          encodeURIComponent(email) +
+          "&username=" +
+          encodeURIComponent(username) +
+          "&plan=" +
+          encodeURIComponent(selectedPlan);
+
+      }catch(error){
+
+        console.error(
+          "PAYMENT LINK ERROR:",
+          error
+        );
+
+        showMessage(
+          "Unable to prepare payment. Please try again."
+        );
+
+        return;
+
+      }
+
+
+      /* ---------------------------------------------
+         DISABLE MAIN PAYMENT BUTTON
+         --------------------------------------------- */
+
+      button.disabled = true;
+
+
+      const originalText =
+        $("payButtonText").textContent;
+
+
+      $("payButtonText").textContent =
+        "Preparing secure checkout...";
+
+
+      $("payArrow").style.display =
+        "none";
+
+
+      /* ---------------------------------------------
+         SMALL DELAY FOR SMOOTH UI
+         --------------------------------------------- */
+
+      setTimeout(()=>{
+
+        openSelar(finalLink);
+
+
+        button.disabled = false;
+
+
+        $("payButtonText").textContent =
+          originalText;
+
+
+        $("payArrow").style.display =
+          "inline";
+
+      },250);
+
+    }
+
+
+    /* =========================================================
+       RETURN FROM PAYMENT
+       ========================================================= */
+
+    function checkReturn(){
+
+      const params =
+        new URLSearchParams(
+          window.location.search
+        );
+
+
+      const paymentSuccess =
+        params.get("payment") === "success" ||
+        params.get("selar_success") === "true" ||
+        params.get("selar_success") === "1";
+
+
+      if(!paymentSuccess){
+        return;
+      }
+
+
+      let plan =
+        localStorage.getItem(
+          "selected_package"
+        ) || "Silver";
+
+
+      const pending =
+        localStorage.getItem(
+          "jovia_pending_payment"
+        );
+
+
+      if(pending){
+
+        try{
+
+          const parsed =
+            JSON.parse(pending);
+
+
+          if(
+            parsed &&
+            (
+              parsed.plan === "Silver" ||
+              parsed.plan === "Gold"
+            )
+          ){
+
+            plan =
+              parsed.plan;
+
+          }
+
+        }catch{}
+
+      }
+
+
+      if(
+        plan !== "Silver" &&
+        plan !== "Gold"
+      ){
+
+        plan = "Silver";
+
+      }
+
+
+      $("successPlan").textContent =
+        plan + " Membership";
+
+
+      $("successMessage").innerHTML =
+        `
+          Your ${plan} membership payment
+          has been received.
+          <br>
+          Your membership activation will be
+          processed shortly.
+          <br><br>
+          If your account does not update after
+          a few minutes, contact Jovia support
+          with your payment receipt.
+        `;
+
+
+      $("successScreen").classList.add(
+        "show"
+      );
+
+
+      /* ---------------------------------------------
+         REMOVE USED QUERY PARAMETERS
+         --------------------------------------------- */
+
+      try{
+
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+      }catch{}
+
+    }
+
+
+    /* =========================================================
+       DASHBOARD
+       ========================================================= */
+
+    function goToDashboard(){
+
+      window.location.href =
+        "/dashboard.html";
+
+    }
+
+
+    /* =========================================================
+       MODAL CLICK OUTSIDE
+       ========================================================= */
+
+    $("selarModal").addEventListener(
+      "click",
+      function(event){
+
+        if(event.target === this){
+
+          closeSelar();
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       KEYBOARD CONTROLS
+       ========================================================= */
+
+    document.addEventListener(
+      "keydown",
+      function(event){
+
+        if(
+          event.key === "Escape" &&
+          $("selarModal").classList.contains("open")
+        ){
+
+          closeSelar();
+
+        }
+
+      }
+    );
+
+
+    /* =========================================================
+       INITIALIZE
+       ========================================================= */
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      function(){
+
+        selectPlan("Silver");
+
+        checkReturn();
+
+        loadAccount();
+
+      }
+    );
+
+  </script>
+
 </body>
 </html>
