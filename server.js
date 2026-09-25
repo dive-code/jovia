@@ -12,7 +12,6 @@ function loadEnvFile(){const envPath=path.join(__dirname,".env");if(!fs.existsSy
 
 const app=express();
 
-// ===== FIX 1: CORS - Allow Vercel Frontend + Railway =====
 app.use(cors({
   origin: function(origin, cb){
     if(!origin) return cb(null,true);
@@ -25,7 +24,6 @@ app.use(cors({
 const PORT=Number(process.env.PORT||3000);
 const HOST=process.env.HOST||"0.0.0.0";
 
-// ===== FIX 2: PERSISTENCE - Railway Volume Support =====
 const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || process.env.RAILWAY_VOLUME || null;
 const DB_DIR = VOLUME_PATH? VOLUME_PATH : __dirname;
 const DB_PATH = process.env.DB_PATH || path.join(DB_DIR,"jovia.db");
@@ -444,7 +442,6 @@ app.delete("/api/admin/links/:id",requireAdmin,(req,res)=>{try{const id=toPositi
 
 app.get("/api/admin/videos",requireAdmin,(req,res)=>{try{return res.json({success:true,videos:db.prepare("SELECT * FROM videos ORDER BY id DESC").all()});}catch(e){return res.status(500).json({success:false,message:"Unable to load videos"});}});
 
-// ===== VIDEO UPLOAD FIXED - FULL URL =====
 app.post("/api/admin/videos/upload", requireAdmin, upload.single("video"), (req,res)=>{
   if(!req.file) return res.status(400).json({success:false,message:"No file received"});
   const baseUrl = `${req.protocol}://${req.get("host")}`;
@@ -477,7 +474,7 @@ app.put("/api/admin/videos/:id", requireAdmin, upload.fields([{name:"video",maxC
     const ex=db.prepare("SELECT * FROM videos WHERE id=?").get(id); if(!ex) return res.status(404).json({success:false,message:"Video not found"});
     const t=cleanString(req.body?.title??ex.title,200);
     const d=cleanString(req.body?.description??ex.description,2000);
-    let vu=cleanString(req.body?.url??req.body?.video_url??ex.video_url,1000);
+    let vu=cleanString(req.body?.url??ex.video_url??ex.video_url,1000);
     let th=cleanString(req.body?.thumbnail??ex.thumbnail_url??ex.thumbnail_url,1000);
     const rw=Number(req.body?.reward??ex.reward);
     const duration=Number(req.body?.duration??ex.duration);
@@ -496,12 +493,11 @@ app.delete("/api/admin/videos/:id", requireAdmin, (req,res)=>{
   try{
     const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid id"});
     const ex=db.prepare("SELECT * FROM videos WHERE id=?").get(id); if(!ex) return res.status(404).json({success:false,message:"Not found"});
-    // handle both relative and absolute URLs
     try{
       let filePath = ex.video_url;
       if(filePath.includes("/uploads/")){
         const idx = filePath.indexOf("/uploads/");
-        const rel = filePath.slice(idx); // /uploads/videos/...
+        const rel = filePath.slice(idx);
         const fp = path.join(UPLOAD_ROOT, rel.replace("/uploads/",""));
         if(fs.existsSync(fp)) fs.unlinkSync(fp);
       }
@@ -573,6 +569,67 @@ app.get("/api/referrals", requireUser, (req,res)=>{
     return res.json({success:true, referrals: refs, rewards, totalReferrals: refs.length});
   }catch(e){ return res.json({success:true, referrals:[], rewards:[]});}
 });
+
+// ===== SELAR AUTO ACTIVATION - MAKES ADMIN SHOW ACTIVE =====
+app.post("/api/selar/activate", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const name = cleanString(req.body?.name || req.body?.fullName || req.body?.full_name, 120);
+    const phone = cleanString(req.body?.phone, 30);
+    let plan = packageFromInput(req.body?.plan) || "Silver";
+    if(String(req.body?.plan).includes("15")) plan = "Gold";
+    if(String(req.body?.plan).includes("9")) plan = "Silver";
+    if(String(req.body?.amount).includes("15000")) plan = "Gold";
+    if(String(req.body?.amount).includes("9000")) plan = "Silver";
+
+    if (!email) return res.status(400).json({ success: false, message: "Email required" });
+
+    let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email);
+
+    if (!user) {
+      const username = email.split("@")[0].replace(/[^a-z0-9]/gi,"").slice(0,20) + "_" + Date.now().toString().slice(-4);
+      const tempPass = await bcrypt.hash("jovia123", 10);
+      const amount = PACKAGES[plan];
+      const welcomeBonus = getWelcomeBonus(plan);
+      const result = db.prepare(`INSERT INTO users
+        (full_name, username, email, phone, password_hash, package, package_amount, welcome_bonus, referral_code, account_status)
+        VALUES (?,?,?,?,?,?,?,?,?, 'pending')`)
+     .run(name || "Selar Customer", username, email, phone || "0000000000", tempPass, plan, amount, welcomeBonus, username.toUpperCase());
+      user = db.prepare("SELECT * FROM users WHERE id=?").get(result.lastInsertRowid);
+    }
+
+    if (user.account_status === "active" || user.account_status === "approved") {
+      return res.json({ success: true, message: "Already active", user: publicUser(user) });
+    }
+
+    activateUserAndRewards(user.id);
+    const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
+    console.log(`SELAR ACTIVATION: ${email} => ACTIVE (${plan})`);
+    return res.json({ success: true, message: "User activated", user: publicUser(updated) });
+  } catch (e) {
+    console.error("SELAR ACTIVATE ERROR:", e);
+    return res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.post("/api/webhooks/selar", async (req, res) => {
+  try {
+    const data = req.body || {};
+    const email = normalizeEmail(data.email || data.customer_email || data.buyer_email || data?.data?.email || data?.customer?.email);
+    if (!email) return res.status(200).json({ success: true, message: "No email" });
+    let plan = "Silver";
+    if(String(data.amount).includes("15000") || String(data.plan).toLowerCase().includes("gold")) plan = "Gold";
+
+    let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email);
+    if(user && user.account_status!== 'active'){
+      activateUserAndRewards(user.id);
+    }
+    return res.json({ success: true });
+  } catch (e) {
+    return res.json({ success: false });
+  }
+});
+
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{
   console.error("SERVER ERROR:",error);
@@ -587,7 +644,7 @@ if (require.main === module) {
   app.listen(PORT, HOST, () => {
     console.log("");
     console.log("==========================================");
-    console.log(" JOVIA NETWORK SERVER - FULLY FIXED");
+    console.log(" JOVIA NETWORK SERVER - FULLY FIXED + SELAR ACTIVE");
     console.log(` Server: http://${HOST}:${PORT}`);
     console.log(` DB: ${DB_PATH}`);
     console.log(` Volume: ${VOLUME_PATH || "local (add Volume in Railway!)"}`);
