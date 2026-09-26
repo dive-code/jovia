@@ -145,8 +145,6 @@ function webhookSignatureValid(req){const signature=req.headers["monnify-signatu
 app.post("/api/webhooks/monnify",async(req,res)=>{try{if(!webhookSignatureValid(req))return res.status(401).json({success:false,message:"Invalid webhook signature."});const payload=req.body||{};const eventType=String(payload.eventType||payload.event||"").toUpperCase();const eventKey=payload.eventId||payload.eventID||payload.id||crypto.createHash("sha256").update(req.rawBody||Buffer.from(safeJson(payload))).digest("hex");if(!saveWebhookEvent(String(eventKey),eventType,payload))return res.status(200).json({success:true,duplicate:true});const eventData=payload.eventData||{};if(eventType==="SUCCESSFUL_TRANSACTION"){const paymentReference=eventData.paymentReference||eventData.payment_reference;if(paymentReference){try{const verified=await verifyMonnifyPayment(paymentReference);processSuccessfulPayment(paymentReference,verified);}catch(error){console.error("WEBHOOK PAYMENT ERROR:",error);}}}return res.status(200).json({success:true,received:true});}catch(error){console.error("WEBHOOK ERROR:",error);return res.status(500).json({success:false,message:"Webhook processing failed."});}});
 app.get("/api/jobs", requireActiveUser, (req,res)=>{try{let jobs; try{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' AND (j.deleted_at IS NULL OR j.deleted_at='') ORDER BY j.id DESC`).all(req.user.id, req.user.id);}catch{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' ORDER BY j.id DESC`).all(req.user.id, req.user.id);} return res.json({success:true, jobs:jobs.map((job)=>({id:job.id, title:job.title, description:job.description||"", category:job.category||"General", slot:job.slot||"General", reward:Number(job.reward||0), link:job.link||"", url:job.link||"", duration:job.duration||"Flexible", status:job.status, user_status:job.user_status, link_opened:job.link_opened, linkOpened:Boolean(job.link_opened), completed:job.user_status==="completed", started:job.user_status==="started"}))});}catch(err){return res.status(500).json({success:false, message:"Unable to load jobs"});}});
 app.post("/api/jobs/:id/open", requireActiveUser, function(req, res){try{const jobId = toPositiveInteger(req.params.id); if(!jobId) return res.status(400).json({success:false, message:"Invalid job."}); let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); } if(!job) return res.status(404).json({success:false, message:"Job not found"}); db.prepare("INSERT OR IGNORE INTO user_job_link_opens (user_id,job_id) VALUES (?,?)").run(req.user.id, jobId); const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId); if(!existing){db.prepare("INSERT INTO user_jobs (user_id,job_id,status) VALUES (?,?, 'started')").run(req.user.id, jobId);} else if(existing.status === "pending"){db.prepare("UPDATE user_jobs SET status='started' WHERE user_id=? AND job_id=?").run(req.user.id, jobId);} return res.json({success:true, linkOpened:true, url:job.link||"", link:job.link||"", title:job.title, message:"Task opened - now claim"});}catch(e){return res.status(400).json({success:false, message:e.message});}});
-
-// ===== FIXED COMPLETE - SILVER 2500 / GOLD 7000 =====
 app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
   try{
     const jobId = toPositiveInteger(req.params.id);
@@ -205,77 +203,39 @@ app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
     return res.status(400).json({success:false, message:e.message});
   }
 });
-
 app.get("/api/wallet",requireUser,(req,res)=>{try{const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance,total_earned FROM users WHERE id=?`).get(req.user.id);if(!user)return res.status(404).json({success:false,message:"User not found."});const transactions=db.prepare(`SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC`).all(req.user.id);return res.json({success:true,walletBalance:Number(user.wallet_balance||0),affiliateBalance:Number(user.affiliate_balance||0),totalEarned:Number(user.total_earned||0),transactions:transactions.map((item)=>({id:item.id,type:item.type,amount:Number(item.amount||0),balanceType:item.balance_type,reference:item.reference,description:item.description,createdAt:item.created_at}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load wallet."});}});
 app.post("/api/withdrawals",requireActiveUser,async(req,res)=>{try{if(!isWithdrawalsEnabled()){return res.status(403).json({success:false,message:"Withdrawals are currently disabled by admin. Please try again later."});} const body=req.body||{}; const type=String(body.type||"regular").toLowerCase()==="affiliate"?"affiliate":"regular"; const amount=toPositiveInteger(body.amount); const bankName=cleanString(body.bankName??body.bank_name,120); const accountNumber=cleanString(body.accountNumber??body.account_number,30).replace(/\s+/g,""); const accountNameInput=cleanString(body.accountName??body.account_name,150); const note=cleanString(body.note,500); if(!amount)return res.status(400).json({success:false,message:"Enter a valid withdrawal amount."}); if(!bankName)return res.status(400).json({success:false,message:"Bank name is required."}); if(!accountNumber)return res.status(400).json({success:false,message:"Account number is required."}); if(!/^\d{10}$/.test(accountNumber))return res.status(400).json({success:false,message:"Enter a valid 10-digit account number."}); if(!accountNameInput)return res.status(400).json({success:false,message:"Account name is required."}); const minimum=WITHDRAWAL_MINIMUMS[type];if(amount<minimum)return res.status(400).json({success:false,message:`Minimum ${type} withdrawal is ₦${minimum.toLocaleString()}.`}); const balanceColumn=type==="affiliate"?"affiliate_balance":"wallet_balance"; const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance FROM users WHERE id=? LIMIT 1`).get(req.user.id); if(!user)return res.status(404).json({success:false,message:"User not found."}); const currentBalance=Number(user[balanceColumn]||0);if(currentBalance<amount)return res.status(400).json({success:false,message:"Insufficient balance."}); const withdrawal=db.transaction(()=>{updateUserBalance(req.user.id,balanceColumn,-amount); const result=db.prepare(`INSERT INTO withdrawals (user_id,amount,type,status,bank_name,account_name,account_number,note,gateway) VALUES (?,?,?, 'pending',?,?,?,?, 'manual')`).run(req.user.id,amount,type,bankName,accountNameInput,accountNumber,note); const withdrawalId=Number(result.lastInsertRowid); recordWalletTransaction(req.user.id,"withdrawal",-amount,type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_${withdrawalId}`,`Withdrawal request - ${type}`); addWithdrawalEvent(withdrawalId,"withdrawal_requested",req.user.username,{amount,type,bankName,accountName:accountNameInput,accountNumber,note}); return db.prepare(`SELECT * FROM withdrawals WHERE id=? LIMIT 1`).get(withdrawalId);})(); return res.status(201).json({success:true,message:"Withdrawal request submitted successfully.",withdrawal:withdrawalResult(withdrawal)});}catch(error){return res.status(500).json({success:false,message:error.message||"Unable to submit withdrawal request."});}});
-
-// ================== NEW REFERRAL ENDPOINTS - PROFESSIONAL ==================
 app.get("/api/referrals/link", requireUser, (req,res)=>{
   try{
     const username = req.user.username;
     const origin = req.headers.origin || `${req.protocol}://${req.get('host')}`;
-    // Use your real frontend URL - change if needed
-    const frontend = process.env.FRONTEND_URL || origin;
+    const frontend = process.env.FRONTEND_URL || "https://jovianetworkcom.vercel.app";
     const link = `${frontend}/register.html?ref=${encodeURIComponent(username)}`;
     return res.json({success:true, link, referralLink: link, url: link});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
-
 app.get("/api/referrals", requireUser, (req,res)=>{
   try{
-    // Get referrals
     const refs = db.prepare("SELECT u.id, u.full_name, u.username, u.package, u.account_status, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id);
     const rewards = db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=? ORDER BY id DESC").all(req.user.id);
     const rewardMap = new Map();
     for(const r of rewards){ rewardMap.set(r.referred_user_id, r); }
-
     const mapped = refs.map(u=>{
       const rew = rewardMap.get(u.id);
       return {
-        id: u.id,
-        full_name: u.full_name,
-        name: u.full_name,
-        fullName: u.full_name,
-        username: u.username,
-        package: u.package,
-        plan: u.package,
-        package_name: u.package,
+        id: u.id, full_name: u.full_name, name: u.full_name, fullName: u.full_name, username: u.username, package: u.package, plan: u.package, package_name: u.package,
         status: (u.account_status==='active' || u.account_status==='approved')? 'approved' : 'pending',
-        commission: rew? rew.amount : 0,
-        amount: rew? rew.amount : 0,
-        earning: rew? rew.amount : 0,
-        created_at: u.created_at,
-        createdAt: u.created_at,
-        joined_at: u.created_at,
+        commission: rew? rew.amount : 0, amount: rew? rew.amount : 0, earning: rew? rew.amount : 0,
+        created_at: u.created_at, createdAt: u.created_at, joined_at: u.created_at,
       };
     });
-
     const total = mapped.length;
     const successful = mapped.filter(r=>r.status==='approved').length;
     const pending = total - successful;
     const totalEarnings = mapped.reduce((s,r)=>s+Number(r.commission||0),0);
-
-    return res.json({
-      success:true,
-      referrals: mapped,
-      data: mapped,
-      users: mapped,
-      rewards,
-      total,
-      totalReferrals: total,
-      successfulReferrals: successful,
-      approvedReferrals: successful,
-      pendingReferrals: pending,
-      totalEarnings,
-      referralEarnings: totalEarnings,
-    });
-  }catch(e){
-    console.error("REFERRALS ERROR:", e);
-    return res.json({success:true, referrals:[], rewards:[], totalReferrals:0, successfulReferrals:0, pendingReferrals:0, totalEarnings:0});
-  }
+    return res.json({ success:true, referrals: mapped, data: mapped, users: mapped, rewards, total, totalReferrals: total, successfulReferrals: successful, approvedReferrals: successful, pendingReferrals: pending, totalEarnings, referralEarnings: totalEarnings, });
+  }catch(e){ return res.json({success:true, referrals:[], rewards:[], totalReferrals:0, successfulReferrals:0, pendingReferrals:0, totalEarnings:0}); }
 });
-
-// Backwards compatibility for old route used before
 app.get("/api/referrals/my", requireUser, (req,res)=>{
   try{
     const refs = db.prepare("SELECT u.id, u.username, u.full_name, u.package, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id);
@@ -284,7 +244,6 @@ app.get("/api/referrals/my", requireUser, (req,res)=>{
     return res.json({success:true, total: refs.length, active: refs.length, totalEarnings, referrals: refs.map(r=>({username:r.username, package:r.package, bonusEarned:0, bonusGiven:0}))});
   }catch(e){ return res.json({success:true, total:0, active:0, totalEarnings:0, referrals:[]}); }
 });
-
 async function verifyAdminPassword(password){const configured=String(ADMIN_PASSWORD||"");if(!configured)return false;if(configured.startsWith("$2a$")||configured.startsWith("$2b$")||configured.startsWith("$2y$")){return bcrypt.compare(password,configured);}return password===configured;}
 app.post("/api/admin/login",async(req,res)=>{try{const username=cleanString(req.body?.username??req.body?.login,100);const password=String(req.body?.password||"");if(!username||!password)return res.status(400).json({success:false,message:"Username and password are required."});const validUsername=username.toLowerCase()===String(ADMIN_USERNAME||"").toLowerCase();if(!validUsername)return res.status(401).json({success:false,message:"Invalid admin credentials."});const validPassword=await verifyAdminPassword(password);if(!validPassword)return res.status(401).json({success:false,message:"Invalid admin credentials."});const token=crypto.randomBytes(32).toString("hex");const maxAge=8*60*60*1000;adminSessions.set(token,{username:ADMIN_USERNAME,expiresAt:Date.now()+maxAge});setSessionCookie(res,"jovia_admin_session",token,maxAge);return res.json({success:true,username:ADMIN_USERNAME,admin:{username:ADMIN_USERNAME}});}catch(error){return res.status(500).json({success:false,message:"Unable to sign in as admin."});}});
 app.post("/api/admin/logout",(req,res)=>{const token=getSessionToken(req,"jovia_admin_session"); if(token) adminSessions.delete(token); const userToken=getSessionToken(req,"jovia_session"); if(userToken) sessions.delete(userToken); clearSessionCookie(res,"jovia_admin_session"); clearSessionCookie(res,"jovia_session"); return res.json({success:true});});
@@ -373,7 +332,50 @@ app.post("/api/webhooks/selar", async (req, res) => {
     return res.json({ success: false });
   }
 });
+
+// ================== FIX FOR YOUR ISSUE - AUTO ACTIVATE AFTER SELAR REDIRECT ==================
+app.get("/api/activate", async (req, res) => {
+  try {
+    const email = normalizeEmail(req.query?.email || req.query?.customer_email || req.body?.email || "");
+    const username = cleanString(req.query?.username || "", 50);
+    let plan = packageFromInput(req.query?.plan || req.query?.package) || "Silver";
+    let targetEmail = email;
+    if (!targetEmail && username) {
+      const byUser = db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username);
+      if (byUser) targetEmail = byUser.email;
+    }
+    if (!targetEmail) return res.status(400).json({ success: false, message: "Email required for activation" });
+    let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail);
+    if (!user && username) user = db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username);
+    if (!user) return res.status(404).json({ success: false, message: "User not found: " + targetEmail });
+    if (user.account_status === "active" || user.account_status === "approved") return res.json({ success: true, alreadyActive: true, user: publicUser(user) });
+    if (plan && plan!== user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id);
+    activateUserAndRewards(user.id);
+    const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
+    console.log(`✅ AUTO-ACTIVATED via /api/activate: ${updated.email} -> ${plan}`);
+    return res.json({ success: true, message: "Account activated", user: publicUser(updated) });
+  } catch (e) { console.error("ACTIVATE ERROR", e); return res.status(500).json({ success: false, message: e.message }); }
+});
+app.post("/api/activate", async (req,res)=>{
+  try{
+    const email = normalizeEmail(req.body?.email || req.query?.email || "");
+    const username = cleanString(req.body?.username || req.query?.username || "",50);
+    let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver";
+    let targetEmail = email;
+    if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; }
+    if(!targetEmail) return res.status(400).json({success:false});
+    let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail);
+    if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username);
+    if(!user) return res.status(404).json({success:false});
+    if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true});
+    if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id);
+    activateUserAndRewards(user.id);
+    return res.json({success:true});
+  }catch(e){ return res.status(500).json({success:false}); }
+});
+// ================== END FIX ==================
+
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
-if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA NETWORK SERVER - FIXED + SILVER 2500 / GOLD 7000 DAILY LIMIT + REFERRAL PRO"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Admin: http://${HOST}:${PORT}/admin.html`); console.log(" Limits: Silver 5x500=2500, Gold 10x700=7000 per day"); console.log(" Referral: /api/referrals + /api/referrals/link"); console.log("=========================================="); console.log("");});}
+if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA NETWORK SERVER - FIXED + SELAR AUTO-ACTIVATE"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Admin: http://${HOST}:${PORT}/admin.html`); console.log(" Limits: Silver 5x500=2500, Gold 10x700=7000 per day"); console.log(" Referral: /api/referrals + /api/referrals/link + /api/activate"); console.log("=========================================="); console.log("");});}
 module.exports = app;
