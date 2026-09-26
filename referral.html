@@ -3,154 +3,249 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Referral History | Jovia Network</title>
+  <meta name="description" content="Jovia Network Referral Center">
+  <title>Referrals | Jovia Network</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{--purple:#3b0758;--purple-dark:#260038;--purple-light:#68108e;--gold:#ffc400;--gold-dark:#ff9d00;--bg:#fffaff;--white:#fff;--text:#24152c;--muted:#77707b;--green:#16a34a;--red:#dc2626;--border:#eee7f1;--shadow:0 15px 45px rgba(59,7,88,.08)}
-    body{font-family:"Poppins",sans-serif;background:radial-gradient(circle at top right,rgba(104,16,142,.08),transparent 30%),var(--bg);color:var(--text);min-height:100vh}
-  .topbar{position:sticky;top:0;z-index:1000;height:76px;display:flex;align-items:center;justify-content:space-between;padding:0 5%;background:rgba(255,250,255,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
-  .brand{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--purple)}
-  .brand-logo{width:42px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:var(--gold);font-size:20px;font-weight:800}
-  .brand-name{font-size:19px;font-weight:800}
-  .back-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 15px;border:1px solid var(--border);border-radius:12px;background:var(--white);color:var(--purple);text-decoration:none;font-size:13px;font-weight:600}
-  .page{width:min(1180px,92%);margin:0 auto;padding:38px 0 60px}
-  .eyebrow{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:rgba(255,196,0,.12);color:#8a6500;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:12px}
-  .eyebrow-dot{width:6px;height:6px;border-radius:50%;background:var(--gold-dark)}
-  .page-heading h1{font-size:clamp(28px,4vw,42px);color:var(--purple-dark);letter-spacing:-1.2px;margin-bottom:9px}
-  .page-heading p{color:var(--muted);font-size:14px;max-width:650px}
-  .referral-hero{position:relative;overflow:hidden;padding:28px;border-radius:24px;background:radial-gradient(circle at 90% 10%,rgba(255,196,0,.25),transparent 28%),linear-gradient(135deg,var(--purple-dark),var(--purple),#68108e);color:#fff;margin-bottom:24px}
-  .hero-content{display:grid;grid-template-columns:1fr auto;gap:30px;align-items:center}
-  .hero-title{font-size:28px;font-weight:800;margin-bottom:7px}
-  .hero-text{color:rgba(255,255,255,.76);font-size:13px;max-width:570px}
-  .hero-amount{text-align:right}
-  .hero-amount span{display:block;color:rgba(255,255,255,.68);font-size:12px;margin-bottom:4px}
-  .hero-amount strong{display:block;color:var(--gold);font-size:32px;font-weight:800}
-  .stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px}
-  .stat-card{background:var(--white);border:1px solid var(--border);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
-  .stat-label{color:var(--muted);font-size:12px;margin-bottom:4px}
-  .stat-value{color:var(--purple-dark);font-size:25px;font-weight:800}
-  .link-card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:22px;box-shadow:var(--shadow);margin-bottom:24px}
-  .section-title{display:flex;justify-content:space-between;margin-bottom:15px}
-  .section-title h2{color:var(--purple-dark);font-size:17px;font-weight:700}
-  .referral-link-box{display:flex;gap:10px}
-  .referral-link{flex:1;height:48px;border:1px solid var(--border);border-radius:12px;background:#faf8fb;padding:0 15px;font-size:13px}
-  .copy-btn{height:48px;padding:0 20px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#3a2600;font-weight:700;cursor:pointer}
-  .history-card{background:var(--white);border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
-  .history-header{display:flex;justify-content:space-between;padding:22px;border-bottom:1px solid var(--border)}
-  .table-wrap{width:100%;overflow-x:auto}
-    table{width:100%;min-width:760px;border-collapse:collapse}
-    th{padding:15px 20px;text-align:left;color:#8a828e;background:#fcfafc;font-size:10px;font-weight:700;text-transform:uppercase;border-bottom:1px solid var(--border)}
-    td{padding:17px 20px;border-bottom:1px solid #f2edf4;font-size:12px}
-  .user-cell{display:flex;align-items:center;gap:11px}
-  .avatar{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:rgba(59,7,88,.12);color:var(--purple);font-weight:800;font-size:12px}
-  .package{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:700}
-  .package.gold{color:#876000;background:rgba(255,196,0,.14)}
-  .package.silver{color:#65616a;background:#f0edf1}
-  .status{display:inline-flex;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:700}
-  .status.approved{color:#16803d;background:rgba(22,163,74,.10)}
-  .status.pending{color:#986b00;background:rgba(255,196,0,.12)}
-  .commission{font-weight:800;color:var(--purple)}
-  .loading{text-align:center;padding:45px;color:var(--muted);font-size:12px}
-  .spinner{width:25px;height:25px;margin:0 auto 12px;border:3px solid #eee7f1;border-top-color:var(--purple);border-radius:50%;animation:spin.8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
-  .toast{position:fixed;left:50%;bottom:25px;transform:translate(-50%,100px);opacity:0;z-index:2000;min-width:230px;padding:13px 17px;border-radius:13px;background:var(--purple-dark);color:#fff;text-align:center;font-size:12px;font-weight:600;transition:.3s}
-  .toast.show{transform:translate(-50%,0);opacity:1}
-  .empty-state{display:none;padding:60px 20px;text-align:center}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    :root{--purple:#3b0758;--purple-dark:#260038;--purple-light:#68108e;--gold:#ffc400;--gold-dark:#ff9d00;--bg:#f7f5f8;--white:#ffffff;--text:#24152c;--muted:#827a86;--border:#e9e3ec;--green:#16a34a;--red:#dc2626;--blue:#2563eb;--shadow:0 7px 25px rgba(45,13,58,.055);}
+    html{scroll-behavior:smooth;}
+    body{min-height:100vh;font-family:"Poppins",sans-serif;color:var(--text);background:radial-gradient(circle at 100% 0%,rgba(104,16,142,.045),transparent 28%),var(--bg);}
+    button,input{font-family:inherit;}a{text-decoration:none;}
+   .topbar{position:sticky;top:0;z-index:1000;height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 5%;background:rgba(255,255,255,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border);}
+   .brand{display:flex;align-items:center;gap:10px;color:var(--purple);}
+   .brand-logo{width:39px;height:39px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:linear-gradient(145deg,var(--purple),var(--purple-light));color:var(--gold);font-size:18px;font-weight:800;box-shadow:0 6px 16px rgba(59,7,88,.15);}
+   .brand-name{font-size:17px;font-weight:800;letter-spacing:-.4px;}
+   .back-btn{height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:var(--white);color:var(--purple);font-size:12px;font-weight:600;transition:.2s ease;}
+   .back-btn:hover{border-color:#d7c7de;box-shadow:0 5px 14px rgba(59,7,88,.06);transform:translateY(-1px);}
+   .page{width:min(1160px,92%);margin:0 auto;padding:34px 0 65px;}
+   .page-intro{margin-bottom:23px;}
+   .eyebrow{display:inline-flex;align-items:center;gap:7px;margin-bottom:9px;color:#856200;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;}
+   .eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--gold-dark);}
+   .page-intro h1{color:var(--purple-dark);font-size:clamp(28px,4vw,39px);line-height:1.1;letter-spacing:-1.1px;margin-bottom:7px;}
+   .page-intro p{max-width:650px;color:var(--muted);font-size:13px;line-height:1.65;}
+   .referral-panel{position:relative;overflow:hidden;min-height:218px;display:grid;grid-template-columns:1fr 310px;margin-bottom:17px;border-radius:21px;background:linear-gradient(115deg,#240035 0%,#3b0758 56%,#5f0d80 100%);box-shadow:0 17px 38px rgba(59,7,88,.15);}
+   .referral-panel::before{content:"";position:absolute;width:310px;height:310px;right:-135px;top:-155px;border:48px solid rgba(255,255,255,.035);border-radius:50%;}
+   .referral-panel::after{content:"";position:absolute;width:180px;height:180px;right:250px;bottom:-130px;border-radius:50%;background:rgba(255,196,0,.055);}
+   .panel-content{position:relative;z-index:2;padding:29px 33px;display:flex;flex-direction:column;justify-content:center;}
+   .panel-small{color:rgba(255,255,255,.55);font-size:11px;font-weight:500;margin-bottom:7px;}
+   .panel-title{color:#fff;font-size:clamp(25px,4vw,34px);font-weight:800;line-height:1.13;letter-spacing:-.9px;margin-bottom:9px;}
+   .panel-description{max-width:570px;color:rgba(255,255,255,.66);font-size:12px;line-height:1.7;}
+   .panel-reward{position:relative;z-index:2;display:flex;flex-direction:column;justify-content:center;padding:29px 33px;border-left:1px solid rgba(255,255,255,.09);}
+   .reward-label{color:rgba(255,255,255,.56);font-size:11px;margin-bottom:5px;}
+   .reward-amount{color:var(--gold);font-size:32px;font-weight:800;line-height:1.1;letter-spacing:-.8px;margin-bottom:10px;}
+   .reward-note{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,.58);font-size:10px;}
+   .reward-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);}
+   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:17px;}
+   .stat{min-height:112px;display:flex;flex-direction:column;justify-content:space-between;padding:16px 17px;background:var(--white);border:1px solid var(--border);border-radius:15px;box-shadow:var(--shadow);}
+   .stat-top{display:flex;align-items:center;justify-content:space-between;}
+   .stat-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#f3edf5;color:var(--purple);font-size:13px;font-weight:800;}
+   .stat:nth-child(2).stat-icon{color:var(--green);background:#edf8f1;}
+   .stat:nth-child(3).stat-icon{color:#9a6d00;background:#fff7dc;}
+   .stat:nth-child(4).stat-icon{color:var(--blue);background:#eef4ff;}
+   .stat-label{color:var(--muted);font-size:10px;font-weight:500;margin-bottom:2px;}
+   .stat-value{color:var(--purple-dark);font-size:21px;font-weight:800;letter-spacing:-.5px;}
+   .link-section{display:grid;grid-template-columns:1fr 290px;gap:17px;margin-bottom:17px;}
+   .link-card,.info-card,.history-card{background:var(--white);border:1px solid var(--border);box-shadow:var(--shadow);}
+   .link-card{padding:20px;border-radius:16px;}
+   .card-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:12px;}
+   .card-heading h2{color:var(--purple-dark);font-size:15px;font-weight:700;}
+   .card-heading span{color:var(--muted);font-size:10px;}
+   .link-box{display:flex;gap:8px;}
+   .link-input{flex:1;min-width:0;height:44px;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:#faf9fb;color:#514955;outline:none;font-size:11px;}
+   .copy-btn{flex-shrink:0;height:44px;padding:0 17px;border:0;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#3c2900;font-size:11px;font-weight:700;cursor:pointer;transition:.2s ease;}
+   .copy-btn:hover{transform:translateY(-1px);box-shadow:0 7px 16px rgba(255,157,0,.18);}
+   .info-card{padding:20px;border-radius:16px;}
+   .info-title{display:flex;align-items:center;gap:8px;color:var(--purple-dark);font-size:14px;font-weight:700;margin-bottom:8px;}
+   .info-icon{width:27px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#f4edf6;color:var(--purple);font-size:11px;font-weight:800;}
+   .info-card p{color:var(--muted);font-size:10px;line-height:1.7;}
+   .history-card{overflow:hidden;border-radius:17px;}
+   .history-head{min-height:68px;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+   .history-title h2{color:var(--purple-dark);font-size:16px;font-weight:700;}
+   .history-title p{color:var(--muted);font-size:10px;margin-top:2px;}
+   .refresh-btn{height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 11px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--purple);font-size:10px;font-weight:600;cursor:pointer;transition:.2s ease;}
+   .refresh-btn:hover{background:#fbf8fc;border-color:#d9cbe0;}
+   .table-wrap{width:100%;overflow-x:auto;}
+    table{width:100%;min-width:900px;border-collapse:collapse;}
+    th{padding:12px 18px;background:#fbfafc;color:#918a95;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.55px;border-bottom:1px solid var(--border);white-space:nowrap;}
+    td{padding:14px 18px;color:var(--text);font-size:11px;border-bottom:1px solid #f1edf3;vertical-align:middle;}
+    tbody tr{transition:.15s ease;}tbody tr:hover{background:#fdfbfe;}tbody tr:last-child td{border-bottom:none;}
+   .user{display:flex;align-items:center;gap:10px;min-width:170px;}
+   .avatar{width:34px;height:34px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:9px;background:linear-gradient(135deg,#f1e9f4,#f8f3f9);color:var(--purple);font-size:10px;font-weight:800;}
+   .user-name{color:var(--purple-dark);font-size:11px;font-weight:700;white-space:nowrap;}
+   .username{color:var(--muted);font-size:9px;margin-top:1px;white-space:nowrap;}
+   .phone{display:flex;flex-direction:column;gap:2px;min-width:115px;}
+   .phone-number{color:#3d3342;font-size:10px;font-weight:600;white-space:nowrap;}
+   .phone-label{color:#aaa3ad;font-size:8px;}
+   .badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:700;white-space:nowrap;}
+   .badge.gold{color:#8b6500;background:#fff6d8;}
+   .badge.silver{color:#66616a;background:#f0eef1;}
+   .status{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:700;white-space:nowrap;}
+   .status::before{content:"";width:5px;height:5px;border-radius:50%;}
+   .status.approved{color:#16803d;background:#edf8f1;}
+   .status.approved::before{background:var(--green);}
+   .status.pending{color:#946900;background:#fff7dc;}
+   .status.pending::before{background:var(--gold-dark);}
+   .status.rejected{color:#b42318;background:#fff0ef;}
+   .status.rejected::before{background:var(--red);}
+   .commission{color:var(--purple);font-weight:800;white-space:nowrap;}
+   .date{color:var(--muted);white-space:nowrap;}
+   .loading{padding:45px 20px;text-align:center;color:var(--muted);font-size:11px;}
+   .spinner{width:23px;height:23px;margin:0 auto 10px;border:2px solid #eee8f0;border-top-color:var(--purple);border-radius:50%;animation:spin.75s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+   .empty-state{display:none;padding:55px 20px;text-align:center;}
+   .empty-icon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;margin:0 auto 13px;border-radius:15px;background:#f4edf6;color:var(--purple);font-size:20px;}
+   .empty-state h3{color:var(--purple-dark);font-size:14px;margin-bottom:4px;}
+   .empty-state p{max-width:360px;margin:auto;color:var(--muted);font-size:10px;line-height:1.7;}
+   .toast{position:fixed;left:50%;bottom:22px;z-index:2000;min-width:210px;padding:11px 15px;border-radius:10px;background:var(--purple-dark);color:#fff;text-align:center;font-size:11px;font-weight:600;opacity:0;transform:translate(-50%,80px);pointer-events:none;transition:.25s ease;box-shadow:0 12px 30px rgba(38,0,56,.2);}
+   .toast.show{opacity:1;transform:translate(-50%,0);}
+    @media(max-width:900px){.referral-panel{grid-template-columns:1fr;}.panel-reward{padding:0 33px 28px;border-left:none;}.link-section{grid-template-columns:1fr;}}
+    @media(max-width:700px){.topbar{height:66px;padding:0 4%;}.brand-name{font-size:15px;}.brand-logo{width:36px;height:36px;}.back-btn{height:35px;padding:0 10px;font-size:10px;}.page{width:92%;padding-top:27px;}.page-intro h1{font-size:29px;}.stats{grid-template-columns:1fr 1fr;gap:9px;}.stat{min-height:105px;padding:15px;}.stat-value{font-size:19px;}.referral-panel{border-radius:18px;}.panel-content{padding:24px 21px 18px;}.panel-reward{padding:3px 21px 24px;}.panel-title{font-size:25px;}.reward-amount{font-size:28px;}.link-card,.info-card{padding:17px;}.link-box{flex-direction:column;}.copy-btn{width:100%;}.history-head{padding:15px;}th,td{padding-left:15px;padding-right:15px;}}
+    @media(max-width:420px){.brand-name{display:none;}.stats{gap:8px;}.stat{padding:13px;}.stat-icon{width:30px;height:30px;}.stat-label{font-size:9px;}.stat-value{font-size:17px;}.history-head{align-items:flex-start;}}
   </style>
 </head>
 <body>
-  <header class="topbar"><a href="/dashboard.html" class="brand"><div class="brand-logo">J</div><div class="brand-name">Jovia Network</div></a><a href="/dashboard.html" class="back-btn">← Dashboard</a></header>
-  <main class="page">
-    <section class="page-heading"><div class="eyebrow"><span class="eyebrow-dot"></span> Referral Center</div><h1>Referral History</h1><p>Track the people you've referred, their membership status, and the commissions generated.</p></section>
-    <section class="referral-hero"><div class="hero-content"><div><div style="font-size:12px;opacity:.7;margin-bottom:7px">Your referral rewards</div><div class="hero-title">Grow your network.</div><div class="hero-text">Invite people to Jovia Network using your personal referral link and keep track of your referral activity from one place.</div></div><div class="hero-amount"><span>Total Referral Earnings</span><strong id="heroEarnings">₦0.00</strong></div></div></section>
-    <section class="stats-grid">
-      <div class="stat-card"><div class="stat-label">Total Referrals</div><div class="stat-value" id="totalReferrals">0</div></div>
-      <div class="stat-card"><div class="stat-label">Successful Referrals</div><div class="stat-value" id="successfulReferrals">0</div></div>
-      <div class="stat-card"><div class="stat-label">Pending Referrals</div><div class="stat-value" id="pendingReferrals">0</div></div>
-      <div class="stat-card"><div class="stat-label">Total Earnings</div><div class="stat-value" id="totalEarnings">₦0</div></div>
-    </section>
-    <section class="link-card"><div class="section-title"><h2>Your Referral Link</h2></div><div class="referral-link-box"><input type="text" id="referralLink" class="referral-link" value="Loading..." readonly><button class="copy-btn" onclick="copyReferralLink()">Copy Link</button></div></section>
-    <section class="history-card"><div class="history-header"><div><h2>Referral Activity</h2></div><button class="copy-btn" style="height:38px;background:#fff;border:1px solid #eee7f1;color:#3b0758" onclick="loadReferralHistory()">↻ Refresh</button></div><div class="table-wrap"><table><thead><tr><th>User</th><th>Package</th><th>Status</th><th>Commission</th><th>Date Joined</th></tr></thead><tbody id="referralTableBody"><tr><td colspan="5"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr></tbody></table><div class="empty-state" id="emptyState"><h3>No referrals yet</h3><p>Your referral activity will appear here when someone joins through your link.</p></div></div></section>
-  </main>
-  <div id="toast" class="toast"></div>
+<header class="topbar">
+  <a href="/dashboard.html" class="brand"><div class="brand-logo">J</div><div class="brand-name">Jovia Network</div></a>
+  <a href="/dashboard.html" class="back-btn">← Dashboard</a>
+</header>
+<main class="page">
+  <section class="page-intro"><div class="eyebrow">Referral Center</div><h1>Referrals</h1><p>Track your referrals, monitor their membership status and view the rewards generated from your network.</p></section>
+  <section class="referral-panel">
+    <div class="panel-content"><div class="panel-small">Build your network</div><div class="panel-title">Invite. Connect. Earn.</div><div class="panel-description">Share your personal referral link with people you know. Your referral activity and rewards are recorded here automatically.</div></div>
+    <div class="panel-reward"><div class="reward-label">Total referral earnings</div><div class="reward-amount" id="heroEarnings">₦0.00</div><div class="reward-note"><span class="reward-dot"></span> Referral rewards</div></div>
+  </section>
+  <section class="stats">
+    <div class="stat"><div class="stat-top"><div class="stat-icon">👥</div></div><div><div class="stat-label">Total Referrals</div><div class="stat-value" id="totalReferrals">0</div></div></div>
+    <div class="stat"><div class="stat-top"><div class="stat-icon">✓</div></div><div><div class="stat-label">Successful</div><div class="stat-value" id="successfulReferrals">0</div></div></div>
+    <div class="stat"><div class="stat-top"><div class="stat-icon">◷</div></div><div><div class="stat-label">Pending</div><div class="stat-value" id="pendingReferrals">0</div></div></div>
+    <div class="stat"><div class="stat-top"><div class="stat-icon">₦</div></div><div><div class="stat-label">Total Earnings</div><div class="stat-value" id="totalEarnings">₦0.00</div></div></div>
+  </section>
+  <section class="link-section">
+    <div class="link-card"><div class="card-heading"><h2>Your Referral Link</h2><span>Share your link</span></div><div class="link-box"><input type="text" id="referralLink" class="link-input" value="Loading referral link..." readonly><button type="button" class="copy-btn" onclick="copyReferralLink()">Copy Link</button></div></div>
+    <div class="info-card"><div class="info-title"><div class="info-icon">i</div> How referrals work</div><p>Share your unique referral link. When someone joins through your link, their activity will appear in your referral history.</p></div>
+  </section>
+  <section class="history-card">
+    <div class="history-head"><div class="history-title"><h2>Referral History</h2><p>Your recent referral activity</p></div><button type="button" class="refresh-btn" onclick="loadReferralHistory()">↻ Refresh</button></div>
+    <div class="table-wrap"><table><thead><tr><th>User</th><th>Phone Number</th><th>Package</th><th>Status</th><th>Commission</th><th>Date Joined</th></tr></thead><tbody id="referralTableBody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr></tbody></table><div class="empty-state" id="emptyState"><div class="empty-icon">👥</div><h3>No referrals yet</h3><p>When someone joins Jovia Network using your referral link, their activity will appear here.</p></div></div>
+  </section>
+</main>
+<div id="toast" class="toast"></div>
 <script>
-function showToast(m){const t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500)}
-function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-function formatMoney(v){return "₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
-function formatDate(v){if(!v)return "—";const d=new Date(v);if(isNaN(d.getTime()))return String(v);return d.toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"})}
-function getInitials(n){const t=String(n||"User").trim();const p=t.split(/\s+/);if(p.length===1)return p[0].substring(0,2).toUpperCase();return(p[0][0]+p[p.length-1][0]).toUpperCase()}
+  const VERCEL_URL = "https://jovianetworkcom.vercel.app";
 
-async function apiFetch(url){
-  const res = await fetch(url, {credentials:"include"});
-  let data={}; try{data=await res.json()}catch{}
-  if(res.status===401){ window.location.href="/login.html"; throw new Error("Not logged in");}
-  if(!res.ok) throw new Error(data.message||"Failed");
-  return data;
-}
+  function escapeHtml(value){return String(value?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+  function formatMoney(value){const amount=Number(value||0);return "₦"+amount.toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function formatDate(value){if(!value){return "—";}const date=new Date(String(value).replace(" ","T"));if(Number.isNaN(date.getTime())){return String(value);}return date.toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"});}
+  function getInitials(name){const text=String(name||"User").trim();if(!text){return "U";}const parts=text.split(/\s+/).filter(Boolean);if(parts.length===1){return parts[0].substring(0,2).toUpperCase();}return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();}
+  function showToast(message){const toast=document.getElementById("toast");toast.textContent=message;toast.classList.add("show");clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast.classList.remove("show");},2500);}
 
-async function loadReferralLink(){
-  try{
-    const data = await apiFetch("/api/referrals/link");
-    const link = data.link || data.referralLink || data.url;
-    if(link){ document.getElementById("referralLink").value = link; return;}
-  }catch(e){ console.log("link error", e.message)}
-  try{
-    const me = await apiFetch("/api/me");
-    const username = me.user?.username;
-    if(username){
-      const origin = window.location.origin;
-      document.getElementById("referralLink").value = `${origin}/register.html?ref=${encodeURIComponent(username)}`;
-    }
-  }catch(e){ document.getElementById("referralLink").value = "Login required"; }
-}
-
-async function copyReferralLink(){
-  const v=document.getElementById("referralLink").value.trim();
-  if(!v || v.includes("Login") || v.includes("Loading")){showToast("Link not ready");return}
-  try{ await navigator.clipboard.writeText(v); showToast("Referral link copied."); }catch{ const i=document.getElementById("referralLink"); i.select(); document.execCommand("copy"); showToast("Referral link copied."); }
-}
-
-async function loadReferralHistory(){
-  const tbody=document.getElementById("referralTableBody");
-  const empty=document.getElementById("emptyState");
-  tbody.innerHTML=`<tr><td colspan="5"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr>`;
-  empty.style.display="none";
-  try{
-    const data = await apiFetch("/api/referrals");
-    const referrals = data.referrals || data.data || [];
-    const total = data.totalReferrals?? referrals.length;
-    const successful = data.successfulReferrals?? referrals.filter(r=>String(r.status).toLowerCase()==='approved').length;
-    const pending = data.pendingReferrals?? (total - successful);
-    const earnings = data.totalEarnings?? 0;
-
-    document.getElementById("totalReferrals").textContent = total;
-    document.getElementById("successfulReferrals").textContent = successful;
-    document.getElementById("pendingReferrals").textContent = pending;
-    document.getElementById("totalEarnings").textContent = formatMoney(earnings);
-    document.getElementById("heroEarnings").textContent = formatMoney(earnings);
-
-    if(!referrals.length){ tbody.innerHTML=""; empty.style.display="block"; return; }
-
-    tbody.innerHTML = referrals.map(item=>{
-      const name=item.full_name||item.name||"User";
-      const username=item.username||"";
-      const pkg=item.package||"—";
-      const statusRaw=String(item.status||"pending").toLowerCase();
-      let statusClass="pending",statusText="Pending";
-      if(["approved","active","completed"].includes(statusRaw)){statusClass="approved";statusText="Approved"}
-      const commission=Number(item.commission||item.amount||0);
-      const date=item.created_at||item.createdAt||"";
-      const pkgClass=String(pkg).toLowerCase().includes("gold")?"gold":"silver";
-      return `<tr><td><div class="user-cell"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div style="font-weight:700">${escapeHtml(name)}</div>${username?`<div style="font-size:10px;color:#777">@${escapeHtml(username)}</div>`:""}</div></div></td><td><span class="package ${pkgClass}">${escapeHtml(pkg)}</span></td><td><span class="status ${statusClass}">${statusText}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td>${escapeHtml(formatDate(date))}</td></tr>`;
-    }).join("");
-  }catch(err){
-    console.error(err);
-    tbody.innerHTML=`<tr><td colspan="5"><div class="loading">Unable to load: ${escapeHtml(err.message)}</div></td></tr>`;
+  async function apiFetch(url,options={}){
+    const response=await fetch(url,{credentials:"include",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+    let data={};try{data=await response.json();}catch{data={};}
+    if(!response.ok){throw new Error(data.message||data.error||"Request failed.");}
+    return data;
   }
-}
 
-document.addEventListener("DOMContentLoaded",()=>{ loadReferralLink(); loadReferralHistory(); });
+  // ===== FIXED TO FORCE VERCEL LINK =====
+  async function loadReferralLink(){
+    try{
+      // First try to get real user to get correct REF CODE
+      const meData = await apiFetch("/api/me");
+      const user = meData.user || meData.data?.user || meData;
+      const rawCode = user?.referral_code || user?.referralCode || user?.username || "";
+      const code = String(rawCode).trim().toUpperCase() || "DIVEMEDIA";
+      const finalLink = `${VERCEL_URL}/register.html?ref=${encodeURIComponent(code)}`;
+      document.getElementById("referralLink").value = finalLink;
+      return;
+    }catch(e){
+      console.warn("me failed, trying link endpoint", e.message);
+    }
+
+    try{
+      const data = await apiFetch("/api/referrals/link");
+      let link = data.referralLink || data.link || data.url || "";
+      // FORCE REPLACE ANY RAILWAY LINK WITH VERCEL
+      if(link){
+        link = link.replaceAll("https://jovia-production.up.railway.app", VERCEL_URL);
+        link = link.replaceAll("http://jovia-production.up.railway.app", VERCEL_URL);
+        link = link.replaceAll("jovia-production.up.railway.app", "jovianetworkcom.vercel.app");
+        // Ensure it points to register.html?ref=
+        if(link.includes("?ref=")){
+          document.getElementById("referralLink").value = link;
+          return;
+        }
+      }
+    }catch(error){
+      console.warn("Referral link endpoint unavailable:", error);
+    }
+
+    // Final fallback
+    try{
+      const username = (localStorage.getItem("joviaUsername") || localStorage.getItem("jovia_username") || "DIVEMEDIA").toUpperCase();
+      document.getElementById("referralLink").value = `${VERCEL_URL}/register.html?ref=${encodeURIComponent(username)}`;
+    }catch{
+      document.getElementById("referralLink").value = `${VERCEL_URL}/register.html?ref=DIVEMEDIA`;
+    }
+  }
+
+  async function copyReferralLink(){
+    const input=document.getElementById("referralLink");
+    const value=input.value.trim();
+    if(!value||value==="Loading referral link..."||value==="Your referral link will appear here"){
+      showToast("Referral link is not available yet.");return;
+    }
+    try{await navigator.clipboard.writeText(value);showToast("Referral link copied.");}
+    catch{input.select();document.execCommand("copy");showToast("Referral link copied.");}
+  }
+
+  async function loadReferralHistory(){
+    const tbody=document.getElementById("referralTableBody");
+    const emptyState=document.getElementById("emptyState");
+    tbody.innerHTML=`<tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr>`;
+    emptyState.style.display="none";
+    try{
+      const data=await apiFetch("/api/referrals");
+      const referrals=data.referrals||data.data||data.users||[];
+      updateStats(data,referrals);
+      if(!Array.isArray(referrals)||referrals.length===0){tbody.innerHTML="";emptyState.style.display="block";return;}
+      tbody.innerHTML=referrals.map(renderReferral).join("");
+    }catch(error){
+      console.error("Referral history error:",error);
+      tbody.innerHTML=`<tr><td colspan="6"><div class="loading">Unable to load referral history.</div></td></tr>`;
+    }
+  }
+
+  function updateStats(data,referrals){
+    const total=Number(data.totalReferrals??data.total??referrals.length??0);
+    const successful=Number(data.successfulReferrals??data.approvedReferrals??referrals.filter(item=>["approved","active","completed"].includes(String(item.status||"").toLowerCase())).length);
+    const pending=Number(data.pendingReferrals??referrals.filter(item=>String(item.status||"").toLowerCase()==="pending").length);
+    const earnings=Number(data.totalEarnings??data.referralEarnings??referrals.reduce((sum,item)=>sum+Number(item.commission??item.earning??item.amount??0),0));
+    document.getElementById("totalReferrals").textContent=total;
+    document.getElementById("successfulReferrals").textContent=successful;
+    document.getElementById("pendingReferrals").textContent=pending;
+    document.getElementById("totalEarnings").textContent=formatMoney(earnings);
+    document.getElementById("heroEarnings").textContent=formatMoney(earnings);
+  }
+
+  function renderReferral(item){
+    const name=item.full_name||item.fullName||item.name||item.referredName||item.user_name||"User";
+    const username=item.username||item.referredUsername||"";
+    const phone=item.phone||item.phone_number||item.phoneNumber||item.mobile||item.mobile_number||item.mobileNumber||"—";
+    const packageName=item.package||item.package_name||item.plan||"—";
+    const statusRaw=String(item.status||"pending").toLowerCase();
+    let statusClass="pending";let statusText="Pending";
+    if(["approved","active","completed"].includes(statusRaw)){statusClass="approved";statusText="Approved";}
+    else if(["rejected","declined","suspended"].includes(statusRaw)){statusClass="rejected";statusText=statusRaw==="suspended"?"Suspended":"Rejected";}
+    const commission=Number(item.commission??item.earning??item.amount??0);
+    const date=item.created_at||item.createdAt||item.date||item.joined_at||item.joinedAt||"";
+    const packageClass=String(packageName).toLowerCase().includes("gold")?"gold":"silver";
+    return `<tr><td><div class="user"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div class="user-name">${escapeHtml(name)}</div>${username?`<div class="username">@${escapeHtml(username)}</div>`:""}</div></div></td><td><div class="phone"><div class="phone-number">${escapeHtml(phone)}</div>${phone!=="—"?`<div class="phone-label">Contact number</div>`:""}</div></td><td><span class="badge ${packageClass}">${escapeHtml(packageName)}</span></td><td><span class="status ${statusClass}">${escapeHtml(statusText)}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td><span class="date">${escapeHtml(formatDate(date))}</span></td></tr>`;
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>{Promise.allSettled([loadReferralLink(),loadReferralHistory()]);});
 </script>
 </body>
 </html>
