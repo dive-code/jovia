@@ -103,20 +103,25 @@ const API_BASE = "";
 let allJobs=[];let availableJobs=[];let completedJobs=[];let currentFilter="available";let accountActivated=false;let messageTimer=null;
 const watchedVideos = new Map();
 
-// ===== NEW: PLAN LOGIC - SILVER 2500 / GOLD 7000 =====
+// ===== DAILY RESET - FIX FOR OVER EARNING =====
+function checkDailyReset(){
+  const today = new Date().toDateString();
+  const lastDate = localStorage.getItem("jovia_last_job_date");
+  if(lastDate !== today){
+    localStorage.setItem("jovia_today_earn", "0");
+    localStorage.setItem("jovia_jobs_done_today", "0");
+    localStorage.setItem("jovia_last_job_date", today);
+  }
+}
+checkDailyReset();
+
+// ===== PLAN LOGIC - SILVER 2500 / GOLD 7000 - STRICT =====
 function getCurrentPlan(){
   try{
-    // 1. From localStorage (payment-success saves this)
     let plan = localStorage.getItem("jovia_paid_plan") || localStorage.getItem("jovia_plan") || "";
-    // 2. From jovia_user
     if(!plan){
       const u = JSON.parse(localStorage.getItem("jovia_user")||"{}");
       plan = u.plan || "";
-    }
-    // 3. From email sync
-    if(!plan){
-      const email = localStorage.getItem("jovia_email") || "";
-      // default silver
     }
     plan = String(plan).toLowerCase();
     if(plan.includes("gold")) return "Gold";
@@ -124,41 +129,34 @@ function getCurrentPlan(){
   }catch{ return "Silver"; }
 }
 function getPlanLimits(plan){
-  if(plan==="Gold") return {maxDaily:7000, perTask:700, taskCount:10};
-  return {maxDaily:2500, perTask:500, taskCount:5};
+  if(plan==="Gold") return {maxDaily:7000, perTask:700, taskCount:10, maxPerJob:7000};
+  return {maxDaily:2500, perTask:500, taskCount:5, maxPerJob:2500};
 }
 function updatePlanUI(){
   const plan = getCurrentPlan();
   const limits = getPlanLimits(plan);
   const badge = document.getElementById("planBadge");
   const limitInfo = document.getElementById("limitInfo");
-  const completedLabel = document.getElementById("completedLabel");
-  const planDesc = document.getElementById("planDesc");
-  
   badge.style.display="inline-flex";
   badge.className = plan==="Gold" ? "plan-badge plan-gold" : "plan-badge plan-silver";
   badge.textContent = plan==="Gold" ? `👑 GOLD - ₦${limits.maxDaily.toLocaleString()}/day` : `🥈 SILVER - ₦${limits.maxDaily.toLocaleString()}/day`;
-  
   limitInfo.textContent = `Daily limit: ₦${limits.maxDaily.toLocaleString()} (${plan} - ${limits.taskCount} jobs × ₦${limits.perTask})`;
-  completedLabel.textContent = `Completed (${plan})`;
-  
-  document.getElementById("completedCount").textContent = `0/${limits.taskCount}`;
-  planDesc.textContent = `${plan} plan: ${limits.taskCount} jobs/day × ₦${limits.perTask} = ₦${limits.maxDaily.toLocaleString()} max`;
-  
-  // Save for other pages
+  document.getElementById("completedCount").textContent = `${completedJobs.length}/${limits.taskCount}`;
+  document.getElementById("planDesc").textContent = `${plan} plan: ${limits.taskCount} jobs/day × ₦${limits.perTask} = ₦${limits.maxDaily.toLocaleString()} max`;
   localStorage.setItem("jovia_paid_plan", plan);
   localStorage.setItem("jovia_plan", plan);
   localStorage.setItem("jovia_max_daily", limits.maxDaily);
 }
-function isDailyLimitReached(){
+function getTodayStats(){
   const plan = getCurrentPlan();
   const limits = getPlanLimits(plan);
-  // Count completed today from server list
-  const completedToday = completedJobs.length;
-  return completedToday >= limits.taskCount;
+  const done = completedJobs.length; // server says completed today (we assume API returns today only, else we use local)
+  const earn = done * limits.perTask;
+  return {done, earn, limits, remainingCount: Math.max(0, limits.taskCount - done), remainingEarn: Math.max(0, limits.maxDaily - earn)};
 }
-function canClaimMore(){
-  return !isDailyLimitReached();
+function isDailyLimitReached(){
+  const s = getTodayStats();
+  return s.done >= s.limits.taskCount || s.earn >= s.limits.maxDaily;
 }
 
 function formatNaira(a){const n=Number(a);if(!Number.isFinite(n))return "₦0";return "₦"+n.toLocaleString("en-NG")}
@@ -166,14 +164,12 @@ function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"
 function getJobId(j){return j?.id??j?.job_id??""}
 function getJobTitle(j){return j?.title||j?.name||"Job"}
 function getJobDescription(j){return j?.description||"Complete this job."}
+function getOriginalAmount(j){ return Number(j?.reward??j?.amount??j?.price??0); }
 function getJobAmount(j){
-  // ENFORCE PLAN AMOUNT - Silver 500, Gold 700 regardless of admin setting
   const plan = getCurrentPlan();
   const limits = getPlanLimits(plan);
-  // If admin set higher, cap it to plan rate
-  const original = Number(j?.reward??j?.amount??0);
-  if(plan==="Gold") return Math.min(original||700, 700) || 700;
-  return Math.min(original||500, 500) || 500;
+  // ALWAYS pay fixed rate per plan, not admin amount
+  return limits.perTask;
 }
 function getJobDuration(j){return j?.duration||"Flexible"}
 function getJobCategory(j){return j?.category||"General"}
@@ -206,7 +202,7 @@ function isAccountActivated(s, user){
   }
   return true;
 }
-function getResponseReward(data,job){const vals=[data?.rewardAmount,data?.reward_amount,data?.amount,data?.data?.rewardAmount,data?.reward];for(const v of vals){const n=Number(v);if(Number.isFinite(n))return n}return getJobAmount(job)}
+function getResponseReward(data,job){return getPlanLimits(getCurrentPlan()).perTask;}
 function hideJobContent(){document.getElementById("loadingState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("emptyState").style.display="none";document.getElementById("jobsList").innerHTML="";}
 function showActivationState(){hideJobContent();accountActivated=false;document.getElementById("activationState").style.display="block";document.getElementById("suspendedState").style.display="none";document.getElementById("sectionTitle").textContent="Account Activation";document.getElementById("filterRow").style.display="none"}
 function showSuspendedState(){hideJobContent();accountActivated=false;document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="block";document.getElementById("sectionTitle").textContent="Account Suspended";document.getElementById("filterRow").style.display="none"}
@@ -229,8 +225,6 @@ async function claimVideo(videoId, buttonEl){
     showMessage(data.message || `✅ ${formatNaira(data.reward||0)} credited!`, "success");
     if(data.walletBalance) document.getElementById("walletBalance").textContent = formatNaira(data.walletBalance);
     await loadVideos();
-    const me = await fetch(`${API_BASE}/api/me?t=${Date.now()}`,{credentials:"include"}).then(r=>r.json()).catch(()=>null);
-    if(me?.user?.wallet_balance) document.getElementById("walletBalance").textContent = formatNaira(me.user.wallet_balance);
   }catch(e){
     showMessage(e.message||"Claim failed", "error");
     if(btn){ btn.disabled=false; btn.textContent = btn.dataset.label || "Claim Reward"; }
@@ -252,7 +246,7 @@ let playerHTML="";
 if(url.endsWith(".mp4")||url.includes(".mp4")||url.includes("/uploads/")){
   playerHTML=`<video class="video-player" id="vid-${v.id}" controls preload="metadata" src="${escapeHTML(url)}"></video><div class="watch-progress"><div class="watch-bar" id="bar-${v.id}"></div></div>`;
 } else {
-  playerHTML=`<div style="background:#111827;color:white;padding:20px;border-radius:12px;text-align:center"><div style="font-size:30px;margin-bottom:8px">▶️</div><a href="${escapeHTML(url)}" target="_blank" onclick="fetch('${API_BASE}/api/videos/${v.id}/open',{method:'POST',credentials:'include'}); watchedVideos.set('${v.id}', 10)" style="color:#f59e0b;font-size:13px;font-weight:800">▶️ Watch Video ↗</a><div style="font-size:10px;margin-top:6px;word-break:break-all;color:#9ca3af">${escapeHTML(url)}</div></div>`;
+  playerHTML=`<div style="background:#111827;color:white;padding:20px;border-radius:12px;text-align:center"><div style="font-size:30px;margin-bottom:8px">▶️</div><a href="${escapeHTML(url)}" target="_blank" onclick="fetch('${API_BASE}/api/videos/${v.id}/open',{method:'POST',credentials:'include'}); watchedVideos.set('${v.id}', 10)" style="color:#f59e0b;font-size:13px;font-weight:800">▶️ Watch Video ↗</a></div>`;
 }
 return `<div class="video-card">${playerHTML}
 <div class="video-title">${escapeHTML(v.title||"Training")}</div>
@@ -271,31 +265,14 @@ videos.forEach(v=>{
   const bar = document.getElementById(`bar-${v.id}`);
   if(!vid || !btn) return;
   watchedVideos.set(String(v.id), 0);
-  vid.addEventListener('play', ()=>{
-    fetch(`${API_BASE}/api/videos/${encodeURIComponent(v.id)}/open`, {method:'POST', credentials:'include'}).catch(()=>{});
-  });
+  vid.addEventListener('play', ()=>{ fetch(`${API_BASE}/api/videos/${encodeURIComponent(v.id)}/open`, {method:'POST', credentials:'include'}).catch(()=>{}); });
   vid.addEventListener('timeupdate', ()=>{
     const sec = Math.floor(vid.currentTime);
     watchedVideos.set(String(v.id), sec);
-    if(bar){
-      const pct = Math.min(100, (vid.currentTime / (vid.duration || 30)) * 100);
-      bar.style.width = pct + '%';
-    }
-    if(sec >= 5 && btn.disabled){
-      btn.disabled = false;
-      btn.textContent = `Claim ${formatNaira(v.reward||0)} ✅`;
-      btn.style.background = '#111827';
-    }
-  });
-  vid.addEventListener('ended', ()=>{
-    watchedVideos.set(String(v.id), 100);
-    if(btn){
-      btn.disabled = false;
-      btn.textContent = `Claim ${formatNaira(v.reward||0)} ✅ Watched!`;
-    }
+    if(bar){ bar.style.width = Math.min(100, (vid.currentTime / (vid.duration || 30)) * 100) + '%'; }
+    if(sec >= 5 && btn.disabled){ btn.disabled = false; btn.textContent = `Claim ${formatNaira(v.reward||0)} ✅`; }
   });
 });
-
 }catch(e){loading.style.display="none";empty.style.display="block";document.getElementById("videoCount").textContent="0 videos"}
 }
 
@@ -305,17 +282,20 @@ const list=document.getElementById("jobsList");const empty=document.getElementBy
 loading.style.display="none";error.style.display="none";list.innerHTML="";
 const plan = getCurrentPlan();
 const limits = getPlanLimits(plan);
+const stats = getTodayStats();
 document.getElementById("jobCount").textContent=`${jobs.length} ${jobs.length===1?"job":"jobs"}`;
+document.getElementById("completedCount").textContent = `${stats.done}/${limits.taskCount}`;
+document.getElementById("availableCount").textContent = currentFilter==="completed" ? completedJobs.length : Math.max(0, jobs.length);
 
-if(isDailyLimitReached() && currentFilter==="available"){
-  list.innerHTML = `<div style="padding:30px 20px;text-align:center"><div style="width:60px;height:60px;margin:0 auto 12px;background:#fee2e2;border:1px solid #fecaca;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px">🚫</div><h3 style="font-size:16px;font-weight:800;margin-bottom:6px">Daily Limit Reached - ${plan}</h3><p style="font-size:12px;color:#6b7280;line-height:1.5">You have completed ${limits.taskCount}/${limits.taskCount} jobs today.<br>Max ₦${limits.maxDaily.toLocaleString()} earned. Come back tomorrow.<br><br><span style="font-size:11px;background:#111827;color:#fff;padding:6px 10px;border-radius:999px">Silver: 5 × ₦500 = ₦2,500 | Gold: 10 × ₦700 = ₦7,000</span></p></div>`;
+if(stats.done >= limits.taskCount && currentFilter==="available"){
+  list.innerHTML = `<div style="padding:30px 20px;text-align:center"><div style="width:60px;height:60px;margin:0 auto 12px;background:#fee2e2;border:1px solid #fecaca;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px">🚫</div><h3 style="font-size:16px;font-weight:800;margin-bottom:6px">Daily Limit Reached - ${plan}</h3><p style="font-size:12px;color:#6b7280;line-height:1.5">You have completed ${limits.taskCount}/${limits.taskCount} jobs today = ₦${limits.maxDaily.toLocaleString()}<br>Come back tomorrow at 12:00 AM<br><br><span style="font-size:11px;background:#111827;color:#fff;padding:6px 10px;border-radius:999px">Silver: 5 × ₦500 = ₦2,500 | Gold: 10 × ₦700 = ₦7,000</span></p></div>`;
   empty.style.display="none";
   return;
 }
 
 if(!jobs.length){
   empty.style.display="block";
-  if(currentFilter==="available"){document.getElementById("emptyTitle").textContent="No jobs available";document.getElementById("emptyText").textContent="New jobs will appear."}
+  if(currentFilter==="available"){document.getElementById("emptyTitle").textContent = stats.done>=limits.taskCount ? "Limit Reached" : "No jobs available"; document.getElementById("emptyText").textContent = stats.done>=limits.taskCount ? `You reached ₦${limits.maxDaily.toLocaleString()} today` : "New jobs will appear."}
   else{document.getElementById("emptyTitle").textContent="No completed";document.getElementById("emptyText").textContent="Completed jobs here."}
   return
 }
@@ -324,7 +304,8 @@ jobs.forEach(job=>{
 const id=String(getJobId(job));
 const title=getJobTitle(job);
 const description=getJobDescription(job);
-const amount=getJobAmount(job);
+const original = getOriginalAmount(job);
+const amount=getJobAmount(job); // fixed 500/700
 const duration=getJobDuration(job);
 const category=getJobCategory(job);
 const taskLink=getTaskLink(job);
@@ -332,23 +313,29 @@ const linkOpened=hasOpenedTask(job);
 const completed=isCompleted(job);
 const item=document.createElement("div");item.className="job-card";
 
+// === NEW: HIDE/LOCK JOBS THAT EXCEED PLAN MAX ===
+if(original > limits.maxPerJob && !completed){
+  item.innerHTML = `<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward" style="color:#991b1b">₦${original.toLocaleString()} 🔒</div></div>
+  <div class="job-description">${escapeHTML(description)}</div>
+  <div class="task-box" style="background:#fee2e2;border-color:#fecaca"><div class="task-label" style="color:#991b1b">🔒 REQUIRES HIGHER PLAN</div><div class="task-info" style="color:#991b1b">This job pays ₦${original.toLocaleString()} which exceeds ${plan} max of ₦${limits.maxPerJob.toLocaleString()}/job. Upgrade to Gold for higher limits.</div></div>
+  <button class="complete-btn limit" type="button" disabled>🔒 Locked - Your limit ₦${limits.maxPerJob.toLocaleString()}</button>`;
+  list.appendChild(item);
+  return;
+}
+
 let html = `<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(amount)}</div></div>
 <div class="job-description">${escapeHTML(description)}</div>
-<div class="job-meta"><span class="meta">${escapeHTML(category)} - ${plan}</span><span class="meta">⏱ ${escapeHTML(duration)}</span></div>`;
+<div class="job-meta"><span class="meta">${escapeHTML(category)} - ${plan} Rate</span><span class="meta">⏱ ${escapeHTML(duration)}</span><span class="meta">${stats.done}/${limits.taskCount} today</span></div>`;
 
 if(completed){
-  html += `<div class="task-box" style="background:#dcfce7;border-color:#bbf7d0"><div class="task-label" style="color:#166534">TASK COMPLETED ✓</div><div class="task-info" style="color:#166534">Reward ${formatNaira(amount)} credited to wallet.</div></div>
+  html += `<div class="task-box" style="background:#dcfce7;border-color:#bbf7d0"><div class="task-label" style="color:#166534">TASK COMPLETED ✓</div><div class="task-info" style="color:#166534">Reward ${formatNaira(amount)} credited.</div></div>
   <button class="complete-btn completed" type="button" disabled>Completed ✓ ${formatNaira(amount)} Credited</button>`;
-} else if(!canClaimMore()){
-  html += `<div class="task-box" style="background:#fee2e2;border-color:#fecaca"><div class="task-label" style="color:#991b1b">DAILY LIMIT - ${plan} REACHED</div><div class="task-info" style="color:#991b1b">You reached ${limits.taskCount} jobs / ₦${limits.maxDaily.toLocaleString()} today. Upgrade to Gold for ₦7,000/day.</div></div>
-  <button class="complete-btn limit" type="button" disabled>Limit Reached 🚫 ${plan} Max ₦${limits.maxDaily.toLocaleString()}</button>`;
 } else if(linkOpened){
-  html += `<div class="task-box"><div class="task-label">TASK OPENED ✓ - NOW CLAIM</div><div class="task-info">You opened the task. Now click Claim to add ${formatNaira(amount)} to balance. ${completedJobs.length+1}/${limits.taskCount} today</div></div>
-  <button class="complete-btn" type="button" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(amount)} (${completedJobs.length+1}/${limits.taskCount})</button>
-  <a href="${escapeHTML(taskLink)}" target="_blank" style="display:block;text-align:center;margin-top:8px;font-size:11px;color:#6b7280">Open Task Again ↗</a>`;
+  html += `<div class="task-box"><div class="task-label">TASK OPENED ✓ - NOW CLAIM</div><div class="task-info">You opened the task. Now click Claim to add ${formatNaira(amount)} to balance. ${stats.done+1}/${limits.taskCount} today - ₦${(stats.earn+amount).toLocaleString()}/${limits.maxDaily.toLocaleString()}</div></div>
+  <button class="complete-btn" type="button" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(amount)} (${stats.done+1}/${limits.taskCount})</button>`;
 } else {
-  html += `<div class="task-box"><div class="task-label">REQUIRED TASK - ${plan} Rate ₦${amount}</div><div class="task-info">Open the task first, then return to claim your reward. ${completedJobs.length}/${limits.taskCount} done today</div></div>
-  <button class="task-open-btn" type="button" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗ ${escapeHTML(taskLink.substring(0,35))}...</button>`;
+  html += `<div class="task-box"><div class="task-label">REQUIRED TASK - ${plan} Rate ₦${amount}</div><div class="task-info">Open the task first, then return to claim. ${stats.done}/${limits.taskCount} done - Remaining ₦${stats.remainingEarn.toLocaleString()}</div></div>
+  <button class="task-open-btn" type="button" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗</button>`;
 }
 item.innerHTML = html;
 list.appendChild(item);
@@ -362,21 +349,12 @@ async function getCurrentUser(){
   if(!response.ok)throw new Error("Unable to verify");
   const data=await response.json();
   const user = data?.user||data?.data?.user||data;
-  // SYNC PLAN FROM SERVER - handles manual admin approval
   try{
     if(user?.package || user?.plan){
       const serverPlan = String(user.package||user.plan).toLowerCase().includes("gold") ? "Gold" : "Silver";
       localStorage.setItem("jovia_paid_plan", serverPlan);
       localStorage.setItem("jovia_plan", serverPlan);
       localStorage.setItem("jovia_user", JSON.stringify({email:user.email, plan:serverPlan, status:"active"}));
-    } else if(user?.email){
-      // Also try check-status
-      const chk = await fetch(`${API_BASE}/api/check-status?email=${encodeURIComponent(user.email)}&t=${Date.now()}`,{cache:"no-store"}).then(r=>r.json()).catch(()=>null);
-      if(chk?.plan){
-        const p = chk.plan.toLowerCase().includes("gold") ? "Gold" : "Silver";
-        localStorage.setItem("jovia_paid_plan", p);
-        localStorage.setItem("jovia_plan", p);
-      }
     }
     updatePlanUI();
   }catch{}
@@ -386,6 +364,7 @@ async function getCurrentUser(){
 async function loadJobs(){
 const loading=document.getElementById("loadingState");const error=document.getElementById("errorState");const empty=document.getElementById("emptyState");
 try{
+checkDailyReset();
 updatePlanUI();
 loading.style.display="block";error.style.display="none";empty.style.display="none";
 document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="none";
@@ -401,30 +380,17 @@ const data=await response.json();let jobs=data?.jobs||data?.data?.jobs||[];if(!A
 allJobs=jobs;
 availableJobs=jobs.filter(job=>!isCompleted(job));
 completedJobs=jobs.filter(job=>isCompleted(job));
-const plan = getCurrentPlan();
-const limits = getPlanLimits(plan);
 document.getElementById("availableCount").textContent=availableJobs.length;
-// Enforce limit on display count
-const remaining = Math.max(0, limits.taskCount - completedJobs.length);
-document.getElementById("completedCount").textContent=completedJobs.length+"/"+limits.taskCount;
-if(remaining===0 && currentFilter==="available"){
-  // Show limit message
-}
-if(currentFilter==="completed")renderJobs(completedJobs);else renderJobs(availableJobs.slice(0, remaining>0?remaining:0));
-if(remaining===0 && currentFilter==="available"){
-  renderJobs([]); // Will trigger limit block
-  // Actually render with limit logic
-  const list=document.getElementById("jobsList");
-  // re-render to show block
-  renderJobs(availableJobs);
-}
+updatePlanUI();
+if(currentFilter==="completed")renderJobs(completedJobs);else renderJobs(availableJobs);
 }catch(e){accountActivated=false;loading.style.display="none";error.style.display="block";}
 }
 async function openTask(jobId,button){
 if(!accountActivated){showActivationState();return}
-if(!canClaimMore()){
+if(isDailyLimitReached()){
   const plan=getCurrentPlan(); const limits=getPlanLimits(plan);
-  showMessage(`🚫 Daily limit reached! ${plan} max ${limits.taskCount} jobs (₦${limits.maxDaily.toLocaleString()}/day). Come tomorrow or upgrade to Gold.`, "error");
+  showMessage(`🚫 Daily limit reached! ${plan} max ${limits.taskCount} jobs (₦${limits.maxDaily.toLocaleString()}/day). Come tomorrow.`, "error");
+  renderJobs(availableJobs);
   return;
 }
 if(button){button.disabled=true;button.textContent="Opening...";}
@@ -447,9 +413,9 @@ setTimeout(()=>{loadJobs()},800);
 }
 async function completeJob(jobId,button){
 if(!accountActivated){showActivationState();return}
-if(!canClaimMore()){
+if(isDailyLimitReached()){
   const plan=getCurrentPlan(); const limits=getPlanLimits(plan);
-  showMessage(`🚫 Daily limit reached! ${plan} = ₦${limits.maxDaily.toLocaleString()} max (${limits.taskCount} jobs). Upgrade to Gold for ₦7,000/day.`, "error");
+  showMessage(`🚫 Limit reached! ${plan} = ₦${limits.maxDaily.toLocaleString()} max (${limits.taskCount} jobs).`, "error");
   renderJobs(availableJobs);
   return;
 }
@@ -458,11 +424,10 @@ try{
 const response=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});
 const data=await response.json().catch(()=>({}));
 if(!response.ok)throw new Error(data?.message||"Open task first");
-const reward=getResponseReward(data,allJobs.find(j=>String(getJobId(j))===String(jobId))||{});
 const plan=getCurrentPlan();
 const limits=getPlanLimits(plan);
-const newCount = completedJobs.length+1;
-showMessage(`✅ Job completed! ${formatNaira(reward)} added! ${newCount}/${limits.taskCount} today. Wallet: ${formatNaira(data.walletBalance||data.wallet_balance||"")}`,"success");
+const reward=limits.perTask;
+showMessage(`✅ ${formatNaira(reward)} added! ${completedJobs.length+1}/${limits.taskCount} today.`,"success");
 if(data.walletBalance||data.wallet_balance) document.getElementById("walletBalance").textContent=formatNaira(data.walletBalance||data.wallet_balance);
 await loadJobs();
 }catch(e){showMessage(e.message||"Unable to complete","error");if(button){button.disabled=false;button.textContent=`Claim`;}}
@@ -475,7 +440,7 @@ document.getElementById("jobsList").addEventListener("click",async event=>{
   if(action==="complete"){await completeJob(jobId,button);}
 });
 document.getElementById("filterRow").addEventListener("click",event=>{const button=event.target.closest(".filter-btn");if(!button)return;filterJobs(button.dataset.filter,button);});
-document.addEventListener("DOMContentLoaded",()=>{updatePlanUI(); loadJobs();loadVideos();});
+document.addEventListener("DOMContentLoaded",()=>{checkDailyReset(); updatePlanUI(); loadJobs();loadVideos();});
 </script>
 </body>
 </html>
