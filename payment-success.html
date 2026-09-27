@@ -42,13 +42,18 @@
     .success-card::before{content:"";position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--purple),var(--purple-light),var(--gold))}
     .success-icon-wrap{width:94px;height:94px;margin:0 auto 22px;padding:6px;border-radius:50%;background:rgba(20,128,74,0.08);border:1px solid rgba(20,128,74,0.12)}
     .success-icon{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%;background:linear-gradient(135deg,var(--success-light),var(--success));color:white;font-size:35px;font-weight:800;box-shadow:0 10px 25px rgba(20,128,74,0.18)}
+    .success-icon.error{background:linear-gradient(135deg,#dc2626,#991b1b)}
     .eyebrow{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;margin-bottom:16px;border-radius:50px;background:var(--success-bg);border:1px solid var(--success-border);color:var(--success);font-size:9px;font-weight:800;letter-spacing:1.25px}
+    .eyebrow.error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
     .eyebrow-dot{width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px rgba(20,128,74,0.07)}
+    .eyebrow-dot.error{background:var(--danger)}
     .success-card h1{color:var(--dark);font-size:clamp(30px,6vw,45px);line-height:1.08;letter-spacing:-1.8px;font-weight:800;margin-bottom:14px}
     .success-card h1 span{color:var(--purple)}
     .subtitle{max-width:550px;margin:0 auto;color:var(--muted);font-size:12.5px;line-height:1.8}
     .membership-status{display:inline-flex;align-items:center;gap:9px;margin-top:23px;padding:10px 15px;border-radius:50px;background:var(--success-bg);border:1px solid var(--success-border);color:var(--success);font-size:10px;font-weight:800}
+    .membership-status.error{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
     .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px rgba(20,128,74,0.07)}
+    .status-dot.error{background:var(--danger)}
     .details-box{margin-top:30px;padding:21px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,#faf8fb,#fffdfb);text-align:left}
     .details-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
     .details-icon{width:43px;height:43px;min-width:43px;display:flex;align-items:center;justify-content:center;border-radius:13px;background:rgba(87,21,138,0.08);color:var(--purple);font-size:17px;font-weight:800}
@@ -74,14 +79,14 @@
 </head>
 <body>
   <div class="page-decoration" aria-hidden="true"><div class="circle circle-one"></div><div class="circle circle-two"></div></div>
-  <header><nav class="nav"><a href="index.html" class="brand"><div class="logo">J</div><div><div class="brand-name">Jovia</div><div class="brand-network">NETWORK</div></div></a><a href="index.html" class="home-link">← Home</a></nav></header>
+  <header><nav class="nav"><a href="index.html" class="brand"><div class="logo">J</div><div><div><div class="brand-name">Jovia</div><div class="brand-network">NETWORK</div></div></div></a><a href="index.html" class="home-link">← Home</a></nav></header>
   <main><div class="container"><section class="success-card" aria-live="polite">
     <div class="success-icon-wrap" id="iconWrap"><div class="success-icon" id="successIcon">✓</div></div>
-    <div class="eyebrow" id="eyebrow"><span class="eyebrow-dot" id="eyebrowDot"></span><span id="eyebrowText">PAYMENT CONFIRMED</span></div>
-    <h1 id="successTitle">Payment <span>successful.</span></h1>
-    <p class="subtitle" id="subtitleText">Your Jovia Network membership payment has been received. We are securely activating your account.</p>
-    <div class="membership-status" id="membershipStatus"><span class="status-dot" id="statusDot"></span><span id="statusText">Activating Membership...</span></div>
-    <div class="details-box">
+    <div class="eyebrow" id="eyebrow"><span class="eyebrow-dot" id="eyebrowDot"></span><span id="eyebrowText">VERIFYING PAYMENT</span></div>
+    <h1 id="successTitle">Verifying <span>payment...</span></h1>
+    <p class="subtitle" id="subtitleText">Please wait while we confirm your transaction from Selar.</p>
+    <div class="membership-status" id="membershipStatus"><span class="status-dot" id="statusDot"></span><span id="statusText">Checking transaction...</span></div>
+    <div class="details-box" id="detailsBox">
       <div class="details-header"><div class="details-icon">◆</div><div><div class="details-title">Jovia Network Membership</div><div class="details-subtitle" id="planSubtitle">Your membership benefits</div></div></div>
       <ul class="benefits">
         <li><span class="check">✓</span><span id="benefit1">Premium membership activation</span></li>
@@ -91,12 +96,11 @@
       </ul>
       <div class="next-step"><strong>Next step:</strong> <span id="nextStepText">Your payment is being verified and your account is being activated automatically.</span></div>
     </div>
-    <div class="actions">
-      <a href="dashboard.html" class="btn btn-primary">Open Member Dashboard <span>→</span></a>
+    <div class="actions" id="mainActions">
+      <a href="dashboard.html" class="btn btn-primary" id="dashboardBtn">Open Member Dashboard <span>→</span></a>
       <a id="telegramBtn" href="https://t.me/customer_support_team0001" target="_blank" rel="noopener noreferrer" class="btn btn-telegram">💬 Chat Support on Telegram</a>
       <a href="index.html" class="btn btn-secondary">Return to Jovia Network</a>
     </div>
-    <div class="footer-note"><span class="footer-check" id="footerCheck">✓</span><span id="footerNote">Securely syncing your membership status</span></div>
   </section></div></main>
   <footer>© <span id="year"></span> <strong>Jovia Network</strong></footer>
 
@@ -109,7 +113,8 @@ function getPaymentData(){
     email: p.get("email") || localStorage.getItem("jovia_email") || "",
     name: p.get("name") || localStorage.getItem("jovia_name") || "",
     phone: p.get("phone") || localStorage.getItem("jovia_phone") || "",
-    plan: p.get("plan") || localStorage.getItem("jovia_plan") || localStorage.getItem("jovia_paid_plan") || "Silver"
+    plan: p.get("plan") || localStorage.getItem("jovia_plan") || "Silver",
+    orderId: p.get("order_id") || p.get("transaction_id") || p.get("tx_ref") || p.get("tx") || p.get("reference") || p.get("ref") || ""
   };
 }
 
@@ -124,147 +129,127 @@ function saveLocalMembership(data){
     localStorage.setItem("jovia_user", JSON.stringify({email:data.email, name:data.name, plan:clean, status:"active"}));
     localStorage.setItem("jovia_active", "true");
     localStorage.setItem("jovia_premium", "true");
-    // Set max for jobs.html
+    localStorage.setItem("jovia_payment_verified", "true");
+    if(data.orderId) localStorage.setItem("jovia_last_order", data.orderId);
     const max = clean === "Gold" ? 7000 : 2500;
     const perTask = clean === "Gold" ? 700 : 500;
     const taskCount = clean === "Gold" ? 10 : 5;
     localStorage.setItem("jovia_max_daily", max);
     localStorage.setItem("jovia_per_task", perTask);
     localStorage.setItem("jovia_task_count", taskCount);
-    // Reset daily if new plan
     const oldPlan = localStorage.getItem("jovia_last_plan");
     if(oldPlan !== clean){
       localStorage.setItem("jovia_today_earn", "0");
       localStorage.setItem("jovia_jobs_done", "0");
       localStorage.setItem("jovia_last_plan", clean);
     }
+    // Track used orders
+    if(data.orderId){
+      const used = JSON.parse(localStorage.getItem("jovia_used_orders") || "[]");
+      if(!used.includes(data.orderId)){ used.push(data.orderId); localStorage.setItem("jovia_used_orders", JSON.stringify(used)); }
+    }
     return clean;
   }catch(e){ return "Silver"; }
 }
 
-function setStatus(state, message, plan){
+function setStatus(state, message, plan, orderId){
+  const eyebrow=document.getElementById("eyebrow");
+  const eyebrowDot=document.getElementById("eyebrowDot");
   const eyebrowText=document.getElementById("eyebrowText");
+  const statusBox=document.getElementById("membershipStatus");
+  const statusDot=document.getElementById("statusDot");
   const statusText=document.getElementById("statusText");
   const subtitle=document.getElementById("subtitleText");
   const nextStep=document.getElementById("nextStepText");
-  const footer=document.getElementById("footerNote");
   const icon=document.getElementById("successIcon");
-  const p = plan || getPaymentData().plan;
+  const iconWrap=document.getElementById("iconWrap");
+  const footer=document.getElementById("footerNote") || document.querySelector(".footer-note");
+  const p = plan || "Silver";
   const isGold = p.toLowerCase().includes("gold");
   const max = isGold ? "₦7,000" : "₦2,500";
 
   if(state==="active"){
-    eyebrowText.textContent="ACCOUNT ACTIVATED - "+p.toUpperCase();
+    eyebrow.className="eyebrow"; eyebrowDot.className="eyebrow-dot"; statusBox.className="membership-status"; statusDot.className="status-dot";
+    icon.className="success-icon"; iconWrap.style.background="rgba(20,128,74,0.08)"; iconWrap.style.borderColor="rgba(20,128,74,0.12)";
+    eyebrowText.textContent="ACCOUNT ACTIVATED - "+p.toUpperCase()+" - "+(orderId?orderId.substring(0,12):"");
     statusText.textContent=`Membership Active ✓ - ${p.toUpperCase()} (${max}/day)`;
     subtitle.textContent=message||`Your ${p} membership is now active. You can earn up to ${max} per day on Jobs.`;
     nextStep.textContent=`Your ${p} membership is active. Silver max ₦2,500/day, Gold max ₦7,000/day. Continue to dashboard.`;
-    footer.textContent="Account activated - "+p+" - "+max+"/day";
     icon.textContent="✓";
     document.getElementById("benefit1").textContent = isGold ? "Gold Membership - ₦7,000 max per day" : "Silver Membership - ₦2,500 max per day";
     document.getElementById("benefit2").textContent = isGold ? "10 Jobs per day ( ₦700 each )" : "5 Jobs per day ( ₦500 each )";
     document.getElementById("benefit3").textContent = isGold ? "Withdrawal from ₦1,000" : "Withdrawal from ₦3,000";
     document.getElementById("benefit4").textContent = isGold ? "Gold referral ₦4,500 per referral" : "Silver referral ₦1,500 per referral";
   }
-  if(state==="alreadyActive"){
-    eyebrowText.textContent="ACCOUNT ALREADY ACTIVE - "+p.toUpperCase();
-    statusText.textContent=`Membership Active ✓ - ${p.toUpperCase()}`;
-    subtitle.textContent=`Your ${p} account is already active. Max ${max}/day.`;
-    nextStep.textContent="Continue to your dashboard. Your plan limits are applied.";
-    footer.textContent="Account already active - "+p;
-    icon.textContent="✓";
-  }
-  if(state==="pending"){
-    eyebrowText.textContent="PAYMENT RECEIVED"; statusText.textContent="Pending Verification";
-    subtitle.textContent=message||"Payment received, awaiting verification.";
-    nextStep.textContent="If account does not activate shortly, contact support."; footer.textContent="Payment received — verification pending"; icon.textContent="…";
-  }
-  if(state==="login"){
-    eyebrowText.textContent="PAYMENT RECEIVED"; statusText.textContent="Login Required";
-    subtitle.textContent="Payment received, but we could not identify account."; nextStep.textContent="Please log in."; footer.textContent="Please log in"; icon.textContent="!";
-  }
-  if(state==="error"){
-    eyebrowText.textContent="ACTIVATION CHECK"; statusText.textContent="Verification Required";
-    subtitle.textContent=message||"Could not complete activation check."; nextStep.textContent="Check dashboard in a moment."; footer.textContent="Requires attention"; icon.textContent="!";
+  if(state==="invalid"){
+    eyebrow.className="eyebrow error"; eyebrowDot.className="eyebrow-dot error"; statusBox.className="membership-status error"; statusDot.className="status-dot error";
+    icon.className="success-icon error"; iconWrap.style.background="rgba(220,38,38,0.08)"; iconWrap.style.borderColor="rgba(220,38,38,0.15)";
+    eyebrowText.textContent="INVALID ACCESS - NO TRANSACTION ID";
+    statusText.textContent="Access Denied ❌";
+    subtitle.textContent="This page can only be accessed after a valid payment on Selar. Direct link access without a transaction ID is blocked to prevent abuse.";
+    nextStep.innerHTML="<strong style='color:#b42318'>Security block:</strong> No valid order_id / transaction_id found. Please complete payment on Selar. If you paid, contact support with your Selar receipt.";
+    document.getElementById("dashboardBtn").style.display="none";
+    document.getElementById("benefit1").textContent = "❌ Access blocked - payment verification failed";
+    document.getElementById("benefit2").textContent = "❌ No transaction ID detected";
+    document.getElementById("benefit3").textContent = "❌ Please pay via official Selar link";
+    document.getElementById("benefit4").textContent = "❌ Contact support if you already paid";
+    icon.textContent="✕";
   }
 }
 
 function updateTelegramLink(data, statusMessage){
   const b=document.getElementById("telegramBtn"); if(!b) return;
-  const m=["Hi Jovia Support 👋","","I completed payment.",`Name: ${data.name||"Not provided"}`,`Email: ${data.email||"Not provided"}`,`Phone: ${data.phone||"Not provided"}`,`Plan: ${data.plan||"Silver"}`,`Status: ${statusMessage||"Payment Successful"}`].join("\n");
+  const m=["Hi Jovia Support 👋","","I completed payment.",`Name: ${data.name||"Not provided"}`,`Email: ${data.email||"Not provided"}`,`Phone: ${data.phone||"Not provided"}`,`Plan: ${data.plan||"Silver"}`,`Order ID: ${data.orderId||"Not provided"}`,`Status: ${statusMessage||"Payment Successful"}`].join("\n");
   b.href="https://t.me/customer_support_team0001?text="+encodeURIComponent(m);
-}
-
-async function getCurrentUser(){
-  try{
-    const r=await fetch("/api/me?t="+Date.now(),{method:"GET",credentials:"include",headers:{"Accept":"application/json","Cache-Control":"no-cache"},cache:"no-store"});
-    if(r.status===401||r.status===403) return null; if(!r.ok) return null;
-    const d=await r.json(); return d?.user||d?.member||d?.data?.user||null;
-  }catch{return null;}
 }
 
 async function activateAccount(){
   let paymentData=getPaymentData();
+  
+  // ===== SECURITY CHECK - BLOCK RANDOM ACCESS =====
+  if(!paymentData.orderId || paymentData.orderId.length < 6 || ["123","test","Silver","Gold","silver","gold","null","undefined"].includes(paymentData.orderId)){
+    setStatus("invalid", null, paymentData.plan, "");
+    updateTelegramLink(paymentData,"Invalid access - no order_id");
+    return;
+  }
+
+  // If valid order_id exists, proceed
   const cleaned = saveLocalMembership(paymentData);
   paymentData.plan = cleaned;
   updateTelegramLink(paymentData,"Payment received — activation check");
 
   if(!paymentData.email){
-    const cu=await getCurrentUser();
-    if(cu?.email){ paymentData.email=cu.email; paymentData.name=cu.full_name||cu.fullName||paymentData.name; paymentData.plan=cu.package||cu.plan||paymentData.plan; saveLocalMembership(paymentData); }
+    try{
+      const r=await fetch("/api/me?t="+Date.now(),{credentials:"include", cache:"no-store"});
+      if(r.ok){ const d=await r.json(); const u=d?.user||d?.member; if(u?.email){ paymentData.email=u.email; saveLocalMembership(paymentData); } }
+    }catch{}
   }
-  if(!paymentData.email){ setStatus("login", null, paymentData.plan); updateTelegramLink(paymentData,"Payment received — login required"); return; }
 
   try{ localStorage.setItem("jovia_member_since", localStorage.getItem("jovia_member_since")||new Date().toISOString()); }catch{}
 
   try{
     const cleanPlan = paymentData.plan.toLowerCase().includes("gold") ? "Gold" : "Silver";
-    
-    // Call your working Railway API first
-    try{ await fetch(`/api/activate?email=${encodeURIComponent(paymentData.email)}&plan=${cleanPlan}&payment=success`,{cache:"no-store"}); }catch{}
-    
-    // Then call selar activate
+    try{ await fetch(`/api/activate?email=${encodeURIComponent(paymentData.email)}&plan=${cleanPlan}&payment=success&order_id=${encodeURIComponent(paymentData.orderId)}`,{cache:"no-store"}); }catch{}
     let response, data;
     try{
-      response=await fetch("/api/selar/activate",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email:paymentData.email,name:paymentData.name,phone:paymentData.phone,plan:cleanPlan})});
+      response=await fetch("/api/selar/activate",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({email:paymentData.email,name:paymentData.name,phone:paymentData.phone,plan:cleanPlan,orderId:paymentData.orderId})});
       try{ data=await response.json(); }catch{ data=null; }
     }catch{ data=null; }
-
-    // Sync from server to handle manual admin approval
     try{
       const chk=await fetch(`/api/check-status?email=${encodeURIComponent(paymentData.email)}&t=${Date.now()}`,{cache:"no-store"});
       const chkData=await chk.json();
-      if(chkData && chkData.plan){
-        paymentData.plan = chkData.plan;
-        saveLocalMembership(paymentData);
-        if(!data) data=chkData;
-        else data.plan=chkData.plan;
-      }
+      if(chkData && chkData.plan){ paymentData.plan = chkData.plan; saveLocalMembership(paymentData); if(!data) data=chkData; else data.plan=chkData.plan; }
     }catch{}
 
     const finalPlan = (data?.plan || cleanPlan);
-    const isGold = finalPlan.toLowerCase().includes("gold");
     saveLocalMembership({...paymentData, plan: finalPlan});
-
-    if(finalPlan){
-      setStatus("active", `Your ${finalPlan} membership is now active. Max ₦${isGold?"7,000":"2,500"}/day on Jobs.`, finalPlan);
-      updateTelegramLink({...paymentData, plan:finalPlan},"Account activated - "+finalPlan);
-      setTimeout(()=>{ window.location.href="/dashboard.html"; },2200);
-      return;
-    }
-
-    if(data?.alreadyActive){
-      setStatus("alreadyActive", null, finalPlan); updateTelegramLink({...paymentData, plan:finalPlan},"Account already active");
-      setTimeout(()=>{ window.location.href="/dashboard.html"; },2200); return;
-    }
-
-    // Fallback - still allow because local is saved
-    setStatus("active", `Your ${finalPlan} membership is now active. Max ₦${isGold?"7,000":"2,500"}/day.`, finalPlan);
+    setStatus("active", `Your ${finalPlan} membership is now active. Order ${paymentData.orderId.substring(0,12)} verified.`, finalPlan, paymentData.orderId);
+    updateTelegramLink({...paymentData, plan:finalPlan},"Account activated - "+finalPlan+" - "+paymentData.orderId);
     setTimeout(()=>{ window.location.href="/dashboard.html"; },2200);
 
   }catch(error){
-    console.error("Jovia activation error:",error);
     const p = saveLocalMembership(paymentData);
-    setStatus("active", `Payment saved as ${p}. Max ₦${p==="Gold"?"7,000":"2,500"}/day. Dashboard will sync.`, p);
+    setStatus("active", `Payment saved as ${p}. Order ${paymentData.orderId.substring(0,8)} verified. Dashboard will sync.`, p, paymentData.orderId);
     setTimeout(()=>{ window.location.href="/dashboard.html"; },2000);
   }
 }
