@@ -7,19 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
- --purple:#2a0f3d;
- --purple2:#4b1d6b;
- --purple-light:#f6f0fa;
- --gold:#f5b700;
- --gold-light:#ffe88a;
- --bg:#fbf8ff;
- --text:#1e1430;
- --muted:#8a8196;
- --white:#ffffff;
- --border:#ece6f1;
- --success:#16a34a;
-}
+:root{--purple:#2a0f3d;--purple2:#4b1d6b;--purple-light:#f6f0fa;--gold:#f5b700;--gold-light:#ffe88a;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--white:#ffffff;--border:#ece6f1;--success:#16a34a}
 body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
 button{font-family:inherit}
 .app{width:100%;max-width:680px;min-height:100vh;margin:auto;padding:20px 18px 115px}
@@ -28,8 +16,7 @@ button{font-family:inherit}
 .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white;box-shadow:0 8px 20px rgba(75,29,107,0.3)}
 .logo-name{font-size:16px;font-weight:800;color:var(--purple);letter-spacing:-0.3px}
 .logo-sub{display:block;font-size:9px;letter-spacing:2.5px;color:var(--muted);font-weight:700;margin-top:1px}
-.menu-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:18px;cursor:pointer;transition:0.2s}
-.menu-btn:hover{background:var(--purple-light);transform:rotate(5deg)}
+.menu-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:18px;cursor:pointer}
 .welcome{margin-bottom:20px;padding:0 4px}
 .welcome-label{font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .welcome-label:before{content:"";width:22px;height:2px;background:var(--gold);border-radius:2px}
@@ -46,36 +33,31 @@ button{font-family:inherit}
 .account-top{position:relative;z-index:2;display:flex;justify-content:space-between;align-items:flex-start}
 .account-label{font-size:10px;letter-spacing:1.5px;opacity:.7;font-weight:700}
 .account-balance{font-size:40px;font-weight:900;margin-top:6px;letter-spacing:-1.5px;line-height:1}
-.plan-badge{position:relative;z-index:2;padding:8px 14px;border-radius:30px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#2a1a00;font-size:11px;font-weight:900;box-shadow:0 4px 15px rgba(245,183,0,0.35);letter-spacing:0.3px}
+.plan-badge{position:relative;z-index:2;padding:8px 14px;border-radius:30px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#2a1a00;font-size:11px;font-weight:900;box-shadow:0 4px 15px rgba(245,183,0,0.35)}
 .account-info{position:relative;z-index:2;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.12);display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .info-box small{display:block;color:rgba(255,255,255,.6);font-size:10px;margin-bottom:5px;font-weight:600;letter-spacing:0.8px}
 .info-box strong{font-size:14px;font-weight:700}
-.account-button{position:relative;z-index:2;width:100%;border:0;margin-top:20px;padding:15px;border-radius:14px;background:linear-gradient(135deg,#ffc400 0%,#ffe06b 100%);color:#2a1a00;font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(255,196,0,0.35);transition:0.2s}
-.account-button:hover{transform:translateY(-1px);box-shadow:0 12px 25px rgba(255,196,0,0.45)}
-.account-button:disabled{opacity:0.6;cursor:default;transform:none}
+.account-button{position:relative;z-index:2;width:100%;border:0;margin-top:20px;padding:15px;border-radius:14px;background:linear-gradient(135deg,#ffc400 0%,#ffe06b 100%);color:#2a1a00;font-size:14px;font-weight:800;cursor:pointer}
 .quick-title{font-size:15px;font-weight:800;color:var(--purple);margin:26px 0 14px;display:flex;align-items:center;gap:10px}
 .quick-title:after{content:"";flex:1;height:1px;background:var(--border)}
 .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.quick{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;box-shadow:0 6px 20px rgba(42,15,61,0.04);transition:0.2s}
-.quick:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(42,15,61,0.08);border-color:#ddd3e8}
-.quick-icon{width:46px;height:46px;flex-shrink:0;border-radius:13px;background:linear-gradient(135deg,#fff8d6,#fff0a8);display:flex;align-items:center;justify-content:center;font-size:18px;color:#8a5c00;box-shadow:0 4px 10px rgba(245,183,0,0.15)}
+.quick{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;box-shadow:0 6px 20px rgba(42,15,61,0.04)}
+.quick-icon{width:46px;height:46px;flex-shrink:0;border-radius:13px;background:linear-gradient(135deg,#fff8d6,#fff0a8);display:flex;align-items:center;justify-content:center;font-size:18px;color:#8a5c00}
 .quick strong{display:block;color:var(--purple);font-size:13px;margin-bottom:2px;font-weight:700}
 .quick small{color:var(--muted);font-size:11px;font-weight:500}
 .referral-card{background:white;border:1px solid var(--border);border-radius:22px;padding:20px;margin-top:22px;box-shadow:0 8px 25px rgba(42,15,61,0.05)}
 .referral-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.referral-heading h2{color:var(--purple);font-size:16px;font-weight:800;letter-spacing:-0.3px}
+.referral-heading h2{color:var(--purple);font-size:16px;font-weight:800}
 .referral-box{border:1.5px dashed #d9cfea;background:linear-gradient(135deg,#fdfbff,#f6f0ff);border-radius:14px;padding:14px}
 .referral-label{font-size:9px;color:#9a8da8;letter-spacing:1.2px;font-weight:800;margin-bottom:7px}
 .referral-url{color:var(--purple);font-size:12px;font-weight:700;line-height:1.5;word-break:break-all}
 .referral-actions{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
-.copy{border:0;background:var(--purple);color:#fff;padding:12px 18px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer;transition:0.2s;box-shadow:0 6px 15px rgba(42,15,61,0.2)}
-.copy:hover{background:var(--purple2);transform:translateY(-1px)}
+.copy{border:0;background:var(--purple);color:#fff;padding:12px 18px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer}
 .ref-count{font-size:11px;color:var(--muted);background:var(--purple-light);padding:7px 12px;border-radius:20px;font-weight:600}
 .activity-section{margin-top:26px}
 .activity-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .activity-head h2{color:var(--purple);font-size:16px;font-weight:800}
-.activity-head button{background:var(--purple-light);border:1px solid var(--border);color:var(--purple);font-size:11px;font-weight:800;cursor:pointer;padding:7px 12px;border-radius:20px;transition:0.2s}
-.activity-head button:hover{background:var(--purple);color:white}
+.activity-head button{background:var(--purple-light);border:1px solid var(--border);color:var(--purple);font-size:11px;font-weight:800;cursor:pointer;padding:7px 12px;border-radius:20px}
 .activity-item{background:white;border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 6px 20px rgba(42,15,61,0.04)}
 .activity-left{display:flex;align-items:center;gap:12px}
 .activity-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#f0e6ff,#e8d9ff);color:var(--purple);display:flex;align-items:center;justify-content:center;font-weight:800}
@@ -83,101 +65,57 @@ button{font-family:inherit}
 .activity-date{font-size:10px;color:var(--muted);margin-top:3px;font-weight:500}
 .activity-amount{color:#8a5c00;font-size:13px;font-weight:800;background:#fff8d6;padding:6px 10px;border-radius:10px}
 .bottom-nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:500px;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;padding:10px 8px;display:grid;grid-template-columns:repeat(4,1fr);z-index:100;box-shadow:0 15px 40px rgba(42,15,61,0.12)}
-.nav{border:0;background:none;color:#9a92a6;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;cursor:pointer;transition:0.2s;padding:6px 0;border-radius:14px}
-.nav-icon{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:20px;transition:0.2s}
+.nav{border:0;background:none;color:#9a92a6;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;cursor:pointer;padding:6px 0;border-radius:14px}
+.nav-icon{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:20px}
 .nav.active{color:var(--purple);background:var(--purple-light)}
-@media(max-width:390px){.app{padding-left:14px;padding-right:14px}.welcome h1{font-size:24px}.account-balance{font-size:34px}.quick{padding:14px 11px}}
-#joviaPopupOverlay{position:fixed;inset:0;z-index:99999;background:rgba(18,6,32,0.75);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}
-#joviaPopupOverlay.show{display:flex}
-#joviaPopupBox{width:100%;max-width:440px;background:white;border-radius:24px;padding:28px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,0.30);position:relative;text-align:center;animation:popupIn 0.35s ease;border:1px solid #ece5f3}
+#joviaPopupOverlay{position:fixed;inset:0;z-index:99999;background:rgba(18,6,32,0.85);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:18px}
+#joviaPopupOverlay.show{display:flex!important}
+#joviaPopupBox{width:100%;max-width:440px;background:white;border-radius:24px;padding:28px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,0.35);position:relative;text-align:center;animation:popupIn 0.35s ease;border:1px solid #ece5f3}
 @keyframes popupIn{from{transform:scale(0.85) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 #joviaPopupClose{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:#f3eef8;color:#57158a;border:none;font-size:16px;font-weight:800;cursor:pointer}
 .joviaPopupBadge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f3eef8;border:1px solid #e9e2ef;border-radius:50px;color:#57158a;font-size:9px;font-weight:800;letter-spacing:1px;margin-bottom:14px}
 .joviaPopupTitle{font-size:20px;font-weight:800;color:#1c102b;margin-bottom:10px;line-height:1.2}
 .joviaPopupText{font-size:12.5px;line-height:1.7;color:#5f5170;margin-bottom:18px;text-align:left;background:#fcf9ff;border:1px solid #f0e8f8;border-radius:14px;padding:14px}
 .joviaPopupBtns{display:grid;gap:10px}
-.joviaBtn{width:100%;min-height:50px;border-radius:12px;border:none;font-size:11.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.joviaBtn{width:100%;min-height:50px;border-radius:12px;border:none;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
 .joviaBtnChannel{background:linear-gradient(135deg,#229ed9,#1c8ac0);color:white;box-shadow:0 10px 22px rgba(34,158,217,0.25)}
 .joviaBtnClose{background:white;border:1px solid #e9e2ef;color:#57158a}
-.joviaPopupSmall{margin-top:12px;font-size:9px;color:#9a8aaa}
 </style>
 </head>
 <body>
 <div class="app">
-    <header class="topbar">
-        <div class="logo-area">
-            <div class="logo">J</div>
-            <div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div>
-        </div>
-        <button class="menu-btn" onclick="logout()">↪</button>
-    </header>
-    <section class="welcome">
-        <div class="welcome-label">MEMBER AREA</div>
-        <h1>Hello, <span id="userName">Loading...</span></h1>
-    </section>
-    <section class="account-card" id="accountCard">
-        <div class="swipe-wrapper" id="swipeWrapper">
-            <div class="swipe-slide">
-                <div class="account-top"><div><div class="account-label">AVAILABLE BALANCE</div><div class="account-balance" id="balance">₦0</div></div><div class="plan-badge" id="planBadge">SILVER</div></div>
-                <div class="account-info"><div class="info-box"><small>ACCOUNT STATUS</small><strong id="accountStatus">Pending</strong></div><div class="info-box"><small>WELCOME BONUS</small><strong id="welcomeBonus">₦0</strong></div></div>
-                <button class="account-button" id="paymentButton" onclick="activate()">Continue to Payment</button>
-            </div>
-            <div class="swipe-slide">
-                <div class="account-top"><div><div class="account-label">AFFILIATE EARNINGS</div><div class="account-balance" id="affiliateBalance">₦0</div></div><div class="plan-badge" id="planBadge2">SILVER</div></div>
-                <div class="account-info"><div class="info-box"><small>REFERRALS</small><strong id="affiliateCountBig">0 Joined</strong></div><div class="info-box"><small>TOTAL EARNED</small><strong id="totalEarned">₦0</strong></div></div>
-                <button class="account-button" id="affiliateButton" disabled style="opacity:0.7;cursor:default;">Affiliate Balance</button>
-            </div>
-        </div>
-        <div class="swipe-dots"><div class="dot active" id="dot0"></div><div class="dot" id="dot1"></div></div>
-    </section>
-    <div class="quick-title">Quick access</div>
-    <div class="quick-grid">
-        <button class="quick" onclick="openPage('withdraw.html')"><div class="quick-icon">₦</div><div><strong>Withdraw</strong><small>Request payout</small></div></button>
-        <button class="quick" onclick="openPage('jobs.html')"><div class="quick-icon">◈</div><div><strong>Available Jobs</strong><small>View opportunities</small></div></button>
-        <button class="quick" onclick="openPage('history.html')"><div class="quick-icon">◷</div><div><strong>Transactions</strong><small>View activity</small></div></button>
-        <button class="quick" onclick="openPage('profile.html')"><div class="quick-icon">◍</div><div><strong>My Profile</strong><small>Account settings</small></div></button>
-    </div>
-    <section class="referral-card">
-        <div class="referral-heading"><h2>Invite & Earn</h2></div>
-        <div class="referral-box"><div class="referral-label">YOUR PERSONAL LINK</div><div class="referral-url" id="referralLink">Loading...</div></div>
-        <div class="referral-actions"><button class="copy" onclick="copyReferral()">Copy Link</button><div class="ref-count"><strong id="memberCount">0</strong> joined</div></div>
-    </section>
-    <section class="activity-section">
-        <div class="activity-head"><h2>Latest Activity</h2><button onclick="openPage('history.html')">View All</button></div>
-        <div class="activity-item"><div class="activity-left"><div class="activity-icon">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate">Pending activation</div></div></div><div class="activity-amount" id="activityAmount">Pending</div></div>
-    </section>
+<header class="topbar"><div class="logo-area"><div class="logo">J</div><div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div></div><button class="menu-btn" onclick="logout()">↪</button></header>
+<section class="welcome"><div class="welcome-label">MEMBER AREA</div><h1>Hello, <span id="userName">Loading...</span></h1></section>
+<section class="account-card" id="accountCard"><div class="swipe-wrapper" id="swipeWrapper"><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AVAILABLE BALANCE</div><div class="account-balance" id="balance">₦0</div></div><div class="plan-badge" id="planBadge">SILVER</div></div><div class="account-info"><div class="info-box"><small>ACCOUNT STATUS</small><strong id="accountStatus">Pending</strong></div><div class="info-box"><small>WELCOME BONUS</small><strong id="welcomeBonus">₦0</strong></div></div><button class="account-button" id="paymentButton" onclick="activate()">Continue to Payment</button></div><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AFFILIATE EARNINGS</div><div class="account-balance" id="affiliateBalance">₦0</div></div><div class="plan-badge" id="planBadge2">SILVER</div></div><div class="account-info"><div class="info-box"><small>REFERRALS</small><strong id="affiliateCountBig">0 Joined</strong></div><div class="info-box"><small>TOTAL EARNED</small><strong id="totalEarned">₦0</strong></div></div><button class="account-button" id="affiliateButton" disabled style="opacity:0.7;cursor:default;">Affiliate Balance</button></div></div><div class="swipe-dots"><div class="dot active" id="dot0"></div><div class="dot" id="dot1"></div></div></section>
+<div class="quick-title">Quick access</div><div class="quick-grid"><button class="quick" onclick="openPage('withdraw.html')"><div class="quick-icon">₦</div><div><strong>Withdraw</strong><small>Request payout</small></div></button><button class="quick" onclick="openPage('jobs.html')"><div class="quick-icon">◈</div><div><strong>Available Jobs</strong><small>View opportunities</small></div></button><button class="quick" onclick="openPage('history.html')"><div class="quick-icon">◷</div><div><strong>Transactions</strong><small>View activity</small></div></button><button class="quick" onclick="openPage('profile.html')"><div class="quick-icon">◍</div><div><strong>My Profile</strong><small>Account settings</small></div></button></div>
+<section class="referral-card"><div class="referral-heading"><h2>Invite & Earn</h2></div><div class="referral-box"><div class="referral-label">YOUR PERSONAL LINK</div><div class="referral-url" id="referralLink">Loading...</div></div><div class="referral-actions"><button class="copy" onclick="copyReferral()">Copy Link</button><div class="ref-count"><strong id="memberCount">0</strong> joined</div></div></section>
+<section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate">Pending activation</div></div></div><div class="activity-amount" id="activityAmount">Pending</div></div></section>
 </div>
-<nav class="bottom-nav">
-    <button class="nav active" onclick="openPage('dashboard.html')"><div class="nav-icon">⌂</div>Home</button>
-    <button class="nav" onclick="openPage('jobs.html')"><div class="nav-icon">◈</div>Jobs</button>
-    <button class="nav" onclick="openPage('history.html')"><div class="nav-icon">◷</div>History</button>
-    <button class="nav" onclick="openPage('profile.html')"><div class="nav-icon">◍</div>Profile</button>
-</nav>
+<nav class="bottom-nav"><button class="nav active" onclick="openPage('dashboard.html')"><div class="nav-icon">⌂</div>Home</button><button class="nav" onclick="openPage('jobs.html')"><div class="nav-icon">◈</div>Jobs</button><button class="nav" onclick="openPage('history.html')"><div class="nav-icon">◷</div>History</button><button class="nav" onclick="openPage('profile.html')"><div class="nav-icon">◍</div>Profile</button></nav>
 
-<!-- ===== JOVIA GLOBAL POPUP - LINK FIXED TO t.me/jovianetwerk ===== -->
 <div id="joviaPopupOverlay">
  <div id="joviaPopupBox">
   <button id="joviaPopupClose">✕</button>
   <div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div>
-  <div class="joviaPopupTitle" id="joviaPopupTitle">Join Our Official Channel</div>
-  <div class="joviaPopupText" id="joviaPopupText">Loading...</div>
+  <div class="joviaPopupTitle" id="joviaPopupTitle">🚨 Join Official Channel or Miss Withdrawal! 📢</div>
+  <div class="joviaPopupText" id="joviaPopupText">ATTENTION ALL MEMBERS! 🚨<br><br>All <b>withdrawal codes, payment proofs and daily job updates</b> are now posted ONLY in our official channel: <b>https://t.me/jovianetwerk</b><br><br>If you are NOT in the channel, your withdrawal may be delayed.<br><br>👇 Click below to join now!</div>
   <div class="joviaPopupBtns">
    <a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a>
    <button class="joviaBtn joviaBtnClose" id="joviaPopupOk">I Have Joined, Continue →</button>
   </div>
-  <div class="joviaPopupSmall">You must join to get withdrawal updates • Jovia Network</div>
  </div>
 </div>
 
 <script>
 "use strict";
+// FIXED: showOncePerDay = false so it ALWAYS shows
 const JOVIA_ANNOUNCEMENT = {
   enabled: true,
-  title: "Join Our Official Channel Now! 📢",
-  message: "To receive <b>withdrawal codes, job updates and daily tasks</b>, you MUST join our official channel.<br><br>⚠️ <b>Important:</b> All payment proofs and new earning updates will only be posted in the official channel. If you don't join, you may miss your withdrawal.<br><br>👇 Click below to join now!",
+  title: "🚨 Join Official Channel or Miss Withdrawal! 📢",
+  message: "ATTENTION ALL MEMBERS! 🚨<br><br>All <b>withdrawal codes, payment proofs and daily job updates</b> are now posted ONLY in our official channel: <b>https://t.me/jovianetwerk</b><br><br>If you are NOT in the channel, your withdrawal may be delayed or you will miss important updates.<br><br>👇 Click below to join now!",
   channelUrl: "https://t.me/jovianetwerk",
   channelText: "📲 Join Official Channel →",
-  showOncePerDay: true
+  showOncePerDay: false
 };
 let currentUser = null;
 let currentSlide = 0;
@@ -189,107 +127,62 @@ function isPaymentVerifiedForCurrentUser(currentEmail) {
   const paidPlan = localStorage.getItem("jovia_paid_plan");
   if (!verified || verified!== "true") return {verified: false};
   if (!paidEmail ||!currentEmail) return {verified: false};
-  if (paidEmail === currentEmail.toLowerCase().trim()) {
-    return {verified: true, plan: paidPlan || "Silver", paidEmail};
-  } else {
-    return {verified: false, mismatch: true, paidEmail, currentEmail};
-  }
+  if (paidEmail === currentEmail.toLowerCase().trim()) return {verified: true, plan: paidPlan || "Silver"};
+  return {verified: false};
 }
-function setSlide(i){
-    currentSlide = i;
-    wrapper.style.transform = `translateX(-${i*100}%)`;
-    document.getElementById('dot0').classList.toggle('active', i===0);
-    document.getElementById('dot1').classList.toggle('active', i===1);
-}
+function setSlide(i){ currentSlide = i; wrapper.style.transform = `translateX(-${i*100}%)`; document.getElementById('dot0').classList.toggle('active', i===0); document.getElementById('dot1').classList.toggle('active', i===1); }
 let startX=0; let curX=0; let isDragging=false;
 card.addEventListener('touchstart', e=>{startX=e.touches[0].clientX; isDragging=true; wrapper.style.transition='none';},{passive:true});
 card.addEventListener('touchmove', e=>{if(!isDragging)return; curX=e.touches[0].clientX; let diff=curX-startX; let translate=-currentSlide*100 + (diff/window.innerWidth)*100; wrapper.style.transform=`translateX(${translate}%)`;},{passive:true});
 card.addEventListener('touchend', e=>{if(!isDragging)return; isDragging=false; wrapper.style.transition='transform 0.35s cubic-bezier(0.4,0,0.2,1)'; let diff=curX-startX; if(diff<-50 && currentSlide===0)setSlide(1); else if(diff>50 && currentSlide===1)setSlide(0); else setSlide(currentSlide);});
-card.addEventListener('click', ()=>{setSlide(currentSlide===0?1:0)});
 
 async function loadUser(){
     try{
-        const response = await fetch("/api/me?t=" + Date.now(),{method:"GET",credentials:"include",cache:"no-store",headers:{"Accept":"application/json","Cache-Control":"no-cache"}});
-        let data = null;
-        try{data = await response.json();}catch(error){console.error("Invalid API response:",error);}
+        const response = await fetch("/api/me?t=" + Date.now(),{method:"GET",credentials:"include",cache:"no-store"});
+        let data = null; try{data = await response.json();}catch{}
         if(response.status === 401 || response.status === 403){window.location.href = "login.html";return;}
-        if(!response.ok ||!data){throw new Error("Unable to load account data.");}
-        let user = null;
-        if(data.user && typeof data.user === "object"){user = data.user;}
-        else if(data.data && data.data.user && typeof data.data.user === "object"){user = data.data.user;}
-        else if(data.member && typeof data.member === "object"){user = data.member;}
-        else if(typeof data === "object" && (data.fullName || data.full_name || data.name || data.username || data.email || data.plan || data.package || data.id || data._id)){user = data;}
-        if(!user){throw new Error("No member information was returned.");}
+        if(!response.ok ||!data) throw new Error("load fail");
+        let user = data.user || data.data?.user || data.member || data;
         currentUser = user;
-        const emailToSave = firstText(user.email, data.email);
+        const emailToSave = user.email || data.email;
         if(emailToSave && emailToSave.includes("@")){try{localStorage.setItem("jovia_email", emailToSave.toLowerCase());}catch{}}
         displayUser(currentUser,data);
-        loadWallet();
-        loadReferrals();
-        showGlobalPopup();
-    }catch(error){
-        console.error("Dashboard loading error:",error);
-        document.getElementById("userName").textContent = "Member";
-        document.getElementById("accountStatus").textContent = "Unable to load";
-        document.getElementById("planBadge").textContent = "SILVER";
-        document.getElementById("balance").textContent = "₦0";
-        document.getElementById("welcomeBonus").textContent = "₦0";
-        document.getElementById("referralLink").textContent = "Referral link unavailable";
-        const localEmail = localStorage.getItem("jovia_email")||"";
-        const check = isPaymentVerifiedForCurrentUser(localEmail);
-        if(check.verified){
-          document.getElementById("accountStatus").textContent="Active";
-          document.getElementById("paymentButton").textContent="Account Activated ✓";
-          document.getElementById("paymentButton").disabled=true;
-        }
-        showGlobalPopup();
-    }
+        loadWallet(); loadReferrals();
+    }catch(e){ document.getElementById("userName").textContent = "Member"; }
+    // ALWAYS SHOW POPUP - even if user load fails
+    setTimeout(showGlobalPopup, 800);
 }
-async function loadWallet(){
-    try{const r = await fetch("/api/wallet?t="+Date.now(),{credentials:"include"});const d = await r.json();if(d.success){document.getElementById("balance").textContent = money(d.walletBalance||0);document.getElementById("affiliateBalance").textContent = money(d.affiliateBalance||0);document.getElementById("totalEarned").textContent = money(d.totalEarned||0);}}catch(e){}
-}
-async function loadReferrals(){
-    try{const r = await fetch("/api/referrals?t="+Date.now(),{credentials:"include"});const d = await r.json();if(d.success){document.getElementById("memberCount").textContent = d.totalReferrals||0;document.getElementById("affiliateCountBig").textContent = (d.totalReferrals||0)+" Joined";}}catch(e){}
-}
+async function loadWallet(){ try{const r = await fetch("/api/wallet?t="+Date.now(),{credentials:"include"});const d = await r.json();if(d.success){document.getElementById("balance").textContent = money(d.walletBalance||0);document.getElementById("affiliateBalance").textContent = money(d.affiliateBalance||0);document.getElementById("totalEarned").textContent = money(d.totalEarned||0);}}catch{} }
+async function loadReferrals(){ try{const r = await fetch("/api/referrals?t="+Date.now(),{credentials:"include"});const d = await r.json();if(d.success){document.getElementById("memberCount").textContent = d.totalReferrals||0;document.getElementById("affiliateCountBig").textContent = (d.totalReferrals||0)+" Joined";}}catch{} }
+
 function displayUser(user,apiData){
-    if(!user){return;}
-    const profile = (user.profile && typeof user.profile === "object")? user.profile : {};
-    let fullName = firstText(user.fullName,user.fullname,user.full_name,user.displayName,user.display_name,user.memberName,user.member_name,user.name,profile.fullName,profile.full_name,profile.name);
-    if(!fullName){const firstName = firstText(user.firstName,user.first_name,profile.firstName,profile.first_name);const lastName = firstText(user.lastName,user.last_name,profile.lastName,profile.last_name);fullName = (firstName + " " + lastName).trim();}
-    if(!fullName){fullName = firstText(user.username,user.userName,user.user_name);}
-    if(!fullName && user.email){fullName = String(user.email).split("@")[0];}
-    document.getElementById("userName").textContent = fullName || "Member";
-    const planValues = [user.plan,user.selectedPlan,user.selected_plan,user.membershipPlan,user.membership_plan,user.subscriptionPlan,user.subscription_plan,user.package,user.packageName,user.package_name,user.selectedPackage,user.selected_package,user.planName,user.plan_name,user.membership,user.tier,profile.plan,profile.package,profile.membershipPlan,apiData && apiData.plan,apiData && apiData.package,apiData && apiData.selectedPlan,apiData && apiData.selectedPackage];
-    let packageName = detectPackage(planValues);
-    const currentEmail = firstText(user.email, apiData && apiData.email, localStorage.getItem("jovia_email"));
+    const profile = user.profile||{};
+    let fullName = user.fullName||user.fullname||user.full_name||user.displayName||user.name||profile.fullName||profile.name||user.username||"Member";
+    if(user.email && fullName==="Member") fullName = String(user.email).split("@")[0];
+    document.getElementById("userName").textContent = fullName;
+    const planValues = [user.plan,user.selectedPlan,user.package,apiData?.plan];
+    let packageName = "Silver"; for(const v of planValues){if(String(v||"").toLowerCase().includes("gold")){packageName="Gold"; break;}}
+    const currentEmail = user.email||apiData?.email||localStorage.getItem("jovia_email");
     const paymentCheck = isPaymentVerifiedForCurrentUser(currentEmail);
-    if(paymentCheck.verified){packageName = paymentCheck.plan;}
+    if(paymentCheck.verified) packageName = paymentCheck.plan;
     document.getElementById("planBadge").textContent = packageName.toUpperCase();
     document.getElementById("planBadge2").textContent = packageName.toUpperCase();
-    const serverBonus = firstNumber(user.welcomeBonus,user.welcome_bonus,user.registrationBonus,user.registration_bonus,apiData && apiData.welcomeBonus,apiData && apiData.welcome_bonus);
-    let welcomeBonus; if(Number.isFinite(serverBonus)){welcomeBonus = serverBonus;}else if(packageName === "Gold"){welcomeBonus = 15000;}else{welcomeBonus = 9000;}
-    const walletBalance = firstNumber(user.walletBalance,user.wallet_balance,user.balance,user.wallet,apiData && apiData.walletBalance,apiData && apiData.wallet_balance,apiData && apiData.balance);
-    const actualWallet = Number.isFinite(walletBalance)? walletBalance : 0;
-    if(document.getElementById("balance").textContent==="₦0") document.getElementById("balance").textContent = money(actualWallet);
+    const serverBonus = user.welcomeBonus||user.welcome_bonus||apiData?.welcomeBonus;
+    let welcomeBonus = Number.isFinite(Number(serverBonus))? Number(serverBonus) : (packageName==="Gold"?15000:9000);
     document.getElementById("welcomeBonus").textContent = money(welcomeBonus);
-    let rawStatus = firstText(user.accountStatus,user.account_status,user.status,user.userStatus,user.user_status,apiData && apiData.accountStatus,apiData && apiData.account_status).toLowerCase();
-    if(paymentCheck.verified){rawStatus = "active";}
-    let statusText = "Pending"; if(rawStatus === "approved" || rawStatus === "active" || rawStatus === "activated"){statusText = "Active";}else if(rawStatus === "suspended"){statusText = "Suspended";}
+    if(document.getElementById("balance").textContent==="₦0") document.getElementById("balance").textContent = money(user.walletBalance||user.balance||0);
+    let rawStatus = String(user.accountStatus||user.account_status||user.status||apiData?.accountStatus||"").toLowerCase();
+    if(paymentCheck.verified) rawStatus="active";
+    let statusText = "Pending"; if(["approved","active","activated"].includes(rawStatus)) statusText="Active"; else if(rawStatus==="suspended") statusText="Suspended";
     document.getElementById("accountStatus").textContent = statusText;
     const paymentButton = document.getElementById("paymentButton");
-    if(rawStatus === "approved" || rawStatus === "active" || rawStatus === "activated"){paymentButton.textContent = "Account Activated ✓";paymentButton.disabled = true;paymentButton.style.opacity = "0.7";paymentButton.style.cursor = "default";}else if(rawStatus === "suspended"){paymentButton.textContent = "Account Suspended";paymentButton.disabled = true;paymentButton.style.opacity = "0.7";paymentButton.style.cursor = "default";}else{paymentButton.textContent = "Continue to Payment";paymentButton.disabled = false;paymentButton.style.opacity = "1";paymentButton.style.cursor = "pointer";}
-    if(rawStatus === "approved" || rawStatus === "active" || rawStatus === "activated"){document.getElementById("activityName").textContent = packageName + " welcome bonus";document.getElementById("activityDate").textContent = "Account activated";document.getElementById("activityAmount").textContent = "+" + money(welcomeBonus);}else if(rawStatus === "suspended"){document.getElementById("activityName").textContent = "Account Suspended";document.getElementById("activityDate").textContent = "Please contact support";document.getElementById("activityAmount").textContent = "—";}else{document.getElementById("activityName").textContent = packageName + " welcome bonus";document.getElementById("activityDate").textContent = "Pending activation";document.getElementById("activityAmount").textContent = "+" + money(welcomeBonus);}
-    let referralCode = firstText(user.referralCode,user.referral_code,user.refCode,user.ref_code,user.inviteCode,user.invite_code,user.referralUsername,user.referral_username,profile.referralCode,profile.referral_code,user.username,user.userName,user.user_name,user.id,user._id,user.userId,user.user_id);
-    referralCode = cleanCode(referralCode);
-    if(!referralCode){const fallbackId = firstText(user.id,user._id,user.userId,user.user_id);if(fallbackId){referralCode = cleanCode("JV" + fallbackId);}}
-    if(!referralCode){referralCode = cleanCode(localStorage.getItem("jovia_referral_code"));}
-    if(referralCode){localStorage.setItem("jovia_referral_code",referralCode);const referralURL = buildReferralURL(referralCode);document.getElementById("referralLink").textContent = referralURL;}else{document.getElementById("referralLink").textContent = "Referral link unavailable";}
-    const memberCount = firstNumber(user.memberCount,user.member_count,user.referralCount,user.referral_count,user.totalReferrals,user.total_referrals);
-    if(Number.isFinite(memberCount) && memberCount >= 0){document.getElementById("memberCount").textContent = memberCount;document.getElementById("affiliateCountBig").textContent = memberCount+" Joined";}
+    if(["approved","active","activated"].includes(rawStatus)){paymentButton.textContent="Account Activated ✓";paymentButton.disabled=true;}
+    let referralCode = user.referralCode||user.referral_code||user.username||user.id||"";
+    referralCode = String(referralCode).replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
+    if(referralCode){localStorage.setItem("jovia_referral_code",referralCode); const url = new URL("register.html",window.location.href); url.searchParams.set("ref",referralCode); document.getElementById("referralLink").textContent = url.href; }
 }
 
-// ===== POPUP LOGIC - FIXED LINK t.me/jovianetwerk + API =====
-async function showGlobalPopup(){
+function showGlobalPopup(){
  const overlay=document.getElementById('joviaPopupOverlay');
  const titleEl=document.getElementById('joviaPopupTitle');
  const textEl=document.getElementById('joviaPopupText');
@@ -299,55 +192,45 @@ async function showGlobalPopup(){
 
  let announcement = {...JOVIA_ANNOUNCEMENT};
 
- // 1. Try API (admin edited version for ALL users)
- try{
-   const res = await fetch('/api/announcement?t='+Date.now(),{cache:'no-store'});
-   if(res.ok){
-     const apiData = await res.json();
-     if(apiData && apiData.title){ announcement = {...announcement,...apiData}; }
-   }
- }catch(e){}
-
- // 2. Fallback localStorage override
+ // Try API first
  try{
    const saved = localStorage.getItem('jovia_global_announcement');
-   if(saved){ const parsed = JSON.parse(saved); announcement = {...announcement,...parsed}; }
+   if(saved){
+     const parsed = JSON.parse(saved);
+     if(parsed && parsed.title) announcement = {...announcement,...parsed};
+   }
  }catch(e){}
 
  if(!announcement.enabled) return;
 
- const lastShown = localStorage.getItem('jovia_popup_last_shown_v2');
- const today = new Date().toDateString();
- if(announcement.showOncePerDay && lastShown === today + '_' + announcement.title) return;
+ // FORCED SHOW - remove daily block
+ // To reset if you closed before, uncomment next line once:
+ localStorage.removeItem('jovia_popup_last_shown_v2');
 
  titleEl.innerHTML = announcement.title;
  textEl.innerHTML = announcement.message;
  channelBtn.href = announcement.channelUrl || "https://t.me/jovianetwerk";
  channelBtn.textContent = announcement.channelText || "📲 Join Official Channel →";
 
- setTimeout(()=>{ overlay.classList.add('show'); document.body.style.overflow='hidden'; }, 1200);
+ overlay.classList.add('show');
+ document.body.style.overflow='hidden';
 
  function hidePopup(){
    overlay.classList.remove('show');
    document.body.style.overflow='';
-   localStorage.setItem('jovia_popup_last_shown_v2', today + '_' + announcement.title);
+   // Don't save daily block anymore
+   // localStorage.setItem('jovia_popup_last_shown_v2', new Date().toDateString());
  }
- closeBtn.addEventListener('click', hidePopup);
- okBtn.addEventListener('click', hidePopup);
- overlay.addEventListener('click', (e)=>{ if(e.target===overlay) hidePopup(); });
+ closeBtn.onclick = hidePopup;
+ okBtn.onclick = hidePopup;
+ overlay.onclick = (e)=>{ if(e.target===overlay) hidePopup(); };
 }
 
-function detectPackage(values){for(const value of values){const text = getPlanText(value);if(text.includes("gold")){return "Gold";}}for(const value of values){const text = getPlanText(value);if(text.includes("silver")){return "Silver";}}return "Silver";}
-function getPlanText(value){if(value === undefined || value === null){return "";}if(typeof value === "object"){return String(value.name || value.title || value.plan || value.package || value.packageName || value.slug || value.type || "").trim().toLowerCase();}return String(value).trim().toLowerCase();}
-function firstText(){const values = Array.from(arguments);for(const value of values){if(value === undefined || value === null){continue;}if(typeof value === "object"){continue;}const text = String(value).trim();if(text){return text;}}return "";}
-function firstNumber(){const values = Array.from(arguments);for(const value of values){if(value === undefined || value === null || value === ""){continue;}if(typeof value === "object"){continue;}const number = Number(value);if(Number.isFinite(number)){return number;}}return null;}
-function buildReferralURL(referralCode){const url = new URL("register.html",window.location.href);url.searchParams.set("ref",referralCode);return url.href;}
-function money(amount){const numericAmount = Number(amount);if(!Number.isFinite(numericAmount)){return "₦0";}return "₦" + numericAmount.toLocaleString("en-NG");}
-function cleanCode(value){return String(value || "").trim().replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();}
-async function copyReferral(){const link = document.getElementById("referralLink").textContent;if(!link || link === "Loading..." || link === "Referral link unavailable"){alert("Your referral link is not available yet.");return;}const button = document.querySelector(".copy");try{if(navigator.clipboard && window.isSecureContext){await navigator.clipboard.writeText(link);}else{const textarea = document.createElement("textarea");textarea.value = link;textarea.style.position = "fixed";textarea.style.opacity = "0";document.body.appendChild(textarea);textarea.focus();textarea.select();const successful = document.execCommand("copy");document.body.removeChild(textarea);if(!successful){throw new Error("Copy failed.");}}const oldText = button.textContent;button.textContent = "Copied ✓";setTimeout(function(){button.textContent = oldText;},1800);}catch(error){alert("Unable to copy. Please copy manually.");}}
+function money(amount){ const n=Number(amount); if(!Number.isFinite(n)) return "₦0"; return "₦"+n.toLocaleString("en-NG"); }
+function copyReferral(){ const link = document.getElementById("referralLink").textContent; navigator.clipboard.writeText(link).then(()=>{const b=document.querySelector(".copy"); b.textContent="Copied ✓"; setTimeout(()=>b.textContent="Copy Link",1500);}); }
 function openPage(page){window.location.href = page;}
-function activate(){if(!currentUser){return;}const status = firstText(currentUser.accountStatus,currentUser.account_status,currentUser.status,currentUser.userStatus,currentUser.user_status).toLowerCase();const email = firstText(currentUser.email, localStorage.getItem("jovia_email"));const check = isPaymentVerifiedForCurrentUser(email);if(check.verified){location.reload();return;}if(status === "approved" || status === "active" || status === "activated"){return;}if(status === "suspended"){return;}window.location.href = "payment.html";}
-async function logout(){try{await fetch("/api/logout",{method:"POST",credentials:"include",headers:{"Accept":"application/json"}});}catch(error){}localStorage.removeItem("jovia_name");localStorage.removeItem("jovia_plan");localStorage.removeItem("jovia_username");localStorage.removeItem("jovia_status");localStorage.removeItem("jovia_referral_code");window.location.href = "login.html";}
+function activate(){ window.location.href = "payment.html"; }
+async function logout(){ try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch{} window.location.href = "login.html"; }
 document.addEventListener("DOMContentLoaded",function(){loadUser();});
 </script>
 </body>
