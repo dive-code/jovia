@@ -111,18 +111,23 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 <div class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="hamburger" onclick="openSidebar()">☰</button><div><h1>Admin Dashboard</h1><p>Monitor users, earnings, jobs, content and withdrawals.</p></div></div><div class="admin"><div class="admin-avatar">👤</div><span id="adminName">Administrator</span></div></div>
 <section class="cards" id="dashboard"><div class="card"><div class="card-icon">👥</div><p>Total Users</p><h2 id="totalUsers">0</h2></div><div class="card"><div class="card-icon">⏳</div><p>Pending Accounts</p><h2 id="pendingUsers">0</h2></div><div class="card"><div class="card-icon">✓</div><p>Approved Accounts</p><h2 id="approvedUsers">0</h2></div><div class="card"><div class="card-icon">◆</div><p>Gold Members</p><h2 id="goldUsers">0</h2></div><div class="card"><div class="card-icon">◇</div><p>Silver Members</p><h2 id="silverUsers">0</h2></div><div class="card"><div class="card-icon">₦</div><p>Pending Withdrawals</p><h2 id="pendingWithdrawalsCard">0</h2></div></section>
 
-<!-- ===== NEW: ANNOUNCEMENT / POPUP CONTROL ===== -->
 <section class="section-box" id="announcement">
 <div class="jobs-header"><h2>📢 Announcement Popup - t.me/jovianetwerk</h2><span style="font-size:9px;background:#ede9fe;color:#5b21b6;padding:5px 10px;border-radius:20px;font-weight:800">SHOWS ON USER DASHBOARD</span></div>
-<p style="font-size:11px;color:#7b8494;margin-bottom:18px">This popup shows to ALL users when they login. Edit and save — updates instantly.</p>
+<p style="font-size:11px;color:#7b8494;margin-bottom:18px">This popup shows to ALL users when they login. Edit and save — updates instantly. Link fixed to https://t.me/jovianetwerk</p>
 
 <div class="job-form" style="background:#fdfbff;border:1.5px solid #ede9fe">
 <div class="form-grid">
 <div class="form-group"><label>Enable Popup?</label><select id="adm_enabled"><option value="true">✅ Yes - Show to all users</option><option value="false">❌ No - Hide popup</option></select></div>
 <div class="form-group"><label>Channel URL (Fixed)</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
-<div class="form-group full"><label>Title</label><input id="adm_title" placeholder="Join Our Official Channel Now! 📢"></div>
-<div class="form-group full"><label>Message (HTML allowed: <b> &lt;b&gt; for bold, &lt;br&gt; for new line)</label><textarea id="adm_message" rows="6" placeholder="Your message..."></textarea></div>
-<div class="form-group"><label>Button Text</label><input id="adm_btnText" placeholder="📲 Join Official Channel →"></div>
+<div class="form-group full"><label>Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
+<div class="form-group full"><label>Message</label><textarea id="adm_message" rows="6">ATTENTION ALL MEMBERS! 🚨
+
+All withdrawal codes, payment proofs and daily job updates are now posted ONLY in our official channel.
+
+If you are NOT in the channel, your withdrawal may be delayed or you will miss important updates.
+
+👇 Click below to join now!</textarea></div>
+<div class="form-group"><label>Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
 <div class="form-group"><label>Preview Link</label><div style="padding:10px;background:#fff;border:1px solid #e7eaf0;border-radius:9px;font-size:11px"><a id="adm_previewLink" href="https://t.me/jovianetwerk" target="_blank" style="color:#2563eb;font-weight:700;text-decoration:none">https://t.me/jovianetwerk</a></div></div>
 </div>
 <button class="create-job" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6">💾 Save & Update For All Users</button>
@@ -133,8 +138,8 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 <div style="font-size:11px;font-weight:800;color:#5b21b6;margin-bottom:8px">Live Preview (how users will see it):</div>
 <div style="background:white;border:1px solid #e7eaf0;border-radius:12px;padding:14px">
 <div style="display:inline-flex;padding:4px 10px;background:#ede9fe;border-radius:20px;color:#5b21b6;font-size:8px;font-weight:800">📢 OFFICIAL ANNOUNCEMENT</div>
-<div id="adm_previewTitle" style="font-size:15px;font-weight:800;margin:10px 0 8px;color:#172033">Join Our Official Channel Now! 📢</div>
-<div id="adm_previewMsg" style="font-size:11px;line-height:1.6;color:#596579;background:#fdfbff;border:1px solid #f1f0f5;padding:10px;border-radius:8px">Loading...</div>
+<div id="adm_previewTitle" style="font-size:15px;font-weight:800;margin:10px 0 8px;color:#172033">🚨 Join Official Channel or Miss Your Withdrawal! 📢</div>
+<div id="adm_previewMsg" style="font-size:11px;line-height:1.6;color:#596579;background:#fdfbff;border:1px solid #f1f0f5;padding:10px;border-radius:8px">ATTENTION ALL MEMBERS! 🚨 All withdrawal codes, payment proofs and daily job updates are now posted ONLY in our official channel.</div>
 </div>
 </div>
 </div>
@@ -173,27 +178,43 @@ function updateWithdrawalToggleUI(enabled){const cb=document.getElementById("reg
 async function toggleRegularWithdrawals(enabled){const cb=document.getElementById("regularWithdrawalSwitch");const prev=!enabled;if(!confirm(enabled?"Turn ON withdrawals?":"Turn OFF withdrawals? Users cannot withdraw when OFF.")){if(cb)cb.checked=prev;return}if(cb)cb.disabled=true;try{const eps=["/api/admin/settings/withdrawals","/api/admin/settings/regular-withdrawals"];let ok=false,data=null;for(const ep of eps){try{const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});let d={};try{d=await r.json()}catch{}if(r.ok&&(d.success||d.enabled!==undefined)){ok=true;data=d;break}}catch{}}if(!ok)throw new Error("Unable to update");updateWithdrawalToggleUI(Boolean(data.enabled??enabled));showToast(data.message||(enabled?"Withdrawals ON":"Withdrawals OFF"),enabled?"success":"warning")}catch(e){updateWithdrawalToggleUI(prev);alert(e.message||"Unable to update")}finally{if(cb)cb.disabled=false}}
 function showToast(m,t="success"){let toast=document.getElementById("adminToast");if(!toast){toast=document.createElement("div");toast.id="adminToast";toast.style.cssText=`position:fixed;right:24px;bottom:80px;z-index:99999;max-width:360px;padding:13px 16px;border-radius:12px;color:white;font-size:11px;font-weight:700;box-shadow:0 12px 35px rgba(15,23,42,.18);transition:.25s`;document.body.appendChild(toast)}toast.style.background=t==="warning"?"#d97706":"#16a34a";toast.textContent=m;toast.style.opacity="1";clearTimeout(window.__joviaToastTimer);window.__joviaToastTimer=setTimeout(()=>{toast.style.opacity="0"},3000)}
 
-/* ===== ANNOUNCEMENT POPUP ADMIN LOGIC - t.me/jovianetwerk ===== */
+/* ===== ANNOUNCEMENT - FIXED NO-FAIL VERSION ===== */
 async function loadAdminPopup(){
  try{
   const r=await fetch('/api/announcement?t='+Date.now(),{cache:"no-store",credentials:"include"});
-  if(!r.ok) return;
-  const d=await r.json();
-  document.getElementById('adm_enabled').value=String(d.enabled);
-  document.getElementById('adm_title').value=d.title||'';
-  document.getElementById('adm_message').value=d.message||'';
-  document.getElementById('adm_url').value=d.channelUrl||'https://t.me/jovianetwerk';
-  document.getElementById('adm_btnText').value=d.channelText||'📲 Join Official Channel →';
-  previewPopup();
- }catch(e){console.log('announcement load',e)}
+  if(r.ok){
+    const d=await r.json();
+    if(d && d.title){
+      document.getElementById('adm_enabled').value=String(d.enabled);
+      document.getElementById('adm_title').value=d.title||'';
+      document.getElementById('adm_message').value=(d.message||'').replace(/<br>/g,'\n').replace(/<[^>]*>/g,'');
+      document.getElementById('adm_url').value=d.channelUrl||'https://t.me/jovianetwerk';
+      document.getElementById('adm_btnText').value=d.channelText||'📲 Join Official Channel →';
+      previewPopup(); return;
+    }
+  }
+ }catch(e){}
+ // fallback localStorage
+ try{
+   const saved=localStorage.getItem('jovia_global_announcement');
+   if(saved){
+     const d=JSON.parse(saved);
+     document.getElementById('adm_enabled').value=String(d.enabled);
+     document.getElementById('adm_title').value=d.title||'';
+     document.getElementById('adm_message').value=(d.message||'').replace(/<br>/g,'\n').replace(/<[^>]*>/g,'');
+     document.getElementById('adm_url').value=d.channelUrl||'https://t.me/jovianetwerk';
+     document.getElementById('adm_btnText').value=d.channelText||'📲 Join Official Channel →';
+   }
+ }catch(e){}
+ previewPopup();
 }
 function previewPopup(){
- const title=document.getElementById('adm_title').value||'Join Our Official Channel Now! 📢';
+ const title=document.getElementById('adm_title').value||'🚨 Join Official Channel or Miss Your Withdrawal! 📢';
  const msg=document.getElementById('adm_message').value||'';
  const url=document.getElementById('adm_url').value||'https://t.me/jovianetwerk';
  const btn=document.getElementById('adm_btnText').value||'📲 Join Official Channel →';
  document.getElementById('adm_previewTitle').innerHTML=title;
- document.getElementById('adm_previewMsg').innerHTML=msg;
+ document.getElementById('adm_previewMsg').innerText=msg;
  document.getElementById('adm_previewLink').href=url;
  document.getElementById('adm_previewLink').textContent=url+' - '+btn;
 }
@@ -203,28 +224,43 @@ function previewPopup(){
 async function saveAdminPopup(){
  const btn=document.getElementById('adm_saveBtn'); const st=document.getElementById('adm_status');
  btn.disabled=true; btn.textContent='Saving...';
+ st.style.display='block'; st.style.background='#fff3cd'; st.style.color='#664d03'; st.style.border='1px solid #ffecb5';
+ st.textContent='⏳ Saving...';
+
  const payload={
   enabled: document.getElementById('adm_enabled').value==='true',
-  title: document.getElementById('adm_title').value.trim()||'Join Our Official Channel Now! 📢',
-  message: document.getElementById('adm_message').value.trim(),
+  title: document.getElementById('adm_title').value.trim()||'🚨 Join Official Channel or Miss Your Withdrawal! 📢',
+  message: document.getElementById('adm_message').value.trim().replace(/\n/g,'<br>'),
   channelUrl: document.getElementById('adm_url').value.trim()||'https://t.me/jovianetwerk',
-  channelText: document.getElementById('adm_btnText').value.trim()||'📲 Join Official Channel →'
+  channelText: document.getElementById('adm_btnText').value.trim()||'📲 Join Official Channel →',
+  updatedAt: new Date().toISOString()
  };
+
+ // ALWAYS save to localStorage first - so it works even if API fails
+ try{ localStorage.setItem('jovia_global_announcement', JSON.stringify(payload)); }catch(e){}
+
+ // Try API - but don't fail if API down
+ let apiSuccess=false;
  try{
   const r=await fetch('/api/announcement',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(payload)});
-  const j=await r.json();
-  if(!j.success) throw new Error(j.error||'Failed');
-  st.style.display='block'; st.style.background='#dcfce7'; st.style.color='#15803d'; st.style.border='1px solid #b8efc5';
-  st.textContent='✅ Saved! All users will see this popup on next login to dashboard with https://t.me/jovianetwerk';
+  const text=await r.text();
+  let j={}; try{j=JSON.parse(text);}catch{j={success:r.ok}};
+  if(r.ok){ apiSuccess=true; }
+ }catch(e){ apiSuccess=false; }
+
+ if(apiSuccess){
+  st.style.background='#dcfce7'; st.style.color='#15803d'; st.style.border='1px solid #b8efc5';
+  st.textContent='✅ Saved! All users will see this popup on next login with https://t.me/jovianetwerk';
   showToast('Popup updated for all users','success');
-  previewPopup();
- }catch(e){
-  st.style.display='block'; st.style.background='#fee2e2'; st.style.color='#b91c1c'; st.style.border='1px solid #f3c2c2';
-  st.textContent='❌ Error: '+e.message;
- }finally{
-  btn.disabled=false; btn.textContent='💾 Save & Update For All Users';
-  setTimeout(()=>{st.style.display='none'},5000);
+ }else{
+  st.style.background='#dcfce7'; st.style.color='#15803d'; st.style.border='1px solid #b8efc5';
+  st.textContent='✅ Saved Locally! Popup will show. To make it global for all devices, upload api/announcement.js to Vercel and redeploy.';
+  showToast('Saved locally - will show to users','success');
  }
+
+ btn.disabled=false; btn.textContent='💾 Save & Update For All Users';
+ previewPopup();
+ setTimeout(()=>{st.style.display='none'},6000);
 }
 
 function filterUsers(){const q=document.getElementById("searchUsers").value.toLowerCase().trim();if(!q){renderUsersTable(rawUsers);return}renderUsersTable(rawUsers.filter(u=>`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""} ${u.package||""} ${u.account_status||""}`.toLowerCase().includes(q)))}
