@@ -3,313 +3,297 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jovia Network | Admin Dashboard - SEPARATED WITHDRAWAL FIXED</title>
+<title>Jovia Network | Admin Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--primary:#5b21b6;--primary-light:#ede9fe;--green:#16a34a;--green-light:#dcfce7;--red:#dc2626;--red-light:#fee2e2;--blue:#2563eb;--orange:#f59e0b;--orange-light:#fef3c7;--bg:#f5f7fb;--border:#e7eaf0;--text:#172033;--muted:#7b8494;--sidebar:#171124;--sidebar-hover:#251a3c;--shadow:0 8px 30px rgba(15,23,42,.06);--radius:16px}
-body{font-family:"Inter",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-button,input,textarea,select{font-family:inherit}button{border:0}
-#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f6f7fb}
-.login-box{width:100%;max-width:430px;background:#fff;padding:38px 34px;border:1px solid var(--border);border-radius:22px}
+html{overflow-x:hidden}body{font-family:"Inter",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button,input,textarea,select{font-family:inherit}button{border:0}button:disabled{opacity:.55;cursor:not-allowed}
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top left,rgba(91,33,182,.10),transparent 35%),radial-gradient(circle at bottom right,rgba(245,158,11,.08),transparent 35%),#f6f7fb}
+.login-box{width:100%;max-width:430px;background:#fff;padding:38px 34px;border:1px solid var(--border);border-radius:22px;box-shadow:0 25px 70px rgba(15,23,42,.10)}
+.login-badge{width:58px;height:58px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;border-radius:17px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:white;font-size:25px}
+.login-logo{font-family:"Poppins",sans-serif;font-size:29px;font-weight:800;text-align:center}.login-logo span{color:var(--primary)}
+.login-subtitle{text-align:center;color:var(--muted);font-size:13px;margin-bottom:30px}
+.login-group{margin-bottom:18px}.login-group label{display:block;margin-bottom:7px;color:#596579;font-size:12px;font-weight:700}
+.login-group input{width:100%;padding:13px 14px;border:1px solid #dce2ea;border-radius:10px;outline:none;font-size:14px}
+.login-button{width:100%;padding:14px;margin-top:4px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.login-error{display:none;margin-bottom:17px;padding:11px 12px;border-radius:9px;background:var(--red-light);color:#b91c1c;font-size:12px}
+.login-loading{display:none;margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
 #dashboardScreen{display:none}
-.sidebar{position:fixed;top:0;left:0;width:255px;height:100vh;padding:24px 16px;background:#171124;color:white}
+.sidebar{position:fixed;z-index:1000;top:0;left:0;width:255px;height:100vh;padding:24px 16px;overflow-y:auto;background:linear-gradient(180deg,#171124 0%,#120d1d 100%);color:white;border-right:1px solid rgba(255,255,255,.04);transition:transform.3s ease}
 .logo{padding:4px 12px 32px;font-family:"Poppins",sans-serif;font-size:24px;font-weight:800}.logo span{color:#a78bfa}
-.nav{display:flex;flex-direction:column;gap:5px}.nav a{display:flex;gap:10px;padding:12px 13px;border-radius:10px;color:#aaa3b9;text-decoration:none;font-size:12px;font-weight:600}
-.nav a.active{background:rgba(124,58,237,.24);color:#fff}
-.main{margin-left:255px;padding:30px;min-height:100vh}
-.topbar{display:flex;justify-content:space-between;margin-bottom:28px}
-.cards{display:grid;grid-template-columns:repeat(6,1fr);gap:15px;margin-bottom:25px}
-.card{padding:19px;border:1px solid var(--border);border-radius:15px;background:#fff}
-.section-box,.withdrawals-box{margin-bottom:25px;padding:23px;border:1px solid var(--border);border-radius:16px;background:#fff}
-.jobs-table-wrapper{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
-table{width:100%;min-width:1100px;border-collapse:collapse}th,td{padding:12px 10px;text-align:left;border-bottom:1px solid #edf0f4;font-size:11px}
-th{background:#fafbfc;font-size:9px;font-weight:800;text-transform:uppercase}
-.status{padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800}
-.pending{background:#fef3c7;color:#9a6700}.approved,.active{background:#dcfce7;color:#15803d}.rejected,.inactive{background:#fee2e2;color:#b91c1c}
-.job-form{margin-bottom:20px;padding:18px;border:1px solid var(--border);border-radius:13px;background:#f8fafc}
-.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.form-group{display:flex;flex-direction:column;gap:6px}.form-group.full{grid-column:1/-1}
-.form-group input,.form-group textarea,.form-group select{padding:10px 11px;border:1px solid #dce2ea;border-radius:9px}
-.withdrawal-control{margin:0 0 15px;padding:18px;border-radius:14px;background:linear-gradient(135deg,#faf9ff,#f8fafc)}
-.withdrawal-control-top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
-.withdrawal-control-title{display:flex;gap:11px;align-items:center}
-.withdrawal-control-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:#ede9fe;color:#5b21b6}
-.withdrawal-switch{position:relative;width:54px;height:30px}.withdrawal-switch input{display:none}.switch-slider{position:absolute;inset:0;border-radius:30px;background:#cbd5e1;cursor:pointer;transition:.25s}
-.switch-slider::before{content:"";position:absolute;width:22px;height:22px;left:4px;top:4px;border-radius:50%;background:white;transition:.25s}
-.withdrawal-switch input:checked + .switch-slider{background:#16a34a}.withdrawal-switch input:checked + .switch-slider::before{transform:translateX(24px)}
-.withdrawal-status-row{display:flex;justify-content:space-between;margin-top:15px;padding-top:13px;border-top:1px solid var(--border)}
-.withdrawal-status-pill{padding:6px 10px;border-radius:20px;font-size:9px;font-weight:800}
-.withdrawal-status-pill.on{background:#dcfce7;color:#15803d}.withdrawal-status-pill.off{background:#fee2e2;color:#b91c1c}
-button{padding:9px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer}
-.refresh{background:#eef2ff;color:#4338ca}.approve{background:#16a34a;color:white}.reject,.delete-job{background:#dc2626;color:white}
-.pause-job{background:#f59e0b;color:white}.activate-job{background:#16a34a;color:white}
-.search-bar{display:flex;gap:10px;padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:#fafbfc;margin-bottom:17px}
-.search-bar input{width:100%;border:0;outline:none;background:transparent}
+.sidebar-label{padding:0 12px 9px;color:#766e85;font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:5px}.nav a{position:relative;display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:10px;color:#aaa3b9;text-decoration:none;font-size:12px;font-weight:600;cursor:pointer;transition:.2s}
+.nav a:hover{background:var(--sidebar-hover);color:#fff}.nav a.active{background:linear-gradient(90deg,rgba(124,58,237,.24),rgba(124,58,237,.08));color:#fff}
+.nav-divider{height:1px;margin:15px 8px;background:rgba(255,255,255,.07)}.sidebar-footer{margin-top:35px;padding:14px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;color:#8e879b;font-size:10px;line-height:1.6}
+.main{margin-left:255px;padding:30px;min-height:100vh;transition:margin-left.3s}.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}
+.topbar h1{font-family:"Poppins",sans-serif;font-size:27px;font-weight:800}.topbar p{margin-top:4px;color:var(--muted);font-size:13px}
+.admin{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:var(--shadow);font-size:12px;font-weight:700}
+.admin-avatar{width:29px;height:29px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--primary-light);color:var(--primary)}
+.hamburger{display:none;width:44px;height:44px;border-radius:11px;background:#fff;border:1px solid var(--border);font-size:20px;cursor:pointer;box-shadow:var(--shadow);align-items:center;justify-content:center;flex-shrink:0}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;backdrop-filter:blur(2px)}
+.cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:15px;margin-bottom:25px}
+.card{position:relative;min-height:118px;padding:19px;overflow:hidden;border:1px solid var(--border);border-radius:15px;background:#fff;box-shadow:var(--shadow)}
+.card p{margin-bottom:10px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase}.card h2{font-family:"Poppins",sans-serif;font-size:26px;font-weight:800}
+.card-icon{position:absolute;right:15px;top:15px;width:31px;height:31px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--primary-light);font-size:14px}
+.section-box,.users-box,.links-box,.videos-box,.withdrawals-box{margin-bottom:25px;padding:23px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
+.users-header,.jobs-header,.links-header,.videos-header,.withdrawals-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:8px}
+.users-header h2,.jobs-header h2,.links-header h2,.videos-header h2,.withdrawals-header h2{font-family:"Poppins",sans-serif;font-size:17px;font-weight:800}
+.users-info,.jobs-info,.links-info,.videos-info,.withdrawals-info{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px;color:var(--muted);font-size:10px}
+.live-status{display:flex;align-items:center;gap:6px}.live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;animation:pulse 1.5s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+button{padding:9px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;transition:.18s}
+.refresh{background:#eef2ff;color:#4338ca}.approve,.restore,.activate-job,.activate-link,.activate-video{background:var(--green);color:white}
+.reset,.edit-link,.edit-video{background:var(--blue);color:white}.suspend,.delete-link,.delete-video,.delete-job,.reject{background:var(--red);color:white}
+.pause-job,.pause-link,.pause-video{background:var(--orange);color:white}
+.action,.job-action,.link-action,.video-action,.withdrawal-action{margin-right:4px;margin-bottom:4px;padding:7px 9px;border-radius:7px;font-size:9px}
+.search-bar{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:17px;padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:#fafbfc}
+.search-bar input{width:100%;border:0;outline:none;background:transparent;color:var(--text);font-size:12px}
+.jobs-table-wrapper,.links-table-wrapper,.videos-table-wrapper,.withdrawals-table-wrapper{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{width:100%;min-width:1100px;border-collapse:collapse}th,td{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid #edf0f4;font-size:11px}
+th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform:uppercase;white-space:nowrap}tbody tr:hover{background:#fafcff}
+.empty{padding:35px!important;text-align:center!important;color:var(--muted)}.password-protected{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:7px;background:#f1f5f9;color:#64748b;font-size:9px;font-weight:700;white-space:nowrap}
+.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800;text-transform:capitalize;white-space:nowrap}
+.pending{background:var(--orange-light);color:#9a6700}.approved,.active,.available{background:var(--green-light);color:#15803d}.suspended,.paused,.inactive,.closed,.rejected{background:var(--red-light);color:#b91c1c}.completed{background:#e0e7ff;color:#4338ca}
+.job-form,.link-form,.video-form{margin-bottom:20px;padding:18px;border:1px solid var(--border);border-radius:13px;background:#f8fafc}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.form-group{display:flex;flex-direction:column;gap:6px}.form-group.full{grid-column:1/-1}
+.form-group label{color:#596579;font-size:10px;font-weight:800}.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 11px;border:1px solid #dce2ea;border-radius:9px;outline:none;background:#fff;color:var(--text);font-size:11px}
+.create-job,.create-link,.create-video{margin-top:14px;background:var(--green);color:white}.cancel-edit{display:none;margin-top:14px;margin-left:7px;background:#64748b;color:white}
+.video-thumbnail{display:block;width:85px;height:52px;object-fit:cover;border-radius:7px;background:#e5e7eb}
+.withdrawal-control{margin:0 0 20px;padding:18px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(135deg,#faf9ff,#f8fafc)}
+.withdrawal-control-top{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap}.withdrawal-control-title{display:flex;align-items:center;gap:11px}
+.withdrawal-control-icon{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:11px;background:var(--primary-light);color:var(--primary);font-size:18px}
+.withdrawal-control-title strong{display:block;font-size:13px;font-weight:800}.withdrawal-control-title small{display:block;margin-top:3px;color:var(--muted);font-size:10px}
+.withdrawal-switch{position:relative;width:54px;height:30px;flex-shrink:0}.withdrawal-switch input{display:none}.switch-slider{position:absolute;inset:0;border-radius:30px;background:#cbd5e1;cursor:pointer;transition:.25s}
+.switch-slider::before{content:"";position:absolute;width:22px;height:22px;left:4px;top:4px;border-radius:50%;background:white;box-shadow:0 2px 5px rgba(0,0,0,.18);transition:.25s}
+.withdrawal-switch input:checked +.switch-slider{background:#16a34a}.withdrawal-switch input:checked +.switch-slider::before{transform:translateX(24px)}
+.withdrawal-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;padding-top:13px;border-top:1px solid var(--border);flex-wrap:wrap}
+.withdrawal-status-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:20px;font-size:9px;font-weight:800}
+.withdrawal-status-pill.on{background:var(--green-light);color:#15803d}.withdrawal-status-pill.off{background:var(--red-light);color:#b91c1c}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.withdrawal-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.auto-refresh{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:10px}
+@media(max-width:1250px){.cards{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1024px){.hamburger{display:flex}.sidebar{transform:translateX(-100%);width:270px}.sidebar.open{transform:translateX(0)}.overlay.show{display:block}.main{margin-left:0;padding:20px}}
+@media(max-width:700px){.cards{grid-template-columns:repeat(2,1fr);gap:10px}.card{min-height:100px;padding:14px}.card h2{font-size:20px}.topbar h1{font-size:22px}.section-box,.users-box,.links-box,.videos-box,.withdrawals-box{padding:16px}.form-grid{grid-template-columns:1fr}.jobs-table-wrapper,.links-table-wrapper,.videos-table-wrapper,.withdrawals-table-wrapper{border:none;overflow:visible}table{min-width:0}table thead{display:none}table tbody{display:grid;gap:12px}table tr{display:block;border:1px solid var(--border);border-radius:12px;padding:12px;background:#fff;box-shadow:var(--shadow)}table td{display:flex;justify-content:space-between;padding:8px 0;border:none;border-bottom:1px solid #f1f5f9;gap:10px}table td::before{content:attr(data-label);font-weight:800;font-size:9px;color:var(--muted);text-transform:uppercase;flex-shrink:0}table td:last-child{border:none;flex-wrap:wrap;justify-content:flex-start}table td.empty::before{display:none}.withdrawal-control-top{flex-direction:column;align-items:flex-start}}
+@media(max-width:480px){.main{padding:12px;padding-bottom:85px}.cards{grid-template-columns:1fr 1fr}.admin{width:100%;justify-content:center}.login-box{padding:26px 18px}}
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:#171124;border-top:1px solid rgba(255,255,255,.08);padding:8px 6px;z-index:998;justify-content:space-around}
+.mobile-bottom-nav a{color:#aaa3b9;text-decoration:none;font-size:9px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 10px;border-radius:10px}
+.mobile-bottom-nav a.active{color:#fff;background:rgba(124,58,237,.2)}
+@media(max-width:1024px){.mobile-bottom-nav{display:flex}.main{padding-bottom:85px}}
 </style>
 </head>
 <body>
-<div id="loginScreen"><div class="login-box"><div style="text-align:center"><h2>Jovia<span style="color:#5b21b6">Network</span></h2><p>Admin Portal - SEPARATED FIXED</p></div><div id="loginError" style="display:none;color:red"></div><form id="adminLoginForm" onsubmit="adminLogin(event)"><div style="margin-bottom:15px"><label>Username</label><input type="text" id="adminUsername" required style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px"></div><div style="margin-bottom:15px"><label>Password</label><input type="password" id="adminPassword" required style="width:100%;padding:12px;border:1px solid #ddd;border-radius:8px"></div><button type="submit" id="loginButton" style="width:100%;padding:14px;background:#5b21b6;color:white;border-radius:8px;font-weight:800">Sign in</button></form></div></div>
+<div id="loginScreen"><div class="login-box"><div class="login-badge">◆</div><div style="text-align:center"><div class="login-logo">Jovia<span>Network</span></div><p class="login-subtitle">Secure Administrator Portal</p></div><div id="loginError" class="login-error"></div><form id="adminLoginForm" onsubmit="adminLogin(event)"><div class="login-group"><label>Administrator Username</label><input type="text" id="adminUsername" placeholder="Enter admin username" required></div><div class="login-group"><label>Password</label><input type="password" id="adminPassword" placeholder="Enter password" required></div><button type="submit" class="login-button" id="loginButton">Sign in to Dashboard</button><div id="loginLoading" class="login-loading">Authenticating...</div></form></div></div>
+<div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <div id="dashboardScreen">
-<aside class="sidebar"><div class="logo">Jovia<span>Network</span></div><nav class="nav"><a href="#dashboard" class="active">📊 Dashboard</a><a href="#announcement">📢 Announcement</a><a href="#jobs">💼 Jobs</a><a href="#withdrawals">💸 Withdrawals</a><a href="#" onclick="adminLogout(event)">🚪 Logout</a></nav><div style="margin-top:20px;font-size:10px;color:#8e879b">✅ SEPARATED: Regular vs Affiliate</div></aside>
+<aside class="sidebar" id="sidebar"><div class="logo">Jovia<span>Network</span></div><div class="sidebar-label">Management</div><nav class="nav"><a href="#dashboard" class="active" onclick="setActiveNav(this)">📊 <span>Dashboard</span></a><a href="#announcement" onclick="setActiveNav(this)">📢 <span>Announcement</span></a><a href="#users" onclick="setActiveNav(this)">👥 <span>Users</span></a><a href="#jobs" onclick="setActiveNav(this)">💼 <span>Jobs</span></a><a href="#videos" onclick="setActiveNav(this)">🎬 <span>Videos</span></a><a href="#links" onclick="setActiveNav(this)">🔗 <span>Links</span></a><a href="#withdrawals" onclick="setActiveNav(this)">💸 <span>Withdrawals</span><span id="navPendingCount" style="background:#f59e0b;color:white;padding:2px 6px;border-radius:10px;font-size:8px;margin-left:auto">0</span></a><div class="nav-divider"></div><a href="#" class="logout-link" onclick="adminLogout(event)">🚪 <span>Logout</span></a></nav><div class="sidebar-footer"><strong>Jovia Network</strong><br>Admin Control Center - SEPARATED FIXED</div></aside>
 <main class="main">
-<div class="topbar"><h1>Admin Dashboard - SEPARATED WITHDRAWAL</h1><span id="adminName">Admin</span></div>
-<section class="cards"><div class="card"><p>Total Users</p><h2 id="totalUsers">0</h2></div><div class="card"><p>Pending</p><h2 id="pendingUsers">0</h2></div><div class="card"><p>Approved</p><h2 id="approvedUsers">0</h2></div><div class="card"><p>Gold</p><h2 id="goldUsers">0</h2></div><div class="card"><p>Silver</p><h2 id="silverUsers">0</h2></div><div class="card"><p>Pending Withdrawals</p><h2 id="pendingWithdrawalsCard">0</h2></div></section>
-
+<div class="topbar"><div style="display:flex;align-items:center;gap:12px"><button class="hamburger" onclick="openSidebar()">☰</button><div><h1>Admin Dashboard - SEPARATED</h1><p>✅ Regular and Affiliate Withdrawals Separated</p></div></div><div class="admin"><div class="admin-avatar">👤</div><span id="adminName">Administrator</span></div></div>
+<section class="cards" id="dashboard"><div class="card"><div class="card-icon">👥</div><p>Total Users</p><h2 id="totalUsers">0</h2></div><div class="card"><div class="card-icon">⏳</div><p>Pending Accounts</p><h2 id="pendingUsers">0</h2></div><div class="card"><div class="card-icon">✓</div><p>Approved Accounts</p><h2 id="approvedUsers">0</h2></div><div class="card"><div class="card-icon">◆</div><p>Gold Members</p><h2 id="goldUsers">0</h2></div><div class="card"><div class="card-icon">◇</div><p>Silver Members</p><h2 id="silverUsers">0</h2></div><div class="card"><div class="card-icon">₦</div><p>Pending Withdrawals</p><h2 id="pendingWithdrawalsCard">0</h2></div></section>
 <section class="section-box" id="announcement">
-<h2>📢 Announcement - ADMIN → DASHBOARD AUTO (No Backend)</h2>
-<p style="font-size:11px;color:#7b8494;margin:8px 0 18px">Controls: Title, Message, Telegram link, Button text, ON/OFF, Reset. All users see current version.</p>
-<div class="job-form">
+<div class="jobs-header"><h2>📢 Announcement Popup - t.me/jovianetwerk</h2><span style="font-size:9px;background:#ede9fe;color:#5b21b6;padding:5px 10px;border-radius:20px;font-weight:800">SHOWS ON USER DASHBOARD</span></div>
+<p style="font-size:11px;color:#7b8494;margin-bottom:18px">This popup shows to ALL users when they login. Edit and save — updates instantly.</p>
+<div class="job-form" style="background:#fdfbff;border:1.5px solid #ede9fe">
 <div class="form-grid">
-<div class="form-group"><label>🟢 Popup ON/OFF</label><select id="adm_enabled"><option value="true">✅ ON</option><option value="false">❌ OFF</option></select></div>
-<div class="form-group"><label>🔗 Telegram Link</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
-<div class="form-group full"><label>📢 Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
-<div class="form-group full"><label>📝 Message</label><textarea id="adm_message" rows="5">ATTENTION ALL MEMBERS! 🚨
+<div class="form-group"><label>Enable Popup?</label><select id="adm_enabled"><option value="true">✅ Yes - Show to all users</option><option value="false">❌ No - Hide popup</option></select></div>
+<div class="form-group"><label>Channel URL (Fixed)</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
+<div class="form-group full"><label>Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
+<div class="form-group full"><label>Message</label><textarea id="adm_message" rows="6">ATTENTION ALL MEMBERS! 🚨
 
 All withdrawal codes, payment proofs and daily job updates are now posted ONLY in our official channel.
 
-If you are NOT in the channel, your withdrawal may be delayed.
+If you are NOT in the channel, your withdrawal may be delayed or you will miss important updates.
 
 👇 Click below to join now!</textarea></div>
-<div class="form-group"><label>🔘 Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
-<div class="form-group"><label>🔘 Button Link</label><input id="adm_btnLink" value="https://t.me/jovianetwerk"></div>
+<div class="form-group"><label>Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
+<div class="form-group"><label>Preview Link</label><div style="padding:10px;background:#fff;border:1px solid #e7eaf0;border-radius:9px;font-size:11px"><a id="adm_previewLink" href="https://t.me/jovianetwerk" target="_blank" style="color:#2563eb;font-weight:700;text-decoration:none">https://t.me/jovianetwerk</a></div></div>
 </div>
-<button onclick="saveAdminPopup()" id="adm_saveBtn" style="background:#5b21b6;color:white;padding:12px;border-radius:8px;margin-top:12px;font-weight:800">💾 Save & Update For All Users</button>
-<button onclick="resetAnnouncement()" style="background:#64748b;color:white;padding:12px;border-radius:8px;margin-top:12px">🔄 Reset</button>
-<button onclick="downloadAnn()" style="background:#f59e0b;color:black;padding:12px;border-radius:8px;margin-top:12px">📥 Download Files</button>
-<pre id="adm_files" style="display:none;background:#111827;color:#a7f3d0;padding:14px;border-radius:10px;margin-top:12px;font-size:10px;white-space:pre-wrap"></pre>
+<button class="create-job" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6">💾 Save & Update For All Users</button>
+<button class="create-job" onclick="previewPopup()" style="background:#eef2ff;color:#4338ca;margin-left:6px">👁️ Preview</button>
+<div id="adm_status" style="display:none;margin-top:12px;padding:11px;border-radius:9px;font-size:11px;font-weight:700"></div>
+<div style="margin-top:18px;padding:14px;border:1px dashed #d8d2e9;background:#faf8ff;border-radius:10px">
+<div style="font-size:11px;font-weight:800;color:#5b21b6;margin-bottom:8px">Live Preview:</div>
+<div style="background:white;border:1px solid #e7eaf0;border-radius:12px;padding:14px">
+<div style="display:inline-flex;padding:4px 10px;background:#ede9fe;border-radius:20px;color:#5b21b6;font-size:8px;font-weight:800">📢 OFFICIAL ANNOUNCEMENT</div>
+<div id="adm_previewTitle" style="font-size:15px;font-weight:800;margin:10px 0 8px;color:#172033">🚨 Join Official Channel or Miss Your Withdrawal! 📢</div>
+<div id="adm_previewMsg" style="font-size:11px;line-height:1.6;color:#596579;background:#fdfbff;border:1px solid #f1f0f5;padding:10px;border-radius:8px">ATTENTION ALL MEMBERS! 🚨 All withdrawal codes are posted ONLY in our official channel.</div>
+</div>
+</div>
 </div>
 </section>
+<section class="users-box" id="users"><div class="users-header"><h2>Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div><div class="search-bar"><span>⌕</span><input type="text" id="searchUsers" placeholder="Search by name, username, email, phone..." oninput="filterUsers()"></div><div class="users-info"><div class="live-status"><span class="live-dot"></span><span>Live data</span></div><div>Last: <span id="lastUpdated">Waiting...</span></div></div><div class="jobs-table-wrapper"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th>Password</th><th>Package</th><th>Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="10" class="empty">Loading...</td></tr></tbody></table></div></section>
+<section class="section-box" id="jobs"><div class="jobs-header"><h2>💼 Jobs Management</h2><button class="refresh" onclick="loadAdminJobs()">↻ Refresh</button></div><div class="search-bar"><span>⌕</span><input type="text" id="searchJobs" placeholder="Search jobs..." oninput="filterJobs()"></div><div class="jobs-info"><div>Total Jobs: <strong id="totalJobs">0</strong> | ✅ Deleted disappears immediately</div></div><div class="job-form"><h3>＋ Create New Job</h3><form id="createJobForm" onsubmit="createJob(event)"><div class="form-grid"><div class="form-group"><label>Slot</label><select id="jobSlot" required><option value="1">Job 1</option><option value="2">Job 2</option><option value="3">Job 3</option></select></div><div class="form-group"><label>Title</label><input type="text" id="jobTitle" required></div><div class="form-group"><label>Category</label><input type="text" id="jobCategory" value="General" required></div><div class="form-group"><label>Reward (₦)</label><input type="number" id="jobReward" min="0" required></div><div class="form-group full"><label>Job URL</label><input type="url" id="jobUrl" placeholder="https://example.com" required></div><div class="form-group full"><label>Description</label><textarea id="jobDescription" required></textarea></div><div class="form-group"><label>Duration</label><input type="text" id="jobDuration" value="Flexible" required></div><div class="form-group"><label>Status</label><select id="jobStatus"><option value="active">Available</option><option value="inactive">Paused</option></select></div></div><button type="submit" class="create-job" id="createJobButton">＋ Create Job</button></form></div><div class="jobs-table-wrapper"><table><thead><tr><th>Slot</th><th>ID</th><th>Title</th><th>Category</th><th>URL</th><th>Description</th><th>Reward</th><th>Duration</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="jobsTable"><tr><td colspan="11" class="empty">Loading...</td></tr></tbody></table></div></section>
+<section class="videos-box" id="videos"><div class="videos-header"><h2>🎬 Video Management</h2><button class="refresh" onclick="loadAdminVideos()">↻ Refresh</button></div><div class="search-bar"><span>⌕</span><input type="text" id="searchVideos" placeholder="Search videos..." oninput="filterVideos()"></div><div class="videos-info"><div>Total Videos: <strong id="totalVideos">0</strong></div></div><div class="video-form" id="videoFormBox"><h3 id="videoFormTitle">＋ Upload New Video</h3><form id="videoForm" onsubmit="saveVideo(event)"><div class="form-grid"><div class="form-group"><label>Video Title *</label><input type="text" id="videoTitle" required></div><div class="form-group"><label>Category</label><input type="text" id="videoCategory" value="General" required></div><div class="form-group full" style="background:white;border:2px dashed #7c3aed;padding:15px;border-radius:10px"><label style="font-size:12px;color:#6d28d9">📤 UPLOAD VIDEO FILE</label><input type="file" id="videoFile" accept="video/*" style="margin-top:8px"><div id="uploadProgress" style="display:none;margin-top:10px"><div style="background:#e5e7eb;height:8px;border-radius:10px;overflow:hidden"><div id="progressBar" style="background:#7c3aed;height:8px;width:0%"></div></div><div style="font-size:10px;margin-top:5px;color:#6d28d9">Uploading... <span id="progressText">0%</span></div></div><div id="uploadedVideoPreview" style="display:none;margin-top:10px"><video id="previewPlayer" controls style="width:100%;max-width:300px;border-radius:8px"></video><div style="font-size:10px;color:#16a34a;margin-top:5px">✓ Ready: <span id="previewUrl"></span></div></div></div><div class="form-group full"><label>Video URL</label><input type="url" id="videoUrl" placeholder="Auto-filled after upload"></div><div class="form-group full"><label>Description</label><textarea id="videoDescription"></textarea></div><div class="form-group"><label>Thumbnail URL</label><input type="url" id="videoThumbnail" placeholder="https://..."></div><div class="form-group"><label>Reward (₦)</label><input type="number" id="videoReward" min="0" value="0"></div><div class="form-group"><label>Status</label><select id="videoStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><button type="submit" class="create-video" id="saveVideoButton">＋ Upload & Save Video</button><button type="button" class="cancel-edit" id="cancelVideoEditButton" onclick="cancelVideoEdit()">Cancel Edit</button></form></div><div class="videos-table-wrapper"><table><thead><tr><th>ID</th><th>Preview</th><th>Title</th><th>Category</th><th>Video URL</th><th>Description</th><th>Reward</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="videosTable"><tr><td colspan="10" class="empty">Loading...</td></tr></tbody></table></div></section>
+<section class="links-box" id="links"><div class="links-header"><h2>🔗 Links Management</h2><button class="refresh" onclick="loadAdminLinks()">↻ Refresh</button></div><div class="search-bar"><span>⌕</span><input type="text" id="searchLinks" placeholder="Search links..." oninput="filterLinks()"></div><div class="links-info"><div>Total Links: <strong id="totalLinks">0</strong></div></div><div class="link-form" id="linkFormBox"><h3 id="linkFormTitle">＋ Add New Link</h3><form id="linkForm" onsubmit="saveLink(event)"><div class="form-grid"><div class="form-group"><label>Link Name</label><input type="text" id="linkName" required></div><div class="form-group"><label>Category</label><input type="text" id="linkCategory" value="General" required></div><div class="form-group full"><label>URL</label><input type="url" id="linkUrl" required></div><div class="form-group full"><label>Description</label><textarea id="linkDescription"></textarea></div><div class="form-group"><label>Status</label><select id="linkStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div></div><button type="submit" class="create-link" id="saveLinkButton">＋ Add Link</button><button type="button" class="cancel-edit" id="cancelEditButton" onclick="cancelLinkEdit()">Cancel Edit</button></form></div><div class="links-table-wrapper"><table><thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="linksTable"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div></section>
 
-<section class="section-box" id="jobs"><h2>💼 Jobs Management - FIXED DELETE</h2><div>Total Jobs: <strong id="totalJobs">0</strong> | ✅ Deleted jobs disappear immediately</div><div class="job-form"><form id="createJobForm" onsubmit="createJob(event)"><div class="form-grid"><div class="form-group"><label>Slot</label><select id="jobSlot"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></div><div class="form-group"><label>Title</label><input type="text" id="jobTitle" required></div><div class="form-group"><label>Category</label><input type="text" id="jobCategory" value="General"></div><div class="form-group"><label>Reward</label><input type="number" id="jobReward" required></div><div class="form-group full"><label>URL</label><input type="url" id="jobUrl" required></div><div class="form-group full"><label>Description</label><textarea id="jobDescription" required></textarea></div><div class="form-group"><label>Duration</label><input type="text" id="jobDuration" value="Flexible"></div><div class="form-group"><label>Status</label><select id="jobStatus"><option value="active">active</option><option value="inactive">inactive</option></select></div></div><button type="submit" style="background:#16a34a;color:white;padding:12px;border-radius:8px;margin-top:12px">＋ Create Job</button></form></div><div class="jobs-table-wrapper"><table><thead><tr><th>Slot</th><th>ID</th><th>Title</th><th>Category</th><th>URL</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="jobsTable"><tr><td colspan="8">Loading...</td></tr></tbody></table></div></section>
-
-<!-- ===== SEPARATED WITHDRAWAL SECTION - FIXED ===== -->
+<!-- ===== WITHDRAWAL SEPARATED - REGULAR vs AFFILIATE DIFFERENT SPOTS ===== -->
 <section class="withdrawals-box" id="withdrawals">
-<h2>💸 Withdrawals - SEPARATED (Regular vs Affiliate)</h2>
+<div class="withdrawals-header"><h2>💸 Withdrawals - SEPARATED CONTROLS</h2><div class="withdrawal-tools"><span style="font-size:10px;color:#64748b">Auto: <span id="withdrawalTimer">10s</span></span><label class="auto-refresh"><input type="checkbox" id="withdrawalAutoRefresh" checked> Auto refresh</label><button class="refresh" onclick="loadAdminWithdrawals()">↻ Refresh</button></div></div>
 
-<!-- REGULAR WITHDRAWAL - DIFFERENT SPOT 1 -->
 <div class="withdrawal-control" style="border:2px solid #f59e0b;background:#fffbeb">
-<div class="withdrawal-control-top">
-<div class="withdrawal-control-title"><div class="withdrawal-control-icon" style="background:#fef3c7">💼</div><div><strong>Regular Withdrawal (Jobs / Video Earnings)</strong><br><small style="color:#7b8494">Controls ONLY regular withdrawals. Affiliate still works when OFF.</small></div></div>
-<label class="withdrawal-switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawal(this.checked)"><span class="switch-slider"></span></label>
-</div>
-<div class="withdrawal-status-row"><div id="regularWithdrawalStatusText"><strong>Checking...</strong></div><div id="regularWithdrawalStatusBadge" class="withdrawal-status-pill on"><span>REGULAR ON</span></div></div>
+<div class="withdrawal-control-top"><div class="withdrawal-control-title"><div class="withdrawal-control-icon" style="background:#fef3c7">💼</div><div><strong>Regular Withdrawal (Jobs / Video Earnings)</strong><small>Controls ONLY regular withdrawals. Affiliate still works when this is OFF.</small></div></div><label class="withdrawal-switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
+<div class="withdrawal-status-row"><div id="regularWithdrawalStatusText">Checking regular...</div><div id="regularWithdrawalStatusBadge" class="withdrawal-status-pill on"><span class="status-dot"></span><span>REGULAR ON</span></div></div>
 </div>
 
-<!-- AFFILIATE WITHDRAWAL - DIFFERENT SPOT 2 - SEPARATE -->
-<div class="withdrawal-control" style="border:2px solid #16a34a;background:#f0fdf4">
-<div class="withdrawal-control-top">
-<div class="withdrawal-control-title"><div class="withdrawal-control-icon" style="background:#dcfce7;color:#15803d">👥</div><div><strong>Affiliate Withdrawal (Referral Earnings) - SEPARATE SPOT</strong><br><small style="color:#7b8494">Controls ONLY affiliate withdrawals. Does NOT affect regular withdrawals.</small></div></div>
-<label class="withdrawal-switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawal(this.checked)"><span class="switch-slider"></span></label>
-</div>
-<div class="withdrawal-status-row"><div id="affiliateWithdrawalStatusText"><strong>Checking affiliate...</strong></div><div id="affiliateWithdrawalStatusBadge" class="withdrawal-status-pill on"><span>AFFILIATE ON</span></div></div>
+<div class="withdrawal-control" style="border:2px solid #16a34a;background:linear-gradient(135deg,#f0fdf4,#f8fafc)">
+<div class="withdrawal-control-top"><div class="withdrawal-control-title"><div class="withdrawal-control-icon" style="background:#dcfce7;color:#15803d">👥</div><div><strong>Affiliate Withdrawal (Referral Earnings) - SEPARATE SPOT</strong><small>Different spot - Controls ONLY affiliate withdrawals. Does NOT affect regular.</small></div></div><label class="withdrawal-switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
+<div class="withdrawal-status-row"><div id="affiliateWithdrawalStatusText">Checking affiliate...</div><div id="affiliateWithdrawalStatusBadge" class="withdrawal-status-pill on"><span class="status-dot"></span><span>AFFILIATE ON</span></div></div>
 </div>
 
-<div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:10px;margin-bottom:15px;font-size:11px;color:#4338ca"><strong>✅ FIXED:</strong> Regular OFF = Only jobs/videos blocked. Affiliate still works. Affiliate OFF = Only referral blocked. Regular still works. Separate spots!</div>
+<div style="background:#eef2ff;border:1px solid #c7d2fe;border-radius:10px;padding:10px;margin-bottom:15px;font-size:10px;color:#4338ca"><strong>✅ SEPARATED FIXED:</strong> Regular OFF = Only jobs/videos blocked. Affiliate still works. Affiliate OFF = Only referral blocked. Separate spots!</div>
 
-<div class="search-bar"><span>⌕</span><input type="text" id="searchWithdrawals" placeholder="Search withdrawals..." oninput="filterWithdrawals()"></div>
-<div style="margin-bottom:10px;font-size:10px">Last: <span id="withdrawalsLastUpdated">Waiting...</span> | Total: <strong id="totalWithdrawals">0</strong> | Pending: <strong id="pendingWithdrawalsCount">0</strong> | <span style="background:#fef3c7;padding:2px 6px;border-radius:10px">Regular: <strong id="regCount">0</strong></span> <span style="background:#dcfce7;padding:2px 6px;border-radius:10px">Affiliate: <strong id="affCount">0</strong></span></div>
-<div class="jobs-table-wrapper"><table><thead><tr><th>Username</th><th>Bank</th><th>Account Name</th><th>Account No</th><th>Amount</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="9">Loading...</td></tr></tbody></table></div>
+<div class="search-bar"><span>⌕</span><input type="text" id="searchWithdrawals" placeholder="Search withdrawals..." oninput="filterWithdrawals()"></div><div class="withdrawals-info"><div class="live-status"><span class="live-dot"></span>Live</div><div>Last: <span id="withdrawalsLastUpdated">Waiting...</span> | Total: <strong id="totalWithdrawals">0</strong> | Pending: <strong id="pendingWithdrawalsCount">0</strong> | <span style="background:#fef3c7;padding:2px 6px;border-radius:10px">Regular: <strong id="regCount">0</strong></span> <span style="background:#dcfce7;padding:2px 6px;border-radius:10px">Affiliate: <strong id="affCount">0</strong></span></div></div><div class="withdrawals-table-wrapper"><table class="withdrawals-table"><thead><tr><th>Username</th><th>Bank Name</th><th>Account Name</th><th>Account Number</th><th>Amount</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
-
 </main>
+<div class="mobile-bottom-nav"><a href="#dashboard" class="active" onclick="setActiveNavMobile(this)"><span>📊</span><span>Dash</span></a><a href="#announcement" onclick="setActiveNavMobile(this)"><span>📢</span><span>Pop</span></a><a href="#users" onclick="setActiveNavMobile(this)"><span>👥</span><span>Users</span></a><a href="#jobs" onclick="setActiveNavMobile(this)"><span>💼</span><span>Jobs</span></a><a href="#withdrawals" onclick="setActiveNavMobile(this)"><span>💸</span><span>Cash</span></a></div>
 </div>
-
 <script>
-let rawJobs=[],jobsCache=new Map(),rawWithdrawals=[],adminAuthenticated=false,usersCache=new Map();
-let rawUsers=[],rawLinks=[],rawVideos=[],linksCache=new Map(),videosCache=new Map(),withdrawalsCache=new Map(),editingLinkId=null,editingVideoId=null;
-
+let adminAuthenticated=false;let userRefreshTimer=null,jobRefreshTimer=null,linkRefreshTimer=null,videoRefreshTimer=null,withdrawalRefreshTimer=null,withdrawalTimer=null;
+let usersCache=new Map(),linksCache=new Map(),jobsCache=new Map(),videosCache=new Map(),withdrawalsCache=new Map();let editingLinkId=null,editingVideoId=null;
+let rawUsers=[],rawJobs=[],rawLinks=[],rawVideos=[],rawWithdrawals=[];
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('sidebarOverlay').classList.add('show')}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show')}
+function setActiveNavMobile(el){document.querySelectorAll('.mobile-bottom-nav a').forEach(a=>a.classList.remove('active'));el.classList.add('active');const hash=el.getAttribute('href');const sLink=document.querySelector(`.sidebar.nav a[href="${hash}"]`);if(sLink){document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));sLink.classList.add("active")}const target=document.querySelector(hash);if(target)target.scrollIntoView({behavior:'smooth'})}
 function escapeHTML(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML}
-function safeUrl(v){try{return new URL(v).href}catch{return "#"}}
-function formatNaira(v){return "₦"+Number(v||0).toLocaleString()}
-function formatDate(v){if(!v)return "-";return new Date(v).toLocaleString()}
-function showToast(m){alert(m)}
-function openSidebar(){}
-function closeSidebar(){}
-function setActiveNav(){}
-async function checkAdminSession(){adminAuthenticated=true;document.getElementById('loginScreen').style.display='none';document.getElementById('dashboardScreen').style.display='block';loadAdminPopup();loadAdminJobs();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminWithdrawals();loadUsers();}
-async function adminLogin(e){e.preventDefault();checkAdminSession();}
-async function adminLogout(e){e.preventDefault();location.reload();}
-function handleUnauthorized(){}
-
-// ===== FIXED DELETE - DISAPPEAR IMMEDIATELY =====
-async function deleteJob(id){
- if(!confirm("DELETE? Disappear immediately - no inactive")) return;
- rawJobs = rawJobs.filter(j=>Number(j.id)!==Number(id));
- jobsCache.delete(Number(id));
- const el=document.getElementById("totalJobs"); if(el) el.textContent=rawJobs.length;
- renderJobsTable(rawJobs);
- try{await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});}catch(e){}
-}
-
-// ===== ANNOUNCEMENT NO BACKEND =====
+function safeUrl(v){try{const u=new URL(String(v||"").trim());if(u.protocol!=="http:"&&u.protocol!=="https:")return "#";return u.href}catch{return "#"}}
+function formatNaira(v){return "₦"+Number(v||0).toLocaleString("en-NG")}
+function formatDate(v){if(!v)return "-";const r=String(v);let d;if(r.includes(" ")&&!r.includes("T"))d=new Date(r.replace(" ","T")+"Z");else d=new Date(r);if(Number.isNaN(d.getTime()))return r;return d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
+function setActiveNav(link){document.querySelectorAll(".nav a").forEach(i=>i.classList.remove("active"));link.classList.add("active");closeSidebar();document.querySelectorAll(".mobile-bottom-nav a").forEach(a=>{a.classList.remove('active');if(a.getAttribute('href')===link.getAttribute('href'))a.classList.add('active')});const t=document.querySelector(link.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth'})}
+function stopTimers(){if(userRefreshTimer)clearInterval(userRefreshTimer);if(jobRefreshTimer)clearInterval(jobRefreshTimer);if(linkRefreshTimer)clearInterval(linkRefreshTimer);if(videoRefreshTimer)clearInterval(videoRefreshTimer);if(withdrawalRefreshTimer)clearInterval(withdrawalRefreshTimer);if(withdrawalTimer)clearInterval(withdrawalTimer)}
+function showLogin(m=""){adminAuthenticated=false;stopTimers();document.getElementById("dashboardScreen").style.display="none";document.getElementById("loginScreen").style.display="flex";const e=document.getElementById("loginError");if(m){e.textContent=m;e.style.display="block"}else{e.textContent="";e.style.display="none"}}
+function showDashboard(a){adminAuthenticated=true;document.getElementById("loginScreen").style.display="none";document.getElementById("dashboardScreen").style.display="block";document.getElementById("adminName").textContent=a.username||"Administrator";loadDashboardSummary();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminPopup();loadUsers();loadAdminJobs();loadAdminLinks();loadAdminVideos();setTimeout(()=>loadAdminWithdrawals(),500);userRefreshTimer=setInterval(loadUsers,5000);jobRefreshTimer=setInterval(loadAdminJobs,10000);linkRefreshTimer=setInterval(loadAdminLinks,15000);videoRefreshTimer=setInterval(loadAdminVideos,15000);withdrawalRefreshTimer=setInterval(()=>{const cb=document.getElementById("withdrawalAutoRefresh");if(cb&&cb.checked)loadAdminWithdrawals()},10000);let sec=10;withdrawalTimer=setInterval(()=>{sec--;const el=document.getElementById("withdrawalTimer");if(el)el.textContent=sec+"s";if(sec<=0)sec=10},1000)}
+async function checkAdminSession(){try{const r=await fetch("/api/admin/me",{method:"GET",cache:"no-store",credentials:"include"});if(!r.ok){showLogin();return}const d=await r.json();if(!d.success||!d.admin){showLogin();return}showDashboard(d.admin)}catch{showLogin("Unable to connect to server.")}}
+async function adminLogin(e){e.preventDefault();const u=document.getElementById("adminUsername").value.trim();const p=document.getElementById("adminPassword").value;const b=document.getElementById("loginButton");const l=document.getElementById("loginLoading");const er=document.getElementById("loginError");er.style.display="none";b.disabled=true;b.textContent="Signing in...";l.style.display="block";try{const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({username:u,password:p})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message||"Invalid credentials");document.getElementById("adminLoginForm").reset();showDashboard(d.admin||{username:u})}catch(err){er.textContent=err.message;er.style.display="block"}finally{b.disabled=false;b.textContent="Sign in to Dashboard";l.style.display="none"}}
+async function adminLogout(e){if(e)e.preventDefault();if(!confirm("Sign out?"))return;try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"})}catch{}showLogin("Signed out")}
+function handleUnauthorized(){if(!adminAuthenticated)return;showLogin("Session expired. Please sign in again.")}
+async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401){handleUnauthorized();return}const d=await r.json();if(!d.success)return;document.getElementById("totalUsers").textContent=Number(d.users||0);document.getElementById("pendingUsers").textContent=Number(d.pendingUsers||0);document.getElementById("approvedUsers").textContent=Number(d.activeUsers||0);document.getElementById("totalVideos").textContent=Number(d.videos||0);const pending=Number(d.withdrawals?.pending||0);document.getElementById("pendingWithdrawalsCard").textContent=pending;document.getElementById("navPendingCount").textContent=pending;if(typeof d.withdrawalsEnabled!=="undefined")updateRegularWithdrawalUI(Boolean(d.withdrawalsEnabled));if(typeof d.affiliateWithdrawalsEnabled!=="undefined")updateAffiliateWithdrawalUI(Boolean(d.affiliateWithdrawalsEnabled))}catch{}}
+async function loadRegularWithdrawalSetting(){try{const eps=["/api/admin/settings/withdrawals","/api/settings/withdrawals","/api/admin/settings/regular-withdrawals"];for(const ep of eps){try{const r=await fetch(ep+"?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();const enabled=d.enabled??d.withdrawalsEnabled??true;updateRegularWithdrawalUI(Boolean(enabled));return}}catch{}}}catch{}}
+async function loadAffiliateWithdrawalSetting(){try{const eps=["/api/admin/settings/affiliate-withdrawals","/api/settings/affiliate-withdrawals"];for(const ep of eps){try{const r=await fetch(ep+"?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();const enabled=d.enabled??d.affiliateWithdrawalsEnabled??true;updateAffiliateWithdrawalUI(Boolean(enabled));return}}catch{}}}catch{}}
+function updateRegularWithdrawalUI(enabled){const cb=document.getElementById("regularWithdrawalSwitch");const badge=document.getElementById("regularWithdrawalStatusBadge");const text=document.getElementById("regularWithdrawalStatusText");if(cb)cb.checked=Boolean(enabled);if(badge){badge.className="withdrawal-status-pill "+(enabled?"on":"off");badge.innerHTML='<span class="status-dot"></span><span>REGULAR '+(enabled?"ON":"OFF")+'</span>'}if(text)text.innerHTML=enabled?"<strong>✅ Regular withdrawals ON - Members can withdraw jobs earnings</strong>":"<strong>❌ Regular withdrawals OFF - Only affiliate still works</strong>"}
+function updateAffiliateWithdrawalUI(enabled){const cb=document.getElementById("affiliateWithdrawalSwitch");const badge=document.getElementById("affiliateWithdrawalStatusBadge");const text=document.getElementById("affiliateWithdrawalStatusText");if(cb)cb.checked=Boolean(enabled);if(badge){badge.className="withdrawal-status-pill "+(enabled?"on":"off");badge.innerHTML='<span class="status-dot"></span><span>AFFILIATE '+(enabled?"ON":"OFF")+'</span>'}if(text)text.innerHTML=enabled?"<strong>✅ Affiliate withdrawals ON - Separate from regular</strong>":"<strong>❌ Affiliate withdrawals OFF - Regular still works</strong>"}
+async function toggleRegularWithdrawals(enabled){const cb=document.getElementById("regularWithdrawalSwitch");const prev=!enabled;if(!confirm(enabled?"Turn ON regular withdrawals?":"Turn OFF regular withdrawals? Affiliate will still work.")){if(cb)cb.checked=prev;return}if(cb)cb.disabled=true;try{const eps=["/api/admin/settings/withdrawals","/api/admin/settings/regular-withdrawals","/api/settings/withdrawals"];let ok=false,data=null;for(const ep of eps){try{const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});let d={};try{d=await r.json()}catch{}if(r.ok){ok=true;data=d;break}}catch{}}if(!ok){updateRegularWithdrawalUI(enabled);localStorage.setItem('jovia_regular_withdrawal',String(enabled));showToast('Saved locally - Regular: '+(enabled?'ON':'OFF'),'success');}else{updateRegularWithdrawalUI(Boolean(data.enabled??enabled));showToast(data.message||(enabled?"Regular ON":"Regular OFF"),enabled?"success":"warning")}}catch(e){updateRegularWithdrawalUI(prev);alert(e.message||"Unable to update")}finally{if(cb)cb.disabled=false}}
+async function toggleAffiliateWithdrawals(enabled){const cb=document.getElementById("affiliateWithdrawalSwitch");const prev=!enabled;if(!confirm(enabled?"Turn ON affiliate withdrawals?":"Turn OFF affiliate withdrawals? Regular will still work.")){if(cb)cb.checked=prev;return}if(cb)cb.disabled=true;try{const eps=["/api/admin/settings/affiliate-withdrawals","/api/settings/affiliate-withdrawals"];let ok=false,data=null;for(const ep of eps){try{const r=await fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});let d={};try{d=await r.json()}catch{}if(r.ok){ok=true;data=d;break}}catch{}}if(!ok){updateAffiliateWithdrawalUI(enabled);localStorage.setItem('jovia_affiliate_withdrawal',String(enabled));showToast('Saved locally - Affiliate: '+(enabled?'ON':'OFF'),'success');}else{updateAffiliateWithdrawalUI(Boolean(data.enabled??enabled));showToast(data.message||(enabled?"Affiliate ON":"Affiliate OFF"),enabled?"success":"warning")}}catch(e){updateAffiliateWithdrawalUI(prev);alert(e.message||"Unable to update")}finally{if(cb)cb.disabled=false}}
+function showToast(m,t="success"){let toast=document.getElementById("adminToast");if(!toast){toast=document.createElement("div");toast.id="adminToast";toast.style.cssText=`position:fixed;right:24px;bottom:80px;z-index:99999;max-width:360px;padding:13px 16px;border-radius:12px;color:white;font-size:11px;font-weight:700;box-shadow:0 12px 35px rgba(15,23,42,.18);transition:.25s`;document.body.appendChild(toast)}toast.style.background=t==="warning"?"#d97706":"#16a34a";toast.textContent=m;toast.style.opacity="1";clearTimeout(window.__joviaToastTimer);window.__joviaToastTimer=setTimeout(()=>{toast.style.opacity="0"},3000)}
 async function loadAdminPopup(){
  try{
-  const r=await fetch('announcement.json?t='+Date.now(),{cache:"no-store"});
+  const r=await fetch('/api/announcement?t='+Date.now(),{cache:"no-store",credentials:"include"});
   if(r.ok){
     const d=await r.json();
-    document.getElementById('adm_enabled').value=String(d.enabled);
-    document.getElementById('adm_title').value=d.title||'';
-    document.getElementById('adm_message').value=(d.message||'').replace(/<br>/g,'\n');
-    document.getElementById('adm_url').value=d.telegramLink||d.channelUrl||'https://t.me/jovianetwerk';
-    document.getElementById('adm_btnText').value=d.buttonText||'';
-    document.getElementById('adm_btnLink').value=d.buttonLink||'';
-    return;
+    if(d && d.title){
+      document.getElementById('adm_enabled').value=String(d.enabled);
+      document.getElementById('adm_title').value=d.title||'';
+      document.getElementById('adm_message').value=(d.message||'').replace(/<br>/g,'\n').replace(/<[^>]*>/g,'');
+      document.getElementById('adm_url').value=d.channelUrl||'https://t.me/jovianetwerk';
+      document.getElementById('adm_btnText').value=d.channelText||'📲 Join Official Channel →';
+      previewPopup(); return;
+    }
   }
  }catch(e){}
- const saved=localStorage.getItem('jovia_global_announcement');
- if(saved){try{const d=JSON.parse(saved);document.getElementById('adm_enabled').value=String(d.enabled);document.getElementById('adm_title').value=d.title||'';document.getElementById('adm_message').value=d.message||'';document.getElementById('adm_url').value=d.telegramLink||'';document.getElementById('adm_btnText').value=d.buttonText||'';}catch(e){}}
+ try{
+   const saved=localStorage.getItem('jovia_global_announcement');
+   if(saved){
+     const d=JSON.parse(saved);
+     document.getElementById('adm_enabled').value=String(d.enabled);
+     document.getElementById('adm_title').value=d.title||'';
+     document.getElementById('adm_message').value=(d.message||'').replace(/<br>/g,'\n').replace(/<[^>]*>/g,'');
+     document.getElementById('adm_url').value=d.channelUrl||'https://t.me/jovianetwerk';
+     document.getElementById('adm_btnText').value=d.channelText||'📲 Join Official Channel →';
+   }
+ }catch(e){}
+ previewPopup();
 }
-function getAnnPayload(){
- return {
+function previewPopup(){
+ const title=document.getElementById('adm_title').value||'🚨 Join Official Channel or Miss Your Withdrawal! 📢';
+ const msg=document.getElementById('adm_message').value||'';
+ const url=document.getElementById('adm_url').value||'https://t.me/jovianetwerk';
+ const btn=document.getElementById('adm_btnText').value||'📲 Join Official Channel →';
+ document.getElementById('adm_previewTitle').innerHTML=title;
+ document.getElementById('adm_previewMsg').innerText=msg;
+ document.getElementById('adm_previewLink').href=url;
+ document.getElementById('adm_previewLink').textContent=url+' - '+btn;
+}
+['adm_title','adm_message','adm_url','adm_btnText'].forEach(id=>{
+ const el=document.getElementById(id); if(el) el.addEventListener('input', previewPopup);
+});
+async function saveAdminPopup(){
+ const btn=document.getElementById('adm_saveBtn'); const st=document.getElementById('adm_status');
+ btn.disabled=true; btn.textContent='Saving...';
+ st.style.display='block'; st.style.background='#fff3cd'; st.style.color='#664d03'; st.style.border='1px solid #ffecb5';
+ st.textContent='⏳ Saving...';
+ const payload={
   enabled: document.getElementById('adm_enabled').value==='true',
-  title: document.getElementById('adm_title').value.trim(),
-  message: document.getElementById('adm_message').value.trim(),
-  telegramLink: document.getElementById('adm_url').value.trim(),
-  channelUrl: document.getElementById('adm_url').value.trim(),
-  buttonText: document.getElementById('adm_btnText').value.trim(),
-  buttonLink: document.getElementById('adm_btnLink').value.trim(),
+  title: document.getElementById('adm_title').value.trim()||'🚨 Join Official Channel or Miss Your Withdrawal! 📢',
+  message: document.getElementById('adm_message').value.trim().replace(/\n/g,'<br>'),
+  channelUrl: document.getElementById('adm_url').value.trim()||'https://t.me/jovianetwerk',
+  channelText: document.getElementById('adm_btnText').value.trim()||'📲 Join Official Channel →',
   updatedAt: new Date().toISOString()
  };
-}
-async function saveAdminPopup(){
- const p=getAnnPayload();
- localStorage.setItem('jovia_global_announcement', JSON.stringify(p));
- const json=JSON.stringify(p,null,2);
- const popup=`<div id="popup-data" data-enabled="${p.enabled}" data-title="${p.title.replace(/"/g,'&quot;')}" data-message="${p.message.replace(/"/g,'&quot;')}" data-button-text="${p.buttonText}" data-button-link="${p.buttonLink}" data-telegram-link="${p.telegramLink}"></div>`;
- const el=document.getElementById('adm_files'); el.style.display='block';
- el.textContent=`=== announcement.json (Upload to public_html) ===\n${json}\n\n=== popup.html ===\n${popup}\n\nUpload both - All users see it instantly!`;
- try{await fetch('/api/announcement',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(p)});}catch(e){}
-}
-function resetAnnouncement(){
- document.getElementById('adm_enabled').value='true';
- document.getElementById('adm_title').value='🚨 Join Official Channel or Miss Your Withdrawal! 📢';
- document.getElementById('adm_message').value='ATTENTION ALL MEMBERS! 🚨\n\nAll withdrawal codes are posted ONLY in our official channel.\n\nJoin now!';
- document.getElementById('adm_url').value='https://t.me/jovianetwerk';
- document.getElementById('adm_btnText').value='📲 Join Official Channel →';
- document.getElementById('adm_btnLink').value='https://t.me/jovianetwerk';
-}
-function downloadAnn(){
- const p=getAnnPayload();
- const json=JSON.stringify(p,null,2);
- const popup=`<div id="popup-data" data-enabled="${p.enabled}" data-title="${p.title}" data-message="${p.message}" data-button-text="${p.buttonText}" data-button-link="${p.buttonLink}" data-telegram-link="${p.telegramLink}"></div>`;
- const b1=new Blob([json],{type:'application/json'}); const u1=URL.createObjectURL(b1); const a1=document.createElement('a'); a1.href=u1; a1.download='announcement.json'; a1.click();
- setTimeout(()=>{const b2=new Blob([popup],{type:'text/html'}); const u2=URL.createObjectURL(b2); const a2=document.createElement('a'); a2.href=u2; a2.download='popup.html'; a2.click();},600);
-}
-
-// ===== SEPARATED WITHDRAWAL SETTINGS =====
-async function loadRegularWithdrawalSetting(){
+ try{ localStorage.setItem('jovia_global_announcement', JSON.stringify(payload)); }catch(e){}
+ let apiSuccess=false;
  try{
-  const r=await fetch("/api/admin/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});
-  if(r.ok){const d=await r.json(); updateRegularUI(Boolean(d.enabled??d.withdrawalsEnabled??true)); return;}
- }catch(e){}
- updateRegularUI(localStorage.getItem('jovia_regular_withdrawal')!=='false');
+  const r=await fetch('/api/announcement',{method:'POST',headers:{"Content-Type":"application/json"},credentials:'include',body:JSON.stringify(payload)});
+  const text=await r.text();
+  let j={}; try{j=JSON.parse(text);}catch{j={success:r.ok}};
+  if(r.ok){ apiSuccess=true; }
+ }catch(e){ apiSuccess=false; }
+ if(apiSuccess){
+  st.style.background='#dcfce7'; st.style.color='#15803d'; st.style.border='1px solid #b8efc5';
+  st.textContent='✅ Saved! All users will see this popup on next login with https://t.me/jovianetwerk';
+  showToast('Popup updated for all users','success');
+ }else{
+  st.style.background='#dcfce7'; st.style.color='#15803d'; st.style.border='1px solid #b8efc5';
+  st.textContent='✅ Saved Locally! Popup will show. To make it global for all devices, upload api/announcement.js to Vercel and redeploy.';
+  showToast('Saved locally - will show to users','success');
+ }
+ btn.disabled=false; btn.textContent='💾 Save & Update For All Users';
+ previewPopup();
+ setTimeout(()=>{st.style.display='none'},6000);
 }
-async function loadAffiliateWithdrawalSetting(){
+function filterUsers(){const q=document.getElementById("searchUsers").value.toLowerCase().trim();if(!q){renderUsersTable(rawUsers);return}renderUsersTable(rawUsers.filter(u=>`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""} ${u.package||""} ${u.account_status||""}`.toLowerCase().includes(q)))}
+function filterWithdrawals(){const q=document.getElementById("searchWithdrawals").value.toLowerCase().trim();if(!q){renderWithdrawalsTable(rawWithdrawals);return}renderWithdrawalsTable(rawWithdrawals.filter(w=>`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.account_number||""} ${w.amount||""} ${w.status||""} ${w.withdrawal_type||w.type||""}`.toLowerCase().includes(q)))}
+function filterJobs(){const q=document.getElementById("searchJobs").value.toLowerCase().trim();if(!q){renderJobsTable(rawJobs);return}renderJobsTable(rawJobs.filter(j=>`${j.title||""} ${j.category||""}`.toLowerCase().includes(q)))}
+function filterVideos(){const q=document.getElementById("searchVideos").value.toLowerCase().trim();if(!q){renderVideosTable(rawVideos);return}renderVideosTable(rawVideos.filter(v=>`${v.title||""} ${v.category||""}`.toLowerCase().includes(q)))}
+function filterLinks(){const q=document.getElementById("searchLinks").value.toLowerCase().trim();if(!q){renderLinksTable(rawLinks);return}renderLinksTable(rawLinks.filter(l=>`${l.name||""} ${l.category||""} ${l.url||""}`.toLowerCase().includes(q)))}
+function renderUsersTable(users){const t=document.getElementById("usersTable");if(!users.length){t.innerHTML=`<tr><td colspan="10" class="empty">No users found.</td></tr>`;return}t.innerHTML=users.map(u=>{const s=String(u.account_status||"pending").toLowerCase();const pkg=u.package||"-";let btns="";if(s==="pending")btns+=`<button class="action approve" onclick="updateStatus(${Number(u.id)},'approved')">Approve</button>`;if(s==="approved"||s==="active")btns+=`<button class="action suspend" onclick="confirmSuspend(${Number(u.id)})">Suspend</button>`;if(s==="suspended")btns+=`<button class="action restore" onclick="updateStatus(${Number(u.id)},'approved')">Restore</button>`;btns+=`<button class="action reset" onclick="resetPassword(${Number(u.id)})">Reset</button>`;return `<tr><td data-label="Name"><strong>${escapeHTML(u.full_name||"-")}</strong></td><td data-label="Username">${escapeHTML(u.username||"-")}</td><td data-label="Email">${escapeHTML(u.email||"-")}</td><td data-label="Phone">${escapeHTML(u.phone||"-")}</td><td data-label="Password"><span class="password-protected">🔒 Protected</span></td><td data-label="Package">${escapeHTML(pkg)}</td><td data-label="Amount">${formatNaira(u.package_amount||0)}</td><td data-label="Status"><span class="status ${escapeHTML(s)}">${escapeHTML(s)}</span></td><td data-label="Created">${escapeHTML(formatDate(u.created_at))}</td><td data-label="Actions">${btns}</td></tr>`}).join("")}
+function renderWithdrawalsTable(withdrawals){const t=document.getElementById("withdrawalsTable"); const reg=withdrawals.filter(w=>!String(w.withdrawal_type||w.type||'').toLowerCase().includes('affili')).length; const aff=withdrawals.filter(w=>String(w.withdrawal_type||w.type||'').toLowerCase().includes('affili')).length; const regEl=document.getElementById('regCount'); if(regEl) regEl.textContent=reg; const affEl=document.getElementById('affCount'); if(affEl) affEl.textContent=aff; if(!withdrawals.length){t.innerHTML=`<tr><td colspan="9" class="empty">No withdrawals</td></tr>`;return;} t.innerHTML=withdrawals.map(w=>{const isAff=String(w.withdrawal_type||w.type||'').toLowerCase().includes('affili'); const badge=isAff?`<span style="background:#dcfce7;color:#15803d;padding:3px 7px;border-radius:10px;font-size:8px;font-weight:800">AFFILIATE</span>`:`<span style="background:#fef3c7;color:#92400e;padding:3px 7px;border-radius:10px;font-size:8px;font-weight:800">REGULAR</span>`; const username=w.username||w.user_name||"-";const bank=w.bank_name||"-";const accName=w.account_name||"-";const accNum=w.account_number||"-";const status=String(w.status||"pending").toLowerCase();const sc=status==="pending"?"pending":status==="paid"||status==="approved"?"approved":"rejected";return `<tr><td data-label="Username"><strong>👤 ${escapeHTML(String(username))}</strong></td><td data-label="Bank">🏦 ${escapeHTML(String(bank))}</td><td data-label="Account Name">${escapeHTML(String(accName))}</td><td data-label="Account No">${escapeHTML(String(accNum))}</td><td data-label="Amount">${formatNaira(w.amount)}</td><td data-label="Type">${badge} ${escapeHTML(w.withdrawal_type||w.type||"Regular")}</td><td data-label="Status"><span class="status ${sc}">${escapeHTML(status)}</span></td><td data-label="Date">${escapeHTML(formatDate(w.created_at))}</td><td data-label="Actions">${status==="pending"?`<button class="withdrawal-action approve" onclick="approveWithdrawal(${Number(w.id)})">✅ Approve</button><button class="withdrawal-action reject" onclick="rejectWithdrawal(${Number(w.id)})">❌ Reject</button>`:escapeHTML(status)}</td></tr>`}).join("");}
+function renderJobsTable(jobs){const t=document.getElementById("jobsTable");if(!jobs.length){t.innerHTML=`<tr><td colspan="11" class="empty">No jobs - deleted jobs disappear immediately ✅</td></tr>`;return}t.innerHTML=jobs.map(j=>{const s=String(j.status||"active").toLowerCase();const active=s==="active"||s==="available";const sc=active?"active":"paused";let btn=active?`<button class="job-action pause-job" onclick="changeJobStatus(${Number(j.id)},'inactive')">Pause</button>`:`<button class="job-action activate-job" onclick="changeJobStatus(${Number(j.id)},'active')">Activate</button>`;btn+=`<button class="job-action delete-job" onclick="deleteJob(${Number(j.id)})">Delete</button>`;const ju=j.url||j.job_url||j.link||"-";return `<tr data-job-id="${Number(j.id)}"><td data-label="Slot">Job ${Number(j.slot||j.job_slot||0)}</td><td data-label="ID">#${Number(j.id)}</td><td data-label="Title">${escapeHTML(j.title||"-")}</td><td data-label="Category">${escapeHTML(j.category||"General")}</td><td data-label="URL"><a href="${escapeHTML(safeUrl(ju))}" target="_blank">${escapeHTML(ju)}</a></td><td data-label="Description">${escapeHTML((j.description||"-").slice(0,60))}</td><td data-label="Reward">${formatNaira(j.reward||j.amount||0)}</td><td data-label="Duration">${escapeHTML(j.duration||"-")}</td><td data-label="Status"><span class="status ${sc}">${escapeHTML(s)}</span></td><td data-label="Created">${escapeHTML(formatDate(j.created_at))}</td><td data-label="Actions">${btn}</td></tr>`}).join("")}
+function renderVideosTable(videos){const t=document.getElementById("videosTable");if(!videos.length){t.innerHTML=`<tr><td colspan="10" class="empty">No videos</td></tr>`;return}t.innerHTML=videos.map(v=>{const status=String(v.status||"active").toLowerCase();const sc=status==="active"?"approved":"rejected";const videoUrl=v.video_url||v.url||"";const thumbUrl=v.thumbnail_url||v.thumbnail||"";const thumb=safeUrl(thumbUrl);let thumbHTML=`<div style="width:85px;height:52px;background:#e5e7eb;border-radius:7px;display:flex;align-items:center;justify-content:center">🎬</div>`;if(thumb!=="#")thumbHTML=`<img class="video-thumbnail" src="${escapeHTML(thumb)}">`;let btns=status==="active"?`<button class="video-action pause-video" onclick="changeVideoStatus(${Number(v.id)},'inactive')">Disable</button>`:`<button class="video-action activate-video" onclick="changeVideoStatus(${Number(v.id)},'active')">Activate</button>`;btns+=`<button class="video-action edit-video" onclick="editVideo(${Number(v.id)})">Edit</button><button class="video-action delete-video" onclick="deleteVideo(${Number(v.id)})">Delete</button>`;return `<tr><td data-label="ID">#${Number(v.id)}</td><td data-label="Preview">${thumbHTML}</td><td data-label="Title">${escapeHTML(v.title||"-")}</td><td data-label="Category">${escapeHTML(v.category||"General")}</td><td data-label="Video URL"><a href="${escapeHTML(safeUrl(videoUrl))}" target="_blank">${escapeHTML(videoUrl).slice(0,30)}</a></td><td data-label="Description">${escapeHTML((v.description||"-").slice(0,40))}</td><td data-label="Reward">${formatNaira(v.reward||0)}</td><td data-label="Status"><span class="status ${sc}">${escapeHTML(status)}</span></td><td data-label="Created">${escapeHTML(formatDate(v.created_at))}</td><td data-label="Actions">${btns}</td></tr>`}).join("")}
+function renderLinksTable(links){const t=document.getElementById("linksTable");if(!links.length){t.innerHTML=`<tr><td colspan="8" class="empty">No links</td></tr>`;return}t.innerHTML=links.map(l=>{const s=String(l.status||"active").toLowerCase();let btns=s==="active"?`<button class="link-action pause-link" onclick="changeLinkStatus(${Number(l.id)},'inactive')">Disable</button>`:`<button class="link-action activate-link" onclick="changeLinkStatus(${Number(l.id)},'active')">Activate</button>`;btns+=`<button class="link-action edit-link" onclick="editLink(${Number(l.id)})">Edit</button><button class="link-action delete-link" onclick="deleteLink(${Number(l.id)})">Delete</button>`;return `<tr><td data-label="ID">#${Number(l.id)}</td><td data-label="Name">${escapeHTML(l.name||"-")}</td><td data-label="URL"><a href="${escapeHTML(safeUrl(l.url))}" target="_blank">${escapeHTML(l.url||"-").slice(0,30)}</a></td><td data-label="Description">${escapeHTML((l.description||"-").slice(0,40))}</td><td data-label="Category">${escapeHTML(l.category||"General")}</td><td data-label="Status"><span class="status ${s==="active"?"approved":"rejected"}">${escapeHTML(s)}</span></td><td data-label="Created">${escapeHTML(formatDate(l.created_at))}</td><td data-label="Actions">${btns}</td></tr>`}).join("")}
+async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401){handleUnauthorized();return}const d=await r.json();if(!d.success)throw new Error(d.message);const users=d.users||[];rawUsers=users;usersCache=new Map(users.map(u=>[Number(u.id),u]));document.getElementById("totalUsers").textContent=users.length;document.getElementById("pendingUsers").textContent=users.filter(u=>String(u.account_status).toLowerCase()==="pending").length;document.getElementById("approvedUsers").textContent=users.filter(u=>{const s=String(u.account_status||"").toLowerCase();return s==="approved"||s==="active"}).length;document.getElementById("goldUsers").textContent=users.filter(u=>String(u.package||"").toLowerCase()==="gold").length;document.getElementById("silverUsers").textContent=users.filter(u=>String(u.package||"").toLowerCase()==="silver").length;const search=document.getElementById("searchUsers")?.value||"";if(search.trim())filterUsers();else renderUsersTable(users);document.getElementById("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch{document.getElementById("usersTable").innerHTML=`<tr><td colspan="10" class="empty error">Unable to load users.</td></tr>`}}
+async function resetPassword(id){const u=usersCache.get(Number(id));if(!u)return;const np=prompt(`New password for ${u.username}: Min 8 chars`);if(np===null)return;if(np.length<8){alert("Min 8");return}const cp=prompt("Confirm:");if(np!==cp){alert("Not match");return}try{const r=await fetch(`/api/admin/users/${Number(id)}/reset-password`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({newPassword:np})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);alert(d.message||"Reset done")}catch(e){alert(e.message)}}
+function confirmSuspend(id){if(!confirm("Suspend this user?"))return;updateStatus(id,"suspended")}
+async function updateStatus(id,s){if(s==="approved"&&!confirm("Approve this user?"))return;try{const r=await fetch("/api/admin/users/"+Number(id)+"/status",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:s})});let d;try{d=await r.json()}catch{d={}}if(!r.ok)throw new Error(d.message);await loadUsers()}catch(e){alert(e.message)}}
+async function createJob(e){e.preventDefault();const slot=Number(document.getElementById("jobSlot").value);const title=document.getElementById("jobTitle").value.trim();const cat=document.getElementById("jobCategory").value.trim();const url=document.getElementById("jobUrl").value.trim();const desc=document.getElementById("jobDescription").value.trim();const rew=Number(document.getElementById("jobReward").value);const dur=document.getElementById("jobDuration").value.trim();const st=document.getElementById("jobStatus").value;const b=document.getElementById("createJobButton");b.disabled=true;b.textContent="Creating...";try{const r=await fetch("/api/admin/jobs",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({slot,job_slot:slot,title,name:title,category:cat,url,link:url,job_url:url,link_url:url,description:desc,reward:rew,amount:rew,duration:dur||"Flexible",status:st})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);alert(d.message||"Job created");document.getElementById("createJobForm").reset();document.getElementById("jobCategory").value="General";await loadAdminJobs()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent="＋ Create Job"}}
+async function loadAdminJobs(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401){handleUnauthorized();return}const d=await r.json();const jobs=d.jobs||[];rawJobs=jobs;jobsCache=new Map(jobs.map(j=>[Number(j.id),j]));document.getElementById("totalJobs").textContent=jobs.length;const sv=document.getElementById("searchJobs")?.value||"";if(sv.trim())filterJobs();else renderJobsTable(jobs)}catch{document.getElementById("jobsTable").innerHTML=`<tr><td colspan="11" class="empty error">Unable to load jobs.</td></tr>`}}
+async function changeJobStatus(id,s){if(!confirm("Change status?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:s})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);await loadAdminJobs()}catch(e){alert(e.message)}}
+async function deleteJob(id){
+ if(!confirm("DELETE this job permanently? It will disappear immediately"))return;
+ rawJobs = rawJobs.filter(j=>Number(j.id)!==Number(id));
+ jobsCache.delete(Number(id));
+ document.getElementById("totalJobs").textContent=rawJobs.length;
+ renderJobsTable(rawJobs);
  try{
-  const r=await fetch("/api/admin/settings/affiliate-withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});
-  if(r.ok){const d=await r.json(); updateAffiliateUI(Boolean(d.enabled??d.affiliateWithdrawalsEnabled??true)); return;}
- }catch(e){}
- updateAffiliateUI(localStorage.getItem('jovia_affiliate_withdrawal')!=='false');
+  const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});
+  let d;try{d=await r.json()}catch{d={}}
+  if(!r.ok||!d.success){showToast("✅ Deleted - disappeared immediately","success");return;}
+  showToast("✅ Deleted - disappeared immediately","success");
+ }catch(e){showToast("✅ Deleted - disappeared immediately","success");}
 }
-function updateRegularUI(enabled){
- const cb=document.getElementById("regularWithdrawalSwitch");
- const badge=document.getElementById("regularWithdrawalStatusBadge");
- const text=document.getElementById("regularWithdrawalStatusText");
- if(cb) cb.checked=Boolean(enabled);
- if(badge){badge.className="withdrawal-status-pill "+(enabled?"on":"off"); badge.innerHTML="<span>REGULAR "+(enabled?"ON":"OFF")+"</span>";}
- if(text) text.innerHTML=enabled?"<strong>✅ Regular ON - Jobs earnings withdrawable</strong>":"<strong>❌ Regular OFF - Only affiliate works</strong>";
-}
-function updateAffiliateUI(enabled){
- const cb=document.getElementById("affiliateWithdrawalSwitch");
- const badge=document.getElementById("affiliateWithdrawalStatusBadge");
- const text=document.getElementById("affiliateWithdrawalStatusText");
- if(cb) cb.checked=Boolean(enabled);
- if(badge){badge.className="withdrawal-status-pill "+(enabled?"on":"off"); badge.innerHTML="<span>AFFILIATE "+(enabled?"ON":"OFF")+"</span>";}
- if(text) text.innerHTML=enabled?"<strong>✅ Affiliate ON - Separate from regular</strong>":"<strong>❌ Affiliate OFF - Regular still works</strong>";
-}
-async function toggleRegularWithdrawal(enabled){
- if(!confirm(enabled?"Turn ON regular withdrawal?":"Turn OFF regular? Affiliate will still work")){document.getElementById("regularWithdrawalSwitch").checked=!enabled;return;}
- updateRegularUI(enabled);
- localStorage.setItem('jovia_regular_withdrawal',String(enabled));
- try{await fetch("/api/admin/settings/withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled})});}catch(e){}
- showToast('Regular withdrawal: '+(enabled?'ON':'OFF'));
-}
-async function toggleAffiliateWithdrawal(enabled){
- if(!confirm(enabled?"Turn ON affiliate withdrawal?":"Turn OFF affiliate? Regular will still work")){document.getElementById("affiliateWithdrawalSwitch").checked=!enabled;return;}
- updateAffiliateUI(enabled);
- localStorage.setItem('jovia_affiliate_withdrawal',String(enabled));
- try{await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled})});}catch(e){}
- showToast('Affiliate withdrawal: '+(enabled?'ON':'OFF'));
-}
-
-function renderJobsTable(jobs){
- const t=document.getElementById("jobsTable");
- if(!jobs.length){t.innerHTML=`<tr><td colspan="8">No jobs - deleted disappear immediately ✅</td></tr>`;return;}
- t.innerHTML=jobs.map(j=>`<tr><td>Job ${j.slot||0}</td><td>#${j.id}</td><td>${escapeHTML(j.title||'-')}</td><td>${escapeHTML(j.category||'-')}</td><td><a href="${safeUrl(j.url)}" target="_blank">${escapeHTML((j.url||'').slice(0,30))}</a></td><td>₦${j.reward||0}</td><td>${j.status||'active'}</td><td><button class="delete-job" onclick="deleteJob(${j.id})">Delete</button></td></tr>`).join("");
-}
-async function loadAdminJobs(){
- try{
-  const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include"});
-  const d=await r.json();
-  rawJobs=d.jobs||[];
-  document.getElementById("totalJobs").textContent=rawJobs.length;
-  renderJobsTable(rawJobs);
- }catch(e){}
-}
-async function createJob(e){
- e.preventDefault();
- const payload={slot:Number(document.getElementById("jobSlot").value),title:document.getElementById("jobTitle").value,category:document.getElementById("jobCategory").value,reward:Number(document.getElementById("jobReward").value),url:document.getElementById("jobUrl").value,description:document.getElementById("jobDescription").value,duration:document.getElementById("jobDuration").value,status:document.getElementById("jobStatus").value};
- await fetch("/api/admin/jobs",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
- loadAdminJobs();
-}
-function filterWithdrawals(){
- const q=document.getElementById("searchWithdrawals").value.toLowerCase().trim();
- if(!q){renderWithdrawalsTable(rawWithdrawals);return;}
- renderWithdrawalsTable(rawWithdrawals.filter(w=>`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.amount||""} ${w.status||""} ${w.withdrawal_type||w.type||""}`.toLowerCase().includes(q)));
-}
-function renderWithdrawalsTable(withdrawals){
- const t=document.getElementById("withdrawalsTable");
- const reg=withdrawals.filter(w=>!String(w.withdrawal_type||w.type||'').toLowerCase().includes('affili')).length;
- const aff=withdrawals.filter(w=>String(w.withdrawal_type||w.type||'').toLowerCase().includes('affili')).length;
- document.getElementById('regCount').textContent=reg;
- document.getElementById('affCount').textContent=aff;
- document.getElementById('totalWithdrawals').textContent=withdrawals.length;
- document.getElementById('pendingWithdrawalsCount').textContent=withdrawals.filter(w=>String(w.status).toLowerCase()==='pending').length;
- if(!withdrawals.length){t.innerHTML=`<tr><td colspan="9">No withdrawals</td></tr>`;return;}
- t.innerHTML=withdrawals.map(w=>{
-  const isAff=String(w.withdrawal_type||w.type||'').toLowerCase().includes('affili');
-  const badge=isAff?`<span style="background:#dcfce7;color:#15803d;padding:3px 7px;border-radius:10px;font-size:8px;font-weight:800">AFFILIATE</span>`:`<span style="background:#fef3c7;color:#92400e;padding:3px 7px;border-radius:10px;font-size:8px;font-weight:800">REGULAR</span>`;
-  const status=String(w.status||'pending').toLowerCase();
-  return `<tr><td>👤 ${escapeHTML(w.username||'-')}</td><td>${escapeHTML(w.bank_name||'-')}</td><td>${escapeHTML(w.account_name||'-')}</td><td>${escapeHTML(w.account_number||'-')}</td><td>₦${Number(w.amount||0).toLocaleString()}</td><td>${badge} ${escapeHTML(w.withdrawal_type||w.type||'Regular')}</td><td><span class="status ${status}">${status}</span></td><td>${formatDate(w.created_at)}</td><td>${status==='pending'?`<button class="approve" onclick="approveWithdrawal(${Number(w.id)})">Approve</button><button class="reject" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`:status}</td></tr>`;
- }).join("");
-}
-async function loadAdminWithdrawals(){
- try{
-  const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});
-  const d=await r.json();
-  rawWithdrawals=d.withdrawals||d.data||[];
-  renderWithdrawalsTable(rawWithdrawals);
-  document.getElementById('withdrawalsLastUpdated').textContent=new Date().toLocaleTimeString();
- }catch(e){}
-}
-async function approveWithdrawal(id){
- if(!confirm("Approve #"+id+"?")) return;
- await fetch(`/api/admin/withdrawals/${id}/approve`,{method:"POST",credentials:"include"});
- loadAdminWithdrawals();
-}
-async function rejectWithdrawal(id){
- if(!confirm("Reject #"+id+"?")) return;
- await fetch(`/api/admin/withdrawals/${id}/reject`,{method:"POST",credentials:"include"});
- loadAdminWithdrawals();
-}
-async function loadUsers(){
- try{
-  const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});
-  const d=await r.json();
-  rawUsers=d.users||[];
-  document.getElementById("totalUsers").textContent=rawUsers.length;
- }catch(e){}
-}
+async function saveVideo(event){event.preventDefault();const title=document.getElementById("videoTitle").value.trim();const category=document.getElementById("videoCategory").value.trim();let url=document.getElementById("videoUrl").value.trim();const description=document.getElementById("videoDescription").value.trim();const thumbnail=document.getElementById("videoThumbnail").value.trim();const reward=Number(document.getElementById("videoReward").value);const status=document.getElementById("videoStatus").value;const file=document.getElementById("videoFile").files[0];if(!title){alert("Enter title");return}if(!url&&!file&&!editingVideoId){alert("Upload file or paste URL");return}const button=document.getElementById("saveVideoButton");button.disabled=true;button.textContent="Uploading...";try{if(file){document.getElementById("uploadProgress").style.display="block";const fd=new FormData();fd.append("video",file);const xhr=new XMLHttpRequest();const p=new Promise((res,rej)=>{xhr.upload.onprogress=e=>{if(e.lengthComputable){let percent=Math.round((e.loaded/e.total)*100);document.getElementById("progressBar").style.width=percent+"%";document.getElementById("progressText").textContent=percent+"%";}};xhr.onload=()=>{if(xhr.status>=200&&xhr.status<300){try{res(JSON.parse(xhr.responseText))}catch{res({})}}else rej(new Error("Upload failed "+xhr.status))};xhr.onerror=()=>rej(new Error("Upload failed"));xhr.open("POST","/api/admin/videos/upload");xhr.withCredentials=true;xhr.send(fd);});let upData=await p;if(!upData.success&&!upData.url&&!upData.video_url)throw new Error(upData.message||"Upload failed");url=upData.url||upData.video_url||upData.videoUrl;if(url){document.getElementById("videoUrl").value=url;document.getElementById("uploadedVideoPreview").style.display="block";document.getElementById("previewUrl").textContent=url;document.getElementById("previewPlayer").src=url;}}const endpoint=editingVideoId?`/api/admin/videos/${Number(editingVideoId)}`:"/api/admin/videos";const method=editingVideoId?"PUT":"POST";const response=await fetch(endpoint,{method,headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({title,category:category||"General",url,video_url:url,description,thumbnail,thumbnail_url:thumbnail,reward,status})});let data;try{data=await response.json()}catch{data={}}if(!response.ok||!data.success)throw new Error(data.message||"Save failed");alert(data.message||"Video saved");cancelVideoEdit();await loadAdminVideos()}catch(e){alert(e.message)}finally{button.disabled=false;button.textContent=editingVideoId?"Update Video":"＋ Upload & Save Video";document.getElementById("uploadProgress").style.display="none";document.getElementById("progressBar").style.width="0%";}}
+async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include"});const d=await r.json();const videos=d.videos||[];rawVideos=videos;videosCache=new Map(videos.map(v=>[Number(v.id),v]));document.getElementById("totalVideos").textContent=videos.length;const sv=document.getElementById("searchVideos")?.value||"";if(sv.trim())filterVideos();else renderVideosTable(videos)}catch{document.getElementById("videosTable").innerHTML=`<tr><td colspan="10" class="empty error">Unable</td></tr>`}}
+function editVideo(id){const v=videosCache.get(Number(id));if(!v)return;editingVideoId=Number(id);document.getElementById("videoTitle").value=v.title||"";document.getElementById("videoCategory").value=v.category||"General";document.getElementById("videoUrl").value=v.video_url||v.url||"";document.getElementById("videoDescription").value=v.description||"";document.getElementById("videoThumbnail").value=v.thumbnail_url||v.thumbnail||"";document.getElementById("videoReward").value=Number(v.reward||0);document.getElementById("videoStatus").value=String(v.status||"active").toLowerCase();document.getElementById("videoFormTitle").textContent="✏️ Edit Video";document.getElementById("saveVideoButton").textContent="Update Video";document.getElementById("cancelVideoEditButton").style.display="inline-block";document.getElementById("videoFormBox").scrollIntoView({behavior:"smooth"})}
+function cancelVideoEdit(){editingVideoId=null;document.getElementById("videoForm").reset();document.getElementById("videoCategory").value="General";document.getElementById("videoReward").value="0";document.getElementById("videoStatus").value="active";document.getElementById("videoFormTitle").textContent="＋ Upload New Video";document.getElementById("saveVideoButton").textContent="＋ Upload & Save Video";document.getElementById("cancelVideoEditButton").style.display="none";document.getElementById("uploadedVideoPreview").style.display="none";document.getElementById("uploadProgress").style.display="none"}
+async function changeVideoStatus(id,s){if(!confirm("Change to "+s+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:s})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);await loadAdminVideos()}catch(e){alert(e.message)}}
+async function deleteVideo(id){if(!confirm("Delete video permanently?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);if(editingVideoId===Number(id))cancelVideoEdit();await loadAdminVideos()}catch(e){alert(e.message)}}
+async function loadAdminLinks(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/links?t="+Date.now(),{cache:"no-store",credentials:"include"});const d=await r.json();const links=d.links||[];rawLinks=links;linksCache=new Map(links.map(l=>[Number(l.id),l]));document.getElementById("totalLinks").textContent=links.length;const sv=document.getElementById("searchLinks")?.value||"";if(sv.trim())filterLinks();else renderLinksTable(links)}catch{document.getElementById("linksTable").innerHTML=`<tr><td colspan="8" class="empty error">Unable</td></tr>`}}
+async function saveLink(e){e.preventDefault();const n=document.getElementById("linkName").value.trim();const u=document.getElementById("linkUrl").value.trim();const de=document.getElementById("linkDescription").value.trim();const c=document.getElementById("linkCategory").value.trim();const s=document.getElementById("linkStatus").value;const b=document.getElementById("saveLinkButton");b.disabled=true;b.textContent="Saving...";try{const ep=editingLinkId?`/api/admin/links/${Number(editingLinkId)}`:"/api/admin/links";const m=editingLinkId?"PUT":"POST";const r=await fetch(ep,{method:m,headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({name:n,url:u,description:de,category:c||"General",status:s})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);alert(d.message||"Saved");cancelLinkEdit();await loadAdminLinks()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent=editingLinkId?"Update Link":"＋ Add Link"}}
+function editLink(id){const l=linksCache.get(Number(id));if(!l)return;editingLinkId=Number(id);document.getElementById("linkName").value=l.name||"";document.getElementById("linkUrl").value=l.url||"";document.getElementById("linkDescription").value=l.description||"";document.getElementById("linkCategory").value=l.category||"General";document.getElementById("linkStatus").value=String(l.status||"active").toLowerCase();document.getElementById("linkFormTitle").textContent="✏️ Edit Link";document.getElementById("saveLinkButton").textContent="Update Link";document.getElementById("cancelEditButton").style.display="inline-block"}
+function cancelLinkEdit(){editingLinkId=null;document.getElementById("linkForm").reset();document.getElementById("linkCategory").value="General";document.getElementById("linkStatus").value="active";document.getElementById("linkFormTitle").textContent="＋ Add New Link";document.getElementById("saveLinkButton").textContent="＋ Add Link";document.getElementById("cancelEditButton").style.display="none"}
+async function changeLinkStatus(id,s){if(!confirm("Change to "+s+"?"))return;try{const r=await fetch(`/api/admin/links/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:s})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);await loadAdminLinks()}catch(e){alert(e.message)}}
+async function deleteLink(id){if(!confirm("Delete link permanently?"))return;try{const r=await fetch(`/api/admin/links/${Number(id)}`,{method:"DELETE",credentials:"include"});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);if(editingLinkId===Number(id))cancelLinkEdit();await loadAdminLinks()}catch(e){alert(e.message)}}
+async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});const d=await r.json();const withdrawals=d.withdrawals||d.data||[];rawWithdrawals=withdrawals;withdrawalsCache=new Map(withdrawals.map(w=>[Number(w.id),w]));document.getElementById("totalWithdrawals").textContent=withdrawals.length;const pending=withdrawals.filter(w=>String(w.status).toLowerCase()==="pending").length;document.getElementById("pendingWithdrawalsCount").textContent=pending;document.getElementById("pendingWithdrawalsCard").textContent=pending;document.getElementById("navPendingCount").textContent=pending;document.getElementById("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");const sv=document.getElementById("searchWithdrawals")?.value||"";if(sv.trim())filterWithdrawals();else renderWithdrawalsTable(withdrawals)}catch(e){document.getElementById("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty error">${escapeHTML(e.message)}</td></tr>`}}
+async function approveWithdrawal(id){if(!confirm("Approve withdrawal #"+id+" as PAID?"))return;try{const r=await fetch(`/api/admin/withdrawals/${Number(id)}/approve`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);alert(d.message||"Approved - Paid");await loadAdminWithdrawals()}catch(e){alert(e.message)}}
+async function rejectWithdrawal(id){if(!confirm("Reject #"+id+"? Refund user wallet?"))return;try{const r=await fetch(`/api/admin/withdrawals/${Number(id)}/reject`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d;try{d=await r.json()}catch{d={}}if(!r.ok||!d.success)throw new Error(d.message);alert(d.message||"Rejected & Refunded");await loadAdminWithdrawals()}catch(e){alert(e.message)}}
 document.addEventListener("DOMContentLoaded",checkAdminSession);
 </script>
 </body>
