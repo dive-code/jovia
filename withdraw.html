@@ -4,1859 +4,536 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#321047">
-<meta name="description" content="Jovia Network secure withdrawals">
 <title>Jovia Network | Withdraw</title>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-
-:root{
---purple:#321047;
---purple-dark:#22082f;
---purple-deep:#180520;
---purple-light:#5a1c76;
---gold:#f7b500;
---gold-light:#ffd84a;
---gold-soft:#fff8df;
---bg:#f7f6fa;
---text:#24192b;
---muted:#817986;
---white:#fff;
---border:#ebe7ef;
---success:#208a55;
---success-bg:#edf9f2;
---danger:#c83c3c;
---danger-bg:#fff0f0;
---blue:#4169a1;
---blue-bg:#eef4ff;
---shadow:0 10px 35px rgba(40,20,50,.055)
-}
-
+:root{--purple:#321047;--purple-dark:#22082f;--purple-deep:#180520;--purple-light:#5a1c76;--gold:#f7b500;--gold-light:#ffd84a;--gold-soft:#fff8df;--bg:#f7f6fa;--text:#24192b;--muted:#817986;--white:#fff;--border:#ebe7ef;--success:#208a55;--success-bg:#edf9f2;--danger:#c83c3c;--danger-bg:#fff0f0;--blue:#4169a1;--blue-bg:#eef4ff;--shadow:0 10px 35px rgba(40,20,50,.055)}
 html{scroll-behavior:smooth}
-
-body{
-min-height:100vh;
-font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-background:radial-gradient(circle at 50% -10%,rgba(82,20,105,.07),transparent 34%),var(--bg);
-color:var(--text)
-}
-
-button,input,select{font:inherit}
-button{cursor:pointer;-webkit-tap-highlight-color:transparent}
-button:disabled{cursor:not-allowed;opacity:.6}
-
-.app{
-width:100%;
-max-width:720px;
-min-height:100vh;
-margin:0 auto;
-padding:16px 18px 120px
-}
-
-.topbar-wrap{
-position:sticky;
-top:0;
-z-index:300;
-padding-bottom:14px;
-background:linear-gradient(to bottom,var(--bg) 0%,rgba(247,246,250,.96) 78%,rgba(247,246,250,0) 100%)
-}
-
-.topbar{
-min-height:72px;
-padding:9px 10px;
-display:flex;
-align-items:center;
-justify-content:space-between;
-border:1px solid rgba(235,231,239,.95);
-border-radius:21px;
-background:rgba(255,255,255,.94);
-box-shadow:0 8px 28px rgba(40,20,50,.045);
-backdrop-filter:blur(18px);
-transition:box-shadow .2s
-}
-
-.topbar.scrolled{box-shadow:0 12px 35px rgba(40,20,50,.11)}
+body{min-height:100vh;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:radial-gradient(circle at 50% -10%,rgba(82,20,105,.07),transparent 34%),var(--bg);color:var(--text)}
+button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed}
+.app{width:100%;max-width:720px;min-height:100vh;margin:0 auto;padding:16px 18px 120px}
+.topbar-wrap{position:sticky;top:0;z-index:300;padding-bottom:14px;background:linear-gradient(to bottom,var(--bg) 0%,rgba(247,246,250,.96) 78%,rgba(247,246,250,0) 100%)}
+.topbar{min-height:72px;padding:9px 10px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(235,231,239,.95);border-radius:21px;background:rgba(255,255,255,.94);box-shadow:0 8px 28px rgba(40,20,50,.045);backdrop-filter:blur(18px)}
 .topbar-left{display:flex;align-items:center;gap:10px}
-
-.back-btn{
-width:43px;height:43px;flex-shrink:0;
-border:1px solid var(--border);
-border-radius:13px;
-background:#faf9fc;
-color:var(--purple);
-display:flex;align-items:center;justify-content:center;
-font-size:20px;font-weight:800
-}
-
-.brand{display:flex;align-items:center;gap:10px}
-
-.brand-mark{
-position:relative;
-width:43px;height:43px;
-flex-shrink:0;
-border-radius:14px;
-background:linear-gradient(145deg,var(--purple),var(--purple-light));
-color:#fff;
-display:flex;align-items:center;justify-content:center;
-font-size:20px;font-weight:950;
-box-shadow:0 8px 18px rgba(50,16,71,.18)
-}
-
-.brand-mark:after{
-content:"";
-position:absolute;right:6px;top:6px;
-width:7px;height:7px;border-radius:50%;
-background:var(--gold)
-}
-
-.brand-text{line-height:1.05}
-.brand-name{color:var(--purple);font-size:15px;font-weight:950}
-.brand-sub{
-display:block;margin-top:5px;color:#958d99;
-font-size:7px;font-weight:900;letter-spacing:2.2px
-}
-
-.header-page{
-display:flex;align-items:center;gap:7px;
-padding:0 5px;color:var(--muted);
-font-size:8px;font-weight:900;letter-spacing:1.3px;
-text-transform:uppercase
-}
-
+.back-btn{width:43px;height:43px;border:1px solid var(--border);border-radius:13px;background:#faf9fc;color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800}
+.brand{display:flex;align-items:center;gap:10px}.brand-mark{width:43px;height:43px;border-radius:14px;background:linear-gradient(145deg,var(--purple),var(--purple-light));color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:950}
+.brand-text{line-height:1.05}.brand-name{color:var(--purple);font-size:15px;font-weight:950}.brand-sub{display:block;margin-top:5px;color:#958d99;font-size:7px;font-weight:900;letter-spacing:2.2px}
+.header-page{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:8px;font-weight:900;letter-spacing:1.3px;text-transform:uppercase}
 .header-page-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
-
-.page-heading{margin:4px 2px 20px}
-.page-label{
-display:inline-flex;align-items:center;gap:7px;
-margin-bottom:9px;color:#927f99;
-font-size:8px;font-weight:950;letter-spacing:2px
-}
-.page-label:before{content:"";width:18px;height:2px;background:var(--gold)}
-.page-heading h1{
-color:var(--purple);font-size:31px;line-height:1.08;
-letter-spacing:-1px;font-weight:950
-}
-.page-heading p{
-max-width:560px;margin-top:9px;
-color:var(--muted);font-size:11px;line-height:1.65
-}
-
-.withdrawal-disabled-banner{
-display:none;margin-bottom:18px;padding:14px 16px;
-border:1px solid #f0cccc;border-radius:15px;
-background:var(--danger-bg);color:var(--danger);
-font-size:10.5px;font-weight:800;text-align:center;line-height:1.55
-}
-
-.balance-card{
-position:relative;overflow:hidden;
-min-height:177px;margin-bottom:20px;padding:25px;
-border-radius:27px;
-background:
-radial-gradient(circle at 92% 0%,rgba(255,216,74,.13),transparent 27%),
-linear-gradient(135deg,var(--purple-deep),var(--purple) 48%,#54166a);
-color:#fff;
-box-shadow:0 20px 45px rgba(50,16,71,.20)
-}
-
-.balance-card:before,.balance-card:after{
-content:"";position:absolute;border:1px solid rgba(255,255,255,.08);
-border-radius:50%
-}
-.balance-card:before{width:220px;height:220px;right:-115px;top:-125px}
-.balance-card:after{width:150px;height:150px;right:-70px;bottom:-100px}
-.balance-content{position:relative;z-index:2}
-.balance-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.balance-label{color:rgba(255,255,255,.62);font-size:8px;font-weight:950;letter-spacing:1.7px}
-.balance-badge{
-display:flex;align-items:center;gap:6px;padding:6px 9px;
-border:1px solid rgba(255,255,255,.1);border-radius:20px;
-background:rgba(255,255,255,.07);color:rgba(255,255,255,.78);
-font-size:8px;font-weight:850
-}
-.balance-dot{width:6px;height:6px;border-radius:50%;background:#65d89a}
-.balance{margin-top:11px;font-size:41px;line-height:1;letter-spacing:-1.3px;font-weight:950}
-.balance-note{margin-top:13px;color:rgba(255,255,255,.65);font-size:9.5px}
-
-.withdraw-card{
-margin-bottom:26px;padding:21px;
-border:1px solid var(--border);border-radius:24px;
-background:rgba(255,255,255,.96);box-shadow:var(--shadow)
-}
-
-.card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}
-.card-icon{
-width:40px;height:40px;flex-shrink:0;
-display:flex;align-items:center;justify-content:center;
-border-radius:13px;background:#f4ecf8;color:var(--purple);
-font-size:17px;font-weight:950
-}
-.card-title{color:var(--purple);font-size:16px;font-weight:950}
-.card-subtitle{margin-top:4px;color:var(--muted);font-size:10.5px;line-height:1.5}
-
-.form-message{
-display:none;margin-bottom:16px;padding:12px 13px;
-border-radius:13px;font-size:10.5px;line-height:1.6;font-weight:750
-}
-.form-message.success{display:block;background:var(--success-bg);border:1px solid #ccebd8;color:var(--success)}
-.form-message.error{display:block;background:var(--danger-bg);border:1px solid #f0cccc;color:var(--danger)}
-.form-message.info{display:block;background:var(--blue-bg);border:1px solid #d4e2fa;color:var(--blue)}
-
-.form-group{margin-bottom:16px}
-.form-group label,.withdraw-type-label{
-display:block;margin-bottom:7px;color:var(--purple);
-font-size:10.5px;font-weight:900
-}
-
-.form-control{
-width:100%;min-height:48px;padding:13px 14px;
-border:1px solid var(--border);border-radius:13px;
-outline:none;background:#fbfafc;color:var(--text);
-font-size:12px;transition:.2s
-}
-.form-control:focus{
-border-color:#bca8c7;background:#fff;
-box-shadow:0 0 0 3px rgba(84,22,111,.06)
-}
-.form-control:disabled{background:#f1eef4;color:#8a8290}
-select.form-control{appearance:auto}
-
-.field-hint{margin-top:6px;color:var(--muted);font-size:9px;line-height:1.5}
-
-.withdraw-type-box{
-margin-bottom:18px;padding:13px;
-border:1px solid #e6deeb;border-radius:16px;background:#faf8fc
-}
-
-.type-balance{
-display:flex;align-items:center;justify-content:space-between;gap:10px;
-margin-top:8px;padding:10px;border-radius:11px;background:#fff
-}
-.type-balance span{color:var(--muted);font-size:9px}
-.type-balance strong{color:var(--purple);font-size:10px;font-weight:950}
-
-.amount-label{margin:9px 0 7px;color:var(--muted);font-size:9px;font-weight:700}
-.amount-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.amount-btn{
-min-height:41px;border:1px solid var(--border);
-border-radius:11px;background:#faf9fc;color:var(--purple);
-font-size:10.5px;font-weight:900
-}
+.page-heading{margin:4px 2px 20px}.page-label{display:inline-flex;align-items:center;gap:7px;margin-bottom:9px;color:#927f99;font-size:8px;font-weight:950;letter-spacing:2px}.page-label:before{content:"";width:18px;height:2px;border-radius:10px;background:var(--gold)}
+.page-heading h1{color:var(--purple);font-size:31px;line-height:1.08;letter-spacing:-1px;font-weight:950}.page-heading p{max-width:560px;margin-top:9px;color:var(--muted);font-size:11px;line-height:1.65}
+.withdrawal-disabled-banner{display:none;margin-bottom:18px;padding:14px 16px;border:1px solid #f0cccc;border-radius:15px;background:var(--danger-bg);color:var(--danger);font-size:10.5px;font-weight:800;text-align:center;line-height:1.55}
+.balance-card{position:relative;overflow:hidden;min-height:177px;margin-bottom:20px;padding:25px;border-radius:27px;background:radial-gradient(circle at 92% 0%,rgba(255,216,74,.13),transparent 27%),linear-gradient(135deg,var(--purple-deep) 0%,var(--purple) 48%,#54166a 100%);color:#fff;box-shadow:0 20px 45px rgba(50,16,71,.20)}
+.balance-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.balance-label{color:rgba(255,255,255,.62);font-size:8px;font-weight:950;letter-spacing:1.7px}
+.balance-badge{display:flex;align-items:center;gap:6px;padding:6px 9px;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.78);font-size:8px;font-weight:850}
+.balance-dot{width:6px;height:6px;border-radius:50%;background:#65d89a;box-shadow:0 0 0 3px rgba(101,216,154,.1)}.balance{margin-top:11px;font-size:41px;line-height:1;letter-spacing:-1.3px;font-weight:950}.balance-note{margin-top:13px;color:rgba(255,255,255,.57);font-size:9.5px}
+.withdraw-card{margin-bottom:26px;padding:21px;border:1px solid var(--border);border-radius:24px;background:rgba(255,255,255,.96);box-shadow:var(--shadow)}
+.card-header{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px}.card-icon{width:40px;height:40px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:13px;background:#f4ecf8;color:var(--purple);font-size:17px;font-weight:950}
+.card-title{color:var(--purple);font-size:16px;font-weight:950}.card-subtitle{margin-top:4px;color:var(--muted);font-size:10.5px;line-height:1.5}
+.form-message{display:none;margin-bottom:16px;padding:12px 13px;border-radius:13px;font-size:10.5px;line-height:1.5;font-weight:750}
+.form-message.success{display:block;background:var(--success-bg);border:1px solid #ccebd8;color:var(--success)}.form-message.error{display:block;background:var(--danger-bg);border:1px solid #f0cccc;color:var(--danger)}
+.form-group{margin-bottom:16px}.form-group label,.withdraw-type-label{display:block;margin-bottom:7px;color:var(--purple);font-size:10.5px;font-weight:900}
+.form-control{width:100%;min-height:48px;padding:13px 14px;border:1px solid var(--border);border-radius:13px;outline:none;background:#fbfafc;color:var(--text);font-size:12px;transition:.2s ease}
+.form-control:focus{border-color:#bca8c7;background:#fff;box-shadow:0 0 0 3px rgba(84,22,111,.06)}
+.withdraw-type-box{margin-bottom:18px;padding:13px;border:1px solid #e6deeb;border-radius:16px;background:#faf8fc}
+.type-balance{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding:10px;border-radius:11px;background:#fff}
+.type-balance span{color:var(--muted);font-size:9px}.type-balance strong{color:var(--purple);font-size:10px;font-weight:950}
+.amount-label{margin:9px 0 7px;color:var(--muted);font-size:9px;font-weight:700}.amount-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.amount-btn{min-height:41px;border:1px solid var(--border);border-radius:11px;background:#faf9fc;color:var(--purple);font-size:10.5px;font-weight:900;transition:.18s ease}
 .amount-btn.active{border-color:#e5c35b;background:var(--gold-soft);color:#8c6100}
-
 .section-divider{height:1px;margin:20px 0;background:var(--border)}
-.bank-heading{display:flex;align-items:center;gap:8px;margin-bottom:15px}
-.bank-heading-icon{
-width:30px;height:30px;display:flex;align-items:center;justify-content:center;
-border-radius:9px;background:#f4ecf8;color:var(--purple);font-size:13px
-}
+.bank-heading{display:flex;align-items:center;gap:8px;margin-bottom:15px}.bank-heading-icon{width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:#f4ecf8;color:var(--purple);font-size:13px}
 .bank-title{color:var(--purple);font-size:13px;font-weight:950}
-
-.method-box{display:none}
-.method-box.active{display:block}
-
-.saved-badge{
-display:none;align-items:center;justify-content:space-between;gap:8px;
-padding:10px 12px;margin-bottom:15px;
-background:var(--success-bg);border:1px solid #ccebd8;
-border-radius:12px;color:var(--success);font-size:9px;font-weight:850
-}
-.saved-badge.show{display:flex}
-.edit-saved{
-border:0;background:transparent;color:var(--success);
-font-size:9px;font-weight:900;text-decoration:underline
-}
-
-.save-btn{
-width:100%;min-height:46px;margin-top:4px;
-border:1px dashed #d9cfea;border-radius:13px;
-background:#fdfbff;color:var(--purple);
-font-size:10.5px;font-weight:900;transition:.2s
-}
-.save-btn:hover{background:#f7f0fb;border-color:var(--purple)}
-.save-btn.saved{background:var(--success-bg);border-style:solid;border-color:#ccebd8;color:var(--success)}
-
-.withdraw-button{
-width:100%;min-height:51px;margin-top:12px;
-border:0;border-radius:14px;
-background:linear-gradient(135deg,#f7b500,#ffda55);
-color:var(--purple);font-size:12px;font-weight:950;
-box-shadow:0 9px 20px rgba(247,181,0,.18);transition:.2s
-}
-.withdraw-button:not(:disabled):active{transform:translateY(1px)}
-
-.info-box{
-margin-top:14px;padding:13px 14px;
-border:1px dashed #d9d0df;border-radius:15px;background:#faf9fc
-}
-.info-row{
-display:flex;align-items:center;justify-content:space-between;
-gap:15px;padding:8px 0
-}
-.info-row:not(:last-child){border-bottom:1px solid #eeeaf1}
-.info-row span{color:var(--muted);font-size:9.5px}
-.info-row strong{color:var(--purple);font-size:9.5px;font-weight:900;text-align:right}
-
-.security-note{
-display:flex;align-items:flex-start;gap:9px;margin-top:13px;
-padding:10px 11px;border-radius:12px;background:#f8f5fa;
-color:var(--muted);font-size:9px;line-height:1.6
-}
-
-.history-section{margin-top:28px}
-.history-shell{
-overflow:hidden;border:1px solid var(--border);border-radius:24px;
-background:rgba(255,255,255,.97);box-shadow:var(--shadow)
-}
-.history-top{
-padding:18px 18px 15px;border-bottom:1px solid #f0edf2;
-background:linear-gradient(135deg,#fff,#fbf8fc)
-}
-.history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}
-.history-eyebrow{
-display:flex;align-items:center;gap:6px;margin-bottom:6px;
-color:#998f9d;font-size:7px;font-weight:950;letter-spacing:1.7px
-}
-.history-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}
-.history-head h2{color:var(--purple);font-size:17px;font-weight:950}
-.history-head p{margin-top:5px;color:var(--muted);font-size:9.5px;line-height:1.45}
-.history-count{
-min-width:48px;padding:8px 9px;border:1px solid #e9e1ed;
-border-radius:12px;background:#f9f6fb;color:var(--purple);text-align:center
-}
-.history-count strong{display:block;font-size:14px;font-weight:950}
-.history-count span{
-display:block;margin-top:4px;color:var(--muted);font-size:6.5px;
-font-weight:900;letter-spacing:.7px;text-transform:uppercase
-}
-.history-item{
-position:relative;display:flex;align-items:center;justify-content:space-between;
-gap:12px;padding:15px 16px;background:#fff
-}
-.history-item:not(:last-child){border-bottom:1px solid #f0edf2}
-.history-item:before{
-content:"";position:absolute;left:0;top:13px;bottom:13px;
-width:3px;border-radius:0 5px 5px 0;background:#d9d1df
-}
-.history-item.status-pending:before{background:var(--gold)}
-.history-item.status-processing:before{background:var(--blue)}
-.history-item.status-approved:before,.history-item.status-completed:before{background:var(--success)}
-.history-item.status-rejected:before,.history-item.status-failed:before{background:var(--danger)}
-.history-left{min-width:0;display:flex;align-items:center;gap:11px}
-.history-icon{
-width:43px;height:43px;flex-shrink:0;display:flex;
-align-items:center;justify-content:center;border-radius:14px;
-background:#f5eef8;color:var(--purple);font-size:18px;font-weight:950
-}
-.history-icon.affiliate{background:#fff8df;color:#9b6d00}
-.history-main{min-width:0}
-.history-name{
-overflow:hidden;color:var(--purple);font-size:10.5px;
-font-weight:950;text-overflow:ellipsis;white-space:nowrap
-}
-.history-meta{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:5px}
-.history-type{
-display:inline-flex;padding:4px 7px;border-radius:20px;
-background:#f4ecf8;color:var(--purple);font-size:6.8px;font-weight:950
-}
-.history-type.affiliate{background:#fff8df;color:#906500}
-.history-account{color:#918894;font-size:7.5px;font-weight:700}
-.history-date{margin-top:5px;color:var(--muted);font-size:8.2px}
-.history-right{flex-shrink:0;text-align:right}
-.history-amount{color:#9b6b00;font-size:12px;font-weight:950;white-space:nowrap}
-.history-status{
-display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 8px;
-border-radius:20px;background:var(--gold-soft);color:#8d6200;
-font-size:7px;font-weight:950;text-transform:capitalize
-}
+.withdraw-button{width:100%;min-height:51px;margin-top:5px;border:0;border-radius:14px;background:linear-gradient(135deg,#f7b500,#ffda55);color:var(--purple);font-size:12px;font-weight:950;box-shadow:0 9px 20px rgba(247,181,0,.18);transition:.2s ease}
+.withdraw-button:disabled{opacity:.55}
+.info-box{margin-top:14px;padding:13px 14px;border:1px dashed #d9d0df;border-radius:15px;background:#faf9fc}
+.info-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:7px 0}.info-row:not(:last-child){border-bottom:1px solid #eeeaf1}
+.info-row span{color:var(--muted);font-size:9.5px}.info-row strong{color:var(--purple);font-size:9.5px;font-weight:900;text-align:right}
+.security-note{display:flex;align-items:flex-start;gap:9px;margin-top:13px;padding:10px 11px;border-radius:12px;background:#f8f5fa;color:var(--muted);font-size:9px;line-height:1.5}
+.history-section{margin-top:28px}.history-shell{overflow:hidden;border:1px solid var(--border);border-radius:24px;background:rgba(255,255,255,.97);box-shadow:0 10px 35px rgba(40,20,50,.045)}
+.history-top{padding:18px 18px 15px;border-bottom:1px solid #f0edf2;background:linear-gradient(135deg,#ffffff,#fbf8fc)}
+.history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:15px}.history-eyebrow{display:flex;align-items:center;gap:6px;margin-bottom:6px;color:#998f9d;font-size:7px;font-weight:950;letter-spacing:1.7px}
+.history-eyebrow-dot{width:5px;height:5px;border-radius:50%;background:var(--gold)}.history-head h2{color:var(--purple);font-size:17px;font-weight:950}.history-head p{margin-top:5px;color:var(--muted);font-size:9.5px}
+.history-count{min-width:48px;padding:8px 9px;border:1px solid #e9e1ed;border-radius:12px;background:#f9f6fb;color:var(--purple);text-align:center}.history-count strong{display:block;font-size:14px;line-height:1;font-weight:950}.history-count span{display:block;margin-top:4px;color:var(--muted);font-size:6.5px;font-weight:900;letter-spacing:.7px;text-transform:uppercase}
+.history-list{display:flex;flex-direction:column;gap:0}.history-item{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 16px;background:#fff}
+.history-item:not(:last-child){border-bottom:1px solid #f0edf2}.history-item:before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:0 5px 5px 0;background:#d9d1df}
+.history-item.status-pending:before{background:var(--gold)}.history-item.status-processing:before{background:var(--blue)}.history-item.status-approved:before,.history-item.status-completed:before{background:var(--success)}.history-item.status-rejected:before,.history-item.status-failed:before{background:var(--danger)}
+.history-left{min-width:0;display:flex;align-items:center;gap:11px}.history-icon{width:43px;height:43px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:14px;background:#f5eef8;color:var(--purple);font-size:18px;font-weight:950}
+.history-icon.affiliate{background:#fff8df;color:#9b6d00}.history-name{overflow:hidden;color:var(--purple);font-size:10.5px;font-weight:950;text-overflow:ellipsis;white-space:nowrap}
+.history-meta{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-top:5px}.history-type{display:inline-flex;align-items:center;padding:4px 7px;border-radius:20px;background:#f4ecf8;color:var(--purple);font-size:6.8px;font-weight:950}
+.history-type.affiliate{background:#fff8df;color:#906500}.history-account{color:#918894;font-size:7.5px;font-weight:700}.history-date{margin-top:5px;color:var(--muted);font-size:8.2px}.history-right{flex-shrink:0;text-align:right}
+.history-amount{color:#9b6b00;font-size:12px;font-weight:950;white-space:nowrap}.history-status{display:inline-flex;align-items:center;gap:5px;margin-top:5px;padding:5px 8px;border-radius:20px;background:var(--gold-soft);color:#8d6200;font-size:7px;font-weight:950;text-transform:capitalize}
 .history-status:before{content:"";width:4px;height:4px;border-radius:50%;background:currentColor}
-.history-status.approved,.history-status.completed{background:var(--success-bg);color:var(--success)}
-.history-status.rejected,.history-status.failed{background:var(--danger-bg);color:var(--danger)}
-.history-status.processing{background:var(--blue-bg);color:var(--blue)}
-.history-footer{
-display:flex;align-items:center;justify-content:center;padding:13px;
-border-top:1px solid #f0edf2;background:#fbfafc;color:#9a919e;
-font-size:7.5px;font-weight:800;letter-spacing:.4px
-}
-.empty-history{padding:34px 20px;background:#fff;color:var(--muted);text-align:center}
-.empty-history-icon{
-width:50px;height:50px;margin:0 auto 11px;display:flex;
-align-items:center;justify-content:center;border-radius:16px;
-background:#f5eef8;color:var(--purple);font-size:21px;font-weight:950
-}
-.empty-history strong{display:block;color:var(--purple);font-size:11px;font-weight:950}
-.empty-history span{display:block;margin-top:5px;font-size:8.5px;line-height:1.5}
-.history-loading{padding:28px 20px;color:var(--muted);font-size:9px;text-align:center}
-
-.modal-overlay{
-position:fixed;inset:0;z-index:500;display:none;
-align-items:center;justify-content:center;padding:18px;
-background:rgba(24,10,32,.52);backdrop-filter:blur(7px)
-}
-.modal-overlay.show{display:flex}
-.modal{
-width:100%;max-width:430px;max-height:90vh;overflow-y:auto;
-padding:21px;border:1px solid rgba(255,255,255,.5);
-border-radius:24px;background:#fff;box-shadow:0 25px 70px rgba(20,5,30,.28)
-}
-.modal h3{color:var(--purple);font-size:17px;font-weight:950}
-.modal-description{margin-top:6px;color:var(--muted);font-size:10.5px}
-.confirm-details{
-margin-top:15px;padding:12px;border:1px solid var(--border);
-border-radius:14px;background:#faf9fc
-}
-.confirm-row{
-display:flex;align-items:flex-start;justify-content:space-between;
-gap:15px;padding:7px 0
-}
-.confirm-row:not(:last-child){border-bottom:1px solid #eeeaf1}
-.confirm-row span{color:var(--muted);font-size:9px}
-.confirm-row strong{
-max-width:62%;color:var(--purple);font-size:9px;
-font-weight:900;text-align:right;word-break:break-word
-}
-.modal-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:16px}
-.modal-btn{min-height:45px;border-radius:12px;font-size:10.5px;font-weight:900}
-.modal-cancel{border:1px solid var(--border);background:#faf9fc;color:var(--purple)}
-.modal-confirm{border:0;background:linear-gradient(135deg,#f7b500,#ffda55);color:var(--purple)}
-
-.bottom-nav{
-position:fixed;z-index:400;left:50%;bottom:0;transform:translateX(-50%);
-width:100%;max-width:720px;display:grid;grid-template-columns:repeat(4,1fr);
-padding:9px 12px 12px;border-top:1px solid rgba(235,231,239,.95);
-background:rgba(255,255,255,.96);box-shadow:0 -8px 25px rgba(40,20,50,.035);
-backdrop-filter:blur(18px)
-}
-.nav{
-min-height:48px;border:0;background:none;color:#88818c;
-display:flex;flex-direction:column;align-items:center;justify-content:center;
-gap:4px;font-size:9px;font-weight:800
-}
-.nav-icon{width:38px;height:29px;display:flex;align-items:center;justify-content:center;font-size:19px}
-.nav.active{color:var(--purple)}
-
-@media(max-width:600px){
-.app{padding:10px 14px 116px}
-.topbar-wrap{padding-bottom:12px}
-.topbar{min-height:68px;padding:8px;border-radius:19px}
-.back-btn{width:41px;height:41px;border-radius:12px}
-.brand-mark{width:40px;height:40px;border-radius:13px;font-size:19px}
-.brand-name{font-size:14px}
-.brand-sub{font-size:6.5px;letter-spacing:1.8px}
-.header-page{font-size:7px}
-.page-heading{margin-bottom:18px}
-.page-heading h1{font-size:28px}
-.page-heading p{font-size:10.5px}
-.balance-card{min-height:158px;padding:22px;border-radius:24px}
-.balance{font-size:36px}
-.withdraw-card{padding:18px;border-radius:21px}
-.card-header{gap:9px}
-.card-title{font-size:15px}
-.card-subtitle{font-size:10px}
-.history-shell{border-radius:21px}
-.history-top{padding:16px 15px 14px}
-.history-item{padding:14px 13px}
-.history-name{max-width:150px}
-.history-amount{font-size:11px}
-.modal{padding:18px;border-radius:21px}
-}
-
-@media(max-width:420px){
-.header-page{display:none}
-.topbar{justify-content:flex-start}
-.topbar-left{width:100%}
-.brand{flex:1}
-.page-heading h1{font-size:26px}
-.balance{font-size:34px}
-.amount-options{gap:6px}
-.amount-btn{font-size:9.5px}
-.history-item{align-items:flex-start;padding:13px 11px}
-.history-left{align-items:flex-start}
-.history-icon{width:40px;height:40px}
-.history-name{max-width:125px}
-.history-account{font-size:7px}
-}
-
-@media(max-width:360px){
-.app{padding-left:11px;padding-right:11px}
-.brand-name{font-size:13px}
-.back-btn{width:39px;height:39px}
-.brand-mark{width:38px;height:38px}
-.page-heading h1{font-size:24px}
-.balance-card{padding:20px}
-.balance{font-size:31px}
-.amount-options{grid-template-columns:1fr}
-.amount-btn{min-height:42px}
-.history-left{gap:7px}
-.history-icon{width:35px;height:35px}
-.history-name{max-width:105px}
-.history-date{font-size:7.5px}
-.history-status{font-size:7px}
-.history-amount{font-size:10px}
-}
+.history-status.approved,.history-status.completed{background:var(--success-bg);color:var(--success)}.history-status.rejected,.history-status.failed{background:var(--danger-bg);color:var(--danger)}.history-status.processing{background:var(--blue-bg);color:var(--blue)}
+.history-footer{display:flex;align-items:center;justify-content:center;padding:13px;border-top:1px solid #f0edf2;background:#fbfafc;color:#9a919e;font-size:7.5px;font-weight:800;letter-spacing:.4px}
+.empty-history{padding:34px 20px;background:#fff;color:var(--muted);text-align:center}.empty-history-icon{width:50px;height:50px;margin:0 auto 11px;display:flex;align-items:center;justify-content:center;border-radius:16px;background:#f5eef8;color:var(--purple);font-size:21px;font-weight:950}
+.empty-history strong{display:block;color:var(--purple);font-size:11px;font-weight:950}.empty-history span{display:block;margin-top:5px;font-size:8.5px;line-height:1.5}
+.history-loading{padding:28px 20px;color:var(--muted);font-size:9px;text-align:center}.history-loading-dot{display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--gold)}
+.modal-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:flex-end;justify-content:center;padding:18px;background:rgba(24,10,32,.52);backdrop-filter:blur(7px)}
+.modal-overlay.show{display:flex}.modal{width:100%;max-width:430px;padding:21px;border:1px solid rgba(255,255,255,.5);border-radius:24px;background:#fff;box-shadow:0 25px 70px rgba(20,5,30,.28)}
+.modal h3{color:var(--purple);font-size:17px;font-weight:950}.modal-description{margin-top:6px;color:var(--muted);font-size:10.5px}
+.confirm-details{margin-top:15px;padding:12px;border:1px solid var(--border);border-radius:14px;background:#faf9fc}
+.confirm-row{display:flex;align-items:flex-start;justify-content:space-between;gap:15px;padding:6px 0}.confirm-row:not(:last-child){border-bottom:1px solid #eeeaf1}
+.confirm-row span{color:var(--muted);font-size:9px}.confirm-row strong{max-width:62%;color:var(--purple);font-size:9px;font-weight:900;text-align:right;word-break:break-word}
+.modal-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:9px;margin-top:16px}.modal-btn{min-height:45px;border-radius:12px;font-size:10.5px;font-weight:900}
+.modal-cancel{border:1px solid var(--border);background:#faf9fc;color:var(--purple)}.modal-confirm{border:0;background:linear-gradient(135deg,#f7b500,#ffda55);color:var(--purple)}
+.bottom-nav{position:fixed;z-index:400;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:720px;display:grid;grid-template-columns:repeat(4,1fr);padding:9px 12px 12px;border-top:1px solid rgba(235,231,239,.95);background:rgba(255,255,255,.96);box-shadow:0 -8px 25px rgba(40,20,50,.035);backdrop-filter:blur(18px)}
+.nav{min-height:48px;border:0;background:none;color:#88818c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:9px;font-weight:800}
+.nav-icon{width:38px;height:29px;display:flex;align-items:center;justify-content:center;font-size:19px}.nav.active{color:var(--purple)}
+.saved-badge{display:none;align-items:center;gap:6px;padding:8px 12px;background:#edf9f2;border:1px solid #ccebd8;border-radius:999px;color:#208a55;font-size:9px;font-weight:800;margin-bottom:14px}
+.saved-badge.show{display:inline-flex}.method-box{display:none}.method-box.active{display:block}
+.save-btn{width:100%;min-height:46px;margin-top:12px;border:1px dashed #d9cfea;border-radius:13px;background:#fdfbff;color:var(--purple);font-size:10.5px;font-weight:900;transition:.2s}
+.save-btn.saved{background:var(--success-bg);border-style:solid;border-color:#ccebd8;color:var(--success)}
+.sub-group{padding:12px;border:1px solid #f0e6f5;border-radius:14px;background:#fcf9ff;margin-bottom:12px}
+.sub-group-title{font-size:9px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:var(--purple-light);margin-bottom:10px}
+@media(max-width:600px){.app{padding:10px 14px 116px}.topbar{min-height:68px;padding:8px;border-radius:19px}.back-btn{width:41px;height:41px;border-radius:12px}.brand-mark{width:40px;height:40px;border-radius:13px;font-size:19px}.brand-name{font-size:14px}.page-heading h1{font-size:28px}.balance-card{min-height:158px;padding:22px;border-radius:24px}.balance{font-size:36px}.withdraw-card{padding:18px;border-radius:21px}}
 </style>
 </head>
-
 <body>
 <div class="app">
-
 <div class="topbar-wrap">
 <header class="topbar" id="topbar">
-<div class="topbar-left">
-<button class="back-btn" type="button" onclick="history.back()" aria-label="Go back">←</button>
-<div class="brand">
-<div class="brand-mark">J</div>
-<div class="brand-text">
-<div class="brand-name">Jovia</div>
-<span class="brand-sub">NETWORK</span>
-</div>
-</div>
-</div>
-<div class="header-page"><span class="header-page-dot"></span>Wallet</div>
+  <div class="topbar-left"><button class="back-btn" type="button" onclick="history.back()">←</button><div class="brand"><div class="brand-mark">J</div><div class="brand-text"><div class="brand-name">Jovia</div><span class="brand-sub">NETWORK</span></div></div></div>
+  <div class="header-page"><span class="header-page-dot"></span>Wallet</div>
 </header>
 </div>
-
-<section class="page-heading">
-<div class="page-label">WALLET</div>
-<h1>Withdraw Funds</h1>
-<p>Choose your earnings source and withdrawal destination. Save your details securely for future requests.</p>
-</section>
-
-<div id="withdrawalDisabledBanner" class="withdrawal-disabled-banner">
-⛔ Regular withdrawals are currently unavailable.<br>
-Affiliate withdrawals may remain available.
-</div>
-
-<section class="balance-card">
-<div class="balance-content">
-<div class="balance-top">
-<div class="balance-label">SELECTED BALANCE</div>
-<div class="balance-badge"><span class="balance-dot"></span>Available</div>
-</div>
-<div class="balance" id="walletBalance">₦0</div>
-<div class="balance-note" id="balanceNote">Regular earnings available for withdrawal.</div>
-</div>
-</section>
-
+<section class="page-heading"><div class="page-label">WALLET</div><h1>Withdraw Funds</h1><p>Select country, choose bank or momo, save once and withdraw anytime.</p></section>
+<div id="withdrawalDisabledBanner" class="withdrawal-disabled-banner">⛔ Regular withdrawals are currently unavailable.<br>Affiliate withdrawals remain available.</div>
+<section class="balance-card"><div class="balance-top"><div class="balance-label">SELECTED BALANCE</div><div class="balance-badge"><span class="balance-dot"></span>Available</div></div><div class="balance" id="walletBalance">₦0</div><div class="balance-note" id="balanceNote">Regular earnings available for withdrawal.</div></section>
 <section class="withdraw-card">
+  <div class="card-header"><div class="card-icon">↓</div><div><div class="card-title">Withdrawal Details</div><div class="card-subtitle">Separate bank lists per country + Momo + USDT TRC20.</div></div></div>
+  <div id="formMessage" class="form-message" role="alert"></div>
+  <div class="withdraw-type-box">
+    <label class="withdraw-type-label" for="withdrawalType">Withdrawal Type</label>
+    <select id="withdrawalType" class="form-control"><option value="regular">Regular Earnings</option><option value="affiliate">Affiliate Earnings</option></select>
+    <div class="type-balance"><span id="typeBalanceLabel">Regular available balance</span><strong id="typeBalance">₦0</strong></div>
+  </div>
+  <div class="form-group">
+    <label for="country">Withdrawal Country</label>
+    <select id="country" class="form-control" onchange="onCountryChange()">
+      <option value="Nigeria">🇳🇬 Nigeria</option>
+      <option value="Ghana">🇬🇭 Ghana</option>
+      <option value="Cameroon">🇨🇲 Cameroon</option>
+      <option value="Others">🌍 Other Countries</option>
+    </select>
+  </div>
+  <div id="savedBadge" class="saved-badge">✓ Using your saved details <button type="button" onclick="editDetails()" style="margin-left:6px;border:0;background:transparent;color:var(--success);font-weight:900;cursor:pointer;text-decoration:underline">Edit</button></div>
+  <div class="form-group"><label for="amount">Withdrawal Amount</label><input id="amount" class="form-control" type="number" min="30000" inputmode="numeric" placeholder="Enter amount"><div class="amount-label">Quick select</div><div class="amount-options"><button id="quickAmount1" type="button" class="amount-btn">₦30,000</button><button id="quickAmount2" type="button" class="amount-btn">₦50,000</button><button id="quickAmount3" type="button" class="amount-btn">₦100,000</button></div></div>
+  <div class="section-divider"></div>
 
-<div class="card-header">
-<div class="card-icon">↓</div>
-<div>
-<div class="card-title">Withdrawal Details</div>
-<div class="card-subtitle">Select your withdrawal type, country and payment destination.</div>
-</div>
-</div>
+  <div id="method-Nigeria" class="method-box active">
+    <div class="sub-group">
+      <div class="sub-group-title">🇳🇬 Nigerian Banks</div>
+      <div class="form-group"><label for="ngBank">Select Bank</label>
+        <select id="ngBank" class="form-control">
+          <option value="">Select Bank</option>
+          <option>Access Bank</option><option>First Bank of Nigeria</option><option>GTBank</option><option>UBA</option><option>Zenith Bank</option>
+          <option>Fidelity Bank</option><option>FCMB</option><option>Ecobank Nigeria</option><option>Union Bank</option><option>Sterling Bank</option>
+          <option>Wema Bank</option><option>Stanbic IBTC</option><option>Standard Chartered</option><option>Unity Bank</option><option>Keystone Bank</option>
+          <option>Polaris Bank</option><option>Titan Trust Bank</option><option>Globus Bank</option><option>Parallex Bank</option><option>Providus Bank</option>
+          <option>PremiumTrust Bank</option><option>SunTrust Bank</option><option>Jaiz Bank</option><option>Taj Bank</option><option>Lotus Bank</option>
+        </select>
+      </div>
+    </div>
+    <div class="sub-group">
+      <div class="sub-group-title">💳 Payment Providers / Fintechs</div>
+      <div class="form-group"><label for="ngProvider">Select Provider (Optional)</label>
+        <select id="ngProvider" class="form-control">
+          <option value="">-- Use Bank Above --</option>
+          <option>Opay</option><option>Moniepoint</option><option>PalmPay</option><option>Kuda Bank</option><option>Carbon (OneFi)</option>
+          <option>VFD Microfinance (V Bank)</option><option>Rubies Bank</option><option>Sparkle Bank</option><option>Mint Bank</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label for="accountName">Account Name</label><input id="accountName" class="form-control" type="text" placeholder="Account name"></div>
+    <div class="form-group"><label for="accountNumber">Account Number</label><input id="accountNumber" class="form-control" type="text" inputmode="numeric" maxlength="10" placeholder="10-digit account number"></div>
+  </div>
 
-<div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
+  <div id="method-Ghana" class="method-box">
+    <div class="sub-group">
+      <div class="sub-group-title">🇬🇭 Ghanaian Banks</div>
+      <div class="form-group"><label for="ghBank">Select Bank</label>
+        <select id="ghBank" class="form-control">
+          <option value="">Select Bank (Optional - use Momo below)</option>
+          <option>GCB Bank PLC</option><option>Ecobank Ghana</option><option>Stanbic Bank Ghana</option><option>Absa Bank Ghana</option>
+          <option>Access Bank Ghana</option><option>Zenith Bank Ghana</option><option>GTBank Ghana</option><option>Fidelity Bank Ghana</option>
+          <option>CalBank</option><option>Consolidated Bank Ghana (CBG)</option><option>First Atlantic Bank</option><option>Republic Bank Ghana</option>
+          <option>Societe Generale Ghana</option><option>Standard Chartered Ghana</option><option>UBA Ghana</option><option>Bank of Africa Ghana</option>
+          <option>Prudential Bank</option><option>Universal Merchant Bank</option><option>OmniBSIC Bank</option><option>Agricultural Development Bank</option>
+          <option>FBNBank Ghana</option><option>National Investment Bank</option><option>First National Bank Ghana</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="ghBankAccount">Bank Account Number (If using bank)</label><input id="ghBankAccount" class="form-control" type="text" placeholder="Account number"></div>
+      <div class="form-group"><label for="ghBankName">Account Name (Bank)</label><input id="ghBankName" class="form-control" type="text" placeholder="Account name"></div>
+    </div>
+    <div class="sub-group">
+      <div class="sub-group-title">📱 Ghana Mobile Money (Recommended)</div>
+      <div class="form-group"><label for="ghProvider">Momo Provider</label><select id="ghProvider" class="form-control"><option value="">Select Momo Provider</option><option>MTN MoMo</option><option>Vodafone Cash</option><option>AirtelTigo Money</option></select></div>
+      <div class="form-group"><label for="ghNumber">Momo Number</label><input id="ghNumber" class="form-control" type="text" placeholder="024 123 4567"></div>
+      <div class="form-group"><label for="ghName">Momo Name</label><input id="ghName" class="form-control" type="text" placeholder="Name on Momo"></div>
+    </div>
+  </div>
 
-<div class="withdraw-type-box">
-<label class="withdraw-type-label" for="withdrawalType">Withdrawal Type</label>
-<select id="withdrawalType" class="form-control">
-<option value="regular">Regular Earnings</option>
-<option value="affiliate">Affiliate Earnings</option>
-</select>
-<div class="type-balance">
-<span id="typeBalanceLabel">Regular available balance</span>
-<strong id="typeBalance">₦0</strong>
-</div>
-</div>
+  <div id="method-Cameroon" class="method-box">
+    <div class="sub-group">
+      <div class="sub-group-title">🇨🇲 Cameroonian Banks</div>
+      <div class="form-group"><label for="cmBank">Select Bank</label>
+        <select id="cmBank" class="form-control">
+          <option value="">Select Bank (Optional - use Momo below)</option>
+          <option>Afriland First Bank</option><option>BICEC</option><option>Ecobank Cameroon</option><option>UBA Cameroon</option>
+          <option>Société Générale Cameroun (SGC)</option><option>Commercial Bank Cameroon (CBC)</option><option>BGFIBank Cameroon</option>
+          <option>SCB Cameroun (Attijariwafa)</option><option>Banque Atlantique Cameroun</option><option>Citibank Cameroon</option>
+          <option>Standard Chartered Cameroon</option><option>Union Bank of Cameroon</option><option>National Financial Credit Bank (NFCB)</option>
+          <option>CCA-BANK</option><option>La Régionale Bank</option><option>Access Bank Cameroon</option><option>BANGE Bank Cameroon</option>
+          <option>Africa Golden Bank</option><option>Banque Camerounaise des PME (BC-PME)</option>
+        </select>
+      </div>
+      <div class="form-group"><label for="cmBankAccount">Bank Account Number</label><input id="cmBankAccount" class="form-control" type="text" placeholder="Account number"></div>
+      <div class="form-group"><label for="cmBankName">Account Name (Bank)</label><input id="cmBankName" class="form-control" type="text" placeholder="Account name"></div>
+    </div>
+    <div class="sub-group">
+      <div class="sub-group-title">📱 Cameroon Mobile Money (Recommended)</div>
+      <div class="form-group"><label for="cmProvider">Momo Provider</label><select id="cmProvider" class="form-control"><option value="">Select Momo Provider</option><option>MTN MoMo</option><option>Orange Money</option></select></div>
+      <div class="form-group"><label for="cmNumber">Momo Number</label><input id="cmNumber" class="form-control" type="text" placeholder="6XX XXX XXX"></div>
+      <div class="form-group"><label for="cmName">Momo Name</label><input id="cmName" class="form-control" type="text" placeholder="Name on Momo"></div>
+    </div>
+  </div>
 
-<div class="form-group">
-<label for="country">Withdrawal Country</label>
-<select id="country" class="form-control">
-<option value="Nigeria">🇳🇬 Nigeria — Bank Transfer</option>
-<option value="Ghana">🇬🇭 Ghana — Mobile Money</option>
-<option value="Cameroon">🇨🇲 Cameroon — Mobile Money</option>
-<option value="Others">🌍 Other Countries — USDT / International Bank</option>
-</select>
-</div>
+  <div id="method-Others" class="method-box">
+    <div class="sub-group">
+      <div class="sub-group-title">₮ USDT TRC20 - Dedicated Wallet</div>
+      <div class="form-group"><label for="usdtAddress">USDT Address (TRC20)</label><input id="usdtAddress" class="form-control" type="text" placeholder="T... (TRC20 address)"></div>
+      <div class="form-group"><label>Network</label><input class="form-control" value="TRC20 - TRON Network" disabled style="background:#f0e6f5;font-weight:800"></div>
+      <div style="font-size:8.5px;color:#927f99;margin-top:6px">⚠️ Only TRC20 network.</div>
+    </div>
+    <div class="sub-group">
+      <div class="sub-group-title">🌍 International Bank Transfer</div>
+      <div class="form-group"><label for="intBankName">Bank Name</label><input id="intBankName" class="form-control" type="text" placeholder="Bank name"></div>
+      <div class="form-group"><label for="intAccount">Account / IBAN</label><input id="intAccount" class="form-control" type="text" placeholder="Account number or IBAN"></div>
+      <div class="form-group"><label for="intName">Account Name</label><input id="intName" class="form-control" type="text" placeholder="Full name"></div>
+      <div class="form-group"><label for="intSwift">SWIFT / BIC (Optional)</label><input id="intSwift" class="form-control" type="text" placeholder="SWIFT code"></div>
+    </div>
+    <div class="form-group"><label for="othersMethod">Preferred Method</label><select id="othersMethod" class="form-control"><option value="USDT">USDT TRC20 (Fastest)</option><option value="BANK">International Bank</option></select></div>
+  </div>
 
-<div id="savedBadge" class="saved-badge">
-<span>✓ Using your saved withdrawal details</span>
-<button type="button" class="edit-saved" id="editSavedButton">Edit details</button>
-</div>
-
-<div class="form-group">
-<label for="amount">Withdrawal Amount (NGN)</label>
-<input id="amount" class="form-control" type="number" min="30000" step="1" inputmode="numeric" placeholder="Enter amount">
-<div class="field-hint">Enter the amount you want to withdraw from your selected balance.</div>
-<div class="amount-label">Quick select</div>
-<div class="amount-options">
-<button id="quickAmount1" type="button" class="amount-btn">₦30,000</button>
-<button id="quickAmount2" type="button" class="amount-btn">₦50,000</button>
-<button id="quickAmount3" type="button" class="amount-btn">₦100,000</button>
-</div>
-</div>
-
-<div class="section-divider"></div>
-
-<!-- NIGERIA -->
-<div id="method-Nigeria" class="method-box active">
-<div class="bank-heading">
-<div class="bank-heading-icon">▣</div>
-<div class="bank-title">Nigerian Bank Account</div>
-</div>
-
-<div class="form-group">
-<label for="accountName">Account Name</label>
-<input id="accountName" class="form-control" type="text" autocomplete="name" placeholder="Full name on your bank account">
-</div>
-
-<div class="form-group">
-<label for="bankName">Bank Name</label>
-<input id="bankName" class="form-control" type="text" list="nigerianBanks" autocomplete="organization" placeholder="Search or enter your bank name">
-<datalist id="nigerianBanks">
-<option value="Access Bank">
-<option value="Access Bank (Diamond)">
-<option value="Citibank Nigeria">
-<option value="Ecobank Nigeria">
-<option value="Fidelity Bank">
-<option value="First Bank of Nigeria">
-<option value="First City Monument Bank (FCMB)">
-<option value="Globus Bank">
-<option value="Guaranty Trust Bank (GTBank)">
-<option value="Heritage Bank">
-<option value="Jaiz Bank">
-<option value="Keystone Bank">
-<option value="Kuda Microfinance Bank">
-<option value="Lotus Bank">
-<option value="Moniepoint Microfinance Bank">
-<option value="Nova Bank">
-<option value="Opay">
-<option value="Optimium Bank">
-<option value="Paga">
-<option value="PalmPay">
-<option value="Parallex Bank">
-<option value="Polaris Bank">
-<option value="PremiumTrust Bank">
-<option value="Providus Bank">
-<option value="Signature Bank">
-<option value="Stanbic IBTC Bank">
-<option value="Standard Chartered Bank Nigeria">
-<option value="Sterling Bank">
-<option value="SunTrust Bank">
-<option value="TajBank">
-<option value="Titan Trust Bank">
-<option value="Union Bank of Nigeria">
-<option value="United Bank for Africa (UBA)">
-<option value="Unity Bank">
-<option value="Wema Bank">
-<option value="Zenith Bank">
-<option value="Other Nigerian Bank">
-</datalist>
-<div class="field-hint">If your bank is not listed, type its full name.</div>
-</div>
-
-<div class="form-group">
-<label for="accountNumber">Account Number</label>
-<input id="accountNumber" class="form-control" type="text" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="Enter 10-digit account number">
-</div>
-</div>
-
-<!-- GHANA -->
-<div id="method-Ghana" class="method-box">
-<div class="bank-heading">
-<div class="bank-heading-icon">₵</div>
-<div class="bank-title">Ghana Mobile Money</div>
-</div>
-
-<div class="form-group">
-<label for="ghProvider">Mobile Money Provider</label>
-<select id="ghProvider" class="form-control">
-<option value="">Select provider</option>
-<option value="MTN MoMo">MTN MoMo</option>
-<option value="Telecel Cash">Telecel Cash (formerly Vodafone Cash)</option>
-<option value="AirtelTigo Money">AirtelTigo Money</option>
-</select>
-</div>
-
-<div class="form-group">
-<label for="ghNumber">Mobile Money Number</label>
-<input id="ghNumber" class="form-control" type="tel" inputmode="tel" autocomplete="tel" placeholder="Enter your mobile money number">
-</div>
-
-<div class="form-group">
-<label for="ghName">Registered Account Name</label>
-<input id="ghName" class="form-control" type="text" autocomplete="name" placeholder="Name registered to your wallet">
-</div>
-</div>
-
-<!-- CAMEROON -->
-<div id="method-Cameroon" class="method-box">
-<div class="bank-heading">
-<div class="bank-heading-icon">F</div>
-<div class="bank-title">Cameroon Mobile Money</div>
-</div>
-
-<div class="form-group">
-<label for="cmProvider">Mobile Money Provider</label>
-<select id="cmProvider" class="form-control">
-<option value="">Select provider</option>
-<option value="MTN MoMo">MTN MoMo</option>
-<option value="Orange Money">Orange Money</option>
-</select>
-</div>
-
-<div class="form-group">
-<label for="cmNumber">Mobile Money Number</label>
-<input id="cmNumber" class="form-control" type="tel" inputmode="tel" autocomplete="tel" placeholder="Enter your mobile money number">
-</div>
-
-<div class="form-group">
-<label for="cmName">Registered Account Name</label>
-<input id="cmName" class="form-control" type="text" autocomplete="name" placeholder="Name registered to your wallet">
-</div>
-</div>
-
-<!-- OTHER COUNTRIES -->
-<div id="method-Others" class="method-box">
-<div class="bank-heading">
-<div class="bank-heading-icon">$</div>
-<div class="bank-title">International Withdrawal</div>
-</div>
-
-<div class="form-group">
-<label for="othersMethod">Withdrawal Method</label>
-<select id="othersMethod" class="form-control">
-<option value="USDT">USDT — TRC20 Network</option>
-<option value="BANK">International Bank Transfer</option>
-</select>
-</div>
-
-<div id="others-usdt">
-<div class="form-group">
-<label for="usdtAddress">USDT Wallet Address</label>
-<input id="usdtAddress" class="form-control" type="text" autocomplete="off" placeholder="Enter your TRON wallet address">
-<div class="field-hint">Use a wallet address that supports USDT on the TRON (TRC20) network. Do not use an ERC20 or BEP20 address unless the withdrawal system explicitly supports it.</div>
-</div>
-
-<div class="form-group">
-<label for="usdtNetwork">Network</label>
-<input id="usdtNetwork" class="form-control" value="TRON (TRC20)" disabled>
-</div>
-</div>
-
-<div id="others-bank" style="display:none">
-<div class="form-group">
-<label for="intCountry">Bank Country</label>
-<input id="intCountry" class="form-control" type="text" autocomplete="country-name" placeholder="Country where the bank is located">
-</div>
-
-<div class="form-group">
-<label for="intBankName">Bank Name</label>
-<input id="intBankName" class="form-control" type="text" placeholder="Full bank name">
-</div>
-
-<div class="form-group">
-<label for="intName">Account Holder Name</label>
-<input id="intName" class="form-control" type="text" autocomplete="name" placeholder="Full name on account">
-</div>
-
-<div class="form-group">
-<label for="intAccount">Account Number / IBAN</label>
-<input id="intAccount" class="form-control" type="text" autocomplete="off" placeholder="Enter account number or IBAN">
-</div>
-
-<div class="form-group">
-<label for="intSwift">SWIFT / BIC Code</label>
-<input id="intSwift" class="form-control" type="text" autocomplete="off" placeholder="Enter SWIFT or BIC code">
-</div>
-
-<div class="form-group">
-<label for="intRouting">Routing / Sort Code (Optional)</label>
-<input id="intRouting" class="form-control" type="text" autocomplete="off" placeholder="If applicable">
-</div>
-</div>
-</div>
-
-<button type="button" class="save-btn" id="saveDetailsBtn">💾 Save Withdrawal Details</button>
-<button type="button" class="withdraw-button" id="withdrawButton">Request Withdrawal</button>
-
-<div class="info-box">
-<div class="info-row"><span>Selected balance</span><strong id="infoBalance">₦0</strong></div>
-<div class="info-row"><span>Withdrawal type</span><strong id="infoWithdrawalType">Regular Earnings</strong></div>
-<div class="info-row"><span>Country</span><strong id="infoCountry">Nigeria</strong></div>
-<div class="info-row"><span>Minimum withdrawal</span><strong id="minimumWithdrawal">₦30,000</strong></div>
-<div class="info-row"><span>Processing</span><strong>Pending review</strong></div>
-</div>
-
-<div class="security-note">
-<span>🔒</span>
-<span>Only enter payment details needed to receive your withdrawal. Never share your password, PIN, OTP or wallet recovery phrase. Processing times depend on the payment method and review.</span>
-</div>
+  <button type="button" class="save-btn" id="saveDetailsBtn" onclick="saveWithdrawalDetails()">💾 Save Payment Details</button>
+  <button type="button" class="withdraw-button" id="withdrawButton" onclick="submitWithdrawal()">Request Withdrawal</button>
+  <div class="info-box">
+    <div class="info-row"><span>Selected balance</span><strong id="infoBalance">₦0</strong></div>
+    <div class="info-row"><span>Withdrawal type</span><strong id="infoWithdrawalType">Regular Earnings</strong></div>
+    <div class="info-row"><span>Country</span><strong id="infoCountry">Nigeria</strong></div>
+    <div class="info-row"><span>Method</span><strong id="infoMethod">Bank</strong></div>
+    <div class="info-row"><span>Minimum withdrawal</span><strong id="minimumWithdrawal">₦30,000</strong></div>
+    <div class="info-row"><span>Processing</span><strong>Pending review</strong></div>
+  </div>
+  <div class="security-note"><span>🔒</span><span>Details saved locally and on server. Momo: 5 mins - 2 hrs. Banks: 24 hrs. USDT: 10-30 mins.</span></div>
 </section>
-
 <section class="history-section">
-<div class="history-shell">
-<div class="history-top">
-<div class="history-head">
-<div class="history-heading-wrap">
-<div class="history-eyebrow"><span class="history-eyebrow-dot"></span>TRANSACTION ACTIVITY</div>
-<h2>Withdrawal History</h2>
-<p>Your latest withdrawal requests and their current status.</p>
-</div>
-<div class="history-count"><strong id="historyCount">0</strong><span>Requests</span></div>
-</div>
-</div>
-
-<div class="history-list" id="historyList">
-<div class="history-loading">Loading withdrawal history...</div>
-</div>
-
-<div class="history-footer">Showing your 10 most recent withdrawal requests</div>
-</div>
+  <div class="history-shell">
+    <div class="history-top"><div class="history-head"><div><div class="history-eyebrow"><span class="history-eyebrow-dot"></span>TRANSACTION ACTIVITY</div><h2>Withdrawal History</h2><p>Your latest withdrawal requests and their status.</p></div><div class="history-count"><strong id="historyCount">0</strong><span>Requests</span></div></div></div>
+    <div class="history-list" id="historyList"><div class="history-loading"><span class="history-loading-dot"></span>Loading withdrawal history...</div></div>
+    <div class="history-footer">Showing your 10 most recent withdrawal requests</div>
+  </div>
 </section>
 </div>
-
-<nav class="bottom-nav" aria-label="Main navigation">
-<button class="nav" type="button" onclick="location.href='dashboard.html'"><div class="nav-icon">⌂</div>Home</button>
-<button class="nav" type="button" onclick="location.href='jobs.html'"><div class="nav-icon">◆</div>Jobs</button>
-<button class="nav" type="button" onclick="location.href='history.html'"><div class="nav-icon">◷</div>History</button>
-<button class="nav active" type="button" onclick="location.href='withdraw.html'"><div class="nav-icon">↓</div>Withdraw</button>
+<nav class="bottom-nav">
+  <button class="nav" type="button" onclick="location.href='dashboard.html'"><div class="nav-icon">⌂</div>Home</button>
+  <button class="nav" type="button" onclick="location.href='jobs.html'"><div class="nav-icon">◆</div>Jobs</button>
+  <button class="nav" type="button" onclick="location.href='history.html'"><div class="nav-icon">◷</div>History</button>
+  <button class="nav active" type="button" onclick="location.href='withdraw.html'"><div class="nav-icon">↓</div>Withdraw</button>
 </nav>
-
-<div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-<div class="modal">
-<h3 id="confirmTitle">Confirm Withdrawal</h3>
-<p class="modal-description">Review the details below before submitting your withdrawal request.</p>
-
-<div class="confirm-details">
-<div class="confirm-row"><span>Withdrawal Type</span><strong id="confirmType">Regular</strong></div>
-<div class="confirm-row"><span>Country</span><strong id="confirmCountry">Nigeria</strong></div>
-<div class="confirm-row"><span>Amount</span><strong id="confirmAmount">₦0</strong></div>
-<div class="confirm-row"><span>Account / Wallet</span><strong id="confirmAccount">—</strong></div>
-<div class="confirm-row"><span>Bank / Provider</span><strong id="confirmBank">—</strong></div>
-<div class="confirm-row"><span>Account Number / Address</span><strong id="confirmNumber">—</strong></div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3>Confirm Withdrawal</h3><p class="modal-description">Please review your withdrawal details below.</p>
+    <div class="confirm-details">
+      <div class="confirm-row"><span>Withdrawal Type</span><strong id="confirmType">Regular</strong></div>
+      <div class="confirm-row"><span>Country</span><strong id="confirmCountry">Nigeria</strong></div>
+      <div class="confirm-row"><span>Method</span><strong id="confirmMethod">Bank</strong></div>
+      <div class="confirm-row"><span>Amount</span><strong id="confirmAmount">₦0</strong></div>
+      <div class="confirm-row"><span>Account</span><strong id="confirmAccount">—</strong></div>
+      <div class="confirm-row"><span>Bank / Provider</span><strong id="confirmBank">—</strong></div>
+      <div class="confirm-row"><span>Account Number</span><strong id="confirmNumber">—</strong></div>
+    </div>
+    <div class="modal-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeConfirmModal()">Cancel</button><button type="button" class="modal-btn modal-confirm" id="confirmWithdrawButton" onclick="confirmWithdrawal()">Confirm Withdrawal</button></div>
+  </div>
 </div>
-
-<div class="modal-actions">
-<button type="button" class="modal-btn modal-cancel" id="cancelConfirmButton">Cancel</button>
-<button type="button" class="modal-btn modal-confirm" id="confirmWithdrawButton">Confirm Withdrawal</button>
-</div>
-</div>
-</div>
-
 <script>
-"use strict";
-
-let currentUser=null;
-let walletBalance=0;
-let affiliateBalance=0;
-let pendingWithdrawal=null;
-let loadingUser=false;
-let submittingWithdrawal=false;
-let regularWithdrawalsEnabled=true;
-let savedDetailsByCountry={};
-
-const MIN_WITHDRAWAL={
-regular:30000,
-affiliate:20000
-};
-
-const DETAILS_STORAGE_KEY="jovia_withdrawal_details";
-const DEFAULT_COUNTRY_KEY="jovia_withdrawal_default_country";
-
-const $=id=>document.getElementById(id);
-
-function money(amount){
-const number=Number(amount);
-if(!Number.isFinite(number))return "₦0";
-return "₦"+number.toLocaleString("en-NG",{maximumFractionDigits:2});
-}
-
-function escapeHtml(value){
-return String(value??"")
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
-}
-
-function getMinimumWithdrawal(type){
-return type==="affiliate"?MIN_WITHDRAWAL.affiliate:MIN_WITHDRAWAL.regular;
-}
-
-function getSelectedBalance(){
-return $("withdrawalType").value==="affiliate"?affiliateBalance:walletBalance;
-}
-
-function getWithdrawalTypeLabel(type){
-return type==="affiliate"?"Affiliate Earnings":"Regular Earnings";
-}
-
-function updateTopbar(){
-$("topbar").classList.toggle("scrolled",window.scrollY>8);
-}
-
+let currentUser=null,walletBalance=0,affiliateBalance=0,pendingWithdrawal=null,loadingUser=false,submittingWithdrawal=false,regularWithdrawalsEnabled=true;
+const MIN_WITHDRAWAL={regular:30000,affiliate:20000};
+function money(a){const n=Number(a);if(!Number.isFinite(n))return"₦0";return"₦"+n.toLocaleString("en-NG");}
+function getMinimumWithdrawal(t){return t==="affiliate"?MIN_WITHDRAWAL.affiliate:MIN_WITHDRAWAL.regular;}
+function getSelectedBalance(){return document.getElementById("withdrawalType").value==="affiliate"?affiliateBalance:walletBalance;}
+function getWithdrawalTypeLabel(t){return t==="affiliate"?"Affiliate Earnings":"Regular Earnings";}
+function updateTopbar(){const b=document.getElementById("topbar");if(!b)return;if(window.scrollY>8)b.classList.add("scrolled");else b.classList.remove("scrolled");}
 window.addEventListener("scroll",updateTopbar,{passive:true});
-
-function showMessage(message,type="info"){
-const element=$("formMessage");
-element.textContent=String(message||"");
-element.className="form-message "+type;
-element.style.display="block";
-}
-
-function clearMessage(){
-const element=$("formMessage");
-element.textContent="";
-element.className="form-message";
-element.style.display="none";
-}
-
 function updateWithdrawalAvailability(){
-const type=$("withdrawalType").value;
-const banner=$("withdrawalDisabledBanner");
-const button=$("withdrawButton");
-
-if(type==="regular"&&!regularWithdrawalsEnabled){
-banner.style.display="block";
-button.disabled=true;
-button.textContent="Regular Withdrawals Disabled";
-}else{
-banner.style.display="none";
-button.disabled=false;
-button.textContent="Request Withdrawal";
+  const t=document.getElementById("withdrawalType").value,b=document.getElementById("withdrawalDisabledBanner"),btn=document.getElementById("withdrawButton");
+  if(t==="regular"&&!regularWithdrawalsEnabled){if(b)b.style.display="block";if(btn){btn.disabled=true;btn.textContent="Regular Withdrawals Disabled ⛔";}}
+  else{if(b)b.style.display="none";if(btn){btn.disabled=false;btn.textContent="Request Withdrawal";}}
 }
+function updateQuickAmounts(t){
+  const a=t==="affiliate"?[20000,30000,50000]:[30000,50000,100000];
+  ["quickAmount1","quickAmount2","quickAmount3"].forEach((id,i)=>{const b=document.getElementById(id);if(!b)return;b.textContent=money(a[i]);b.onclick=()=>setAmount(a[i],b);});
 }
-
-function updateQuickAmounts(type){
-const amounts=type==="affiliate"?[20000,30000,50000]:[30000,50000,100000];
-
-["quickAmount1","quickAmount2","quickAmount3"].forEach((id,index)=>{
-const button=$(id);
-button.textContent=money(amounts[index]);
-button.onclick=()=>setAmount(amounts[index],button);
-});
-}
-
 function updateBalance(){
-const type=$("withdrawalType").value;
-const balance=getSelectedBalance();
-const minimum=getMinimumWithdrawal(type);
-
-$("walletBalance").textContent=money(balance);
-$("infoBalance").textContent=money(balance);
-$("typeBalance").textContent=money(balance);
-$("infoWithdrawalType").textContent=getWithdrawalTypeLabel(type);
-$("typeBalanceLabel").textContent=type==="affiliate"?"Affiliate available balance":"Regular available balance";
-$("balanceNote").textContent=type==="affiliate"?"Affiliate earnings available for withdrawal.":"Regular earnings available for withdrawal.";
-$("amount").min=minimum;
-$("minimumWithdrawal").textContent=money(minimum);
-$("infoCountry").textContent=$("country").value;
-
-updateQuickAmounts(type);
-updateWithdrawalAvailability();
+  const t=document.getElementById("withdrawalType").value,s=getSelectedBalance(),m=getMinimumWithdrawal(t);
+  document.getElementById("walletBalance").textContent=money(s);
+  document.getElementById("infoBalance").textContent=money(s);
+  document.getElementById("typeBalance").textContent=money(s);
+  document.getElementById("infoWithdrawalType").textContent=getWithdrawalTypeLabel(t);
+  document.getElementById("typeBalanceLabel").textContent=t==="affiliate"?"Affiliate available balance":"Regular available balance";
+  document.getElementById("balanceNote").textContent=t==="affiliate"?"Affiliate earnings available for withdrawal.":"Regular earnings available for withdrawal.";
+  document.getElementById("amount").min=m;
+  document.getElementById("minimumWithdrawal").textContent=money(m);
+  document.getElementById("infoCountry").textContent=document.getElementById("country").value;
+  updateQuickAmounts(t);updateWithdrawalAvailability();
 }
-
 async function checkRegularWithdrawalStatus(){
-try{
-const response=await fetch("/api/wallet?t="+Date.now(),{
-credentials:"include",
-cache:"no-store"
-});
-
-if(response.status===401){
-location.href="login.html";
-return;
+  try{const r=await fetch("/api/wallet?t="+Date.now(),{credentials:"include",cache:"no-store"});if(r.status===401||r.status===403)return;if(!r.ok){regularWithdrawalsEnabled=true;updateWithdrawalAvailability();return;}const d=await r.json();if(typeof d.regularWithdrawalsEnabled==="boolean")regularWithdrawalsEnabled=d.regularWithdrawalsEnabled;else if(typeof d.wallet?.regularWithdrawalsEnabled==="boolean")regularWithdrawalsEnabled=d.wallet.regularWithdrawalsEnabled;updateWithdrawalAvailability();}catch{regularWithdrawalsEnabled=true;updateWithdrawalAvailability();}
 }
-
-if(!response.ok)return;
-
-const data=await response.json();
-
-if(typeof data.regularWithdrawalsEnabled==="boolean"){
-regularWithdrawalsEnabled=data.regularWithdrawalsEnabled;
-}else if(typeof data.wallet?.regularWithdrawalsEnabled==="boolean"){
-regularWithdrawalsEnabled=data.wallet.regularWithdrawalsEnabled;
-}
-
-updateWithdrawalAvailability();
-}catch(error){
-console.warn("Could not retrieve withdrawal settings.",error);
-}
-}
-
-function readLocalDetails(){
-try{
-const raw=localStorage.getItem(DETAILS_STORAGE_KEY);
-savedDetailsByCountry=raw?JSON.parse(raw):{};
-if(!savedDetailsByCountry||typeof savedDetailsByCountry!=="object"){
-savedDetailsByCountry={};
-}
-}catch(error){
-savedDetailsByCountry={};
-}
-}
-
-function writeLocalDetails(){
-try{
-localStorage.setItem(DETAILS_STORAGE_KEY,JSON.stringify(savedDetailsByCountry));
-localStorage.setItem(DEFAULT_COUNTRY_KEY,$("country").value);
-return true;
-}catch(error){
-showMessage("Your browser could not save the details locally. Check your device storage settings.","error");
-return false;
-}
-}
-
 function onCountryChange(){
-const country=$("country").value;
-
-document.querySelectorAll(".method-box").forEach(box=>{
-box.classList.toggle("active",box.id==="method-"+country);
-});
-
-$("infoCountry").textContent=country;
-clearMessage();
-
-if(country==="Others")onOthersMethod();
-
-loadSavedForCountry(country);
+  const c=document.getElementById("country").value;
+  document.querySelectorAll(".method-box").forEach(b=>b.classList.remove("active"));
+  const box=document.getElementById("method-"+c);if(box)box.classList.add("active");
+  document.getElementById("infoCountry").textContent=c;
+  document.getElementById("infoMethod").textContent=c==="Others"?document.getElementById("othersMethod").value:"Bank/Momo";
+  loadSavedForCountry(c);clearMessage();
 }
-
-function onOthersMethod(){
-const method=$("othersMethod").value;
-$("others-usdt").style.display=method==="USDT"?"block":"none";
-$("others-bank").style.display=method==="BANK"?"block":"none";
-
-const countryDetails=savedDetailsByCountry.Others;
-if(countryDetails&&countryDetails.method!==method){
-$("savedBadge").classList.remove("show");
-}
-}
-
 function getCurrentDetails(){
-const country=$("country").value;
-
-if(country==="Nigeria"){
-return {
-country,
-bank:$("bankName").value.trim(),
-accountNumber:$("accountNumber").value.trim(),
-accountName:$("accountName").value.trim()
-};
+  const c=document.getElementById("country").value;
+  if(c==="Nigeria"){
+    const bank=document.getElementById("ngBank").value,provider=document.getElementById("ngProvider").value;
+    return {country:c, bank:bank||provider, traditionalBank:bank, provider:provider, accountName:document.getElementById("accountName").value.trim(), accountNumber:document.getElementById("accountNumber").value.trim(), method: provider?"FINTECH":"BANK"};
+  }
+  if(c==="Ghana"){
+    const hasMomo=document.getElementById("ghProvider").value;
+    if(hasMomo){return {country:c, type:"MOMO", provider:document.getElementById("ghProvider").value, number:document.getElementById("ghNumber").value.trim(), name:document.getElementById("ghName").value.trim(), bank:document.getElementById("ghBank").value, bankAccount:document.getElementById("ghBankAccount").value, bankName:document.getElementById("ghBankName").value, method:"MOMO"};}
+    else{return {country:c, type:"BANK", bank:document.getElementById("ghBank").value, accountNumber:document.getElementById("ghBankAccount").value.trim(), accountName:document.getElementById("ghBankName").value.trim(), method:"BANK"};}
+  }
+  if(c==="Cameroon"){
+    const hasMomo=document.getElementById("cmProvider").value;
+    if(hasMomo){return {country:c, type:"MOMO", provider:document.getElementById("cmProvider").value, number:document.getElementById("cmNumber").value.trim(), name:document.getElementById("cmName").value.trim(), bank:document.getElementById("cmBank").value, bankAccount:document.getElementById("cmBankAccount").value, bankName:document.getElementById("cmBankName").value, method:"MOMO"};}
+    else{return {country:c, type:"BANK", bank:document.getElementById("cmBank").value, accountNumber:document.getElementById("cmBankAccount").value.trim(), accountName:document.getElementById("cmBankName").value.trim(), method:"BANK"};}
+  }
+  if(c==="Others"){
+    const m=document.getElementById("othersMethod").value;
+    if(m==="USDT")return {country:c, method:"USDT", usdtAddress:document.getElementById("usdtAddress").value.trim(), type:"USDT"};
+    else return {country:c, method:"BANK", bankName:document.getElementById("intBankName").value.trim(), account:document.getElementById("intAccount").value.trim(), name:document.getElementById("intName").value.trim(), swift:document.getElementById("intSwift").value.trim(), type:"INTBANK"};
+  }
 }
-
-if(country==="Ghana"){
-return {
-country,
-provider:$("ghProvider").value,
-number:$("ghNumber").value.trim(),
-name:$("ghName").value.trim()
-};
+function isDetailsComplete(d){
+  if(!d)return false;
+  if(d.country==="Nigeria")return!!(d.bank&&d.accountNumber&&d.accountName&&d.accountNumber.length===10);
+  if(d.country==="Ghana"){if(d.method==="MOMO")return!!(d.provider&&d.number&&d.name); return!!(d.bank&&d.accountNumber&&d.accountName);}
+  if(d.country==="Cameroon"){if(d.method==="MOMO")return!!(d.provider&&d.number&&d.name); return!!(d.bank&&d.accountNumber&&d.accountName);}
+  if(d.country==="Others"){if(d.method==="USDT")return!!d.usdtAddress&&d.usdtAddress.startsWith("T"); if(d.method==="BANK")return!!(d.bankName&&d.account&&d.name);}
+  return false;
 }
-
-if(country==="Cameroon"){
-return {
-country,
-provider:$("cmProvider").value,
-number:$("cmNumber").value.trim(),
-name:$("cmName").value.trim()
-};
-}
-
-if(country==="Others"){
-const method=$("othersMethod").value;
-
-if(method==="USDT"){
-return {
-country,
-method:"USDT",
-network:"TRC20",
-usdtAddress:$("usdtAddress").value.trim()
-};
-}
-
-return {
-country,
-method:"BANK",
-bankName:$("intBankName").value.trim(),
-account:$("intAccount").value.trim(),
-name:$("intName").value.trim(),
-bankCountry:$("intCountry").value.trim(),
-swift:$("intSwift").value.trim(),
-routing:$("intRouting").value.trim()
-};
-}
-
-return null;
-}
-
-function validateDetails(details){
-if(!details)return "Select a withdrawal country.";
-
-if(details.country==="Nigeria"){
-if(!details.accountName)return "Enter the name registered to your bank account.";
-if(!details.bank)return "Enter or select your bank name.";
-if(!/^\d{10}$/.test(details.accountNumber))return "Enter a valid 10-digit Nigerian account number.";
-return "";
-}
-
-if(details.country==="Ghana"||details.country==="Cameroon"){
-if(!details.provider)return "Select your mobile money provider.";
-if(!details.number)return "Enter your mobile money number.";
-if(!details.name)return "Enter the name registered to your mobile money account.";
-return "";
-}
-
-if(details.country==="Others"&&details.method==="USDT"){
-if(!details.usdtAddress)return "Enter your USDT TRC20 wallet address.";
-if(!/^T[1-9A-HJ-NP-Za-km-z]{25,50}$/.test(details.usdtAddress)){
-return "The wallet address does not look like a valid TRON address. Check it carefully.";
-}
-return "";
-}
-
-if(details.country==="Others"&&details.method==="BANK"){
-if(!details.bankCountry)return "Enter the country where your bank account is held.";
-if(!details.bankName)return "Enter your international bank name.";
-if(!details.name)return "Enter the account holder name.";
-if(!details.account)return "Enter your account number or IBAN.";
-if(!details.swift)return "Enter the SWIFT/BIC code.";
-return "";
-}
-
-return "Please complete your withdrawal details.";
-}
-
-function isDetailsComplete(details){
-return !validateDetails(details);
-}
-
-function populateDetails(details){
-if(!details)return;
-
-if(details.country==="Nigeria"){
-$("bankName").value=details.bank||"";
-$("accountNumber").value=details.accountNumber||"";
-$("accountName").value=details.accountName||"";
-}
-
-if(details.country==="Ghana"){
-$("ghProvider").value=details.provider||"";
-$("ghNumber").value=details.number||"";
-$("ghName").value=details.name||"";
-}
-
-if(details.country==="Cameroon"){
-$("cmProvider").value=details.provider||"";
-$("cmNumber").value=details.number||"";
-$("cmName").value=details.name||"";
-}
-
-if(details.country==="Others"){
-$("othersMethod").value=details.method||"USDT";
-$("usdtAddress").value=details.usdtAddress||"";
-$("intBankName").value=details.bankName||"";
-$("intAccount").value=details.account||"";
-$("intName").value=details.name||"";
-$("intCountry").value=details.bankCountry||"";
-$("intSwift").value=details.swift||"";
-$("intRouting").value=details.routing||"";
-onOthersMethod();
-}
-}
-
-function loadSavedForCountry(country){
-readLocalDetails();
-
-const details=savedDetailsByCountry[country];
-
-if(details){
-populateDetails(details);
-$("savedBadge").classList.add("show");
-}else{
-$("savedBadge").classList.remove("show");
-}
-}
-
-async function requestJson(url,options={}){
-const response=await fetch(url,{
-credentials:"include",
-cache:"no-store",
-...options
-});
-
-let data={};
-try{
-data=await response.json();
-}catch(error){}
-
-if(!response.ok){
-const err=new Error(data.message||data.error||"The request could not be completed.");
-err.status=response.status;
-err.data=data;
-throw err;
-}
-
-return data;
-}
-
-/*
-Backend contract:
-POST /api/save-withdrawal-details
-Body: { country, ...withdrawalDetails }
-
-GET /api/save-withdrawal-details
-Expected response: { details: [...] } or { details: {...} }
-
-The backend must authenticate the user and save details against that user's ID.
-*/
-async function saveDetailsToBackend(details){
-return requestJson("/api/save-withdrawal-details",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-country:details.country,
-withdrawalDetails:details,
-...details
-})
-});
-}
-
-async function loadDetailsFromBackend(){
-try{
-const data=await requestJson("/api/save-withdrawal-details");
-
-let incoming=data.details||data.withdrawalDetails||data.withdrawal_details||null;
-
-if(Array.isArray(incoming)){
-incoming.forEach(details=>{
-if(details&&details.country){
-savedDetailsByCountry[details.country]=details;
-}
-});
-}else if(incoming&&incoming.country){
-savedDetailsByCountry[incoming.country]=incoming;
-}else if(incoming&&typeof incoming==="object"){
-Object.entries(incoming).forEach(([country,details])=>{
-if(details&&typeof details==="object"){
-savedDetailsByCountry[country]={
-...details,
-country:details.country||country
-};
-}
-});
-}
-
-writeLocalDetails();
-}catch(error){
-/*
-The local copy remains usable if the backend GET endpoint
-has not been implemented or is temporarily unavailable.
-*/
-console.warn("Backend withdrawal details could not be loaded.",error);
-}
-}
-
 async function saveWithdrawalDetails(){
-clearMessage();
-
-const details=getCurrentDetails();
-const validation=validateDetails(details);
-
-if(validation){
-showMessage(validation,"error");
-return;
+  clearMessage();const d=getCurrentDetails();
+  if(!isDetailsComplete(d)){showMessage("Please complete all fields for "+d.country+" correctly.","error");return;}
+  const btn=document.getElementById("saveDetailsBtn"),orig=btn.textContent;btn.disabled=true;btn.textContent="Saving...";
+  try{
+    const all=JSON.parse(localStorage.getItem("jovia_withdrawal_details")||"{}");all[d.country]=d;
+    localStorage.setItem("jovia_withdrawal_details",JSON.stringify(all));localStorage.setItem("jovia_withdrawal_default_country",d.country);
+    const token=localStorage.getItem("token")||localStorage.getItem("jovia_token")||"";
+    fetch("/api/save-withdrawal-details",{method:"POST",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify(d),credentials:"include"}).catch(()=>{});
+    showMessage("Payment details saved for "+d.country+"!","success");
+    document.getElementById("savedBadge").classList.add("show");btn.classList.add("saved");btn.textContent="✓ Saved";
+    setTimeout(()=>{btn.textContent=orig;btn.classList.remove("saved");},2000);
+  }catch(e){showMessage("Saved locally","error");}finally{btn.disabled=false;}
 }
-
-const button=$("saveDetailsBtn");
-const originalText=button.textContent;
-
-button.disabled=true;
-button.textContent="Saving details...";
-
-try{
-readLocalDetails();
-
-/* Save locally immediately. */
-savedDetailsByCountry[details.country]=details;
-
-if(!writeLocalDetails()){
-throw new Error("Could not save the details on this device.");
+function loadSavedForCountry(c){
+  try{
+    const all=JSON.parse(localStorage.getItem("jovia_withdrawal_details")||"{}"),d=all[c];
+    if(!d){document.getElementById("savedBadge").classList.remove("show");return;}
+    document.getElementById("savedBadge").classList.add("show");
+    if(c==="Nigeria"){document.getElementById("ngBank").value=d.traditionalBank||d.bank||"";document.getElementById("ngProvider").value=d.provider&&["Opay","Moniepoint","PalmPay","Kuda Bank"].includes(d.provider)?d.provider:"";document.getElementById("accountName").value=d.accountName||"";document.getElementById("accountNumber").value=d.accountNumber||"";}
+    if(c==="Ghana"){document.getElementById("ghBank").value=d.bank||"";document.getElementById("ghBankAccount").value=d.bankAccount||d.accountNumber||"";document.getElementById("ghBankName").value=d.bankName||d.accountName||"";document.getElementById("ghProvider").value=d.provider||"";document.getElementById("ghNumber").value=d.number||"";document.getElementById("ghName").value=d.name||"";}
+    if(c==="Cameroon"){document.getElementById("cmBank").value=d.bank||"";document.getElementById("cmBankAccount").value=d.bankAccount||d.accountNumber||"";document.getElementById("cmBankName").value=d.bankName||d.accountName||"";document.getElementById("cmProvider").value=d.provider||"";document.getElementById("cmNumber").value=d.number||"";document.getElementById("cmName").value=d.name||"";}
+    if(c==="Others"){if(d.method)document.getElementById("othersMethod").value=d.method;if(d.usdtAddress)document.getElementById("usdtAddress").value=d.usdtAddress;if(d.bankName)document.getElementById("intBankName").value=d.bankName;if(d.account)document.getElementById("intAccount").value=d.account;if(d.name)document.getElementById("intName").value=d.name;if(d.swift)document.getElementById("intSwift").value=d.swift;}
+  }catch{}
 }
-
-/* Attempt permanent server-side storage and verify the response. */
-try{
-await saveDetailsToBackend(details);
-
-$("savedBadge").classList.add("show");
-button.classList.add("saved");
-button.textContent="✓ Details Saved";
-
-showMessage(
-"Your withdrawal details have been saved on this device and the server.",
-"success"
-);
-}catch(serverError){
-$("savedBadge").classList.add("show");
-
-showMessage(
-"Your details were saved on this device, but the server could not confirm permanent storage. They may not be available on another device until the server saving route is fixed.",
-"info"
-);
-
-console.warn("Backend save failed:",serverError);
-}
-
-setTimeout(()=>{
-button.textContent=originalText;
-button.classList.remove("saved");
-},2200);
-
-}catch(error){
-showMessage(error.message||"Unable to save withdrawal details.","error");
-}finally{
-button.disabled=false;
-if(button.textContent==="Saving details..."){
-button.textContent=originalText;
-}
-}
-}
-
-function editDetails(){
-$("savedBadge").classList.remove("show");
-showMessage("Edit the account details and save them again before requesting your withdrawal.","info");
-}
-
+function editDetails(){document.getElementById("savedBadge").classList.remove("show");showMessage("You can edit and save again","success");}
 async function loadUser(){
-if(loadingUser)return;
-loadingUser=true;
-
-try{
-const data=await requestJson("/api/me?t="+Date.now());
-const user=data.user||data.data?.user||data.member||data;
-
-currentUser=user;
-
-walletBalance=Number(
-user.walletBalance??user.wallet_balance??user.balance??0
-)||0;
-
-affiliateBalance=Number(
-user.affiliateBalance??user.affiliate_balance??0
-)||0;
-
-if(typeof user.regularWithdrawalsEnabled==="boolean"){
-regularWithdrawalsEnabled=user.regularWithdrawalsEnabled;
+  if(loadingUser)return;loadingUser=true;
+  try{
+    const r=await fetch("/api/me?t="+Date.now(),{credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});
+    if(r.status===401||r.status===403){location.href="login.html";return;}
+    if(!r.ok)throw new Error("Unable to load account.");
+    const data=await r.json();const user=data.user||data.data?.user||data.member||data;
+    currentUser=user;walletBalance=Number(user.walletBalance??user.wallet_balance??user.balance??0)||0;affiliateBalance=Number(user.affiliateBalance??user.affiliate_balance??0)||0;
+    if(typeof user.regularWithdrawalsEnabled==="boolean")regularWithdrawalsEnabled=user.regularWithdrawalsEnabled;
+    if(typeof data.regularWithdrawalsEnabled==="boolean")regularWithdrawalsEnabled=data.regularWithdrawalsEnabled;
+    const bd=user.withdrawalDetails||user.withdrawal_details||data.withdrawalDetails||null;
+    if(bd&&bd.country){const all=JSON.parse(localStorage.getItem("jovia_withdrawal_details")||"{}");all[bd.country]=bd;localStorage.setItem("jovia_withdrawal_details",JSON.stringify(all));}
+    const def=localStorage.getItem("jovia_withdrawal_default_country");if(def)document.getElementById("country").value=def;
+    onCountryChange();updateBalance();await loadWithdrawalHistory();
+  }catch(e){showMessage(e.message||"Unable to load account. Please refresh.","error");}finally{loadingUser=false;}
 }
-
-if(typeof data.regularWithdrawalsEnabled==="boolean"){
-regularWithdrawalsEnabled=data.regularWithdrawalsEnabled;
-}
-
-readLocalDetails();
-
-/* Import saved details returned by the user's account endpoint, if present. */
-const backendDetails=user.withdrawalDetails||user.withdrawal_details||data.withdrawalDetails||null;
-
-if(backendDetails){
-if(Array.isArray(backendDetails)){
-backendDetails.forEach(details=>{
-if(details&&details.country)savedDetailsByCountry[details.country]=details;
-});
-}else if(backendDetails.country){
-savedDetailsByCountry[backendDetails.country]=backendDetails;
-}else if(typeof backendDetails==="object"){
-Object.entries(backendDetails).forEach(([country,details])=>{
-if(details&&typeof details==="object"){
-savedDetailsByCountry[country]={...details,country:details.country||country};
-}
-});
-}
-}
-
-writeLocalDetails();
-
-/* Retrieve any separately stored details from the dedicated endpoint. */
-await loadDetailsFromBackend();
-
-const defaultCountry=localStorage.getItem(DEFAULT_COUNTRY_KEY);
-
-if(defaultCountry&&["Nigeria","Ghana","Cameroon","Others"].includes(defaultCountry)){
-$("country").value=defaultCountry;
-}
-
-onCountryChange();
-updateBalance();
-
-await loadWithdrawalHistory();
-
-}catch(error){
-if(error.status===401||error.status===403){
-location.href="login.html";
-return;
-}
-
-showMessage(error.message||"Unable to load your account. Please refresh.","error");
-
-}catchFinalDummy(){}
-finally{
-loadingUser=false;
-}
-}
-
-function setAmount(amount,button){
-$("amount").value=amount;
-
-document.querySelectorAll(".amount-btn").forEach(item=>{
-item.classList.remove("active");
-});
-
-if(button)button.classList.add("active");
-}
-
-function maskValue(value){
-const text=String(value||"");
-if(text.length<=8)return text;
-return text.slice(0,4)+"..."+text.slice(-4);
-}
-
-function getConfirmationDetails(details){
-if(details.country==="Nigeria"){
-return {
-account:details.accountName,
-bank:details.bank,
-number:"•••• "+details.accountNumber.slice(-4)
-};
-}
-
-if(details.country==="Ghana"||details.country==="Cameroon"){
-return {
-account:details.name,
-bank:details.provider,
-number:maskValue(details.number)
-};
-}
-
-if(details.country==="Others"&&details.method==="USDT"){
-return {
-account:"USDT wallet",
-bank:"TRON (TRC20)",
-number:maskValue(details.usdtAddress)
-};
-}
-
-return {
-account:details.name,
-bank:details.bankName,
-number:maskValue(details.account)
-};
-}
-
+document.getElementById("withdrawalType").addEventListener("change",function(){document.getElementById("amount").value="";document.querySelectorAll(".amount-btn").forEach(b=>b.classList.remove("active"));clearMessage();updateBalance();});
+function setAmount(a,b){document.getElementById("amount").value=a;document.querySelectorAll(".amount-btn").forEach(i=>i.classList.remove("active"));if(b)b.classList.add("active");}
+document.getElementById("amount").addEventListener("input",function(){document.querySelectorAll(".amount-btn").forEach(b=>b.classList.remove("active"));});
+document.getElementById("accountNumber").addEventListener("input",function(){this.value=this.value.replace(/\D/g,"").slice(0,10);});
 function openConfirmModal(){
-if(!pendingWithdrawal)return;
-
-const withdrawal=pendingWithdrawal;
-const display=getConfirmationDetails(withdrawal);
-
-$("confirmType").textContent=getWithdrawalTypeLabel(withdrawal.withdrawalType);
-$("confirmCountry").textContent=withdrawal.country;
-$("confirmAmount").textContent=money(withdrawal.amount);
-$("confirmAccount").textContent=display.account||"—";
-$("confirmBank").textContent=display.bank||"—";
-$("confirmNumber").textContent=display.number||"—";
-
-$("confirmModal").classList.add("show");
-document.body.style.overflow="hidden";
+  if(!pendingWithdrawal)return;
+  document.getElementById("confirmType").textContent=getWithdrawalTypeLabel(pendingWithdrawal.withdrawalType);
+  document.getElementById("confirmCountry").textContent=pendingWithdrawal.country;
+  document.getElementById("confirmMethod").textContent=pendingWithdrawal.method+" - "+(pendingWithdrawal.provider||pendingWithdrawal.bank||pendingWithdrawal.bankName||"");
+  document.getElementById("confirmAmount").textContent=money(pendingWithdrawal.amount);
+  if(pendingWithdrawal.country==="Nigeria"){
+    document.getElementById("confirmAccount").textContent=pendingWithdrawal.accountName;
+    document.getElementById("confirmBank").textContent=pendingWithdrawal.bank;
+    document.getElementById("confirmNumber").textContent="****"+pendingWithdrawal.accountNumber.slice(-4);
+  }else if(pendingWithdrawal.method==="MOMO"){
+    document.getElementById("confirmAccount").textContent=pendingWithdrawal.name;
+    document.getElementById("confirmBank").textContent=pendingWithdrawal.provider;
+    document.getElementById("confirmNumber").textContent=pendingWithdrawal.number;
+  }else if(pendingWithdrawal.method==="USDT"){
+    document.getElementById("confirmAccount").textContent="USDT TRC20";
+    document.getElementById("confirmBank").textContent="TRON";
+    document.getElementById("confirmNumber").textContent=pendingWithdrawal.usdtAddress.slice(0,8)+"..."+pendingWithdrawal.usdtAddress.slice(-6);
+  }else{
+    document.getElementById("confirmAccount").textContent=pendingWithdrawal.accountName||pendingWithdrawal.name||pendingWithdrawal.bankName;
+    document.getElementById("confirmBank").textContent=pendingWithdrawal.bank||pendingWithdrawal.bankName;
+    document.getElementById("confirmNumber").textContent=pendingWithdrawal.accountNumber||pendingWithdrawal.account||pendingWithdrawal.bankAccount||"";
+  }
+  document.getElementById("confirmModal").classList.add("show");document.body.style.overflow="hidden";
 }
-
-function closeConfirmModal(){
-if(submittingWithdrawal)return;
-$("confirmModal").classList.remove("show");
-document.body.style.overflow="";
-}
-
+function closeConfirmModal(){if(submittingWithdrawal)return;document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";}
+document.getElementById("confirmModal").addEventListener("click",function(e){if(e.target===this)closeConfirmModal();});
 async function submitWithdrawal(){
-clearMessage();
-
-const withdrawalType=$("withdrawalType").value;
-
-if(withdrawalType==="regular"&&!regularWithdrawalsEnabled){
-showMessage("Regular withdrawals are currently unavailable. Please try again later.","error");
-return;
+  clearMessage();const wt=document.getElementById("withdrawalType").value;
+  if(wt==="regular"&&!regularWithdrawalsEnabled){showMessage("Regular withdrawals are currently unavailable.","error");return;}
+  if(!currentUser){showMessage("Account still loading.","error");return;}
+  const sel=getSelectedBalance(),min=getMinimumWithdrawal(wt),amt=Number(document.getElementById("amount").value);
+  if(!Number.isFinite(amt)||amt<=0){showMessage("Enter a valid withdrawal amount.","error");return;}
+  if(amt<min){showMessage("Minimum withdrawal for "+getWithdrawalTypeLabel(wt)+" is "+money(min)+".","error");return;}
+  if(amt>sel){showMessage(wt==="affiliate"?"Insufficient affiliate balance.":"Insufficient regular balance.","error");return;}
+  const d=getCurrentDetails();
+  if(!isDetailsComplete(d)){showMessage("Please complete your "+d.country+" details.","error");return;}
+  const all=JSON.parse(localStorage.getItem("jovia_withdrawal_details")||"{}");if(!all[d.country]){all[d.country]=d;localStorage.setItem("jovia_withdrawal_details",JSON.stringify(all));localStorage.setItem("jovia_withdrawal_default_country",d.country);}
+  pendingWithdrawal={amount:amt,withdrawalType:wt,...d};openConfirmModal();
 }
-
-if(!currentUser){
-showMessage("Your account is still loading. Please wait a moment.","info");
-return;
-}
-
-const amount=Number($("amount").value);
-const balance=getSelectedBalance();
-const minimum=getMinimumWithdrawal(withdrawalType);
-
-if(!Number.isFinite(amount)||amount<=0){
-showMessage("Enter a valid withdrawal amount.","error");
-return;
-}
-
-if(amount<minimum){
-showMessage("The minimum withdrawal for "+getWithdrawalTypeLabel(withdrawalType)+" is "+money(minimum)+".","error");
-return;
-}
-
-if(amount>balance){
-showMessage(withdrawalType==="affiliate"?"Your affiliate balance is insufficient.":"Your regular balance is insufficient.","error");
-return;
-}
-
-const details=getCurrentDetails();
-const validation=validateDetails(details);
-
-if(validation){
-showMessage(validation,"error");
-return;
-}
-
-/* Save locally before opening the confirmation dialog. */
-readLocalDetails();
-savedDetailsByCountry[details.country]=details;
-writeLocalDetails();
-
-pendingWithdrawal={
-...details,
-amount,
-withdrawalType
-};
-
-openConfirmModal();
-}
-
 async function confirmWithdrawal(){
-if(!pendingWithdrawal||submittingWithdrawal)return;
-
-const confirmButton=$("confirmWithdrawButton");
-const mainButton=$("withdrawButton");
-
-submittingWithdrawal=true;
-confirmButton.disabled=true;
-mainButton.disabled=true;
-confirmButton.textContent="Submitting...";
-
-try{
-const withdrawal=pendingWithdrawal;
-
-const payload={
-amount:withdrawal.amount,
-type:withdrawal.withdrawalType,
-withdrawalType:withdrawal.withdrawalType,
-country:withdrawal.country,
-method:withdrawal.method||"",
-accountName:withdrawal.accountName||withdrawal.name||"",
-bankName:withdrawal.bank||withdrawal.bankName||withdrawal.provider||"",
-accountNumber:withdrawal.accountNumber||withdrawal.number||withdrawal.account||withdrawal.usdtAddress||"",
-withdrawalDetails:withdrawal,
-
-/* Legacy fields retained for compatibility with existing backend code. */
-bank_name:withdrawal.bank||withdrawal.bankName||withdrawal.provider||"",
-account_name:withdrawal.accountName||withdrawal.name||"",
-account_number:withdrawal.accountNumber||withdrawal.number||withdrawal.account||""
-};
-
-if(withdrawal.country==="Ghana"||withdrawal.country==="Cameroon"){
-payload.momoProvider=withdrawal.provider;
-payload.momoNumber=withdrawal.number;
-payload.momoName=withdrawal.name;
+  if(!pendingWithdrawal||submittingWithdrawal)return;
+  const cb=document.getElementById("confirmWithdrawButton"),mb=document.getElementById("withdrawButton");
+  submittingWithdrawal=true;cb.disabled=true;mb.disabled=true;cb.textContent="Submitting...";
+  try{
+    const payload={
+      amount:pendingWithdrawal.amount,type:pendingWithdrawal.withdrawalType,withdrawalType:pendingWithdrawal.withdrawalType,
+      country:pendingWithdrawal.country,method:pendingWithdrawal.method,
+      accountName:pendingWithdrawal.accountName||pendingWithdrawal.name||"",bankName:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",
+      accountNumber:pendingWithdrawal.accountNumber||pendingWithdrawal.number||pendingWithdrawal.account||pendingWithdrawal.usdtAddress||"",
+      withdrawalDetails:pendingWithdrawal,
+      bank_name:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",account_name:pendingWithdrawal.accountName||pendingWithdrawal.name||"",
+      account_number:pendingWithdrawal.accountNumber||pendingWithdrawal.number||"",
+      momoProvider:pendingWithdrawal.provider||"",momoNumber:pendingWithdrawal.number||"",momoName:pendingWithdrawal.name||"",
+      usdtAddress:pendingWithdrawal.usdtAddress||"",usdtNetwork:"TRC20"
+    };
+    const token=localStorage.getItem("token")||localStorage.getItem("jovia_token")||"";
+    const r=await fetch("/api/withdrawals",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{})},body:JSON.stringify(payload)});
+    let data=null;try{data=await r.json();}catch{}
+    if(r.status===403&&pendingWithdrawal.withdrawalType==="regular"){regularWithdrawalsEnabled=false;updateWithdrawalAvailability();showMessage(data?.message||"Regular withdrawals are currently unavailable.","error");closeConfirmModal();return;}
+    if(r.status===401){location.href="login.html";return;}
+    if(!r.ok)throw new Error(data?.message||"Unable to submit withdrawal.");
+    // Save locally for instant history
+    try{
+      const hist=JSON.parse(localStorage.getItem("jovia_withdrawal_history")||"[]");
+      hist.unshift({id:Date.now(),amount:payload.amount,status:"pending",bank_name:payload.bankName,account_number:payload.accountNumber,country:payload.country,method:payload.method,withdrawal_type:payload.withdrawalType,created_at:new Date().toISOString(),...payload});
+      localStorage.setItem("jovia_withdrawal_history",JSON.stringify(hist.slice(0,20)));
+    }catch{}
+    const rb=Number(data?.walletBalance??data?.wallet_balance??data?.user?.walletBalance??data?.user?.wallet_balance);
+    if(Number.isFinite(rb)&&rb>=0)walletBalance=rb;
+    const rab=Number(data?.affiliateBalance??data?.affiliate_balance??data?.user?.affiliateBalance??data?.user?.affiliate_balance);
+    if(Number.isFinite(rab)&&rab>=0)affiliateBalance=rab;
+    updateBalance();document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";
+    document.getElementById("amount").value="";document.querySelectorAll(".amount-btn").forEach(b=>b.classList.remove("active"));pendingWithdrawal=null;
+    showMessage(data?.message||"Withdrawal request submitted successfully.","success");await loadWithdrawalHistory();
+  }catch(e){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMessage(e.message||"Unable to submit withdrawal.","error");}
+  finally{submittingWithdrawal=false;cb.disabled=false;updateWithdrawalAvailability();cb.textContent="Confirm Withdrawal";}
 }
 
-if(withdrawal.country==="Others"){
-payload.method=withdrawal.method;
-
-if(withdrawal.method==="USDT"){
-payload.usdtAddress=withdrawal.usdtAddress;
-payload.network="TRC20";
-}else{
-payload.intBankName=withdrawal.bankName;
-payload.intAccount=withdrawal.account;
-payload.intName=withdrawal.name;
-payload.intCountry=withdrawal.bankCountry;
-payload.intSwift=withdrawal.swift;
-payload.intRouting=withdrawal.routing;
-}
-}
-
-const data=await requestJson("/api/withdrawals",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify(payload)
-});
-
-const returnedWallet=Number(
-data.walletBalance??data.wallet_balance??data.user?.walletBalance??data.user?.wallet_balance
-);
-
-const returnedAffiliate=Number(
-data.affiliateBalance??data.affiliate_balance??data.user?.affiliateBalance??data.user?.affiliate_balance
-);
-
-if(Number.isFinite(returnedWallet)&&returnedWallet>=0){
-walletBalance=returnedWallet;
-}
-
-if(Number.isFinite(returnedAffiliate)&&returnedAffiliate>=0){
-affiliateBalance=returnedAffiliate;
-}
-
-$("confirmModal").classList.remove("show");
-document.body.style.overflow="";
-$("amount").value="";
-
-document.querySelectorAll(".amount-btn").forEach(button=>{
-button.classList.remove("active");
-});
-
-pendingWithdrawal=null;
-
-updateBalance();
-
-showMessage(data.message||"Your withdrawal request was submitted successfully.","success");
-
-await loadWithdrawalHistory();
-
-}catch(error){
-if(error.status===401){
-location.href="login.html";
-return;
-}
-
-if(error.status===403&&pendingWithdrawal?.withdrawalType==="regular"){
-regularWithdrawalsEnabled=false;
-updateWithdrawalAvailability();
-}
-
-$("confirmModal").classList.remove("show");
-document.body.style.overflow="";
-
-showMessage(error.message||"Unable to submit your withdrawal request.","error");
-
-}catchFinalDummy2(){}
-finally{
-submittingWithdrawal=false;
-confirmButton.disabled=false;
-confirmButton.textContent="Confirm Withdrawal";
-updateWithdrawalAvailability();
-}
-}
-
+// ===== FIXED HISTORY - NOW TRIES MULTIPLE ENDPOINTS + TOKEN + ALL SHAPES =====
 async function loadWithdrawalHistory(){
-const list=$("historyList");
-const count=$("historyCount");
+  const list=document.getElementById("historyList");
+  const count=document.getElementById("historyCount");
+  const token=localStorage.getItem("token")||localStorage.getItem("jovia_token")||localStorage.getItem("accessToken")||"";
+  const headers={"Accept":"application/json",...(token?{Authorization:"Bearer "+token}:{})};
 
-try{
-const data=await requestJson("/api/withdrawals?t="+Date.now());
+  const endpoints=["/api/withdrawals","/api/withdrawal-history","/api/wallet/withdrawals","/api/user/withdrawals","/api/withdrawals/history"];
+  let withdrawals=[];
+  let lastError=null;
 
-const withdrawals=
-Array.isArray(data.withdrawals)?data.withdrawals:
-Array.isArray(data.data)?data.data:
-Array.isArray(data.history)?data.history:[];
+  for(const url of endpoints){
+    try{
+      const r=await fetch(url+"?t="+Date.now(),{method:"GET",headers:headers,credentials:"include",cache:"no-store"});
+      if(r.status===401||r.status===403){lastError="Auth failed on "+url; continue;}
+      if(!r.ok){lastError="HTTP "+r.status+" on "+url; continue;}
+      const data=await r.json().catch(()=>null);
+      if(!data) continue;
+      if(Array.isArray(data)) withdrawals=data;
+      else if(Array.isArray(data.withdrawals)) withdrawals=data.withdrawals;
+      else if(Array.isArray(data.data)) withdrawals=data.data;
+      else if(Array.isArray(data.data?.withdrawals)) withdrawals=data.data.withdrawals;
+      else if(Array.isArray(data.history)) withdrawals=data.history;
+      else if(Array.isArray(data.result)) withdrawals=data.result;
+      else if(Array.isArray(data.items)) withdrawals=data.items;
+      if(withdrawals.length>0) break;
+    }catch(e){lastError=e.message;}
+  }
 
-count.textContent=Math.min(withdrawals.length,10);
+  // fallback local history for instant display
+  if(withdrawals.length===0){
+    try{
+      const localHist=JSON.parse(localStorage.getItem("jovia_withdrawal_history")||"[]");
+      if(localHist.length>0) withdrawals=localHist;
+    }catch{}
+  }
 
-if(!withdrawals.length){
-list.innerHTML=`
-<div class="empty-history">
-<div class="empty-history-icon">↓</div>
-<strong>No withdrawals yet</strong>
-<span>Your withdrawal requests will appear here after you submit your first request.</span>
-</div>`;
-return;
+  if(count) count.textContent=withdrawals.length>0?Math.min(withdrawals.length,10):"0";
+
+  if(!withdrawals.length){
+    list.innerHTML=`<div class="empty-history"><div class="empty-history-icon">↓</div><strong>No withdrawals yet</strong><span>Your withdrawal requests will appear here once you submit one.</span></div>`;
+    return;
+  }
+
+  list.innerHTML=withdrawals.slice(0,10).map(w=>{
+    const amt=Number(w.amount||w.withdrawalAmount||0);
+    const status=String(w.status||"pending").toLowerCase().trim();
+    const type=String(w.withdrawal_type||w.withdrawalType||w.type||"regular").toLowerCase().trim();
+    const country=w.country||w.withdrawalDetails?.country||w.details?.country||"";
+    const method=w.method||w.withdrawalDetails?.method||w.details?.method||"";
+    let bank=w.bank_name||w.bankName||w.bank||w.momoProvider||w.withdrawalDetails?.provider||w.withdrawalDetails?.bank||"Bank";
+    if((w.usdtAddress||w.withdrawalDetails?.usdtAddress)&&!bank.includes("USDT")) bank="USDT TRC20";
+    let acc=String(w.account_number||w.accountNumber||w.momoNumber||w.number||w.usdtAddress||w.account||"");
+    let displayAcc=acc;
+    if(acc.length>=4){
+      if(acc.startsWith("T")) displayAcc=acc.slice(0,6)+"..."+acc.slice(-4);
+      else displayAcc="•••• "+acc.slice(-4);
+    }
+    const date=w.created_at||w.createdAt||w.date||w.timestamp||"";
+    let fd=date;
+    try{if(date){const pd=new Date(date);if(!isNaN(pd.getTime()))fd=pd.toLocaleString("en-NG",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"});}}catch{}
+    const isAff=type==="affiliate";
+    const dt=isAff?"Affiliate":"Regular";
+    const countryFlag=country==="Nigeria"?"🇳🇬":country==="Ghana"?"🇬🇭":country==="Cameroon"?"🇨🇲":country==="Others"?"🌍":"";
+    const sb=escapeHtml(bank);
+    const st=escapeHtml(`${dt}${country?` • ${countryFlag} ${country}`:""}${method?` • ${method}`:""}`);
+    const sd=escapeHtml(fd||"Date unavailable");
+    const ss=escapeHtml(formatStatus(status));
+    const sa=escapeHtml(displayAcc);
+    let sc=normalizeStatusClass(status);
+    return `<div class="history-item status-${sc}"><div class="history-left"><div class="history-icon ${isAff?"affiliate":""}">↓</div><div class="history-main"><div class="history-name">${sb}</div><div class="history-meta"><span class="history-type ${isAff?"affiliate":""}">${st}</span>${sa?`<span class="history-account">${sa}</span>`:""}</div><div class="history-date">${sd}</div></div></div><div class="history-right"><div class="history-amount">-${money(amt)}</div><span class="history-status ${sc}">${ss}</span></div></div>`;
+  }).join("");
 }
-
-list.innerHTML=withdrawals.slice(0,10).map(withdrawal=>{
-const amount=Number(withdrawal.amount||0);
-
-const status=String(withdrawal.status||"pending").toLowerCase().trim();
-
-const type=String(
-withdrawal.withdrawal_type||
-withdrawal.withdrawalType||
-withdrawal.type||
-"regular"
-).toLowerCase().trim();
-
-const details=withdrawal.withdrawalDetails||withdrawal.withdrawal_details||{};
-
-const country=withdrawal.country||details.country||"";
-
-const bank=
-withdrawal.bank_name||
-withdrawal.bankName||
-withdrawal.momoProvider||
-details.provider||
-details.bank||
-details.bankName||
-(details.method==="USDT"?"USDT TRC20":"Bank");
-
-const accountNumber=String(
-withdrawal.account_number||
-withdrawal.accountNumber||
-withdrawal.momoNumber||
-withdrawal.account_no||
-withdrawal.accountNo||
-details.accountNumber||
-details.number||
-details.account||
-details.usdtAddress||
-""
-);
-
-const date=withdrawal.created_at||withdrawal.createdAt||withdrawal.date||"";
-let formattedDate="Date unavailable";
-
-if(date){
-const parsedDate=new Date(date);
-if(!Number.isNaN(parsedDate.getTime())){
-formattedDate=parsedDate.toLocaleString("en-NG",{
-day:"numeric",
-month:"short",
-year:"numeric",
-hour:"numeric",
-minute:"2-digit"
-});
-}
-}
-
-const isAffiliate=type==="affiliate";
-const displayType=(isAffiliate?"Affiliate":"Regular")+(country?" • "+country:"");
-const statusClass=normalizeStatusClass(status);
-const maskedAccount=accountNumber.length>=4?"•••• "+accountNumber.slice(-4):"";
-
-return `
-<div class="history-item status-${statusClass}">
-<div class="history-left">
-<div class="history-icon ${isAffiliate?"affiliate":""}">↓</div>
-<div class="history-main">
-<div class="history-name">${escapeHtml(bank)}</div>
-<div class="history-meta">
-<span class="history-type ${isAffiliate?"affiliate":""}">${escapeHtml(displayType)}</span>
-${maskedAccount?`<span class="history-account">${escapeHtml(maskedAccount)}</span>`:""}
-</div>
-<div class="history-date">${escapeHtml(formattedDate)}</div>
-</div>
-</div>
-<div class="history-right">
-<div class="history-amount">-${money(amount)}</div>
-<span class="history-status ${statusClass}">${escapeHtml(formatStatus(status))}</span>
-</div>
-</div>`;
-}).join("");
-
-}catch(error){
-if(error.status===401){
-location.href="login.html";
-return;
-}
-
-count.textContent="—";
-
-list.innerHTML=`
-<div class="empty-history">
-<div class="empty-history-icon">!</div>
-<strong>History unavailable</strong>
-<span>We couldn't load your withdrawal activity. Please refresh and try again.</span>
-</div>`;
-}
-}
-
-function normalizeStatusClass(status){
-const value=String(status||"pending").toLowerCase().trim();
-
-if(value==="approved")return"approved";
-if(value==="completed")return"completed";
-if(value==="rejected")return"rejected";
-if(value==="failed")return"failed";
-
-if(value==="processing"||value==="in progress"||value==="in_progress"){
-return"processing";
-}
-
-return"pending";
-}
-
-function formatStatus(status){
-const value=String(status||"pending").toLowerCase().trim();
-
-if(value==="in_progress"||value==="in progress")return"Processing";
-if(value==="approved")return"Approved";
-if(value==="completed")return"Completed";
-if(value==="rejected")return"Rejected";
-if(value==="failed")return"Failed";
-if(value==="processing")return"Processing";
-
-return"Pending";
-}
-
-/* Country and withdrawal method changes */
-$("country").addEventListener("change",()=>{
-onCountryChange();
-updateBalance();
-});
-
-$("othersMethod").addEventListener("change",()=>{
-onOthersMethod();
-clearMessage();
-});
-
-$("withdrawalType").addEventListener("change",()=>{
-$("amount").value="";
-
-document.querySelectorAll(".amount-btn").forEach(button=>{
-button.classList.remove("active");
-});
-
-clearMessage();
-updateBalance();
-});
-
-$("amount").addEventListener("input",()=>{
-document.querySelectorAll(".amount-btn").forEach(button=>{
-button.classList.remove("active");
-});
-});
-
-$("accountNumber").addEventListener("input",function(){
-this.value=this.value.replace(/\D/g,"").slice(0,10);
-});
-
-$("saveDetailsBtn").addEventListener("click",saveWithdrawalDetails);
-$("editSavedButton").addEventListener("click",editDetails);
-$("withdrawButton").addEventListener("click",submitWithdrawal);
-$("confirmWithdrawButton").addEventListener("click",confirmWithdrawal);
-$("cancelConfirmButton").addEventListener("click",closeConfirmModal);
-
-$("confirmModal").addEventListener("click",event=>{
-if(event.target===$("confirmModal")){
-closeConfirmModal();
-}
-});
-
-document.addEventListener("keydown",event=>{
-if(event.key==="Escape"&&!submittingWithdrawal){
-closeConfirmModal();
-}
-});
-
-/* Initial page setup */
-document.addEventListener("DOMContentLoaded",async()=>{
-updateTopbar();
-readLocalDetails();
-updateBalance();
-
-const savedCountry=localStorage.getItem(DEFAULT_COUNTRY_KEY);
-
-if(savedCountry&&["Nigeria","Ghana","Cameroon","Others"].includes(savedCountry)){
-$("country").value=savedCountry;
-}
-
-onCountryChange();
-
-await checkRegularWithdrawalStatus();
-await loadUser();
-});
+function normalizeStatusClass(s){const v=String(s||"pending").toLowerCase().trim();if(v==="approved")return"approved";if(v==="completed")return"completed";if(v==="rejected")return"rejected";if(v==="failed")return"failed";if(v==="processing"||v==="in progress"||v==="in_progress")return"processing";return"pending";}
+function formatStatus(s){const v=String(s||"pending").toLowerCase().trim();if(v==="in_progress"||v==="in progress")return"Processing";if(v==="approved")return"Approved";if(v==="completed")return"Completed";if(v==="rejected")return"Rejected";if(v==="failed")return"Failed";if(v==="processing")return"Processing";return"Pending";}
+function escapeHtml(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
+function showMessage(m,t){const e=document.getElementById("formMessage");e.textContent=String(m||"");e.className="form-message "+t;e.style.display="block";e.scrollIntoView({behavior:"smooth",block:"nearest"});}
+function clearMessage(){const e=document.getElementById("formMessage");e.textContent="";e.className="form-message";e.style.display="none";}
+document.addEventListener("DOMContentLoaded",async function(){updateTopbar();updateBalance();await checkRegularWithdrawalStatus();await loadUser();});
+document.getElementById("othersMethod")?.addEventListener("change",function(){document.getElementById("infoMethod").textContent=this.value;});
 </script>
 </body>
 </html>
