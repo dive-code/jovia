@@ -159,24 +159,24 @@ async function sendBrevoEmail(toEmail, subject, htmlMessage){
   const payload = {sender:{name:BREVO_SENDER_NAME, email:BREVO_SENDER_EMAIL},to:[{email:String(toEmail).trim()}],subject:subject,htmlContent:`<div style="font-family:Inter,Arial,sans-serif; line-height:1.7; color:#172033; max-width:600px; margin:0 auto; padding:20px"><div style="background:#5b21b6;color:white;padding:14px 18px;border-radius:12px;margin-bottom:18px;font-weight:800">Jovia Network</div><h2 style="font-size:18px">${subject}</h2><div style="font-size:14px; white-space:pre-line">${htmlMessage.replace(/\n/g,'<br>')}</div></div>`};
   return new Promise((resolve,reject)=>{const url = new URL("https://api.brevo.com/v3/smtp/email");const body = Buffer.from(JSON.stringify(payload));const req = https.request({protocol:url.protocol, hostname:url.hostname, port:443, path:url.pathname, method:"POST", headers:{"Content-Type":"application/json","api-key":BREVO_API_KEY,"Content-Length":body.length}, timeout:15000}, (res)=>{const chunks=[]; res.on("data",c=>chunks.push(c)); res.on("end",()=>{const raw=Buffer.concat(chunks).toString("utf8");let parsed={}; try{parsed=JSON.parse(raw);}catch{parsed={raw};}if(res.statusCode>=200 && res.statusCode<300) resolve(parsed);else reject(new Error(parsed?.message || raw || `Brevo error ${res.statusCode}`));});});req.on("error",reject); req.on("timeout",()=>{req.destroy(new Error("Brevo timeout"));}); req.write(body); req.end();});
 }
-app.get("/api/health",(req,res)=>{res.json({success:true,service:"Jovia Network API V5 60K + 10K CODE + SEPARATED",status:"ok",dbPath:DB_PATH,withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codeFee:WITHDRAWAL_CODE_FEE,time:nowIso()});});
+app.get("/api/health",(req,res)=>{res.json({success:true,service:"Jovia Network API V5 60K + 10K CODE (BUY OUTSIDE NO DEDUCT) + SEPARATED",status:"ok",dbPath:DB_PATH,withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codeFee:WITHDRAWAL_CODE_FEE,minimums:WITHDRAWAL_MINIMUMS,time:nowIso()});});
 app.get("/api/referral/:code",(req,res)=>{try{const code = String(req.params.code||"").trim().toUpperCase(); if(!code) return res.status(400).json({success:false,message:"Code required"}); const user = db.prepare("SELECT username, referral_code FROM users WHERE UPPER(referral_code)=? OR UPPER(username)=? LIMIT 1").get(code, code); if(!user) return res.status(404).json({success:false,message:"Invalid referral code"}); return res.json({success:true, username:user.username, code:user.referral_code||user.username.toUpperCase(), full_name:user.username});}catch(e){ return res.status(500).json({success:false}); }});
-app.get("/api/settings/withdrawals",(req,res)=>{return res.json({success:true, enabled:isRegularWithdrawalsEnabled(), withdrawalsEnabled:isRegularWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codeFee:WITHDRAWAL_CODE_FEE});});
+app.get("/api/settings/withdrawals",(req,res)=>{return res.json({success:true, enabled:isRegularWithdrawalsEnabled(), withdrawalsEnabled:isRegularWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});});
 app.get("/api/admin/settings/withdrawals",(req,res)=>{const a=getAdminSession(req); if(!a) return res.status(401).json({success:false}); return res.json({success:true, enabled:isRegularWithdrawalsEnabled(), withdrawalsEnabled:isRegularWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled()});});
 app.get("/api/admin/settings/regular-withdrawals",(req,res)=>{const a=getAdminSession(req); if(!a) return res.status(401).json({success:false}); return res.json({success:true, enabled:isRegularWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled()});});
 app.get("/api/admin/settings/affiliate-withdrawals",(req,res)=>{const a=getAdminSession(req); if(!a) return res.status(401).json({success:false}); return res.json({success:true, enabled:isAffiliateWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled()});});
 app.get("/api/settings/affiliate-withdrawals",(req,res)=>{return res.json({success:true, enabled:isAffiliateWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled()});});
-app.get("/api/settings/withdrawal-codes",(req,res)=>{const enabled = getSettingValue('withdrawal_codes_enabled','0'); return res.json({success:true, enabled: enabled==='1', required: enabled==='1', codeFee:WITHDRAWAL_CODE_FEE});});
+app.get("/api/settings/withdrawal-codes",(req,res)=>{const enabled = getSettingValue('withdrawal_codes_enabled','0'); return res.json({success:true, enabled: enabled==='1', required: enabled==='1', codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});});
 app.post("/api/admin/generate-withdraw-code",requireAdmin,(req,res)=>{
   try{
     let code = cleanString(req.body?.code,20).toUpperCase();
     if(!code || code.length<6) code = generateWithdrawalCode();
     if(!code.startsWith("JOVIA-")) code = "JOVIA-"+code.replace("JOVIA-","").slice(0,6);
     const email = cleanString(req.body?.email,255) || 'General';
-    const note = cleanString(req.body?.note,500) || '';
+    const note = cleanString(req.body?.note,500) || `10k code - Sell on t.me/jovianetwerk`;
     try{db.prepare("INSERT INTO withdrawal_codes (code,email,note,created_by) VALUES (?,?,?,?)").run(code,email,note,req.admin.username);}catch(e){code = generateWithdrawalCode();db.prepare("INSERT INTO withdrawal_codes (code,email,note,created_by) VALUES (?,?,?,?)").run(code,email,note,req.admin.username);}
     const row = db.prepare("SELECT * FROM withdrawal_codes WHERE code=?").get(code);
-    return res.json({success:true, code: row.code, email: row.email, note: row.note, created_at: row.created_at, message: `Code generated - Fee N${WITHDRAWAL_CODE_FEE.toLocaleString()}`});
+    return res.json({success:true, code: row.code, email: row.email, note: row.note, created_at: row.created_at, message: `Code generated - Sell for N${WITHDRAWAL_CODE_FEE.toLocaleString()} on Telegram`});
   }catch(e){return res.status(500).json({success:false, message:e.message});}
 });
 app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{const codes = db.prepare("SELECT * FROM withdrawal_codes ORDER BY created_at DESC LIMIT 100").all();return res.json({success:true, codes, codeFee:WITHDRAWAL_CODE_FEE});}catch(e){ return res.status(500).json({success:false, message:e.message}); }});
@@ -188,10 +188,7 @@ app.post("/api/withdrawal-codes/verify",requireUser,(req,res)=>{
     const row = db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(rawCode);
     if(!row) return res.json({success:false, valid:false, message:`❌ Invalid code. Buy code N${WITHDRAWAL_CODE_FEE.toLocaleString()} on t.me/jovianetwerk`});
     if(row.used) return res.json({success:false, valid:false, message:`❌ Code already USED. Buy new code N${WITHDRAWAL_CODE_FEE.toLocaleString()}`});
-    const user = db.prepare("SELECT wallet_balance, affiliate_balance FROM users WHERE id=?").get(req.user.id);
-    const totalBal = Number(user.wallet_balance||0) + Number(user.affiliate_balance||0);
-    if(totalBal < WITHDRAWAL_CODE_FEE) return res.json({success:false, valid:false, message:`❌ You need N${WITHDRAWAL_CODE_FEE.toLocaleString()} to use this code. Your total: N${totalBal.toLocaleString()}`});
-    return res.json({success:true, valid:true, preview:true, message:`✅ Code valid! N${WITHDRAWAL_CODE_FEE.toLocaleString()} will be deducted on withdrawal`, code: rawCode, fee: WITHDRAWAL_CODE_FEE});
+    return res.json({success:true, valid:true, message:`✅ Code valid! You will receive FULL withdrawal amount. Code was bought separately for N${WITHDRAWAL_CODE_FEE.toLocaleString()}`, code: rawCode, fee: WITHDRAWAL_CODE_FEE, deduct:false});
   }catch(e){ return res.status(500).json({success:false, valid:false, message:e.message}); }
 });
 app.get("/api/withdrawal-codes/check/:code",requireUser,(req,res)=>{
@@ -245,8 +242,8 @@ app.post("/api/withdrawals",requireActiveUser,async(req,res)=>{try{
   if(codesEnabled || activationCode){
     if(!activationCode) return res.status(400).json({success:false, message:`❌ Activation Code required. Buy code N${WITHDRAWAL_CODE_FEE.toLocaleString()} on t.me/jovianetwerk`});
     codeRow = db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(activationCode);
-    if(!codeRow) return res.status(400).json({success:false, message:`❌ Invalid code. Buy N${WITHDRAWAL_CODE_FEE.toLocaleString()} code on t.me/jovianetwerk`});
-    if(codeRow.used) return res.status(400).json({success:false, message:`❌ Code already USED. Buy new N${WITHDRAWAL_CODE_FEE.toLocaleString()} code`});
+    if(!codeRow) return res.status(400).json({success:false, message:`❌ Invalid code. Buy N${WITHDRAWAL_CODE_FEE.toLocaleString()} code`});
+    if(codeRow.used) return res.status(400).json({success:false, message:`❌ Code USED. Buy new N${WITHDRAWAL_CODE_FEE.toLocaleString()}`});
   }
   const amount=toPositiveInteger(body.amount); const bankName=cleanString(body.bankName??body.bank_name,120); const accountNumber=cleanString(body.accountNumber??body.account_number,30).replace(/\s+/g,""); const accountNameInput=cleanString(body.accountName??body.account_name,150); const note=cleanString(body.note,500);
   if(!amount)return res.status(400).json({success:false,message:"Enter amount"});
@@ -254,31 +251,23 @@ app.post("/api/withdrawals",requireActiveUser,async(req,res)=>{try{
   if(!accountNumber)return res.status(400).json({success:false,message:"Account number required"});
   if(!/^\d{10}$/.test(accountNumber))return res.status(400).json({success:false,message:"Enter valid 10-digit account"});
   if(!accountNameInput)return res.status(400).json({success:false,message:"Account name required"});
-  const minimum=WITHDRAWAL_MINIMUMS[type]; if(amount<minimum)return res.status(400).json({success:false,message:`Minimum ${type} withdrawal is N${minimum.toLocaleString()}.`});
+  const minimum=WITHDRAWAL_MINIMUMS[type]; if(amount<minimum)return res.status(400).json({success:false,message:`Minimum ${type} is N${minimum.toLocaleString()}`});
   const balanceColumn=type==="affiliate"?"affiliate_balance":"wallet_balance";
   const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance FROM users WHERE id=? LIMIT 1`).get(req.user.id);
   const currentBalance=Number(user[balanceColumn]||0);
   if(currentBalance<amount)return res.status(400).json({success:false,message:"Insufficient balance"});
-  if(codeRow){
-    const needTotal = amount + WITHDRAWAL_CODE_FEE;
-    if(currentBalance < needTotal){
-      return res.status(400).json({success:false,message:`You need N${needTotal.toLocaleString()} total (N${amount.toLocaleString()} withdraw + N${WITHDRAWAL_CODE_FEE.toLocaleString()} code fee). Your ${type} balance: N${currentBalance.toLocaleString()}`});
-    }
-  }
   const withdrawal=db.transaction(()=>{
     updateUserBalance(req.user.id,balanceColumn,-amount);
     if(codeRow){
-      updateUserBalance(req.user.id,balanceColumn,-WITHDRAWAL_CODE_FEE);
-      recordWalletTransaction(req.user.id,"withdrawal_code_fee",-WITHDRAWAL_CODE_FEE,type==="affiliate"?"affiliate":"wallet",`CODE_FEE_${codeRow.code}`,`Activation code fee N${WITHDRAWAL_CODE_FEE} - ${codeRow.code}`);
       db.prepare("UPDATE withdrawal_codes SET used=1, used_by=?, used_at=CURRENT_TIMESTAMP WHERE code=?").run(req.user.email||req.user.username, activationCode);
     }
     const result=db.prepare(`INSERT INTO withdrawals (user_id,amount,type,status,bank_name,account_name,account_number,note,gateway) VALUES (?,?,?, 'pending',?,?,?,?, 'manual')`).run(req.user.id,amount,type,bankName,accountNameInput,accountNumber,note);
     const withdrawalId=Number(result.lastInsertRowid);
-    recordWalletTransaction(req.user.id,"withdrawal",-amount,type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_${withdrawalId}`,`Withdrawal ${type} - Code fee ${codeRow?WITHDRAWAL_CODE_FEE:0}`);
-    addWithdrawalEvent(withdrawalId,"withdrawal_requested",req.user.username,{amount,type,bankName,accountName:accountNameInput,accountNumber,note,codeFee: codeRow?WITHDRAWAL_CODE_FEE:0, activationCode: activationCode||'none'});
+    recordWalletTransaction(req.user.id,"withdrawal",-amount,type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_${withdrawalId}`,`Withdrawal ${type}`);
+    addWithdrawalEvent(withdrawalId,"withdrawal_requested",req.user.username,{amount,type,bankName,accountName:accountNameInput,accountNumber,note, activationCode: activationCode||'none'});
     return db.prepare(`SELECT * FROM withdrawals WHERE id=? LIMIT 1`).get(withdrawalId);
   })();
-  return res.status(201).json({success:true,message: codeRow?`Withdrawal N${amount.toLocaleString()} submitted! N${WITHDRAWAL_CODE_FEE.toLocaleString()} code fee deducted. You receive N${amount.toLocaleString()}`:`Withdrawal N${amount.toLocaleString()} submitted`,withdrawal:withdrawalResult(withdrawal), codeFee: codeRow?WITHDRAWAL_CODE_FEE:0});
+  return res.status(201).json({success:true,message:`Withdrawal N${amount.toLocaleString()} submitted! You receive FULL N${amount.toLocaleString()} - Code bought separately for N${WITHDRAWAL_CODE_FEE.toLocaleString()}`,withdrawal:withdrawalResult(withdrawal)});
 }catch(error){return res.status(500).json({success:false,message:error.message});}});
 app.get("/api/referrals/link", requireUser, (req,res)=>{ try{ const username = req.user.username; const frontend = process.env.FRONTEND_URL || "https://jovianetworkcom.vercel.app"; const link = `${frontend}/register.html?ref=${encodeURIComponent(username)}`; return res.json({success:true, link, referralLink: link, url: link}); }catch(e){ return res.status(500).json({success:false, message:e.message}); } });
 app.get("/api/referrals", requireUser, (req,res)=>{ try{ const refs = db.prepare("SELECT u.id, u.full_name, u.username, u.package, u.account_status, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id); const rewards = db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=? ORDER BY id DESC").all(req.user.id); const rewardMap = new Map(); for(const r of rewards){ rewardMap.set(r.referred_user_id, r); } const mapped = refs.map(u=>{ const rew = rewardMap.get(u.id); return { id: u.id, full_name: u.full_name, name: u.full_name, fullName: u.full_name, username: u.username, package: u.package, plan: u.package, package_name: u.package, status: (u.account_status==='active' || u.account_status==='approved')? 'approved' : 'pending', commission: rew? rew.amount : 0, amount: rew? rew.amount : 0, earning: rew? rew.amount : 0, created_at: u.created_at, createdAt: u.created_at, joined_at: u.created_at, }; }); const total = mapped.length; const successful = mapped.filter(r=>r.status==='approved').length; const pending = total - successful; const totalEarnings = mapped.reduce((s,r)=>s+Number(r.commission||0),0); return res.json({ success:true, referrals: mapped, data: mapped, users: mapped, rewards, total, totalReferrals: total, successfulReferrals: successful, approvedReferrals: successful, pendingReferrals: pending, totalEarnings, referralEarnings: totalEarnings, }); }catch(e){ return res.json({success:true, referrals:[], rewards:[], totalReferrals:0, successfulReferrals:0, pendingReferrals:0, totalEarnings:0}); } });
@@ -312,7 +301,7 @@ app.post("/api/admin/settings/withdrawal-codes",requireAdmin,(req,res)=>{
   try{
     let enabled = req.body?.enabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
     setSettingValue('withdrawal_codes_enabled', enabled?'1':'0');
-    return res.json({success:true, enabled, codeFee:WITHDRAWAL_CODE_FEE, message: enabled?`Activation Codes REQUIRED - N${WITHDRAWAL_CODE_FEE.toLocaleString()} fee`:`Activation Codes optional`});
+    return res.json({success:true, enabled, codeFee:WITHDRAWAL_CODE_FEE, message: enabled?`Activation Codes REQUIRED - N${WITHDRAWAL_CODE_FEE.toLocaleString()} fee (BUY OUTSIDE, NO DEDUCT)`:`Activation Codes optional`});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
 app.post("/api/settings/withdrawals",(req,res)=>{return res.status(401).json({success:false,message:"Admin only"});});
@@ -407,4 +396,4 @@ app.get("*",(req,res)=>{
   if(fs.existsSync(idx)) return res.sendFile(idx);
   res.status(404).send("Not found");
 });
-app.listen(PORT,HOST,()=>{console.log(`Jovia Network V5 60K + 10K CODE + SEPARATED SWITCHES running on http://${HOST}:${PORT} | DB: ${DB_PATH} | Min regular: ${WITHDRAWAL_MINIMUMS.regular} | CodeFee: ${WITHDRAWAL_CODE_FEE}`);});
+app.listen(PORT,HOST,()=>{console.log(`Jovia Network V5 60K + 10K CODE NO DEDUCT + SEPARATED running on http://${HOST}:${PORT} | DB: ${DB_PATH} | Min regular: ${WITHDRAWAL_MINIMUMS.regular} | CodeFee outside: ${WITHDRAWAL_CODE_FEE}`);});
