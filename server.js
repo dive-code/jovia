@@ -18,7 +18,7 @@ const DB_PATH = process.env.DB_PATH || path.join(DB_DIR,"jovia.db");
 const ADMIN_USERNAME=process.env.ADMIN_USERNAME||"Divine";
 const ADMIN_PASSWORD=process.env.ADMIN_PASSWORD||"jovia@2026";
 const PACKAGES=Object.freeze({Silver:9000,Gold:15000});
-const WITHDRAWAL_MINIMUMS=Object.freeze({regular:30000,affiliate:20000});
+const WITHDRAWAL_MINIMUMS=Object.freeze({regular:60000,affiliate:20000});
 const MONNIFY_BASE_URL=(process.env.MONNIFY_BASE_URL||(String(process.env.MONNIFY_ENV||"sandbox").toLowerCase()==="live"?"https://api.monnify.com":"https://sandbox.monnify.com")).replace(/\/$/,"");
 const MONNIFY_API_KEY=process.env.MONNIFY_API_KEY||"";
 const MONNIFY_SECRET_KEY=process.env.MONNIFY_SECRET_KEY||"";
