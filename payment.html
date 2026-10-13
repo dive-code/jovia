@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#260038">
+<title>JOVIA Network | Direct Payment</title>
+
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --purple: #3b0758;
+    --dark: #260038;
+    --light-purple: #68108e;
+    --yellow: #ffc400;
+    --text: #24152e;
+    --muted: #796b82;
+    --border: #eadcf1;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: linear-gradient(145deg, #fffaff, #f4e7fb);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+button, a {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.header {
+    background: var(--dark);
+    color: white;
+    padding: 15px 20px;
+}
+
+.header-inner {
+    max-width: 650px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 21px;
+    letter-spacing: 1px;
+}
+
+.logo-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    background: var(--yellow);
+    color: var(--dark);
+    border-radius: 13px;
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.secure {
+    color: #e8d9f0;
+    font-size: 11px;
+}
+
+.container {
+    width: min(100% - 28px, 600px);
+    margin: 26px auto 45px;
+}
+
+.hero {
+    background: linear-gradient(135deg, var(--purple), var(--dark));
+    color: white;
+    padding: 29px 23px;
+    border-radius: 23px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::after {
+    content: "₦";
+    position: absolute;
+    right: 18px;
+    top: -32px;
+    font-size: 155px;
+    font-weight: 800;
+    color: rgba(255,255,255,.055);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.eyebrow {
+    color: var(--yellow);
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 11px;
+    margin-bottom: 12px;
+}
+
+.hero h1 {
+    font-family: 'Manrope', sans-serif;
+    font-size: clamp(27px, 6vw, 35px);
+    line-height: 1.2;
+    margin-bottom: 12px;
+}
+
+.hero p {
+    color: #e9ddef;
+    line-height: 1.8;
+    font-size: 13px;
+    max-width: 420px;
+}
+
+.panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 30px rgba(59,7,88,.055);
+}
+
+.section-title {
+    font-family: 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    margin-bottom: 7px;
+}
+
+.subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 18px;
+}
+
+.package-list {
+    display: grid;
+    gap: 12px;
+}
+
+.package {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    border: 2px solid var(--border);
+    border-radius: 15px;
+    padding: 16px;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.package.selected {
+    border-color: var(--purple);
+    background: #fbf5ff;
+}
+
+.package.gold.selected {
+    border-color: #e7a400;
+    background: #fffaf0;
+}
+
+.radio {
+    width: 19px;
+    height: 19px;
+    accent-color: var(--purple);
+    flex-shrink: 0;
+}
+
+.package-info {
+    flex: 1;
+}
+
+.package-name {
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.package-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+}
+
+.package-price {
+    font-family: 'Manrope', sans-serif;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--purple);
+    white-space: nowrap;
+}
+
+.gold .package-price {
+    color: #946000;
+}
+
+.account-card {
+    background: linear-gradient(140deg, #3b0758, #260038);
+    color: white;
+    border-radius: 18px;
+    padding: 22px;
+    margin-top: 18px;
+}
+
+.account-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 23px;
+}
+
+.bank-label {
+    font-size: 11px;
+    color: #e5d4ed;
+}
+
+.bank-name {
+    font-weight: 800;
+    font-size: 20px;
+    margin-top: 5px;
+}
+
+.bank-icon {
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 13px;
+    background: var(--yellow);
+    color: var(--dark);
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.account-label {
+    color: #dfcce9;
+    font-size: 11px;
+    margin-bottom: 7px;
+}
+
+.account-number-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.account-number {
+    font-family: 'Manrope', sans-serif;
+    font-size: clamp(23px, 5vw, 29px);
+    font-weight: 800;
+    letter-spacing: 1px;
+    overflow-wrap: anywhere;
+}
+
+.copy-btn {
+    flex-shrink: 0;
+    background: var(--yellow);
+    border: none;
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--dark);
+}
+
+.account-holder {
+    border-top: 1px solid rgba(255,255,255,.15);
+    margin-top: 19px;
+    padding-top: 16px;
+}
+
+.account-holder strong {
+    display: block;
+    font-size: 15px;
+    margin-top: 5px;
+}
+
+.amount-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: #f8f0fc;
+    border: 1px solid #e9d8f2;
+    border-radius: 13px;
+    padding: 17px;
+    margin-top: 18px;
+}
+
+.amount-box span {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.amount-box strong {
+    color: var(--purple);
+    font-size: 23px;
+    font-family: 'Manrope', sans-serif;
+}
+
+.notice {
+    margin-top: 17px;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.notice.warning {
+    background: #fff8e6;
+    border: 1px solid #f2dfaa;
+    color: #775500;
+}
+
+.notice.info {
+    background: #f4ebff;
+    border: 1px solid #e5d4f7;
+    color: #542d6c;
+}
+
+.notice.success {
+    background: #e9f9ef;
+    border: 1px solid #c4ead2;
+    color: #17643b;
+}
+
+.confirm-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 18px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--muted);
+}
+
+.confirm-row input {
+    margin-top: 4px;
+    accent-color: var(--purple);
+}
+
+.btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 800;
+    margin-top: 17px;
+    transition: .2s;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--yellow), #ffdb48);
+    color: var(--dark);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+}
+
+.btn-telegram {
+    background: #229ed9;
+    color: white;
+}
+
+.footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+    padding: 0 15px 30px;
+}
+
+.footer strong {
+    color: var(--purple);
+}
+
+.hidden {
+    display: none !important;
+}
+
+@media (max-width: 420px) {
+    .panel {
+        padding: 17px;
+    }
+
+    .account-card {
+        padding: 17px;
+    }
+
+    .package {
+        padding: 13px;
+    }
+
+    .package-price {
+        font-size: 18px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header class="header">
+    <div class="header-inner">
+        <div class="logo">
+            <div class="logo-icon">J</div>
+            <span>JOVIA</span>
+        </div>
+        <span class="secure">🔒 SECURE PAYMENT</span>
+    </div>
+</header>
+
+<main class="container">
+
+<section class="hero">
+    <div class="hero-content">
+        <div class="eyebrow">JOVIA NETWORK</div>
+        <h1>Make Your Payment</h1>
+        <p>
+            Select your payment amount, transfer to our Moniepoint
+            account, and send your payment receipt to our payment
+            support contact for admin confirmation.
+        </p>
+    </div>
+</section>
+
+<section class="panel">
+    <h2 class="section-title">Select Payment Amount</h2>
+    <p class="subtitle">
+        Choose the package amount you want to pay.
+    </p>
+
+    <div class="package-list">
+
+        <div class="package selected" id="silverPackage"
+             onclick="selectPackage('Silver')">
+
+            <input class="radio" type="radio" name="package"
+                   value="Silver" checked>
+
+            <div class="package-info">
+                <div class="package-name">Silver Package</div>
+                <div class="package-desc">Silver package payment</div>
+            </div>
+
+            <div class="package-price">₦9,000</div>
+        </div>
+
+        <div class="package gold" id="goldPackage"
+             onclick="selectPackage('Gold')">
+
+            <input class="radio" type="radio" name="package"
+                   value="Gold">
+
+            <div class="package-info">
+                <div class="package-name">Gold Package</div>
+                <div class="package-desc">Gold package payment</div>
+            </div>
+
+            <div class="package-price">₦15,000</div>
+        </div>
+
+    </div>
+</section>
+
+<section class="panel">
+    <h2 class="section-title">Transfer Details</h2>
+
+    <p class="subtitle">
+        Transfer the exact amount displayed below to this account.
+    </p>
+
+    <div class="account-card">
+
+        <div class="account-top">
+            <div>
+                <div class="bank-label">BANK NAME</div>
+                <div class="bank-name">Moniepoint</div>
+            </div>
+
+            <div class="bank-icon">₦</div>
+        </div>
+
+        <div class="account-label">ACCOUNT NUMBER</div>
+
+        <div class="account-number-row">
+            <div class="account-number" id="accountNumber">
+                9160049921
+            </div>
+
+            <button class="copy-btn" type="button"
+                    onclick="copyAccountNumber(this)">
+                📋 COPY
+            </button>
+        </div>
+
+        <div class="account-holder">
+            <div class="account-label">ACCOUNT NAME</div>
+            <strong>Martins Abanum</strong>
+        </div>
+
+    </div>
+
+    <div class="amount-box">
+        <span>Total Amount to Pay</span>
+        <strong id="amountDisplay">₦9,000</strong>
+    </div>
+
+    <div class="notice warning">
+        <strong>⚠️ Important</strong><br>
+        Confirm the bank name, account number and account name
+        before transferring. Keep your transaction receipt until
+        the admin confirms your payment.
+    </div>
+</section>
+
+<section class="panel">
+    <h2 class="section-title">Submit Payment Proof</h2>
+
+    <p class="subtitle">
+        After making the transfer, contact our payment support team
+        on Telegram. Send your genuine payment receipt so the admin
+        can verify the transaction.
+    </p>
+
+    <label class="confirm-row">
+        <input type="checkbox" id="paymentConfirmed">
+
+        <span>
+            I have completed the transfer and am ready to send
+            my payment proof for admin confirmation.
+        </span>
+    </label>
+
+    <button class="btn btn-primary" type="button"
+            onclick="continueToTelegram()">
+        I Have Paid — Submit Proof →
+    </button>
+
+    <a class="btn btn-telegram"
+       href="https://t.me/customer_support_team0001"
+       target="_blank"
+       rel="noopener noreferrer">
+        ✈ Contact Payment Support
+    </a>
+
+    <div id="message" class="notice hidden"></div>
+
+    <div class="notice info">
+        <strong>Admin Confirmation</strong><br>
+        Opening Telegram does not automatically verify payment.
+        Send your genuine transaction receipt to the admin and
+        wait for confirmation.
+    </div>
+</section>
+
+</main>
+
+<footer class="footer">
+    <strong>JOVIA NETWORK</strong><br>
+    Discover new digital possibilities.<br>
+    © <span id="year"></span> JOVIA Network. All rights reserved.
+</footer>
+
+<script>
+"use strict";
+
+const TELEGRAM_URL = "https://t.me/customer_support_team0001";
+const ACCOUNT_NUMBER = "9160049921";
+const ACCOUNT_NAME = "Martins Abanum";
+const BANK_NAME = "Moniepoint";
+
+const packages = {
+    Silver: 9000,
+    Gold: 15000
+};
+
+let selectedPackage = "Silver";
+
+function formatNaira(amount) {
+    return "₦" + amount.toLocaleString("en-NG");
+}
+
+function selectPackage(packageName) {
+    if (!Object.prototype.hasOwnProperty.call(packages, packageName)) {
+        return;
+    }
+
+    selectedPackage = packageName;
+
+    document.getElementById("silverPackage").classList.toggle(
+        "selected", packageName === "Silver"
+    );
+
+    document.getElementById("goldPackage").classList.toggle(
+        "selected", packageName === "Gold"
+    );
+
+    document.querySelectorAll('input[name="package"]').forEach(
+        function(radio) {
+            radio.checked = radio.value === packageName;
+        }
+    );
+
+    document.getElementById("amountDisplay").textContent =
+        formatNaira(packages[packageName]);
+
+    hideMessage();
+}
+
+async function copyAccountNumber(button) {
+    try {
+        await navigator.clipboard.writeText(ACCOUNT_NUMBER);
+        button.textContent = "✓ COPIED";
+    } catch (error) {
+        const field = document.createElement("textarea");
+
+        field.value = ACCOUNT_NUMBER;
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+
+        document.body.appendChild(field);
+        field.select();
+
+        const copied = document.execCommand("copy");
+
+        document.body.removeChild(field);
+
+        button.textContent = copied ? "✓ COPIED" : ACCOUNT_NUMBER;
+    }
+
+    setTimeout(function() {
+        button.textContent = "📋 COPY";
+    }, 1800);
+}
+
+function showMessage(message, type) {
+    const box = document.getElementById("message");
+
+    box.textContent = message;
+    box.className = "notice " + type;
+}
+
+function hideMessage() {
+    const box = document.getElementById("message");
+
+    box.textContent = "";
+    box.className = "notice hidden";
+}
+
+function continueToTelegram() {
+    hideMessage();
+
+    const confirmed =
+        document.getElementById("paymentConfirmed").checked;
+
+    if (!confirmed) {
+        showMessage(
+            "Please complete your transfer and tick the confirmation box before continuing.",
+            "warning"
+        );
+        return;
+    }
+
+    const amount = packages[selectedPackage];
+
+    const paymentMessage =
+        "Hello JOVIA Network Support,\n\n" +
+        "I have made a payment and would like it confirmed.\n\n" +
+        "Package: " + selectedPackage + "\n" +
+        "Amount: NGN " + amount.toLocaleString("en-NG") + "\n" +
+        "Bank: " + BANK_NAME + "\n" +
+        "Account Number: " + ACCOUNT_NUMBER + "\n" +
+        "Account Name: " + ACCOUNT_NAME + "\n\n" +
+        "I will send my payment receipt for verification.";
+
+    showMessage(
+        "Opening Telegram. Please send your payment receipt to support for admin confirmation.",
+        "success"
+    );
+
+    /*
+      Copy the payment details where clipboard access is available.
+      The user can paste them into the Telegram support chat.
+    */
+    try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(paymentMessage).catch(
+                function() {}
+            );
+        }
+    } catch (error) {
+        // Continue to Telegram if clipboard access is unavailable.
+    }
+
+    window.open(
+        TELEGRAM_URL,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+document.getElementById("year").textContent =
+    new Date().getFullYear();
+
+selectPackage("Silver");
+</script>
+
+</body>
+</html>
