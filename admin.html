@@ -495,29 +495,17 @@ function renderPrivateRecipients(){const container=document.getElementById("priv
 function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 // FIX 2: ACTIVE / PENDING / ALL - REPLACEMENT FOR selectAllPrivateUsers
 function selectPrivateUsersByStatus(type){
-  if(!rawUsers || rawUsers.length===0){ showToast("No users loaded"); return; }
-  privateRecipientIds.clear();
-  rawUsers.forEach(u=>{
-    const s = String(u.account_status||u.status||"").toLowerCase();
-    const id = Number(u.id);
-    if(type==='all') privateRecipientIds.add(id);
-    if(type==='active' && (s==='approved' || s==='active')) privateRecipientIds.add(id);
-    if(type==='pending' && s==='pending') privateRecipientIds.add(id);
-  });
-  renderPrivateRecipients();
-  const countEl = document.getElementById("privateSelectedCount");
-  if(countEl) countEl.textContent = privateRecipientIds.size + " selected";
-  showToast(privateRecipientIds.size + " " + type + " users selected");
-}
+function selectPrivateUsersByStatus(type){ if(!rawUsers || rawUsers.length===0){ showToast("No users loaded - click Load Users first"); return; }
+console.log("First user sample:", rawUsers[0]); // Open F12 to see
+privateRecipientIds.clear();
+rawUsers.forEach(u=>{ // Check EVERY possible status field let s = (u.account_status  u.status  u.user_status  "").toString().toLowerCase().trim(); let isActive = u.is_approved === true  u.is_approved === 1  s === "active"  s === "approved"  s === "approve"; let isPending = s === "pending"  s === ""  u.is_approved === false  u.is_approved === 0;
+const id = Number(u.id);
 
-function clearPrivateSelection(){
-  privateRecipientIds.clear();
-  renderPrivateRecipients();
-  const countEl = document.getElementById("privateSelectedCount");
-  if(countEl) countEl.textContent = "0 selected";
-}
-
-function selectAllPrivateUsers(){ selectPrivateUsersByStatus('all'); }
+if(type==='all') privateRecipientIds.add(id);
+if(type==='active' && isActive) privateRecipientIds.add(id);
+if(type==='pending' && isPending) privateRecipientIds.add(id);
+});
+renderPrivateRecipients(); const countEl = document.getElementById("privateSelectedCount"); if(countEl) countEl.textContent = privateRecipientIds.size + " selected"; showToast(privateRecipientIds.size + " " + type + " users found"); }
 </script>
 </body>
 </html>
