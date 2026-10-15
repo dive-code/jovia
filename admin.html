@@ -433,8 +433,7 @@ function saveLocalCodes(items){localStorage.setItem(CODES_KEY,JSON.stringify(ite
 const CODES_KEY="jovia_withdrawal_codes_v4";
 function getLocalCodes(){try{return JSON.parse(localStorage.getItem(CODES_KEY)||"[]")}catch{return []}}
 function saveLocalCodes(items){localStorage.setItem(CODES_KEY,JSON.stringify(items))}
-function generateCodeString(){
-  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function generateCodeString(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let v=""; for(let i=0;i<6;i++) v+=chars[Math.floor(Math.random()*chars.length)];
   return "JOVIA-"+v;
 }
