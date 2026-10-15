@@ -3,56 +3,68 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#3b0758">
 <title>JOVIA - Jobs</title>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#3b0758;--d:#260038;--y:#ffc400;--bg:#f7f5f9;--c:#fff;--t:#211827;--m:#756d7c;--b:#ebe6ef;--g:#15803d}
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
+button,a{touch-action:manipulation}
+button:disabled{opacity:.65;cursor:not-allowed}
 .app{max-width:680px;min-height:100vh;margin:0 auto;padding-bottom:92px}
-.topbar{position:sticky;top:0;z-index:50;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.96);border-bottom:1px solid var(--b)}
+.topbar{position:sticky;top:0;z-index:50;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b)}
 .brand{font-size:23px;font-weight:900;color:var(--p)}
 .brand span{color:var(--y)}
 .content{padding:20px 15px 25px}
 .page-heading h1{font-size:24px;font-weight:900;margin-bottom:7px}
-.page-heading p{font-size:12px;color:var(--m)}
-.message{display:none;margin-bottom:15px;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700}
+.page-heading p{font-size:12px;color:var(--m);line-height:1.6}
+.message{display:none;margin:15px 0;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700;line-height:1.6}
 .message.success{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .message.error-message{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
-.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:18px;margin-bottom:18px}
+.message.info-message{display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:18px;margin:18px 0}
 .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
+.summary-item{min-width:0;padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
 .summary-label{color:#d8cfe0;font-size:9px;font-weight:700;margin-bottom:6px}
 .summary-value{font-size:18px;font-weight:900;overflow-wrap:anywhere}
 .section{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden}
-.section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between}
+.section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .section-title{font-size:15px;font-weight:900}
-.section-count{color:var(--m);font-size:10px;font-weight:800}
+.section-count{color:var(--m);font-size:10px;font-weight:800;white-space:nowrap}
 .filter-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
 .filter-btn{flex:0 0 auto;border:1px solid var(--b);background:#fff;color:#776e7d;padding:9px 15px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer}
 .filter-btn.active{background:var(--y);border-color:var(--y);color:#281d00}
 .job-card{padding:17px 16px;border-bottom:1px solid #f1edf3}
+.job-card:last-child,.video-card:last-child{border-bottom:0}
 .job-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
-.job-title{font-size:14px;font-weight:900}
+.job-title{font-size:14px;font-weight:900;overflow-wrap:anywhere}
 .job-reward{color:var(--g);font-size:14px;font-weight:900;white-space:nowrap}
-.job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.6}
+.job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.6;overflow-wrap:anywhere}
 .job-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
 .meta{display:inline-flex;background:#faf8fb;border:1px solid var(--b);color:#746b7a;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:800}
 .task-box{padding:12px;margin-bottom:11px;border-radius:13px;background:#fffbeb;border:1px solid #fde68a}
 .task-box.success-box{background:#f0fdf4;border-color:#bbf7d0}
 .task-box.upgrade-box{background:linear-gradient(135deg,#fff7ed,#fffbeb);border:1px solid #f59e0b}
+.task-box.wait-box{background:#f5f3ff;border-color:#ddd6fe}
 .task-label{margin-bottom:5px;color:#92400e;font-size:9px;font-weight:900}
-.task-info{color:#78350f;font-size:10px;line-height:1.55}
+.task-info{color:#78350f;font-size:10px;line-height:1.65;overflow-wrap:anywhere}
 .success-box .task-label,.success-box .task-info{color:#166534}
+.wait-box .task-label,.wait-box .task-info{color:#5b21b6}
 .task-open-btn,.complete-btn,.upgrade-btn{width:100%;border:none;padding:12px 14px;border-radius:10px;font-size:11px;font-weight:900;cursor:pointer}
 .task-open-btn{background:var(--y);color:#241900}
 .complete-btn{background:var(--p);color:#fff;margin-top:9px}
 .complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .upgrade-btn{display:block;background:linear-gradient(135deg,#f59e0b,#ffd83d);color:#3a2600;margin-top:9px;border:1px solid #f59e0b;text-align:center;text-decoration:none}
-.loading{padding:34px 20px;text-align:center;color:var(--m);font-size:12px}
-.empty{display:none;padding:42px 20px;text-align:center}
-.error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center}
+.loading{padding:34px 20px;text-align:center;color:var(--m);font-size:12px;line-height:1.6}
+.empty{display:none;padding:35px 20px;text-align:center}
+.empty>div{font-size:27px;margin-bottom:8px}
+.empty h3{font-size:15px;margin-bottom:7px}
+.empty p{font-size:11px;color:var(--m);line-height:1.6}
+.error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center;line-height:1.6}
 .activation-box,.suspended-box{padding:42px 20px;text-align:center}
+.activation-box h3,.suspended-box h3{margin:10px 0;font-size:17px}
+.activation-box p,.suspended-box p{font-size:12px;color:var(--m);line-height:1.6;margin-bottom:15px}
 .video-card{padding:16px;border-bottom:1px solid #f1edf3}
 .video-player{display:block;width:100%;max-height:235px;border-radius:13px;background:#000}
 .video-title{margin:10px 0 5px;font-size:13px;font-weight:900}
@@ -60,17 +72,26 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
 .watch-progress{height:4px;margin:8px 0 10px;overflow:hidden;background:#e7e4e8;border-radius:999px}
 .watch-bar{height:100%;width:0%;background:var(--y);transition:width .25s}
 .video-external{padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center}
-.video-external a{color:var(--y);font-size:11px;font-weight:900;text-decoration:none}
-.bottom-nav{position:fixed;z-index:60;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;height:72px;display:flex;align-items:center;justify-content:space-around;background:rgba(255,255,255,.98);border-top:1px solid var(--b)}
+.video-external a{display:inline-block;margin-top:8px;color:var(--y);font-size:11px;font-weight:900;text-decoration:none}
+.bottom-nav{position:fixed;z-index:60;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;height:72px;display:flex;align-items:center;justify-content:space-around;background:rgba(255,255,255,.98);border-top:1px solid var(--b);padding-bottom:env(safe-area-inset-bottom)}
 .nav-item{min-width:60px;border:none;background:transparent;color:#9b939f;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:800;cursor:pointer}
 .nav-icon{font-size:20px}
 .nav-item.active{color:var(--p)}
 .popup-overlay{position:fixed;z-index:200;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.68)}
 .popup-overlay.show{display:flex}
 .popup-box{width:100%;max-width:385px;padding:27px 21px 21px;border-radius:22px;background:#fff;text-align:center}
+.popup-box h3{margin-top:10px}
 .popup-btn{display:block;width:100%;padding:12px;border-radius:11px;background:var(--y);color:#241900;font-size:12px;font-weight:900;text-decoration:none}
-.popup-close{margin-top:11px;padding:5px 10px;border:none;background:transparent;color:#9b939f;font-size:11px;font-weight:700;cursor:pointer}
-@media(max-width:400px){.summary-grid{gap:5px}.summary-item{padding:10px 6px}.summary-value{font-size:15px}}
+.popup-close{margin-top:11px;padding:8px 10px;border:none;background:transparent;color:#9b939f;font-size:11px;font-weight:700;cursor:pointer}
+@media(max-width:400px){
+  .summary-grid{gap:5px}
+  .summary-item{padding:10px 6px}
+  .summary-value{font-size:15px}
+  .content{padding:17px 12px 25px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important}
+}
 </style>
 </head>
 
@@ -84,10 +105,10 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
 <main class="content">
   <div class="page-heading">
     <h1>Available Jobs</h1>
-    <p>Complete tasks and earn rewards directly to your wallet.</p>
+    <p>Complete eligible tasks and earn rewards directly to your wallet.</p>
   </div>
 
-  <div id="message" class="message"></div>
+  <div id="message" class="message" role="status" aria-live="polite"></div>
 
   <section class="summary-card">
     <div class="summary-grid">
@@ -114,7 +135,9 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
     <div class="loading" id="videoLoading">Loading academy...</div>
     <div id="videosList"></div>
     <div class="empty" id="videoEmpty">
-      <div>📚</div><h3>No resources yet</h3>
+      <div>📚</div>
+      <h3>No resources yet</h3>
+      <p>Learning resources will appear here when available.</p>
     </div>
   </section>
 
@@ -132,15 +155,23 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
     <div class="loading" id="loadingState">Checking account...</div>
 
     <div class="activation-box" id="activationState" style="display:none">
-      <div>🔒</div><h3>Account Not Activated</h3>
+      <div style="font-size:28px">🔒</div>
+      <h3>Account Not Activated</h3>
+      <p>Activate your account to access available jobs.</p>
       <a href="payment.html" style="display:inline-flex;padding:11px 20px;border-radius:10px;background:var(--y);color:#281d00;font-weight:900;text-decoration:none">Activate →</a>
     </div>
 
     <div class="suspended-box" id="suspendedState" style="display:none">
-      <div>⚠️</div><h3>Account Suspended</h3>
+      <div style="font-size:28px">⚠️</div>
+      <h3>Account Suspended</h3>
+      <p>Please contact support if you believe this is a mistake.</p>
     </div>
 
-    <div id="errorState" class="error">Unable to load jobs. Refresh.</div>
+    <div id="errorState" class="error">
+      Unable to load jobs. Please check your connection and try again.
+      <br><br>
+      <button type="button" id="retryButton" class="task-open-btn">Try Again</button>
+    </div>
 
     <div id="emptyState" class="empty">
       <div>💼</div>
@@ -153,17 +184,18 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
 </main>
 </div>
 
-<nav class="bottom-nav">
+<nav class="bottom-nav" aria-label="Main navigation">
   <a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a>
-  <a class="nav-item active" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a>
+  <a class="nav-item active" href="jobs.html" aria-current="page"><span class="nav-icon">💼</span><span>Jobs</span></a>
   <a class="nav-item" href="history.html"><span class="nav-icon">🧾</span><span>History</span></a>
   <a class="nav-item" href="profile.html"><span class="nav-icon">👤</span><span>Profile</span></a>
 </nav>
 
-<div class="popup-overlay" id="inactivePopup">
+<div class="popup-overlay" id="inactivePopup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
   <div class="popup-box">
-    <div>🔒</div><h3>Account Not Activated</h3>
-    <p style="margin:10px 0 18px">Your account is inactive.</p>
+    <div style="font-size:28px">🔒</div>
+    <h3 id="popupTitle">Account Not Activated</h3>
+    <p style="margin:10px 0 18px;font-size:12px;color:var(--m);line-height:1.6">Your account is inactive. Activate your account to access jobs.</p>
     <a href="payment.html" class="popup-btn">Activate Now →</a>
     <button type="button" class="popup-close" id="popupClose">Close</button>
   </div>
@@ -173,6 +205,8 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
 "use strict";
 
 const API_BASE = "";
+const TASK_WAIT_SECONDS = 30;
+const MIN_WATCH_SECONDS = 60;
 
 let allJobs = [];
 let availableJobs = [];
@@ -184,8 +218,19 @@ let accountActivated = false;
 let currentUser = null;
 let messageTimer = null;
 let dailyStatsFromServer = null;
+let loadingAll = false;
 
 const watchedVideos = new Map();
+
+/*
+ * This timer improves the user experience but is not a security boundary.
+ * A backend endpoint must enforce the 30-second requirement before awarding
+ * a task reward. The timer is retained across same-tab navigation using
+ * sessionStorage, but the server must remain authoritative.
+ */
+const taskTimers = new Map();
+const TASK_TIMER_STORAGE_KEY = "jovia_task_waits_v1";
+let taskTimerInterval = null;
 
 const PLAN_CONFIG = {
   Silver: { maxDaily: 2500, taskCount: 5, upgrade: "GOLD" },
@@ -194,7 +239,9 @@ const PLAN_CONFIG = {
 
 function formatNaira(value) {
   const n = Number(value);
-  return "₦" + (Number.isFinite(n) ? n : 0).toLocaleString("en-NG");
+  return "₦" + (Number.isFinite(n) ? n : 0).toLocaleString("en-NG", {
+    maximumFractionDigits: 2
+  });
 }
 
 function escapeHTML(value) {
@@ -204,6 +251,26 @@ function escapeHTML(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function safeExternalURL(value) {
+  if (typeof value !== "string" || !value.trim()) return "";
+
+  let candidate = value.trim();
+
+  if (candidate.startsWith("www.")) {
+    candidate = "https://" + candidate;
+  }
+
+  try {
+    const parsed = new URL(candidate, location.origin);
+
+    if (!["http:", "https:"].includes(parsed.protocol)) return "";
+
+    return parsed.href;
+  } catch {
+    return "";
+  }
 }
 
 function getJobId(job) {
@@ -227,7 +294,7 @@ function getJobCategory(job) {
 }
 
 function normalizePlan(value) {
-  const p = String(value || "").toLowerCase();
+  const p = String(value || "").toLowerCase().trim();
 
   if (p.includes("super")) return "Gold";
   if (p.includes("gold")) return "Gold";
@@ -237,22 +304,22 @@ function normalizePlan(value) {
 
 function getCurrentPlan() {
   try {
-    const storedPlan =
-      localStorage.getItem("jovia_paid_plan") ||
-      localStorage.getItem("jovia_plan") ||
-      "";
-
-    if (storedPlan) return normalizePlan(storedPlan);
-
     const user = JSON.parse(localStorage.getItem("jovia_user") || "{}");
 
-    return normalizePlan(
+    const planValue =
+      currentUser?.package ||
+      currentUser?.package_name ||
+      currentUser?.plan ||
+      currentUser?.plan_name ||
       user.package ||
       user.package_name ||
       user.plan ||
       user.plan_name ||
-      ""
-    );
+      localStorage.getItem("jovia_paid_plan") ||
+      localStorage.getItem("jovia_plan") ||
+      "";
+
+    return normalizePlan(planValue);
   } catch {
     return "Silver";
   }
@@ -265,19 +332,6 @@ function getPlanLimits(plan) {
 function saveServerUser(user) {
   if (!user) return;
 
-  const pkg =
-    user.package ||
-    user.package_name ||
-    user.plan ||
-    user.plan_name ||
-    "";
-
-  if (pkg) {
-    const normalized = normalizePlan(pkg);
-    localStorage.setItem("jovia_paid_plan", normalized);
-    localStorage.setItem("jovia_plan", normalized);
-  }
-
   try {
     const old = JSON.parse(localStorage.getItem("jovia_user") || "{}");
 
@@ -286,6 +340,11 @@ function saveServerUser(user) {
       JSON.stringify({ ...old, ...user })
     );
   } catch {}
+
+  /*
+   * Do not use localStorage as the authority for plan permissions.
+   * The account's current plan must come from the authenticated backend.
+   */
 }
 
 function getAccountStatus(user) {
@@ -300,9 +359,7 @@ function getAccountStatus(user) {
 }
 
 function isSuspended(user) {
-  const status = getAccountStatus(user);
-
-  return ["suspended", "banned", "blocked"].includes(status);
+  return ["suspended", "banned", "blocked"].includes(getAccountStatus(user));
 }
 
 function isActivated(user) {
@@ -319,8 +376,6 @@ function isActivated(user) {
     String(activated).toLowerCase() === "true"
   ) return true;
 
-  const status = getAccountStatus(user);
-
   return [
     "active",
     "approved",
@@ -329,7 +384,7 @@ function isActivated(user) {
     "activated",
     "silver",
     "gold"
-  ].includes(status);
+  ].includes(getAccountStatus(user));
 }
 
 function showMessage(message, type = "error") {
@@ -337,13 +392,20 @@ function showMessage(message, type = "error") {
 
   if (messageTimer) clearTimeout(messageTimer);
 
-  box.textContent = message;
-  box.className = type === "success"
-    ? "message success"
-    : "message error-message";
+  box.textContent = String(message || "");
+  box.className = "message";
+
+  if (type === "success") {
+    box.classList.add("success");
+  } else if (type === "info") {
+    box.classList.add("info-message");
+  } else {
+    box.classList.add("error-message");
+  }
 
   messageTimer = setTimeout(() => {
     box.className = "message";
+    box.textContent = "";
   }, 7000);
 }
 
@@ -377,16 +439,19 @@ async function getCurrentUser() {
 
   if (response.status === 401) {
     location.href = "login.html";
-    throw new Error("Session expired");
+    throw new Error("Your session has expired. Please sign in again.");
   }
 
   if (!response.ok) {
-    throw new Error("Unable to verify account");
+    throw new Error("Unable to verify your account.");
   }
 
   const data = await response.json();
-
   const user = data?.user || data?.data?.user || data;
+
+  if (!user || typeof user !== "object") {
+    throw new Error("The server returned invalid account information.");
+  }
 
   currentUser = user;
 
@@ -407,16 +472,10 @@ function getTaskLink(job) {
     job.job_url
   ];
 
-  for (let value of candidates) {
-    if (typeof value !== "string" || !value.trim()) continue;
+  for (const value of candidates) {
+    const safeURL = safeExternalURL(value);
 
-    value = value.trim();
-
-    if (value.startsWith("www.")) {
-      value = "https://" + value;
-    }
-
-    if (/^https?:\/\//i.test(value)) return value;
+    if (safeURL) return safeURL;
   }
 
   return "";
@@ -459,43 +518,126 @@ function isVideoCompleted(video) {
   return ["completed", "complete", "claimed", "rewarded"].includes(status);
 }
 
-function hasOpenedTask(job) {
-  if (!job) return false;
-
-  const values = [
-    job.link_opened,
-    job.task_opened,
-    job.opened
-  ];
-
-  return values.some(value => {
-    if (value === true || value === 1) return true;
-
-    return ["true", "1", "opened", "open"].includes(
-      String(value || "").toLowerCase()
-    );
-  });
-}
-
 function getJobReward(job) {
   const amount = Number(job?.reward ?? job?.amount ?? 0);
-
   return Number.isFinite(amount) && amount > 0 ? amount : 0;
 }
 
 function getVideoReward(video) {
   const amount = Number(video?.reward ?? video?.amount ?? 0);
-
   return Number.isFinite(amount) && amount > 0 ? amount : 0;
 }
 
 /*
- * Daily earnings should be based on rewards claimed today.
- * Use server-provided daily statistics when available.
- *
- * Do not add every historically completed task together:
- * completed tasks from previous days must not consume today's limit.
+ * Timer storage:
+ * Each job has a claimAvailableAt timestamp.
+ * It is not created until the open-task request succeeds and a new tab opens.
  */
+function restoreTaskTimers() {
+  try {
+    const saved = JSON.parse(
+      sessionStorage.getItem(TASK_TIMER_STORAGE_KEY) || "{}"
+    );
+
+    const now = Date.now();
+
+    Object.entries(saved).forEach(([id, timestamp]) => {
+      const claimAvailableAt = Number(timestamp);
+
+      if (
+        id &&
+        Number.isFinite(claimAvailableAt) &&
+        claimAvailableAt > now - (TASK_WAIT_SECONDS * 1000) &&
+        claimAvailableAt < now + (TASK_WAIT_SECONDS * 1000) + 5000
+      ) {
+        taskTimers.set(String(id), { claimAvailableAt });
+      }
+    });
+  } catch {
+    taskTimers.clear();
+  }
+}
+
+function saveTaskTimers() {
+  try {
+    const saved = {};
+
+    taskTimers.forEach((state, id) => {
+      if (state && Number.isFinite(state.claimAvailableAt)) {
+        saved[id] = state.claimAvailableAt;
+      }
+    });
+
+    sessionStorage.setItem(
+      TASK_TIMER_STORAGE_KEY,
+      JSON.stringify(saved)
+    );
+  } catch {}
+}
+
+function startTaskTimer(jobId) {
+  const id = String(jobId);
+
+  taskTimers.set(id, {
+    claimAvailableAt: Date.now() + TASK_WAIT_SECONDS * 1000
+  });
+
+  saveTaskTimers();
+  startTaskTimerTicker();
+}
+
+function clearTaskTimer(jobId) {
+  taskTimers.delete(String(jobId));
+  saveTaskTimers();
+}
+
+function getTaskSecondsRemaining(jobId) {
+  const state = taskTimers.get(String(jobId));
+
+  if (!state) return TASK_WAIT_SECONDS;
+
+  return Math.max(
+    0,
+    Math.ceil((state.claimAvailableAt - Date.now()) / 1000)
+  );
+}
+
+function hasOpenedTask(job) {
+  if (!job) return false;
+
+  const id = String(getJobId(job));
+  const state = taskTimers.get(id);
+
+  return Boolean(state && Date.now() >= state.claimAvailableAt);
+}
+
+function startTaskTimerTicker() {
+  if (taskTimerInterval) return;
+
+  taskTimerInterval = setInterval(() => {
+    if (!taskTimers.size) {
+      clearInterval(taskTimerInterval);
+      taskTimerInterval = null;
+      return;
+    }
+
+    let changed = false;
+
+    taskTimers.forEach((state, id) => {
+      if (!state || !Number.isFinite(state.claimAvailableAt)) {
+        taskTimers.delete(id);
+        changed = true;
+      }
+    });
+
+    if (changed) saveTaskTimers();
+
+    if (accountActivated && currentFilter === "available") {
+      renderJobs(availableJobs);
+    }
+  }, 1000);
+}
+
 function getDailyStats() {
   const plan = getCurrentPlan();
   const limits = getPlanLimits(plan);
@@ -549,26 +691,27 @@ function wouldExceedLimit(reward) {
   const stats = getDailyStats();
   const amount = Number(reward) || 0;
 
-  return amount > stats.limits.maxDaily ||
-    stats.earned + amount > stats.limits.maxDaily;
+  return (
+    amount > stats.limits.maxDaily ||
+    stats.earned + amount > stats.limits.maxDaily
+  );
 }
 
 function getUpgradeMessage(plan) {
-  if (plan === "Silver") {
+  if (normalizePlan(plan) === "Silver") {
     return "This task exceeds your plan limit. Kindly upgrade to GOLD.";
   }
 
-  return "This task exceeds your plan limit. Kindly upgrade to JOVIA Super.";
+  return "This task exceeds your plan limit. Kindly upgrade to Jovia Super.";
 }
 
-function getUpgradeLink(plan) {
-  // Change these destinations if your payment page uses specific plan links.
+function getUpgradeLink() {
   return "payment.html";
 }
 
 function renderUpgradeCard(reward, plan) {
   const message = getUpgradeMessage(plan);
-  const target = plan === "Silver" ? "GOLD" : "JOVIA Super";
+  const target = normalizePlan(plan) === "Silver" ? "GOLD" : "JOVIA Super";
 
   return `
     <div class="task-box upgrade-box">
@@ -579,7 +722,7 @@ function renderUpgradeCard(reward, plan) {
         Task reward: ${formatNaira(reward)}
       </div>
     </div>
-    <a href="${getUpgradeLink(plan)}" class="upgrade-btn">
+    <a href="${getUpgradeLink()}" class="upgrade-btn">
       Upgrade to ${escapeHTML(target)} →
     </a>
   `;
@@ -592,34 +735,21 @@ function renderDailyLimit() {
 
   empty.style.display = "none";
 
-  if (stats.plan === "Silver") {
-    list.innerHTML = `
-      <div style="padding:30px 20px;text-align:center">
-        <div style="font-size:26px">🚀</div>
-        <h3>Daily limit reached</h3>
-        <p style="margin-top:8px;color:#756d7c;font-size:11px">
-          Your daily earning limit is ${formatNaira(stats.limits.maxDaily)}.
-          Upgrade to GOLD for a higher limit.
-        </p>
-        <a href="payment.html" class="upgrade-btn">
-          Upgrade to GOLD →
-        </a>
-      </div>
-    `;
-  } else {
-    list.innerHTML = `
-      <div style="padding:30px 20px;text-align:center">
-        <div style="font-size:26px">🎉</div>
-        <h3>Daily limit reached</h3>
-        <p style="margin-top:8px;color:#756d7c;font-size:11px">
-          Your daily earning limit is ${formatNaira(stats.limits.maxDaily)}.
-        </p>
-        <a href="payment.html" class="upgrade-btn">
-          Upgrade to JOVIA Super →
-        </a>
-      </div>
-    `;
-  }
+  const upgradeTarget = stats.plan === "Silver" ? "GOLD" : "JOVIA Super";
+
+  list.innerHTML = `
+    <div style="padding:30px 20px;text-align:center">
+      <div style="font-size:28px">🎯</div>
+      <h3 style="margin-top:10px">Daily limit reached</h3>
+      <p style="margin-top:8px;color:#756d7c;font-size:11px;line-height:1.7">
+        You have earned ${formatNaira(stats.earned)} today.
+        Your daily earning limit is ${formatNaira(stats.limits.maxDaily)}.
+      </p>
+      <a href="${getUpgradeLink()}" class="upgrade-btn">
+        Upgrade to ${escapeHTML(upgradeTarget)} →
+      </a>
+    </div>
+  `;
 }
 
 function hideJobContent() {
@@ -644,7 +774,6 @@ function showJobsState() {
 
 function showSuspendedState() {
   accountActivated = false;
-
   hideJobContent();
 
   document.getElementById("activationState").style.display = "none";
@@ -654,7 +783,6 @@ function showSuspendedState() {
 
 function showActivationState() {
   accountActivated = false;
-
   hideJobContent();
 
   document.getElementById("activationState").style.display = "block";
@@ -684,17 +812,11 @@ function renderJobs(jobs) {
     String(completedJobs.length + completedVideos.length);
 
   document.getElementById("availableCount").textContent =
-    currentFilter === "completed"
-      ? completedJobs.length
-      : availableJobs.length;
+    String(availableJobs.length);
 
   document.getElementById("jobCount").textContent =
     `${jobs.length} ${jobs.length === 1 ? "job" : "jobs"}`;
 
-  /*
-   * Do not hide the task list merely because historical completed jobs
-   * exist. The limit is reached only when today's earnings/count say so.
-   */
   if (currentFilter === "available" && isDailyLimitReached()) {
     renderDailyLimit();
     return;
@@ -702,6 +824,15 @@ function renderJobs(jobs) {
 
   if (!jobs.length) {
     empty.style.display = "block";
+
+    document.getElementById("emptyTitle").textContent =
+      currentFilter === "completed" ? "No completed jobs yet" : "No jobs available";
+
+    document.getElementById("emptyText").textContent =
+      currentFilter === "completed"
+        ? "Jobs you successfully claim will appear here."
+        : "New jobs will appear here when available.";
+
     list.innerHTML = "";
     return;
   }
@@ -717,6 +848,8 @@ function renderJobs(jobs) {
     const category = getJobCategory(job);
     const completed = isCompleted(job);
     const opened = hasOpenedTask(job);
+    const timerExists = taskTimers.has(id);
+    const secondsRemaining = getTaskSecondsRemaining(id);
 
     const item = document.createElement("div");
     item.className = "job-card";
@@ -734,41 +867,59 @@ function renderJobs(jobs) {
     `;
 
     if (completed) {
+      clearTaskTimer(id);
+
       html += `
         <div class="task-box success-box">
           <div class="task-label">TASK COMPLETED ✓</div>
-          <div class="task-info">${formatNaira(reward)} credited.</div>
+          <div class="task-info">Your task has been completed. Reward: ${formatNaira(reward)}.</div>
         </div>
         <button class="complete-btn completed" disabled>
-          Completed ✓ · ${formatNaira(reward)} Credited
+          Completed ✓
         </button>
       `;
-    } else if (reward > getPlanLimits(stats.plan).maxDaily) {
-      /*
-       * Block a single task whose reward exceeds the user's entire plan limit.
-       */
+    } else if (
+      reward > stats.limits.maxDaily ||
+      wouldExceedLimit(reward)
+    ) {
       html += renderUpgradeCard(reward, stats.plan);
-    } else if (wouldExceedLimit(reward)) {
-      /*
-       * This task would take today's total above the plan's daily limit.
-       */
-      html += renderUpgradeCard(reward, stats.plan);
+    } else if (timerExists && !opened) {
+      html += `
+        <div class="task-box wait-box">
+          <div class="task-label">⏳ TASK TIMER IN PROGRESS</div>
+          <div class="task-info">
+            Your task has been opened. Please spend time reviewing it.
+            Claiming becomes available in
+            <strong id="taskCountdown-${escapeHTML(id)}">${secondsRemaining}</strong>
+            second${secondsRemaining === 1 ? "" : "s"}.
+          </div>
+        </div>
+        <button class="complete-btn" disabled>
+          Wait ${secondsRemaining}s before claiming
+        </button>
+      `;
     } else if (opened) {
       html += `
-        <div class="task-box">
-          <div class="task-label">TASK OPENED ✓</div>
-          <div class="task-info">Now claim ${formatNaira(reward)}.</div>
+        <div class="task-box success-box">
+          <div class="task-label">✓ WAITING PERIOD FINISHED</div>
+          <div class="task-info">
+            The 30-second waiting period has passed.
+            Return to the task and make sure you complete its instructions before claiming.
+          </div>
         </div>
         <button class="complete-btn" data-action="complete"
           data-job-id="${escapeHTML(id)}">
-          Claim ${formatNaira(reward)} ✅
+          Claim ${formatNaira(reward)} →
         </button>
       `;
     } else {
       html += `
         <div class="task-box">
           <div class="task-label">TASK</div>
-          <div class="task-info">Open task to earn ${formatNaira(reward)}.</div>
+          <div class="task-info">
+            Open the task and review its instructions.
+            You must wait ${TASK_WAIT_SECONDS} seconds before the claim button becomes available.
+          </div>
         </div>
         <button class="task-open-btn" data-action="open"
           data-job-id="${escapeHTML(id)}">
@@ -783,6 +934,10 @@ function renderJobs(jobs) {
 }
 
 async function loadAll() {
+  if (loadingAll) return;
+
+  loadingAll = true;
+
   const loading = document.getElementById("loadingState");
   const error = document.getElementById("errorState");
   const empty = document.getElementById("emptyState");
@@ -832,7 +987,7 @@ async function loadAll() {
     }
 
     if (!response.ok) {
-      throw new Error("Unable to load jobs");
+      throw new Error("Unable to load jobs.");
     }
 
     const data = await response.json();
@@ -848,26 +1003,23 @@ async function loadAll() {
     availableJobs = allJobs.filter(job => !isCompleted(job));
     completedJobs = allJobs.filter(job => isCompleted(job));
 
-    /*
-     * Read server daily stats if your API supplies them.
-     * Supported names include dailyStats, daily_stats and stats.
-     */
     dailyStatsFromServer =
       data?.dailyStats ??
       data?.daily_stats ??
       data?.stats ??
       dailyStatsFromServer;
 
+    /*
+     * If the server provides a fresh user plan in /api/me, that value
+     * takes priority. Daily earnings must be supplied by the backend
+     * for reliable enforcement across devices and browser sessions.
+     */
     updatePlanUI();
 
     document.getElementById("availableCount").textContent =
       String(availableJobs.length);
 
-    if (currentFilter === "completed") {
-      renderJobs(completedJobs);
-    } else {
-      renderJobs(availableJobs);
-    }
+    renderJobs(currentFilter === "completed" ? completedJobs : availableJobs);
   } catch (errorObject) {
     loading.style.display = "none";
 
@@ -876,6 +1028,8 @@ async function loadAll() {
     }
 
     console.error("JOVIA jobs load error:", errorObject);
+  } finally {
+    loadingAll = false;
   }
 }
 
@@ -889,11 +1043,31 @@ async function openTask(jobId, button) {
     item => String(getJobId(item)) === String(jobId)
   );
 
-  const reward = getJobReward(job);
+  if (!job) {
+    showMessage("This task could not be found. Refresh and try again.", "error");
+    return;
+  }
 
-  if (reward > getPlanLimits(getCurrentPlan()).maxDaily ||
-      wouldExceedLimit(reward)) {
-    showMessage(getUpgradeMessage(getCurrentPlan()), "error");
+  if (isCompleted(job)) {
+    showMessage("You have already completed this task.", "info");
+    await loadAll();
+    return;
+  }
+
+  if (taskTimers.has(String(jobId))) {
+    showMessage("This task has already been opened. Please wait for the timer.", "info");
+    renderJobs(availableJobs);
+    return;
+  }
+
+  const reward = getJobReward(job);
+  const plan = getCurrentPlan();
+
+  if (
+    reward > getPlanLimits(plan).maxDaily ||
+    wouldExceedLimit(reward)
+  ) {
+    showMessage(getUpgradeMessage(plan), "error");
     renderJobs(availableJobs);
     return;
   }
@@ -904,12 +1078,43 @@ async function openTask(jobId, button) {
     return;
   }
 
+  const destinationFromJob = getTaskLink(job);
+
+  if (!destinationFromJob) {
+    showMessage("This task does not have a valid link yet. Please contact support.", "error");
+    return;
+  }
+
   if (button) {
     button.disabled = true;
     button.textContent = "Opening...";
   }
 
+  /*
+   * Open a blank tab immediately during the click gesture so mobile
+   * browsers are less likely to block the external task.
+   * Close it if the backend refuses to open the task.
+   */
+  let popup = null;
+
   try {
+    popup = window.open("about:blank", "_blank");
+
+    if (!popup) {
+      showMessage("Your browser blocked the new tab. Allow pop-ups and try again.", "error");
+
+      if (button) {
+        button.disabled = false;
+        button.textContent = "Open Task ↗";
+      }
+
+      return;
+    }
+
+    try {
+      popup.opener = null;
+    } catch {}
+
     const response = await fetch(
       `${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/open`,
       {
@@ -923,51 +1128,49 @@ async function openTask(jobId, button) {
     const data = await response.json().catch(() => ({}));
 
     if (response.status === 401) {
+      popup.close();
       location.href = "login.html";
       return;
     }
 
     if (!response.ok) {
-      throw new Error(data?.message || "Unable to open task");
+      popup.close();
+      throw new Error(data?.message || "Unable to open this task.");
     }
 
-    let destination =
+    const destination = safeExternalURL(
       data?.url ||
       data?.taskLink ||
       data?.task_link ||
-      getTaskLink(job);
+      destinationFromJob
+    );
 
     if (!destination) {
-      throw new Error("No task link is available.");
+      popup.close();
+      throw new Error("The server did not provide a valid task link.");
     }
 
-    if (destination.startsWith("www.")) {
-      destination = "https://" + destination;
-    }
+    popup.location.replace(destination);
 
-    const parsedURL = new URL(destination, location.origin);
+    /*
+     * Start the 30-second timer only after the open request succeeds
+     * and the browser has accepted the new tab.
+     */
+    startTaskTimer(jobId);
 
-    if (!["http:", "https:"].includes(parsedURL.protocol)) {
-      throw new Error("Invalid task link.");
-    }
+    showMessage(
+      `Task opened successfully. Please review the task for at least ${TASK_WAIT_SECONDS} seconds before claiming.`,
+      "success"
+    );
 
-    const popup = window.open(parsedURL.href, "_blank");
-
-    if (!popup) {
-      showMessage("Your browser blocked the new tab. Please try again.", "error");
-
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Open Task ↗";
-      }
-
-      return;
-    }
-
-    showMessage("Task opened! Complete it, then return here to claim.", "success");
-
-    setTimeout(loadAll, 600);
+    renderJobs(availableJobs);
   } catch (errorObject) {
+    if (popup && !popup.closed) {
+      try {
+        popup.close();
+      } catch {}
+    }
+
     showMessage(errorObject.message || "Unable to open task.", "error");
 
     if (button) {
@@ -987,10 +1190,42 @@ async function completeJob(jobId, button) {
     item => String(getJobId(item)) === String(jobId)
   );
 
+  if (!job) {
+    showMessage("Task not found. Please refresh the page.", "error");
+    return;
+  }
+
+  if (isCompleted(job)) {
+    showMessage("This task has already been claimed.", "info");
+    await loadAll();
+    return;
+  }
+
+  /*
+   * Check the timer in the browser for immediate feedback.
+   * The backend MUST independently enforce the 30-second wait.
+   */
+  if (!hasOpenedTask(job)) {
+    const remaining = getTaskSecondsRemaining(jobId);
+
+    showMessage(
+      remaining > 0
+        ? `Please wait ${remaining} more second${remaining === 1 ? "" : "s"} before claiming this task.`
+        : "Open this task first before claiming.",
+      "error"
+    );
+
+    renderJobs(availableJobs);
+    return;
+  }
+
   const reward = getJobReward(job);
   const plan = getCurrentPlan();
 
-  if (reward > getPlanLimits(plan).maxDaily || wouldExceedLimit(reward)) {
+  if (
+    reward > getPlanLimits(plan).maxDaily ||
+    wouldExceedLimit(reward)
+  ) {
     showMessage(getUpgradeMessage(plan), "error");
     renderJobs(availableJobs);
     return;
@@ -1029,15 +1264,10 @@ async function completeJob(jobId, button) {
       throw new Error(data?.message || "Unable to claim this task.");
     }
 
-    const finalReward = Number(
-      data?.reward ??
-      data?.amount ??
-      reward
-    ) || 0;
+    clearTaskTimer(jobId);
 
-    /*
-     * Trust the balance returned by the server when available.
-     */
+    const finalReward = Number(data?.reward ?? data?.amount ?? reward) || 0;
+
     const balance =
       data?.walletBalance ??
       data?.wallet_balance ??
@@ -1050,29 +1280,20 @@ async function completeJob(jobId, button) {
       if (currentUser) {
         currentUser.wallet_balance = Number(balance);
       }
-    } else {
-      showMessage(
-        "Task claimed. Refreshing your wallet balance...",
-        "success"
-      );
     }
 
-    /*
-     * Refresh from the server instead of locally adding rewards
-     * to a potentially stale wallet balance.
-     */
     showMessage(
-      data?.message || `✅ ${formatNaira(finalReward)} claim successful!`,
+      data?.message || `Claim successful! Reward: ${formatNaira(finalReward)}.`,
       "success"
     );
 
     await loadAll();
   } catch (errorObject) {
-    showMessage(errorObject.message || "Unable to claim task.", "error");
+    showMessage(errorObject.message || "Unable to claim this task.", "error");
 
     if (button) {
       button.disabled = false;
-      button.textContent = `Claim ${formatNaira(reward)}`;
+      button.textContent = `Claim ${formatNaira(reward)} →`;
     }
   }
 }
@@ -1083,10 +1304,8 @@ function filterJobs(filter, button) {
   currentFilter = filter;
 
   document.querySelectorAll(".filter-btn").forEach(item => {
-    item.classList.remove("active");
+    item.classList.toggle("active", item === button);
   });
-
-  if (button) button.classList.add("active");
 
   document.getElementById("sectionTitle").textContent =
     filter === "completed" ? "Completed Jobs" : "Available Jobs";
@@ -1094,14 +1313,12 @@ function filterJobs(filter, button) {
   renderJobs(filter === "completed" ? completedJobs : availableJobs);
 }
 
-const MIN_WATCH_SECONDS = 60;
-
 async function claimVideo(videoId, button) {
   const watched = watchedVideos.get(String(videoId)) || 0;
 
   if (watched < MIN_WATCH_SECONDS) {
     showMessage(
-      `Watch ${MIN_WATCH_SECONDS} seconds before claiming. Watched ${watched} seconds.`,
+      `Watch at least ${MIN_WATCH_SECONDS} seconds before claiming. Watched ${watched} seconds.`,
       "error"
     );
     return;
@@ -1111,10 +1328,24 @@ async function claimVideo(videoId, button) {
     item => String(item.id ?? item.video_id) === String(videoId)
   );
 
+  if (!video) {
+    showMessage("Video not found. Please refresh and try again.", "error");
+    return;
+  }
+
+  if (isVideoCompleted(video)) {
+    showMessage("You have already claimed this video.", "info");
+    await loadAll();
+    return;
+  }
+
   const reward = getVideoReward(video);
   const plan = getCurrentPlan();
 
-  if (reward > getPlanLimits(plan).maxDaily || wouldExceedLimit(reward)) {
+  if (
+    reward > getPlanLimits(plan).maxDaily ||
+    wouldExceedLimit(reward)
+  ) {
     showMessage(getUpgradeMessage(plan), "error");
     return;
   }
@@ -1167,7 +1398,7 @@ async function claimVideo(videoId, button) {
     }
 
     showMessage(
-      data?.message || `✅ ${formatNaira(reward)} claim successful!`,
+      data?.message || `Claim successful! Reward: ${formatNaira(reward)}.`,
       "success"
     );
 
@@ -1209,7 +1440,7 @@ async function loadVideos() {
     }
 
     if (!response.ok) {
-      throw new Error("Unable to load videos");
+      throw new Error("Unable to load videos.");
     }
 
     const data = await response.json();
@@ -1237,23 +1468,25 @@ async function loadVideos() {
 
     list.innerHTML = allVideos.map(video => {
       const id = String(video.id ?? video.video_id ?? "");
-      const url = video.url || video.video_url || video.link || "";
+      const url = safeExternalURL(video.url || video.video_url || video.link || "");
       const completed = isVideoCompleted(video);
       const reward = getVideoReward(video);
       const plan = getCurrentPlan();
 
       const locked =
         !completed &&
-        (reward > getPlanLimits(plan).maxDaily || wouldExceedLimit(reward));
+        (
+          reward > getPlanLimits(plan).maxDaily ||
+          wouldExceedLimit(reward)
+        );
 
+      const canClaim = !completed && !locked;
       let player = "";
 
-      if (url && (
-        url.toLowerCase().includes(".mp4") ||
-        url.toLowerCase().includes("/uploads/")
-      )) {
+      if (url && /\.(mp4|webm|ogg)(?:[?#].*)?$/i.test(url)) {
         player = `
-          <video class="video-player" id="vid-${escapeHTML(id)}"
+          <video class="video-player"
+            id="vid-${escapeHTML(id)}"
             controls preload="metadata" playsinline
             src="${escapeHTML(url)}"></video>
           <div class="watch-progress">
@@ -1268,7 +1501,8 @@ async function loadVideos() {
         player = `
           <div class="video-external">
             <div>▶️</div>
-            <a href="${escapeHTML(url)}" target="_blank"
+            <a href="${escapeHTML(url)}"
+              target="_blank"
               rel="noopener noreferrer"
               data-video-open="${escapeHTML(id)}">
               View Resource ↗
@@ -1278,7 +1512,8 @@ async function loadVideos() {
       } else {
         player = `
           <div class="video-external">
-            <div>📚</div><div>Resource unavailable</div>
+            <div>📚</div>
+            <div style="margin-top:7px;font-size:11px">Resource unavailable</div>
           </div>
         `;
       }
@@ -1298,7 +1533,7 @@ async function loadVideos() {
           <button id="vbtn-${escapeHTML(id)}"
             class="complete-btn"
             data-label="Claim ${formatNaira(reward)}"
-            disabled>
+            ${canClaim ? "disabled" : "disabled"}>
             Watch ${MIN_WATCH_SECONDS}s to unlock (0/${MIN_WATCH_SECONDS}s)
           </button>
         `;
@@ -1308,8 +1543,8 @@ async function loadVideos() {
         <div class="video-card">
           ${player}
           <div class="video-title">${escapeHTML(video.title || "Learning Resource")}</div>
-          <div class="video-desc">${escapeHTML(video.description || "Complete viewing to earn reward.")}</div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+          <div class="video-desc">${escapeHTML(video.description || "Complete viewing to earn a reward.")}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
             <span class="meta">Academy</span>
             <span style="color:#15803d;font-size:11px;font-weight:900">
               ${formatNaira(reward)}
@@ -1328,66 +1563,75 @@ async function loadVideos() {
       const watchText = document.getElementById(`watchText-${id}`);
 
       if (player) {
-        watchedVideos.set(id, 0);
+        if (!watchedVideos.has(id)) {
+          watchedVideos.set(id, 0);
+        }
 
         player.addEventListener("play", () => {
           fetch(`${API_BASE}/api/videos/${encodeURIComponent(id)}/open`, {
             method: "POST",
-            credentials: "include"
+            credentials: "include",
+            cache: "no-store"
           }).catch(() => {});
         });
 
         player.addEventListener("timeupdate", () => {
           const seconds = Math.floor(player.currentTime);
+          const previous = watchedVideos.get(id) || 0;
 
-          watchedVideos.set(id, seconds);
+          /*
+           * Do not count a large jump forward as watched time.
+           * This is a basic client-side check, not server-side proof.
+           */
+          if (seconds > previous + 2) {
+            watchedVideos.set(id, previous + 1);
+          } else {
+            watchedVideos.set(id, Math.max(previous, seconds));
+          }
+
+          const trackedSeconds = watchedVideos.get(id) || 0;
 
           if (progress) {
             progress.style.width =
-              Math.min(100, seconds / MIN_WATCH_SECONDS * 100) + "%";
+              Math.min(100, trackedSeconds / MIN_WATCH_SECONDS * 100) + "%";
           }
 
           if (watchText) {
             watchText.textContent =
-              `Watched: ${seconds}s / ${MIN_WATCH_SECONDS}s - ` +
-              (seconds >= MIN_WATCH_SECONDS
+              `Watched: ${trackedSeconds}s / ${MIN_WATCH_SECONDS}s - ` +
+              (trackedSeconds >= MIN_WATCH_SECONDS
                 ? "Ready!"
-                : `${MIN_WATCH_SECONDS - seconds}s left`);
+                : `${MIN_WATCH_SECONDS - trackedSeconds}s left`);
           }
 
-          if (button && seconds >= MIN_WATCH_SECONDS && button.disabled) {
+          if (button && trackedSeconds >= MIN_WATCH_SECONDS) {
             button.disabled = false;
             button.textContent =
-              `Claim ${formatNaira(getVideoReward(video))} ✅ Ready!`;
+              `Claim ${formatNaira(getVideoReward(video))} ✅`;
           }
         });
 
         player.addEventListener("ended", () => {
-          const seconds = Math.floor(player.currentTime);
+          const trackedSeconds = watchedVideos.get(id) || 0;
 
-          watchedVideos.set(id, seconds);
-
-          if (seconds >= MIN_WATCH_SECONDS && button) {
+          if (trackedSeconds >= MIN_WATCH_SECONDS && button) {
             button.disabled = false;
             button.textContent =
-              `Claim ${formatNaira(getVideoReward(video))} ✅ Ready!`;
+              `Claim ${formatNaira(getVideoReward(video))} ✅`;
           }
         });
       }
 
-      const externalLink = document.querySelector(
-        `[data-video-open="${CSS.escape(id)}"]`
-      );
+      const externalLink = Array.from(
+        document.querySelectorAll("[data-video-open]")
+      ).find(link => link.dataset.videoOpen === id);
 
       if (externalLink) {
         externalLink.addEventListener("click", () => {
-          /*
-           * Opening an external resource does not prove that it was watched.
-           * The server should verify viewing/eligibility before awarding a reward.
-           */
           fetch(`${API_BASE}/api/videos/${encodeURIComponent(id)}/open`, {
             method: "POST",
-            credentials: "include"
+            credentials: "include",
+            cache: "no-store"
           }).catch(() => {});
         });
       }
@@ -1438,7 +1682,15 @@ document.getElementById("inactivePopup").addEventListener("click", event => {
   if (event.target.id === "inactivePopup") closePopup();
 });
 
-document.addEventListener("DOMContentLoaded", loadAll);
+document.getElementById("retryButton").addEventListener("click", () => {
+  loadAll();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  restoreTaskTimers();
+  startTaskTimerTicker();
+  loadAll();
+});
 </script>
 </body>
 </html>
