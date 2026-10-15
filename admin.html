@@ -430,25 +430,14 @@ async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=
 
 function getLocalCodes(){try{return JSON.parse(localStorage.getItem(CODES_KEY)||"[]")}catch{return []}}
 function saveLocalCodes(items){localStorage.setItem(CODES_KEY,JSON.stringify(items))}
-const CODES_KEY="jovia_withdrawal_codes_v4";
-function getLocalCodes(){try{return JSON.parse(localStorage.getItem(CODES_KEY)||"[]")}catch{return []}}
-function saveLocalCodes(items){localStorage.setItem(CODES_KEY,JSON.stringify(items))}
-function generateCodeString(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let v=""; for(let i=0;i<6;i++) v+=chars[Math.floor(Math.random()*chars.length)];
-  return "JOVIA-"+v;
-}
-async function generateActivationCode(){
-  const email=document.getElementById("codeEmail").value.trim();
-  const note=document.getElementById("codeNote").value.trim();
-  const code=generateCodeString();
-  const items=getLocalCodes();
-  items.unshift({code,email:email||"General",note,used:false,created_at:new Date().toISOString()});
-  saveLocalCodes(items.slice(0,100));
-  document.getElementById("codeResult").style.display="block";
-  document.getElementById("codeText").textContent=code;
-  rawCodes=items; renderCodes();
-  showToast("Code generated: "+code);
-}
+function generateCodeString(){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let value="";for(let i=0;i<6;i++)value+=chars.charAt(Math.floor(Math.random()*chars.length));return "JOVIA-"+value}
+async function generateActivationCode(){const email=document.getElementById("codeEmail").value.trim(),note=document.getElementById("codeNote").value.trim(),button=document.getElementById("generateCodeBtn");button.disabled=true;button.textContent="Generating...";let code=generateCodeString();try{const r=await fetch("/api/admin/generate-withdraw-code",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({email,note,code})});const d=await r.json().catch(()=>({}));if(r.ok&&d.code)code=d.code;if(!r.ok||d.success===false)throw new Error(d.message||"Server could not create the code")}catch(e){button.disabled=false;button.textContent="🔐 Generate Code →";showToast(e.message,"error");return}const items=getLocalCodes();items.unshift({code,email:email||"General",note,used:false,created_at:new Date().toISOString()});saveLocalCodes(items.slice(0,100));document.getElementById("codeResult").style.display="block";document.getElementById("codeText").textContent=code;document.getElementById("codeMeta").textContent=(email?email+" • ":"")+(note||"")+" • "+new Date().toLocaleString();const msg=encodeURIComponent("Your Jovia Regular Withdrawal Code: "+code);document.getElementById("waLink").href="https://wa.me/?text="+msg;document.getElementById("tgLink").href="https://t.me/share/url?text="+msg;rawCodes=items;renderCodes();button.disabled=false;button.textContent="🔐 Generate Code →";document.getElementById("codeEmail").value="";document.getElementById("codeNote").value="";showToast("Withdrawal code generated")}
+async function copyCode(){try{await navigator.clipboard.writeText(document.getElementById("codeText").textContent);showToast("Copied")}catch{showToast("Copy unavailable in this browser","error")}}
+function loadCodes(){rawCodes=getLocalCodes();renderCodes()}
+function renderCodes(){const table=document.getElementById("codesTable");if(!table)return;const query=(document.getElementById("codeSearch")?.value||"").toLowerCase();const items=rawCodes.filter(c=>`${c.code} ${c.email||""} ${c.note||""}`.toLowerCase().includes(query));if(!items.length){table.innerHTML='<tr><td colspan="6" class="empty">No codes found</td></tr>';return}table.innerHTML=items.map(c=>`<tr><td data-label="Code"><strong>${escapeHTML(c.code)}</strong></td><td data-label="Email">${escapeHTML(c.email||"General")}</td><td data-label="Note">${escapeHTML(c.note||"-")}</td><td data-label="Status"><span class="status ${c.used?"rejected":"approved"}">${c.used?"USED":"ACTIVE"}</span></td><td data-label="Created">${escapeHTML(formatDate(c.created_at))}</td><td data-label="Actions"><button class="action" style="background:#5b21b6;color:white" onclick="copySpecificCode('${escapeHTML(c.code)}')">Copy</button> <button class="action reject" onclick="deleteCode('${escapeHTML(c.code)}')">Delete</button></td></tr>`).join("")}
+async function copySpecificCode(code){try{await navigator.clipboard.writeText(code);showToast("Copied")}catch{showToast("Copy unavailable","error")}}
+function deleteCode(code){if(!confirm("Delete "+code+"?"))return;const items=getLocalCodes().filter(c=>c.code!==code);saveLocalCodes(items);rawCodes=items;renderCodes();showToast("Code deleted")}
+
 async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();if(d&&d.title){document.getElementById("adm_enabled").value=String(d.enabled);document.getElementById("adm_title").value=d.title||"";document.getElementById("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");document.getElementById("adm_url").value=d.channelUrl||"https://t.me/jovianetwerk";document.getElementById("adm_btnText").value=d.channelText||"📲 Join Official Channel →"}}catch{}}
 async function saveAdminPopup(){const button=document.getElementById("adm_saveBtn"),status=document.getElementById("adm_status");button.disabled=true;button.textContent="Saving...";status.style.display="block";status.style.background="#fff3cd";status.textContent="Saving announcement...";const payload={enabled:document.getElementById("adm_enabled").value==="true",title:document.getElementById("adm_title").value.trim(),message:document.getElementById("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:document.getElementById("adm_url").value.trim(),channelText:document.getElementById("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save announcement");status.style.background="#dcfce7";status.textContent="Announcement saved successfully."}catch(e){status.style.background="#fee2e2";status.textContent=e.message}finally{button.disabled=false;button.textContent="💾 Save & Update"}}
 
