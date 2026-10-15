@@ -494,7 +494,6 @@ function getPrivateUserLabel(user){const name=user.full_name||user.name||"Unname
 function renderPrivateRecipients(){const container=document.getElementById("privateRecipientsList");if(!container)return;const query=(document.getElementById("privateRecipientSearch")?.value||"").trim().toLowerCase(),users=rawUsers.filter(u=>getPrivateUserLabel(u).searchable.includes(query));if(!users.length){container.innerHTML='<p class="empty">No matching members found.</p>';document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}container.innerHTML=users.map(u=>{const id=Number(u.id);return `<label style="display:flex;gap:10px;align-items:center;padding:9px;border-bottom:1px solid #edf0f4"><input type="checkbox" value="${id}" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")} <small style="color:#7b8494">${escapeHTML(u.email||"")}</small></span></label>`}).join("");document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 // FIX 2: ACTIVE / PENDING / ALL - REPLACEMENT FOR selectAllPrivateUsers
-function selectPrivateUsersByStatus(type){
 function selectPrivateUsersByStatus(type){ if(!rawUsers || rawUsers.length===0){ showToast("No users loaded - click Load Users first"); return; }
 console.log("First user sample:", rawUsers[0]); // Open F12 to see
 privateRecipientIds.clear();
@@ -506,6 +505,7 @@ if(type==='active' && isActive) privateRecipientIds.add(id);
 if(type==='pending' && isPending) privateRecipientIds.add(id);
 });
 renderPrivateRecipients(); const countEl = document.getElementById("privateSelectedCount"); if(countEl) countEl.textContent = privateRecipientIds.size + " selected"; showToast(privateRecipientIds.size + " " + type + " users found"); }
+
 </script>
 </body>
 </html>
