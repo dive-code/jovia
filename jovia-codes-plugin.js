@@ -23,7 +23,6 @@ module.exports = (app, db) => {
       CREATE INDEX IF NOT EXISTS idx_jovia_used ON jovia_codes(used);
       CREATE INDEX IF NOT EXISTS idx_jovia_type ON jovia_codes(type);
     `);
-    // Migrate old file to DB
     for(let k in codes){
       try{
         db.prepare("INSERT OR IGNORE INTO jovia_codes (code,type,price,used,used_by,used_by_name,used_by_email,used_by_id,created_at,used_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
@@ -31,7 +30,6 @@ module.exports = (app, db) => {
       }catch(e){}
     }
 
-    // === FIX: CREATE PACKAGE COLUMN IF NOT EXIST - THIS FIXES YOUR ERROR ===
     try{
       const cols = db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
       if(!cols.includes('package')){
@@ -46,6 +44,9 @@ module.exports = (app, db) => {
       }
       if(!cols.includes('updated_at')){
         try{ db.exec("ALTER TABLE users ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP"); }catch(e){}
+      }
+      if(!cols.includes('wallet_balance')){
+        try{ db.exec("ALTER TABLE users ADD COLUMN wallet_balance INTEGER DEFAULT 0"); }catch(e){}
       }
     }catch(e){ console.log("Fix columns error:", e.message); }
 
@@ -68,6 +69,24 @@ module.exports = (app, db) => {
     return null;
   };
 
+  const isSuperUser = (user)=>{
+    if(!user) return false;
+    try{
+      let pkg = String(user.package||user.plan||user.package_name||user.membership_level||user.tier||"").toLowerCase();
+      if(pkg.includes("super")) return true;
+      if(user.is_super==1) return true;
+    }catch(e){}
+    return false;
+  };
+
+  const find = (raw) => {
+    raw = String(raw||"").toUpperCase().trim();
+    try{ const row=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw); if(row) return row; }catch(e){}
+    if(codes[raw]) return codes[raw];
+    try{ if(fs.existsSync(FILE)){ const f=JSON.parse(fs.readFileSync(FILE,'utf8')); if(f[raw]){ codes=f; return f[raw]; } } }catch(e){}
+    return null;
+  };
+
   app.post("/api/admin/codes/generate", (req,res) => {
     const t = String(req.body?.type||"").toLowerCase();
     let type = t.includes("gold") ? "super-gold" : t.includes("silver") ? "super-silver" : "withdraw";
@@ -83,14 +102,6 @@ module.exports = (app, db) => {
     let total=0; try{ total=db.prepare("SELECT COUNT(*) as c FROM jovia_codes").get().c; }catch(e){ total=Object.keys(codes).length; }
     res.json({success:true,codes:out,total});
   });
-
-  const find = (raw) => {
-    raw = String(raw||"").toUpperCase().trim();
-    try{ const row=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw); if(row) return row; }catch(e){}
-    if(codes[raw]) return codes[raw];
-    try{ if(fs.existsSync(FILE)){ const f=JSON.parse(fs.readFileSync(FILE,'utf8')); if(f[raw]){ codes=f; return f[raw]; } } }catch(e){}
-    return null;
-  };
 
   app.post("/api/upgrade/apply", (req,res) => {
     let raw = String(req.body?.code||req.body?.superCode||"").toUpperCase().trim();
@@ -110,51 +121,91 @@ module.exports = (app, db) => {
     let now = new Date().toLocaleString('en-NG', {timeZone:'Africa/Lagos', hour12:true});
 
     if(!user){
-      console.log(`User not found for ${email}, but marking code anyway`);
       try{ db.prepare("UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_at=? WHERE code=?").run(displayName, username, email, now, raw); }catch(e){}
-      return res.json({success:true,message:`✅ Code accepted for ${displayName} - Login again to see SUPER`, package:'SUPER', used_by:displayName, used_at:now});
+      if(codes[raw]){ codes[raw].used=1; codes[raw].used_by=displayName; save(); }
+      return res.json({success:true,message:`✅ Code accepted for ${displayName} - Login again to see SUPER`, package:'SUPER'});
     }
 
-    // CHEAT-PROOF
     let curPkg = String(user.package||user.plan||"").toLowerCase();
     if(curPkg.includes("silver") && row.type==="super-gold") return res.json({success:false,message:"❌ You are SILVER, need SUPER-SILVER N16k code"});
     if(curPkg.includes("gold") && row.type==="super-silver") return res.json({success:false,message:"❌ You are GOLD, need SUPER-GOLD N12k code"});
 
-    // === MAIN FIX - UPDATE WITH FALLBACK ===
     let updated=false;
-    let lastError="";
     const tryUpdate = (sql, params=[])=>{
-      try{ db.prepare(sql).run(...params); updated=true; console.log(`✅ ${sql} OK`); return true; }catch(e){ lastError=e.message; console.log(`❌ ${sql} FAIL: ${e.message}`); return false; }
+      try{ db.prepare(sql).run(...params); updated=true; return true; }catch(e){ return false; }
     };
 
-    // Try update package - now column exists because we created it
     tryUpdate("UPDATE users SET package='SUPER', updated_at=CURRENT_TIMESTAMP WHERE id=?", [user.id]);
     tryUpdate("UPDATE users SET plan='SUPER' WHERE id=?", [user.id]);
     tryUpdate("UPDATE users SET is_super=1 WHERE id=?", [user.id]);
     tryUpdate("UPDATE users SET account_status='active', status='active' WHERE id=?", [user.id]);
-
-    // If still failed, force create column again and retry
-    if(!updated){
-      try{
-        db.exec("ALTER TABLE users ADD COLUMN package TEXT DEFAULT 'Silver'");
-        tryUpdate("UPDATE users SET package='SUPER' WHERE id=?", [user.id]);
-      }catch(e){}
-    }
+    tryUpdate("UPDATE users SET package_name='SUPER' WHERE id=?", [user.id]);
 
     if(!updated){
-      return res.json({success:false, message:`❌ Still can't update: ${lastError}. Tell me your users columns. Run /api/debug/users-schema`});
+      return res.json({success:false, message:`❌ Can't update - check columns /api/debug/users-schema`});
     }
 
-    console.log(`✅ UPGRADED: ${email} -> SUPER with ${raw}`);
-
-    // Mark code as USED permanently in DB
-    try{ db.prepare("UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_by_id=?, used_at=? WHERE code=?").run(displayName, username, email, user.id, now, raw); }catch(e){ console.log("Mark used error:", e.message); }
+    // === FIXED: MARK AS USED PERMANENTLY IN DB + FILE - NEVER ACTIVE AGAIN ===
+    try{ db.prepare("UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_by_id=?, used_at=? WHERE code=?").run(displayName, username, email, user.id, now, raw); }catch(e){}
     if(codes[raw]){ codes[raw].used=1; codes[raw].used_by=displayName; codes[raw].used_by_name=username; codes[raw].used_by_email=email; codes[raw].used_at=now; codes[raw].used_by_id=user.id; save(); }
 
     const freshUser = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
-    console.log(`[AFTER] ${email} package=${freshUser.package} plan=${freshUser.plan}`);
+    console.log(`[UPGRADED] ${email} -> SUPER with ${raw} - Code now USED`);
 
-    return res.json({success:true, message:`✅ SUCCESS! ${displayName} upgraded to SUPER`, package:'SUPER', newPackage:'SUPER', is_super:true, user:freshUser, used_by:displayName, used_at:now, email});
+    return res.json({success:true, message:`✅ SUCCESS! ${displayName} upgraded to SUPER - Code now USED`, package:'SUPER', user:freshUser, used_by:displayName, used_at:now});
+  });
+
+  // === CRITICAL FIX: BYPASS DAILY N7K LIMIT FOR SUPER ===
+  app.post("/api/videos/:id/complete", (req,res,next)=>{
+    try{
+      let user = getUserFromRequest(req);
+      if(user && isSuperUser(user)){
+        let videoId = req.params.id;
+        console.log(`👑 SUPER bypass video ${videoId} for ${user.email}`);
+        let video = null;
+        try{ video = db.prepare("SELECT * FROM videos WHERE id=?").get(videoId); }catch(e){}
+        try{ if(!video) video = db.prepare("SELECT * FROM jovia_videos WHERE id=?").get(videoId); }catch(e){}
+        let reward = video ? Number(video.reward||0) : 500;
+        try{ reward = Number(req.body?.reward||reward); }catch(e){}
+        let currentBal = Number(user.wallet_balance||user.balance||user.wallet||0);
+        let newBal = currentBal + reward;
+        try{ db.prepare("UPDATE users SET wallet_balance=?, balance=? WHERE id=?").run(newBal, newBal, user.id); }catch(e){ try{ db.prepare("UPDATE users SET wallet_balance=? WHERE id=?").run(newBal, user.id); }catch(e2){} }
+        try{ db.prepare("INSERT INTO transactions (user_id, type, amount, status, created_at) VALUES (?,?,?,?, datetime('now','localtime'))").run(user.id, "video_reward", reward, "completed"); }catch(e){}
+        return res.json({success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward, walletBalance:newBal, wallet_balance:newBal});
+      }
+      next();
+    }catch(e){ next(); }
+  });
+
+  app.post("/api/jobs/:id/complete", (req,res,next)=>{
+    try{
+      let user = getUserFromRequest(req);
+      if(user && isSuperUser(user)){
+        let jobId = req.params.id;
+        console.log(`👑 SUPER bypass job ${jobId} for ${user.email}`);
+        let job = null;
+        try{ job = db.prepare("SELECT * FROM jobs WHERE id=?").get(jobId); }catch(e){}
+        let reward = job ? Number(job.reward||0) : 500;
+        let currentBal = Number(user.wallet_balance||user.balance||0);
+        let newBal = currentBal + reward;
+        try{ db.prepare("UPDATE users SET wallet_balance=?, balance=? WHERE id=?").run(newBal, newBal, user.id); }catch(e){ try{ db.prepare("UPDATE users SET wallet_balance=? WHERE id=?").run(newBal, user.id); }catch(e2){} }
+        try{ db.prepare("INSERT INTO transactions (user_id, type, amount, status, created_at) VALUES (?,?,?,?, datetime('now','localtime'))").run(user.id, "job_reward", reward, "completed"); }catch(e){}
+        return res.json({success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward, walletBalance:newBal, wallet_balance:newBal});
+      }
+      next();
+    }catch(e){ next(); }
+  });
+
+  app.post("/api/debug/force-super-me", (req,res)=>{
+    try{
+      let email = req.body?.email||req.user?.email||'';
+      email = String(email).toLowerCase().trim();
+      let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?)").get(email);
+      if(!user) return res.json({success:false, message:"User not found"});
+      db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=?").run(user.id);
+      let fresh = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
+      res.json({success:true, message:"Forced to SUPER - N7k limit cleared", user:fresh});
+    }catch(e){ res.json({success:false, error:e.message}); }
   });
 
   app.post("/api/withdraw/apply-code", (req,res) => {
@@ -174,7 +225,7 @@ module.exports = (app, db) => {
 
   app.get("/api/admin/codes/list", (req,res)=>{ 
     try{ let all=db.prepare("SELECT * FROM jovia_codes ORDER BY created_at DESC").all(); res.json({success:true,codes:all,total:all.length}); }
-    catch(e){ try{ if(fs.existsSync(FILE)) codes=JSON.parse(fs.readFileSync(FILE,'utf8')); }catch(e2){} res.json({success:true,codes:Object.values(codes),total:Object.keys(codes).length}); }
+    catch(e){ res.json({success:true,codes:Object.values(codes),total:Object.keys(codes).length}); }
   });
   app.get("/api/admin/codes/check/:code", (req,res)=>{ 
     let r=find(req.params.code); if(!r) return res.json({success:false,exists:false});
@@ -184,9 +235,9 @@ module.exports = (app, db) => {
     try{
       const cols=db.prepare("PRAGMA table_info(users)").all();
       const sample=db.prepare("SELECT * FROM users LIMIT 1").get();
-      res.json({success:true, columnNames:cols.map(c=>c.name), columns:cols, sampleKeys:sample?Object.keys(sample):[], sampleUser:sample});
+      res.json({success:true, columnNames:cols.map(c=>c.name), columns:cols, sampleKeys:sample?Object.keys(sample):[]});
     }catch(e){ res.json({success:false, error:e.message}); }
   });
 
-  console.log("✅ JOVIA PLUGIN - FIXED: AUTO CREATE package COLUMN + REAL NAME + NEVER DELETE");
+  console.log("✅ JOVIA PLUGIN FIXED - CODE BECOMES USED INSTANTLY + SUPER UNLIMITED BYPASS + NO N7K LIMIT");
 };
