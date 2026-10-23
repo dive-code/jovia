@@ -534,5 +534,37 @@ app.get("/api/activate", async (req, res) => { try { const email = normalizeEmai
 app.post("/api/activate", async (req,res)=>{ try{ const email = normalizeEmail(req.body?.email || req.query?.email || ""); const username = cleanString(req.body?.username || req.query?.username || "",50); let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver"; let targetEmail = email; if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; } if(!targetEmail) return res.status(400).json({success:false}); let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(!user) return res.status(404).json({success:false}); if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true}); if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); activateUserAndRewards(user.id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false}); } });
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
-if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA V5 SECURE - 60K REGULAR FULL + 20K AFFILIATE FREE + 10K CODE 1=1 FULL + NO RANDOM CODE + DAILY LIMIT FIX"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Minimums: Regular 60K FULL / Affiliate 20K / Code Fee 10K`); console.log(` Fixes: 700 bug FIXED, random code BLOCKED, FULL amount ENFORCED, Jobs+Videos daily limit`); console.log("=========================================="); console.log("");});}
+// === JOVIA CODES PLUGIN - NO RANDOM CODE + CHECKER ===
+try {
+  require("./jovia-codes-plugin")(
+    app,
+    db,
+    requireUser,
+    requireAdmin
+  );
+
+  console.log("JOVIA Codes Plugin loaded successfully.");
+} catch (e) {
+  console.error("JOVIA Codes Plugin failed to load:", e);
+  throw e;
+}
+
+// === START SERVER ===
+if (require.main === module) {
+  app.listen(PORT, HOST, () => {
+    console.log("");
+    console.log("==========================================");
+    console.log(" JOVIA V5 SECURE");
+    console.log(" Regular Withdrawal Minimum: ₦60,000");
+    console.log(" Affiliate Withdrawal Minimum: ₦20,000");
+    console.log(" Withdrawal Code Fee: ₦10,000");
+    console.log(" Random Codes: BLOCKED");
+    console.log(" Daily Limits: Server-side enforcement required");
+    console.log(` Server: http://${HOST}:${PORT}`);
+    console.log(` DB: ${DB_PATH}`);
+    console.log("==========================================");
+    console.log("");
+  });
+}
+
 module.exports = app;
