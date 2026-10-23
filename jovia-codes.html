@@ -37,11 +37,10 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 
 <div id="lock" class="lock"><div class="lock-box">
 <h2 style="font-size:20px">🔐 Admin Only</h2>
-<p style="font-size:11px;color:#64748b;margin-top:6px">Enter password to manage codes</p>
-<input id="passInput" type="password" placeholder="Password" style="margin-top:14px">
+<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password to manage codes</p>
+<input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none">❌ Wrong password</p>
-<p style="font-size:10px;color:#94a3b8;margin-top:12px">Default: Jovia2024 (change in code)</p>
 </div></div>
 
 <div class="top">
@@ -108,7 +107,7 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 
 <script>
-const ADMIN_PASSWORD = "Jovia2024";
+const ADMIN_PASSWORD = "Divine@@1";
 let currentTab='withdraw';
 let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
 let allServerCodes = [];
@@ -175,7 +174,6 @@ async function generate(type){
         document.getElementById('superTypeLabel').innerText='SILVER → SUPER - SAVED TO DB';
         document.getElementById('superPriceLabel').innerHTML='Price: <b>N16,000</b> - For SILVER users only<br><small>Will show real name when used</small>';
       }
-      // Show all generated if plugin returns 5
       if(data.codes.length > 1){
         alert(`✅ Generated ${data.codes.length} codes! Showing first: ${newCode}\nAll saved permanently. Check list below.`);
       }
@@ -184,7 +182,7 @@ async function generate(type){
       alert('❌ Failed: ' + (data.message || 'Unknown error'));
     }
   } catch(e){
-    alert('❌ Server error: ' + e.message + '\n\nMake sure you pushed the new jovia-codes-plugin.js');
+    alert('❌ Server error: ' + e.message);
   }
   btn.innerHTML = oldText; btn.disabled = false;
 }
@@ -224,11 +222,7 @@ function renderServer(filtered, totalAll){
   }
   document.getElementById('list').innerHTML = filtered.map((c)=>{
     const used = !!c.used;
-    // FIXED: Show real name, not undefined
     let usedByDisplay = c.used_by || c.used_by_name || c.used_by_email || '';
-    if(!usedByDisplay && c.used_by_name && c.used_by_email){
-      usedByDisplay = `${c.used_by_name} (${c.used_by_email})`;
-    }
     let badgeText = c.type==='withdraw' ? 'WITHDRAW' : c.type==='super-gold' ? 'GOLD→SUPER N12k' : c.type==='super-silver' ? 'SILVER→SUPER N16k' : c.type;
     let badgeColor = c.type==='withdraw' ? '#dcfce7' : c.type==='super-gold' ? '#fef3c7' : '#e0e7ff';
     let dateText = '';
@@ -281,7 +275,7 @@ async function validate(){
       r.innerHTML=`<span style="color:#ef4444">❌ Already USED<br><span style="font-size:11px;color:#0f172a">By: ${by}<br>On: ${data.used_at||'unknown date'}<br>Type: ${data.type}</span></span>`; 
       return; 
     }
-    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active on SERVER<br><span style="font-size:11px;color:#0f172a">Code: ${data.code}<br>Type: ${data.type} - N${data.price}<br>Created: ${data.created_at?new Date(data.created_at).toLocaleString():'N/A'}<br>Not used yet - Ready</span></span>`;
+    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active on SERVER<br><span style="font-size:11px;color:#0f172a">Code: ${data.code}<br>Type: ${data.type} - N${data.price}<br>Not used yet - Ready</span></span>`;
   } catch(e){
     r.innerHTML='<span style="color:red">❌ Server error<br><small>Push new plugin</small></span>';
   }
