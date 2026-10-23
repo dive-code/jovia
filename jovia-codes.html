@@ -1,33 +1,198 @@
 <!DOCTYPE html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>JOVIA Codes - Admin Only</title>
-<style>body{font-family:Arial;background:#0f172a;color:#fff;padding:20px}.card{background:#1e293b;padding:20px;border-radius:12px;max-width:500px;margin:auto}input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;box-sizing:border-box}button{width:100%;padding:12px;background:#22c55e;color:#000;font-weight:bold;border:none;border-radius:8px;cursor:pointer;margin-top:8px}.code-box{margin-top:15px;background:#000;padding:15px;border-radius:8px;text-align:center;display:none}.code-text{font-size:22px;letter-spacing:2px;color:#22c55e;font-weight:bold;word-break:break-all}.item{background:#0f172a;padding:10px;margin:5px 0;border-radius:6px;font-size:13px;display:flex;justify-content:space-between}</style>
-</head><body><div class="card">
-<h2>JOVIA Withdraw Code</h2>
-<input id="railwayUrl" placeholder="Paste Railway URL e.g https://jovia-production.up.railway.app">
+<title>JOVIA Codes - OFFLINE</title>
+<style>
+body{font-family:Arial;background:#0f172a;color:#fff;padding:15px;margin:0}
+.card{background:#1e293b;padding:18px;border-radius:14px;max-width:480px;margin:auto}
+input{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:none;box-sizing:border-box;font-size:15px}
+button{width:100%;padding:12px;background:#22c55e;color:#000;font-weight:800;border:none;border-radius:8px;cursor:pointer;margin-top:8px;font-size:15px}
+button.sec{background:#334155;color:#fff}
+.code-box{margin-top:14px;background:#000;padding:16px;border-radius:10px;text-align:center;display:none}
+.code-text{font-size:24px;letter-spacing:2px;color:#22c55e;font-weight:900;word-break:break-all}
+.item{background:#0f172a;padding:10px;margin:6px 0;border-radius:8px;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+.lock{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:9999}
+.lock-card{background:#1e293b;padding:28px;border-radius:14px;max-width:360px;width:88%;text-align:center}
+.badge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:bold}
+.used{background:#ef4444;color:#fff}
+.active{background:#22c55e;color:#000}
+</style></head><body>
+
+<div id="lockScreen" class="lock"><div class="lock-card">
+<h2 style="margin:0 0 10px">Admin Only</h2>
+<p style="font-size:13px;color:#94a3b8">Enter password to open</p>
+<input id="adminPassInput" type="password" placeholder="Password">
+<button onclick="unlock()">Unlock</button>
+<div id="lockError" style="color:#ef4444;margin-top:10px;display:none;font-size:13px">Wrong password</div>
+</div></div>
+
+<div class="card">
+<h2 style="margin:0">JOVIA Withdraw Code</h2>
+<p style="font-size:12px;color:#94a3b8;margin:4px 0 12px">Offline - No server needed</p>
+
 <input id="codeEmail" placeholder="User Email or General">
-<input id="codeNote" placeholder="Note">
+<input id="codeNote" placeholder="Note e.g 5k withdrawal">
 <button onclick="generate()">Generate Code</button>
-<div id="codeResult" class="code-box"><div id="codeText" class="code-text"></div><button onclick="copyCode()">Copy</button></div>
-<h3>Recent Codes</h3><button onclick="loadCodes()">Refresh List</button><div id="codeList"></div>
+
+<div id="codeResult" class="code-box">
+<div style="font-size:11px;color:#94a3b8">NEW CODE GENERATED</div>
+<div id="codeText" class="code-text"></div>
+<button onclick="copyCode()" class="sec" style="margin-top:10px">Copy Code</button>
+<button onclick="shareCode()" class="sec">Share via WhatsApp</button>
 </div>
+
+<div style="display:flex;gap:8px;margin-top:18px">
+<button class="sec" style="flex:1" onclick="loadCodes()">Refresh</button>
+<button class="sec" style="flex:1;background:#ef4444;color:#fff" onclick="clearAll()">Clear All</button>
+</div>
+
+<div style="margin-top:14px;display:flex;gap:8px">
+<input id="validateInput" placeholder="Paste code to validate / mark used" style="flex:1">
+<button onclick="validateCode()" style="width:auto;padding:12px 16px">Check</button>
+</div>
+<div id="validateResult" style="margin-top:8px;font-size:13px;text-align:center"></div>
+
+<h3 style="margin:18px 0 8px;font-size:14px">Saved Codes (<span id="count">0</span>)</h3>
+<div id="codeList"></div>
+
+<button class="sec" onclick="exportCodes()" style="margin-top:12px">Export Codes as Text</button>
+</div>
+
 <script>
+// === SET YOUR ADMIN PASSWORD HERE ===
+const ADMIN_PASSWORD = "JoviaBoss123"; // CHANGE AM!
+
+let ADMIN_PASS_OK = localStorage.getItem('jovia_admin_ok') === 'yes';
+if(ADMIN_PASS_OK) document.getElementById('lockScreen').style.display='none';
+
+function unlock(){
+  const p=document.getElementById('adminPassInput').value;
+  if(p===ADMIN_PASSWORD){
+    localStorage.setItem('jovia_admin_ok','yes');
+    document.getElementById('lockScreen').style.display='none';
+    loadCodes();
+  } else {
+    document.getElementById('lockError').style.display='block';
+  }
+}
+
+function getCodes(){
+  try{ return JSON.parse(localStorage.getItem('jovia_offline_codes')||'[]'); }catch{return []}
+}
+function saveCodes(c){ localStorage.setItem('jovia_offline_codes', JSON.stringify(c)); }
+
+function genJoviaCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let v=""; for(let i=0;i<6;i++) v+=chars[Math.floor(Math.random()*chars.length)];
+  return "JOVIA-"+v;
+}
+
 let lastCode="";
-function getBase(){let u=document.getElementById('railwayUrl').value.trim(); if(!u){alert('Paste Railway URL first'); throw new Error();} localStorage.setItem('jovia_railway_url',u); return u.replace(/\/$/,'');}
-async function generate(){
- try{
-  const base=getBase();
-  const email=document.getElementById('codeEmail').value;
-  const note=document.getElementById('codeNote').value;
-  const res=await fetch(`${base}/api/generate-code`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,note})});
-  const data=await res.json();
-  if(data.success){lastCode=data.code; document.getElementById('codeResult').style.display='block'; document.getElementById('codeText').textContent=data.code; loadCodes();}
-  else alert('Failed: '+data.message);
- }catch(e){alert('Error: '+e.message)}
+function generate(){
+  const email=document.getElementById('codeEmail').value.trim()||"General";
+  const note=document.getElementById('codeNote').value.trim();
+  const code=genJoviaCode();
+  const codes=getCodes();
+  codes.unshift({code,email,note,used:false,created_at:new Date().toLocaleString()});
+  saveCodes(codes.slice(0,500));
+  lastCode=code;
+  document.getElementById('codeResult').style.display='block';
+  document.getElementById('codeText').textContent=code;
+  loadCodes();
 }
-async function loadCodes(){
- try{ const base=getBase(); const res=await fetch(`${base}/api/codes`); const rows=await res.json(); document.getElementById('codeList').innerHTML=rows.map(r=>`<div class="item"><span><b>${r.code}</b> - ${r.email}</span><span style="color:${r.used?'red':'#22c55e'}">${r.used?'USED':'ACTIVE'}</span></div>`).join(''); }catch(e){}
+
+function loadCodes(){
+  const codes=getCodes();
+  document.getElementById('count').textContent=codes.length;
+  document.getElementById('codeList').innerHTML=codes.map((r,i)=>`
+    <div class="item">
+      <div><b>${r.code}</b><br><span style="color:#94a3b8;font-size:11px">${r.email} ${r.note?'- '+r.note:''}</span><br><span style="color:#64748b;font-size:10px">${r.created_at}</span></div>
+      <div style="text-align:right"><span class="badge ${r.used?'used':'active'}">${r.used?'USED':'ACTIVE'}</span><br><button onclick="markUsed(${i})" style="width:auto;padding:4px 8px;font-size:11px;margin-top:4px;background:${r.used?'#334155':'#22c55e'}">${r.used?'Undo':'Use'}</button></div>
+    </div>
+  `).join('') || '<div style="text-align:center;color:#64748b;font-size:12px;padding:20px">No codes yet</div>';
 }
-function copyCode(){navigator.clipboard.writeText(lastCode); alert('Copied: '+lastCode);}
-(function(){const u=localStorage.getItem('jovia_railway_url'); if(u) document.getElementById('railwayUrl').value=u;})();
+
+function markUsed(i){
+  const codes=getCodes();
+  codes[i].used=!codes[i].used;
+  saveCodes(codes);
+  loadCodes();
+}
+
+function copyCode(){ navigator.clipboard.writeText(lastCode); alert('Copied: '+lastCode); }
+function shareCode(){ window.open(`https://wa.me/?text=${encodeURIComponent('Your JOVIA Withdraw Code: '+lastCode)}`,'_blank'); }
+
+function validateCode(){
+  const input=document.getElementById('validateInput').value.trim().toUpperCase();
+  const res=document.getElementById('validateResult');
+  if(!input){ res.textContent='Enter code'; return; }
+  const codes=getCodes();
+  const idx=codes.findIndex(c=>c.code===input);
+  if(idx===-1){ res.innerHTML='<span style="color:#ef4444">❌ Invalid code - not generated here</span>'; }
+  else if(codes[idx].used){ res.innerHTML='<span style="color:#ef4444">❌ Already USED</span>'; }
+  else {
+    res.innerHTML='<span style="color:#22c55e">✅ Valid & Active - '+codes[idx].email+'</span>';
+    if(confirm('Mark this code as USED now?')){ codes[idx].used=true; saveCodes(codes); loadCodes(); }
+  }
+}
+
+function clearAll(){ if(confirm('Delete ALL codes? This cannot undo')){ saveCodes([]); loadCodes(); document.getElementById('codeResult').style.display='none'; } }
+function exportCodes(){ const codes=getCodes(); const text=codes.map(c=>`${c.code} | ${c.email} | ${c.note} | ${c.used?'USED':'ACTIVE'} | ${c.created_at}`).join('\n'); navigator.clipboard.writeText(text); alert('All codes copied to clipboard!'); }
+
+loadCodes();
+</script></body></html>let v=""; for(let i=0;i<6;i++) v+=chars[Math.floor(Math.random()*chars.length)];
+  return "JOVIA-"+v;
+}
+
+let lastCode="";
+function generate(){
+  const email=document.getElementById('codeEmail').value.trim()||"General";
+  const note=document.getElementById('codeNote').value.trim();
+  const code=genJoviaCode();
+  const codes=getCodes();
+  codes.unshift({code,email,note,used:false,created_at:new Date().toLocaleString()});
+  saveCodes(codes.slice(0,500));
+  lastCode=code;
+  document.getElementById('codeResult').style.display='block';
+  document.getElementById('codeText').textContent=code;
+  loadCodes();
+}
+
+function loadCodes(){
+  const codes=getCodes();
+  document.getElementById('count').textContent=codes.length;
+  document.getElementById('codeList').innerHTML=codes.map((r,i)=>`
+    <div class="item">
+      <div><b>${r.code}</b><br><span style="color:#94a3b8;font-size:11px">${r.email} ${r.note?'- '+r.note:''}</span><br><span style="color:#64748b;font-size:10px">${r.created_at}</span></div>
+      <div style="text-align:right"><span class="badge ${r.used?'used':'active'}">${r.used?'USED':'ACTIVE'}</span><br><button onclick="markUsed(${i})" style="width:auto;padding:4px 8px;font-size:11px;margin-top:4px;background:${r.used?'#334155':'#22c55e'}">${r.used?'Undo':'Use'}</button></div>
+    </div>
+  `).join('') || '<div style="text-align:center;color:#64748b;font-size:12px;padding:20px">No codes yet</div>';
+}
+
+function markUsed(i){
+  const codes=getCodes();
+  codes[i].used=!codes[i].used;
+  saveCodes(codes);
+  loadCodes();
+}
+
+function copyCode(){ navigator.clipboard.writeText(lastCode); alert('Copied: '+lastCode); }
+function shareCode(){ window.open(`https://wa.me/?text=${encodeURIComponent('Your JOVIA Withdraw Code: '+lastCode)}`,'_blank'); }
+
+function validateCode(){
+  const input=document.getElementById('validateInput').value.trim().toUpperCase();
+  const res=document.getElementById('validateResult');
+  if(!input){ res.textContent='Enter code'; return; }
+  const codes=getCodes();
+  const idx=codes.findIndex(c=>c.code===input);
+  if(idx===-1){ res.innerHTML='<span style="color:#ef4444">❌ Invalid code - not generated here</span>'; }
+  else if(codes[idx].used){ res.innerHTML='<span style="color:#ef4444">❌ Already USED</span>'; }
+  else {
+    res.innerHTML='<span style="color:#22c55e">✅ Valid & Active - '+codes[idx].email+'</span>';
+    if(confirm('Mark this code as USED now?')){ codes[idx].used=true; saveCodes(codes); loadCodes(); }
+  }
+}
+
+function clearAll(){ if(confirm('Delete ALL codes? This cannot undo')){ saveCodes([]); loadCodes(); document.getElementById('codeResult').style.display='none'; } }
+function exportCodes(){ const codes=getCodes(); const text=codes.map(c=>`${c.code} | ${c.email} | ${c.note} | ${c.used?'USED':'ACTIVE'} | ${c.created_at}`).join('\n'); navigator.clipboard.writeText(text); alert('All codes copied to clipboard!'); }
+
+loadCodes();
 </script></body></html>
