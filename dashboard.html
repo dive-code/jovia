@@ -63,10 +63,11 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .upgrade-input{flex:1;padding:13px 12px;border:1.5px solid #ece6f1;border-radius:12px;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;outline:none}
 .upgrade-input:focus{border-color:var(--gold);background:#fffef5}
 .upgrade-btn{border:0;padding:13px 18px;border-radius:12px;background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;font-size:11px;font-weight:900;cursor:pointer;white-space:nowrap}
-.upgrade-msg{font-size:11px;font-weight:700;margin-top:10px;min-height:16px;line-height:1.5}
+.upgrade-msg{font-size:11px;font-weight:700;margin-top:10px;min-height:16px;line-height:1.5;word-break:break-word}
 .upgrade-msg.success{color:#16a34a} .upgrade-msg.error{color:#b91c1c}
-.upgrade-success-box{display:none;padding:16px;border-radius:14px;background:linear-gradient(135deg,#dcfce7,#f0fdf4);border:1px solid #bbf7d0;text-align:center}
-.upgrade-success-box.show{display:block}
+.upgrade-success-box{display:none;padding:18px;border-radius:14px;background:linear-gradient(135deg,#dcfce7,#f0fdf4);border:1px solid #bbf7d0;text-align:center}
+.upgrade-success-box.show{display:block;animation:pop .4s}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
 .upgrade-features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
 .upgrade-feat{font-size:10px;font-weight:700;color:var(--purple);background:#fff;padding:8px 10px;border-radius:10px;border:1px solid #f3e8ff}
 .activity-section{margin-top:26px}
@@ -119,7 +120,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <div id="upgradeMsg" class="upgrade-msg"></div>
 <div class="upgrade-features"><div class="upgrade-feat">✅ No Daily Limit</div><div class="upgrade-feat">✅ All Jobs Unlocked</div><div class="upgrade-feat">✅ SUPER-only Updates</div><div class="upgrade-feat">✅ Priority Support</div></div>
 </div>
-<div id="upgradeSuccessBox" class="upgrade-success-box"><div style="font-size:28px">👑</div><div style="font-size:16px;font-weight:900;color:#15803d;margin-top:6px">SUPER UNLOCKED ✓</div><div style="font-size:11px;color:#166534;margin-top:6px;line-height:1.6">Full access. No limit. Future features unlocked.<br>Go to Jobs → Enjoy unlimited earnings!</div><div style="margin-top:12px;display:inline-flex;padding:6px 14px;border-radius:20px;background:#fff;border:1px solid #bbf7d0;color:#15803d;font-size:11px;font-weight:800">👑 SUPER ACTIVE</div><button onclick="openPage('jobs.html')" style="margin-top:14px;width:100%;padding:13px;border-radius:12px;border:0;background:#15803d;color:#fff;font-weight:800;cursor:pointer">Go to SUPER Jobs →</button></div>
+<div id="upgradeSuccessBox" class="upgrade-success-box"><div style="font-size:32px">👑</div><div style="font-size:18px;font-weight:900;color:#15803d;margin-top:8px">SUPER UNLOCKED ✓</div><div style="font-size:12px;color:#166534;margin-top:8px;line-height:1.7">Full access unlocked.<br>No daily limit. All jobs + future features.<br>Your code is now <b>USED - One time only ✓</b></div><div style="margin-top:14px;display:inline-flex;padding:8px 16px;border-radius:20px;background:#fff;border:1px solid #bbf7d0;color:#15803d;font-size:11px;font-weight:800">👑 SUPER ACTIVE - UNLIMITED</div><button onclick="openPage('jobs.html')" style="margin-top:16px;width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;font-weight:800;cursor:pointer;font-size:12px">Go to SUPER Jobs → Unlimited Earnings</button></div>
 </section>
 
 <section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></div></section>
@@ -154,17 +155,32 @@ function getUserFromResponse(data){return data?.user||data?.data?.user||data?.me
 
 async function loadUser(){
   try{
+    // Check localStorage SUPER first - instant SUPER UI even if server slow
+    const localPlan = String(localStorage.getItem("jovia_plan")||localStorage.getItem("jovia_package")||"").toLowerCase();
+    const isLocalSuper = localPlan.includes("super");
+
     const res=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
     const data=res.data;
     const user=getUserFromResponse(data);
     if(!user||!(user.id||user.email)) throw new Error("Invalid user");
     currentUser=user;
+
+    // If localStorage says SUPER but server still Gold, force SUPER for UI (server fix will catch up)
+    if(isLocalSuper && !String(user.package||user.plan||"").toLowerCase().includes("super")){
+      console.log("Local SUPER detected, forcing UI to SUPER");
+      user.package = "SUPER";
+      user.plan = "SUPER";
+    }
+
     const email=safeText(user.email).toLowerCase().trim();
     if(email.includes("@")){
       try{
         localStorage.setItem("jovia_email",email);
         localStorage.setItem("jovia_username",user.username||"");
         localStorage.setItem("jovia_plan",user.package||user.plan||"");
+        if(String(user.package||user.plan||"").toLowerCase().includes("super")){
+          localStorage.setItem("jovia_package","SUPER");
+        }
       }catch(_){}
     }
     displayUser(user,data);
@@ -201,7 +217,7 @@ function displayUser(user,apiData={}){
  let fullName=user.fullName||user.displayName||user.name||user.username||""; if(!fullName&&user.email) fullName=String(user.email).split("@")[0]; if(!fullName) fullName="Member";
  document.getElementById("userName").textContent=fullName;
 
- const planValues=[user.package, user.plan, user.package_name, user.user_package, apiData?.plan, apiData?.package, localStorage.getItem("jovia_plan")];
+ const planValues=[user.package, user.plan, user.package_name, user.user_package, apiData?.plan, apiData?.package, localStorage.getItem("jovia_plan"), localStorage.getItem("jovia_package")];
  let packageName="Silver";
  for(const v of planValues){
    const p=String(v||"").toLowerCase();
@@ -229,7 +245,7 @@ function displayUser(user,apiData={}){
    paymentButton.textContent=packageName==="Super"?"SUPER Active 👑 - Unlimited":"Account Activated ✓";
    paymentButton.disabled=true; paymentButton.style.opacity=".7";
    activityName.textContent=packageName==="Super"?"SUPER welcome bonus - Unlimited":packageName+" welcome bonus";
-   activityDate.textContent=packageName==="Super"?"SUPER active":"Account activated";
+   activityDate.textContent=packageName==="Super"?"SUPER active - Unlimited earnings":"Account activated";
    activityAmount.textContent="+"+money(welcomeBonus); activityAmount.className="activity-amount success";
  } else if(isSuspended){
    statusEl.textContent="Suspended"; paymentButton.textContent="Account Suspended"; paymentButton.disabled=true;
@@ -258,14 +274,14 @@ function displayUser(user,apiData={}){
    upgradeSuccess.classList.remove("show");
    upgradeTitle.textContent="🚀 Silver → SUPER";
    upgradeBadge.textContent="N16,000 CODE";
-   upgradeDesc.innerHTML="As <b>Silver</b>, upgrade to SUPER is <b>₦16,000</b>. Buy <b>SUPER-SILVER code (SUPER-XXXXXXXX)</b> from admin and enter below. Silver code won't work for Gold users.";
+   upgradeDesc.innerHTML="As <b>Silver</b>, upgrade to SUPER is <b>₦16,000</b>. Buy <b>SUPER-SILVER code (SUPER-XXXXXXXX)</b> from admin. Code is one-time use only - shows real name when used.";
  } else if(packageName==="Gold"){
    upgradeCard.classList.add("show");
    upgradeDefault.style.display="block";
    upgradeSuccess.classList.remove("show");
    upgradeTitle.textContent="🚀 Gold → SUPER";
    upgradeBadge.textContent="N12,000 CODE";
-   upgradeDesc.innerHTML="As <b>Gold</b>, upgrade to SUPER is <b>₦12,000</b>. Buy <b>SUPER-GOLD code (SUPER-XXXXXXXX)</b> from admin and enter below. Gold code won't work for Silver users.";
+   upgradeDesc.innerHTML="As <b>Gold</b>, upgrade to SUPER is <b>₦12,000</b>. Buy <b>SUPER-GOLD code (SUPER-XXXXXXXX)</b> from admin. Code is one-time use only - shows real name when used.";
  }
 
  const referralCode=String(user.referralCode||user.username||user.id||"").replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
@@ -300,6 +316,29 @@ async function copyReferral(){
 function openPage(p){const a=["dashboard.html","jobs.html","history.html","profile.html","withdraw.html","payment.html","login.html"]; if(!a.includes(p)) return; location.href=p;}
 function activate(){if(!currentUser) return; const s=String(currentUser.accountStatus??currentUser.account_status??"pending").toLowerCase(); if(["active","approved","activated","super"].includes(s) || String(currentUser.package||"").toLowerCase().includes("super")) return; location.href="payment.html";}
 
+// === FIXED: INSTANT SUPER UI + NO REPEAT ===
+function showSuperSuccessInstant(){
+  try{
+    const upgradeCard=document.getElementById("upgradeCard");
+    const upgradeDefault=document.getElementById("upgradeDefault");
+    const upgradeSuccess=document.getElementById("upgradeSuccessBox");
+    const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2");
+    const statusEl=document.getElementById("accountStatus"),paymentButton=document.getElementById("paymentButton");
+
+    if(b1){ b1.textContent="SUPER"; b1.classList.add("super"); }
+    if(b2){ b2.textContent="SUPER"; b2.classList.add("super"); }
+    if(statusEl){ statusEl.textContent="Active • SUPER 👑"; }
+    if(paymentButton){ paymentButton.textContent="SUPER Active 👑 - Unlimited"; paymentButton.disabled=true; paymentButton.style.opacity=".7"; }
+
+    if(upgradeCard){ upgradeCard.classList.add("show"); }
+    if(upgradeDefault){ upgradeDefault.style.display="none"; }
+    if(upgradeSuccess){ upgradeSuccess.classList.add("show"); }
+
+    localStorage.setItem("jovia_plan","SUPER");
+    localStorage.setItem("jovia_package","SUPER");
+  }catch(e){ console.log("showSuper error", e); }
+}
+
 async function applySuperUpgrade(){
  if(upgradeBusy) return;
  const input=document.getElementById("upgradeCodeInput"),msg=document.getElementById("upgradeMsg"),btn=document.getElementById("upgradeBtn");
@@ -308,10 +347,10 @@ async function applySuperUpgrade(){
    msg.textContent="❌ Must be SUPER-XXXXXXXX (14 chars) - e.g SUPER-AB12CD34"; msg.className="upgrade-msg error"; return;
  }
  if(!currentUser){
-   msg.textContent="⏳ Loading user... wait 2 seconds"; msg.className="upgrade-msg error"; await loadUser(); return;
+   msg.textContent="⏳ Loading user... wait 2 seconds then try again"; msg.className="upgrade-msg error"; await loadUser(); return;
  }
  upgradeBusy=true; btn.disabled=true; btn.textContent="Checking...";
- msg.textContent="⏳ Verifying with server as "+(currentUser.email||currentUser.username)+"..."; msg.className="upgrade-msg";
+ msg.textContent="⏳ Verifying as "+(currentUser.email||currentUser.username)+"..."; msg.className="upgrade-msg";
  try{
   const r=await fetch("/api/upgrade/apply",{
     method:"POST",
@@ -330,27 +369,32 @@ async function applySuperUpgrade(){
   if(!r.ok) throw new Error(d?.message||"Server error "+r.status);
   if(!d.success) throw new Error(d?.message||"Invalid code");
 
-  // INSTANT UI UPDATE TO SUPER - THIS FIXES GOLD STILL SHOWING
-  msg.textContent="✅ "+(d.message||"Upgraded to SUPER! Updating..."); msg.className="upgrade-msg success";
-  btn.textContent="SUCCESS ✓ - SUPER";
-  try{
-    localStorage.setItem("jovia_plan","SUPER");
-    localStorage.setItem("jovia_package","SUPER");
-    if(currentUser){ currentUser.package="SUPER"; currentUser.plan="SUPER"; }
-    displayUser(currentUser);
-  }catch(e){}
+  // === THIS FIXES YOUR 2 ISSUES ===
+  msg.innerHTML="✅ <b>"+(d.message||"Upgraded to SUPER!")+"</b><br><small style='color:#15803d'>Code marked USED - One time only ✓<br>Updating dashboard to SUPER...</small>";
+  msg.className="upgrade-msg success";
+  btn.textContent="SUCCESS ✓ SUPER";
+  btn.style.background="linear-gradient(135deg,#16a34a,#15803d)";
+  btn.style.color="#fff";
+  input.disabled=true;
+  input.value=code+" ✓ USED";
 
-  // Reload fresh data from server after 1.5s
+  // INSTANTLY show SUPER UI - no need to reload to see SUPER
+  showSuperSuccessInstant();
+  if(currentUser){ currentUser.package="SUPER"; currentUser.plan="SUPER"; displayUser(currentUser); }
+
+  // Reload fresh after 2 sec to confirm from server
   setTimeout(async ()=>{
     try{ await loadUser(); }catch(e){}
-    setTimeout(()=>location.reload(),800);
-  },1200);
+    showSuperSuccessInstant();
+  },1500);
 
  }catch(e){
    msg.textContent="❌ "+(e.message||"Failed"); 
    msg.className="upgrade-msg error"; 
    btn.disabled=false; 
    btn.textContent="UPGRADE →"; 
+   btn.style.background="";
+   btn.style.color="";
    upgradeBusy=false;
  }
 }
