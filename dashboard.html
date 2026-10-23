@@ -121,7 +121,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <div id="upgradeSuccessBox" class="upgrade-success-box"><div style="font-size:28px">👑</div><div style="font-size:16px;font-weight:900;color:#15803d;margin-top:6px">SUPER UNLOCKED ✓</div><div style="font-size:11px;color:#166534;margin-top:6px;line-height:1.6">Full access. No limit. Future features unlocked.</div><div style="margin-top:10px;display:inline-flex;padding:6px 12px;border-radius:20px;background:#fff;border:1px solid #bbf7d0;color:#15803d;font-size:10px;font-weight:800">SUPER ACTIVE</div></div>
 </section>
 
-<section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></section>
+<section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></div></section>
 </div>
 <nav class="bottom-nav"><button class="nav active" type="button" onclick="openPage('dashboard.html')"><div class="nav-icon">⌂</div>Home</button><button class="nav" type="button" onclick="openPage('jobs.html')"><div class="nav-icon">◈</div>Jobs</button><button class="nav" type="button" onclick="openPage('history.html')"><div class="nav-icon">◷</div>History</button><button class="nav" type="button" onclick="openPage('profile.html')"><div class="nav-icon">◍</div>Profile</button></nav>
 <div id="joviaPopupOverlay"><div id="joviaPopupBox"><button id="joviaPopupClose" type="button">✕</button><div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div><div class="joviaPopupTitle" id="joviaPopupTitle"></div><div class="joviaPopupText" id="joviaPopupText"></div><div class="joviaPopupBtns"><a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" rel="noopener noreferrer" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a><button class="joviaBtn joviaBtnClose" id="joviaPopupOk" type="button">Continue to Dashboard →</button></div></div></div>
@@ -141,7 +141,7 @@ function finishSwipe(){if(!isDragging)return; isDragging=false; wrapper.style.tr
 card.addEventListener("touchend",finishSwipe,{passive:true}); card.addEventListener("touchcancel",finishSwipe,{passive:true});
 async function fetchJSON(url,options={}){const r=await fetch(url,{credentials:"include",cache:"no-store",...options,headers:{"Accept":"application/json",...(options.headers||{})}}); let d=null; try{d=await r.json();}catch(_){} if(r.status===401||r.status===403){window.location.replace("login.html"); throw new Error("Session expired");} if(!r.ok) throw new Error((d&&(d.message||d.error))||`Failed ${r.status}`); return {response:r,data:d};}
 function getUserFromResponse(data){return data?.user||data?.data?.user||data?.member||data;}
-async function loadUser(){try{const res=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"}); const data=res.data; const user=getUserFromResponse(data); if(!user||!(user.id||user.email)) throw new Error("Invalid user"); currentUser=user; const email=safeText(user.email).toLowerCase().trim(); if(email.includes("@")){try{localStorage.setItem("jovia_email",email);}catch(_){}} displayUser(user,data); await Promise.allSettled([loadWallet(),loadReferrals()]); setTimeout(showGlobalPopup,700); setTimeout(checkPrivatePop,1400);}catch(e){console.error(e); document.getElementById("userName").textContent="Member"; document.getElementById("accountStatus").textContent="Unavailable";}}
+async function loadUser(){try{const res=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"}); const data=res.data; const user=getUserFromResponse(data); if(!user||!(user.id||user.email)) throw new Error("Invalid user"); currentUser=user; const email=safeText(user.email).toLowerCase().trim(); if(email.includes("@")){try{localStorage.setItem("jovia_email",email); localStorage.setItem("jovia_username",user.username||"");}catch(_){}} displayUser(user,data); await Promise.allSettled([loadWallet(),loadReferrals()]); setTimeout(showGlobalPopup,700); setTimeout(checkPrivatePop,1400);}catch(e){console.error(e); document.getElementById("userName").textContent="Member"; document.getElementById("accountStatus").textContent="Unavailable";}}
 async function loadWallet(){try{const {data}=await fetchJSON("/api/wallet?t="+Date.now()); if(data&&data.success){if(data.walletBalance!==undefined)document.getElementById("balance").textContent=money(data.walletBalance??data.wallet_balance); if(data.affiliateBalance!==undefined)document.getElementById("affiliateBalance").textContent=money(data.affiliateBalance??data.affiliate_balance); if(data.totalEarned!==undefined)document.getElementById("totalEarned").textContent=money(data.totalEarned??data.total_earned);}}catch(e){}}
 async function loadReferrals(){try{const {data}=await fetchJSON("/api/referrals?t="+Date.now()); if(data&&data.success){const c=Number(data.totalReferrals??0); document.getElementById("memberCount").textContent=String(c); document.getElementById("affiliateCountBig").textContent=c+" Joined";}}catch(e){}}
 
@@ -149,7 +149,7 @@ function displayUser(user,apiData={}){
  if(!user) return;
  let fullName=user.fullName||user.displayName||user.name||user.username||""; if(!fullName&&user.email) fullName=String(user.email).split("@")[0]; if(!fullName) fullName="Member";
  document.getElementById("userName").textContent=fullName;
- const planValues=[user.plan,user.package,apiData?.plan];
+ const planValues=[user.plan,user.package,user.package_name,apiData?.plan];
  let packageName="Silver"; for(const v of planValues){const p=String(v||"").toLowerCase(); if(p.includes("super")){packageName="Super"; break;} if(p.includes("gold")){packageName="Gold"; break;}}
  const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2"); b1.textContent=packageName.toUpperCase(); b2.textContent=packageName.toUpperCase(); if(packageName==="Super"){b1.classList.add("super"); b2.classList.add("super");} else {b1.classList.remove("super"); b2.classList.remove("super");}
  const defaultBonus=packageName==="Gold"?15000:packageName==="Super"?25000:9000; const serverBonus=user.welcomeBonus??user.welcome_bonus??apiData?.welcomeBonus; const welcomeBonus=Number.isFinite(Number(serverBonus))?Number(serverBonus):defaultBonus; document.getElementById("welcomeBonus").textContent=money(welcomeBonus);
@@ -160,7 +160,6 @@ function displayUser(user,apiData={}){
  else if(isSuspended){statusEl.textContent="Suspended"; paymentButton.textContent="Account Suspended"; paymentButton.disabled=true; activityName.textContent="Suspended"; activityDate.textContent="Contact support"; activityAmount.textContent="—"; activityAmount.className="activity-amount pending";}
  else{statusEl.textContent="Pending"; paymentButton.textContent="Continue to Payment"; paymentButton.disabled=false; paymentButton.style.opacity="1"; activityName.textContent=packageName+" welcome bonus"; activityDate.textContent="Pending activation"; activityAmount.textContent="Pending"; activityAmount.className="activity-amount pending";}
 
- // === NEW CHEAT-PROOF UPGRADE LOGIC ===
  const upgradeCard=document.getElementById("upgradeCard");
  const upgradeDefault=document.getElementById("upgradeDefault");
  const upgradeSuccess=document.getElementById("upgradeSuccessBox");
@@ -168,29 +167,26 @@ function displayUser(user,apiData={}){
  const upgradeBadge=document.getElementById("upgradeBadge");
  const upgradeDesc=document.getElementById("upgradeDesc");
 
- // HIDE FOR NON-ACTIVATED OR PENDING
  if(!isActive){
-   upgradeCard.classList.remove("show"); // hidden for new users
+   upgradeCard.classList.remove("show");
  } else if(packageName==="Super"){
    upgradeCard.classList.add("show");
    upgradeDefault.style.display="none";
    upgradeSuccess.classList.add("show");
  } else if(packageName==="Silver"){
-   // Silver -> Super = 16k
    upgradeCard.classList.add("show");
    upgradeDefault.style.display="block";
    upgradeSuccess.classList.remove("show");
    upgradeTitle.textContent="🚀 Silver → SUPER";
    upgradeBadge.textContent="N16,000 CODE";
-   upgradeDesc.innerHTML="As a <b>Silver member</b>, your upgrade to SUPER is <b>₦16,000</b>. Buy a <b>SUPER-SILVER code</b> from admin (format SUPER-XXXXXXXX) and enter it below. This prevents cheating — Gold codes won't work for you.";
+   upgradeDesc.innerHTML="As a <b>Silver member</b>, your upgrade to SUPER is <b>₦16,000</b>. Buy a <b>SUPER-SILVER code</b> from admin (format SUPER-XXXXXXXX) and enter it below. Silver code won't work for Gold — cheat-proof.";
  } else if(packageName==="Gold"){
-   // Gold -> Super = 12k
    upgradeCard.classList.add("show");
    upgradeDefault.style.display="block";
    upgradeSuccess.classList.remove("show");
    upgradeTitle.textContent="🚀 Gold → SUPER";
    upgradeBadge.textContent="N12,000 CODE";
-   upgradeDesc.innerHTML="As a <b>Gold member</b>, your upgrade to SUPER is <b>₦12,000</b>. Buy a <b>SUPER-GOLD code</b> from admin (format SUPER-XXXXXXXX) and enter it below. Silver codes won't work for you.";
+   upgradeDesc.innerHTML="As a <b>Gold member</b>, your upgrade to SUPER is <b>₦12,000</b>. Buy a <b>SUPER-GOLD code</b> from admin (format SUPER-XXXXXXXX) and enter it below. Gold code won't work for Silver — cheat-proof.";
  }
 
  const referralCode=String(user.referralCode||user.username||user.id||"").replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
@@ -208,20 +204,41 @@ async function copyReferral(){const link=document.getElementById("referralLink")
 function openPage(p){const a=["dashboard.html","jobs.html","history.html","profile.html","withdraw.html","payment.html","login.html"]; if(!a.includes(p)) return; location.href=p;}
 function activate(){if(!currentUser) return; const s=String(currentUser.accountStatus??currentUser.account_status??"pending").toLowerCase(); if(["active","approved","activated"].includes(s)) return; location.href="payment.html";}
 
+// FIXED - NOW SENDS EMAIL + USERNAME TO FIX USER NOT FOUND
 async function applySuperUpgrade(){
  if(upgradeBusy) return;
  const input=document.getElementById("upgradeCodeInput"),msg=document.getElementById("upgradeMsg"),btn=document.getElementById("upgradeBtn");
  let code=String(input.value||"").toUpperCase().trim();
- if(!code.startsWith("SUPER-")||code.length!==14){msg.textContent="Must be SUPER-XXXXXXXX"; msg.className="upgrade-msg error"; return;}
- upgradeBusy=true; btn.disabled=true; btn.textContent="Checking..."; msg.textContent="Verifying with server..."; msg.className="upgrade-msg";
+ if(!code.startsWith("SUPER-")||code.length!==14){msg.textContent="Must be SUPER-XXXXXXXX (14 chars)"; msg.className="upgrade-msg error"; return;}
+ if(!currentUser){msg.textContent="Loading user... wait 2 seconds and try again"; msg.className="upgrade-msg error"; return;}
+ upgradeBusy=true; btn.disabled=true; btn.textContent="Checking..."; msg.textContent="Verifying with server as "+(currentUser.email||currentUser.username)+"..."; msg.className="upgrade-msg";
  try{
-  const r=await fetch("/api/upgrade/apply",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({code})});
+  const r=await fetch("/api/upgrade/apply",{
+    method:"POST",
+    credentials:"include",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      code: code,
+      superCode: code,
+      email: currentUser.email,
+      userEmail: currentUser.email,
+      username: currentUser.username,
+      fullName: currentUser.fullName||currentUser.name||""
+    })
+  });
   const d=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(d?.message||"Failed");
-  if(!d.success) throw new Error(d?.message||"Invalid");
-  msg.textContent="Upgraded to SUPER! Reloading..."; msg.className="upgrade-msg success";
-  setTimeout(()=>location.reload(),1200);
- }catch(e){msg.textContent=e.message; msg.className="upgrade-msg error"; btn.disabled=false; btn.textContent="UPGRADE →"; upgradeBusy=false;}
+  if(!r.ok) throw new Error(d?.message||"Server error "+r.status);
+  if(!d.success) throw new Error(d?.message||"Invalid code");
+  msg.textContent="✅ "+(d.message||"Upgraded to SUPER! Reloading..."); msg.className="upgrade-msg success";
+  btn.textContent="SUCCESS ✓";
+  setTimeout(()=>location.reload(),1500);
+ }catch(e){
+   msg.textContent="❌ "+e.message; 
+   msg.className="upgrade-msg error"; 
+   btn.disabled=false; 
+   btn.textContent="UPGRADE →"; 
+   upgradeBusy=false;
+ }
 }
 document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,14); document.getElementById("upgradeMsg").textContent="";});
 document.getElementById("upgradeCodeInput").addEventListener("keydown",e=>{if(e.key==="Enter") applySuperUpgrade();});
