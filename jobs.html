@@ -24,6 +24,7 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
 .summary-label{color:#d8cfe0;font-size:9px;font-weight:700;margin-bottom:6px}
 .summary-value{font-size:18px;font-weight:900;overflow-wrap:anywhere}
+.super-badge{display:inline-flex;margin-top:8px;padding:5px 10px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:10px;font-weight:900}
 .section{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden}
 .section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
 .section-title{font-size:15px;font-weight:900} .section-count{color:var(--m);font-size:10px;font-weight:800}
@@ -41,7 +42,7 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .task-label{margin-bottom:5px;font-size:9px;font-weight:900} .task-info{font-size:10px;line-height:1.65}
 .task-open-btn,.complete-btn,.upgrade-btn{width:100%;border:none;padding:12px 14px;border-radius:10px;font-size:11px;font-weight:900;cursor:pointer}
 .task-open-btn{background:var(--y);color:#241900} .complete-btn{background:var(--p);color:#fff;margin-top:9px} .complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
-.upgrade-btn{display:block;background:linear-gradient(135deg,#f59e0b,#ffd83d);color:#3a2600;margin-top:9px;text-align:center;text-decoration:none}
+.upgrade-btn{display:block;background:linear-gradient(135deg,#ff9a00,#ffd83d);color:#3a2600;margin-top:9px;text-align:center;text-decoration:none;border:1px solid #f59e0b}
 .loading{padding:34px 20px;text-align:center;color:var(--m);font-size:12px} .empty{display:none;padding:35px 20px;text-align:center}
 .error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center}
 .activation-box,.suspended-box{padding:42px 20px;text-align:center}
@@ -59,9 +60,9 @@ button:disabled{opacity:.65;cursor:not-allowed}
 <div class="app">
 <header class="topbar"><div class="brand">JOVIA<span>.</span></div><div style="font-size:13px;font-weight:800;color:#655b6d">Jobs</div></header>
 <main class="content">
-<div class="page-heading"><h1>Available Jobs</h1><p>Complete tasks + videos. Daily limit: Silver 5/₦2500, Gold 10/₦7000.</p></div>
+<div class="page-heading"><h1>Available Jobs</h1><p id="planInfoText">Complete tasks + videos. Silver 5/₦2,500 • Gold 10/₦7,000 • SUPER unlimited.</p></div>
 <div id="message" class="message"></div>
-<section class="summary-card"><div class="summary-grid"><div class="summary-item"><div class="summary-label">Available</div><div class="summary-value" id="availableCount">0</div></div><div class="summary-item"><div class="summary-label">Completed Today</div><div class="summary-value" id="completedCount">0</div></div><div class="summary-item"><div class="summary-label">Wallet</div><div class="summary-value" id="walletBalance">₦0</div></div></div><div id="dailyEarnedText" style="margin-top:10px;font-size:10px;color:#d8cfe0">Earned today: ₦0 / ₦2500</div></section>
+<section class="summary-card"><div class="summary-grid"><div class="summary-item"><div class="summary-label">Available</div><div class="summary-value" id="availableCount">0</div></div><div class="summary-item"><div class="summary-label">Completed Today</div><div class="summary-value" id="completedCount">0</div></div><div class="summary-item"><div class="summary-label">Wallet</div><div class="summary-value" id="walletBalance">₦0</div></div></div><div id="dailyEarnedText" style="margin-top:10px;font-size:10px;color:#d8cfe0">Earned today: ₦0</div><div id="superActiveBadge" style="display:none" class="super-badge">👑 SUPER - FULL ACCESS UNLIMITED</div></section>
 
 <section class="section" id="videoSection"><div class="section-header"><h2 class="section-title">📚 JOVIA Academy</h2><span class="section-count" id="videoCount">0 resources</span></div><div class="loading" id="videoLoading">Loading academy...</div><div id="videosList"></div><div class="empty" id="videoEmpty"><div>📚</div><h3>No resources yet</h3></div></section>
 
@@ -84,21 +85,71 @@ button:disabled{opacity:.65;cursor:not-allowed}
 const API_BASE=""; const TASK_WAIT_SECONDS=30; const MIN_WATCH_SECONDS=60;
 let allJobs=[],availableJobs=[],completedJobs=[],allVideos=[],completedVideos=[],currentFilter="available",accountActivated=false,currentUser=null,messageTimer=null,dailyStatsFromServer=null,loadingAll=false;
 const watchedVideos=new Map(); const taskTimers=new Map(); const TASK_TIMER_STORAGE_KEY="jovia_task_waits_v1"; let taskTimerInterval=null;
-const PLAN_CONFIG={Silver:{maxDaily:2500,taskCount:5,upgrade:"GOLD"},Gold:{maxDaily:7000,taskCount:10,upgrade:"JOVIA Super"}};
+
+// FIXED: ADD SUPER - UNLIMITED
+const PLAN_CONFIG={
+  Silver:{maxDaily:2500,taskCount:5,upgrade:"SUPER",label:"Silver"},
+  Gold:{maxDaily:7000,taskCount:10,upgrade:"SUPER",label:"Gold"},
+  Super:{maxDaily:999999999,taskCount:999,upgrade:"SUPER",label:"SUPER"}
+};
+
 function formatNaira(v){const n=Number(v);return"₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{maximumFractionDigits:2});}
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 function safeExternalURL(v){if(typeof v!=="string"||!v.trim())return"";let c=v.trim();if(c.startsWith("www."))c="https://"+c;try{const p=new URL(c,location.origin);if(!["http:","https:"].includes(p.protocol))return"";return p.href;}catch{return"";}}
 function getJobId(j){return j?.id??"";} function getJobTitle(j){return j?.title||"Job";} function getJobDescription(j){return j?.description||"Complete to earn.";} function getJobDuration(j){return j?.duration||"Flexible";} function getJobCategory(j){return j?.category||"General";}
-function normalizePlan(v){const p=String(v||"").toLowerCase();if(p.includes("gold"))return"Gold";return"Silver";} 
-function getCurrentPlan(){try{return normalizePlan(currentUser?.package||localStorage.getItem("jovia_plan")||"Silver");}catch{return"Silver";}}
+
+// FIXED: NORMALIZE PLAN WITH SUPER
+function normalizePlan(v){
+  const p=String(v||"").toLowerCase().trim();
+  if(p.includes("super")) return "Super";
+  if(p.includes("gold")) return "Gold";
+  return "Silver";
+}
+function getCurrentPlan(){
+  try{
+    const pkg=currentUser?.package||currentUser?.plan||localStorage.getItem("jovia_plan")||"Silver";
+    return normalizePlan(pkg);
+  }catch{return"Silver";}
+}
+function isSuperPlan(){return getCurrentPlan()==="Super";}
 function getPlanLimits(plan){return PLAN_CONFIG[normalizePlan(plan)]||PLAN_CONFIG.Silver;}
-function getAccountStatus(u){return String(u?.account_status||u?.status||"").toLowerCase();} function isSuspended(u){return["suspended","banned"].includes(getAccountStatus(u));} function isActivated(u){if(!u||isSuspended(u))return false;return["active","approved","silver","gold"].includes(getAccountStatus(u));}
+function getAccountStatus(u){return String(u?.account_status||u?.status||"").toLowerCase();}
+function isSuspended(u){return["suspended","banned","blocked"].includes(getAccountStatus(u));}
+function isActivated(u){
+  if(!u||isSuspended(u))return false;
+  const s=getAccountStatus(u);
+  return ["active","approved","silver","gold","super"].includes(s)||s.includes("super");
+}
 function showMessage(m,t="error"){const box=document.getElementById("message");if(messageTimer)clearTimeout(messageTimer);box.textContent=String(m||"");box.className="message "+(t==="success"?"success":t==="info"?"info-message":"error-message");messageTimer=setTimeout(()=>{box.className="message";box.textContent="";},7000);}
 function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance??0;document.getElementById("walletBalance").textContent=formatNaira(b);}
-function getDailyStats(){const plan=getCurrentPlan();const limits=getPlanLimits(plan);let earned=0,claimedCount=0;if(dailyStatsFromServer){earned=Number(dailyStatsFromServer.earnedToday??dailyStatsFromServer.todayEarned??0)||0;claimedCount=Number(dailyStatsFromServer.claimedToday??dailyStatsFromServer.todayClaimed??0)||0;}else{claimedCount=completedJobs.length+completedVideos.length;}return{plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned)};}
-function isDailyLimitReached(){const s=getDailyStats();return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;}
-function wouldExceedLimit(reward){const s=getDailyStats();const a=Number(reward)||0;return a>s.limits.maxDaily||s.earned+a>s.limits.maxDaily;}
-function getUpgradeMessage(plan){return normalizePlan(plan)==="Silver"?"This task exceeds your plan limit. Kindly upgrade to GOLD.":"This task exceeds your plan limit. Kindly upgrade to Jovia Super.";}
+
+function getDailyStats(){
+  // SUPER HAS NO LIMIT
+  if(isSuperPlan()){
+    return {plan:"Super",limits:PLAN_CONFIG.Super,earned:0,claimedCount:completedJobs.length+completedVideos.length,remainingAmount:999999999,isSuper:true};
+  }
+  const plan=getCurrentPlan();const limits=getPlanLimits(plan);let earned=0,claimedCount=0;
+  if(dailyStatsFromServer){
+    earned=Number(dailyStatsFromServer.earnedToday??dailyStatsFromServer.todayEarned??0)||0;
+    claimedCount=Number(dailyStatsFromServer.claimedToday??dailyStatsFromServer.todayClaimed??0)||0;
+  }else{
+    claimedCount=completedJobs.length+completedVideos.length;
+  }
+  return {plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned),isSuper:false};
+}
+function isDailyLimitReached(){
+  if(isSuperPlan()) return false; // SUPER NEVER REACHES LIMIT
+  const s=getDailyStats(); return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;
+}
+function wouldExceedLimit(reward){
+  if(isSuperPlan()) return false; // SUPER CAN CLAIM ANY AMOUNT
+  const s=getDailyStats();const a=Number(reward)||0;return a>s.limits.maxDaily||s.earned+a>s.limits.maxDaily;
+}
+function getUpgradeMessage(plan){
+  if(normalizePlan(plan)==="Silver") return "Daily limit reached. Upgrade to SUPER (N12k code) for full unlimited access.";
+  if(normalizePlan(plan)==="Gold") return "Daily limit reached. Upgrade to SUPER (N12k code) for unlimited access.";
+  return "Upgrade to SUPER for unlimited access.";
+}
 function restoreTaskTimers(){try{const saved=JSON.parse(sessionStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");const now=Date.now();Object.entries(saved).forEach(([id,ts])=>{const t=Number(ts);if(id&&Number.isFinite(t)&&t>now-30000&&t<now+35000)taskTimers.set(String(id),{claimAvailableAt:t});});}catch{taskTimers.clear();}}
 function saveTaskTimers(){try{const o={};taskTimers.forEach((s,id)=>{if(s&&Number.isFinite(s.claimAvailableAt))o[id]=s.claimAvailableAt;});sessionStorage.setItem(TASK_TIMER_STORAGE_KEY,JSON.stringify(o));}catch{}}
 function startTaskTimer(jobId){taskTimers.set(String(jobId),{claimAvailableAt:Date.now()+TASK_WAIT_SECONDS*1000});saveTaskTimers();startTaskTimerTicker();}
@@ -106,13 +157,21 @@ function clearTaskTimer(jobId){taskTimers.delete(String(jobId));saveTaskTimers()
 function getTaskSecondsRemaining(jobId){const s=taskTimers.get(String(jobId));if(!s)return TASK_WAIT_SECONDS;return Math.max(0,Math.ceil((s.claimAvailableAt-Date.now())/1000));}
 function hasOpenedTask(job){const s=taskTimers.get(String(getJobId(job)));return Boolean(s&&Date.now()>=s.claimAvailableAt);}
 function startTaskTimerTicker(){if(taskTimerInterval)return;taskTimerInterval=setInterval(()=>{if(!taskTimers.size){clearInterval(taskTimerInterval);taskTimerInterval=null;return;}if(accountActivated&&currentFilter==="available")renderJobs(availableJobs);},1000);}
-function renderUpgradeCard(reward,plan){return `<div class="task-box upgrade-box"><div class="task-label">🔒 TASK LOCKED</div><div class="task-info"><strong>${escapeHTML(getUpgradeMessage(plan))}</strong><br><br>Task reward: ${formatNaira(reward)}</div></div><a href="payment.html" class="upgrade-btn">Upgrade to ${escapeHTML(normalizePlan(plan)==="Silver"?"GOLD":"JOVIA Super")} →</a>`;}
-function renderDailyLimit(){const list=document.getElementById("jobsList");const s=getDailyStats();list.innerHTML=`<div style="padding:30px 20px;text-align:center"><div style="font-size:28px">🎯</div><h3 style="margin-top:10px">Daily limit reached</h3><p style="margin-top:8px;color:#756d7c;font-size:11px">Earned ${formatNaira(s.earned)} / ${formatNaira(s.limits.maxDaily)} today.<br>${s.claimedCount}/${s.limits.taskCount} tasks.</p><a href="payment.html" class="upgrade-btn">Upgrade to ${escapeHTML(s.plan==="Silver"?"GOLD":"JOVIA Super")} →</a></div>`;}
+
+function renderUpgradeCard(reward,plan){
+  return `<div class="task-box upgrade-box"><div class="task-label">🔒 UPGRADE TO SUPER</div><div class="task-info"><strong>${escapeHTML(getUpgradeMessage(plan))}</strong><br><br>Task reward: ${formatNaira(reward)} • SUPER gets unlimited access.</div></div><a href="dashboard.html" class="upgrade-btn">🚀 Upgrade to SUPER - N12k Code →</a>`;
+}
+function renderDailyLimit(){
+  const list=document.getElementById("jobsList");const s=getDailyStats();
+  if(s.isSuper) return; // SHOULD NEVER SHOW FOR SUPER
+  list.innerHTML=`<div style="padding:30px 20px;text-align:center"><div style="font-size:28px">🎯</div><h3 style="margin-top:10px">Daily limit reached</h3><p style="margin-top:8px;color:#756d7c;font-size:11px">Earned ${formatNaira(s.earned)} / ${formatNaira(s.limits.maxDaily)} today.<br>${s.claimedCount}/${s.limits.taskCount} tasks.</p><a href="dashboard.html" class="upgrade-btn">🚀 Upgrade to SUPER (N12k Code) →</a><p style="margin-top:10px;font-size:10px;color:#8a8196">SUPER users get unlimited jobs + future features.</p></div>`;
+}
 function hideJobContent(){document.getElementById("loadingState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("emptyState").style.display="none";document.getElementById("jobsList").innerHTML="";}
 function showJobsState(){accountActivated=true;document.getElementById("loadingState").style.display="none";document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("filterRow").style.display="flex";document.getElementById("sectionTitle").textContent=currentFilter==="completed"?"Completed Jobs":"Available Jobs";}
 function showSuspendedState(){accountActivated=false;hideJobContent();document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="block";}
 function showActivationState(){accountActivated=false;hideJobContent();document.getElementById("activationState").style.display="block";document.getElementById("inactivePopup").classList.add("show");}
 function closePopup(){document.getElementById("inactivePopup").classList.remove("show");}
+
 function renderJobs(jobs){
  if(!accountActivated)return;
  const list=document.getElementById("jobsList");const empty=document.getElementById("emptyState");
@@ -121,7 +180,20 @@ function renderJobs(jobs){
  document.getElementById("completedCount").textContent=String(stats.claimedCount);
  document.getElementById("availableCount").textContent=String(availableJobs.length);
  document.getElementById("jobCount").textContent=`${jobs.length} ${jobs.length===1?"job":"jobs"}`;
- document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${formatNaira(stats.limits.maxDaily)} - ${stats.claimedCount}/${stats.limits.taskCount} tasks`;
+ 
+ // SUPER UI
+ const superBadge=document.getElementById("superActiveBadge");
+ const planInfo=document.getElementById("planInfoText");
+ if(stats.isSuper){
+   superBadge.style.display="inline-flex";
+   planInfo.textContent="👑 SUPER ACTIVE - Unlimited jobs, unlimited earnings, all future features unlocked.";
+   document.getElementById("dailyEarnedText").textContent=`SUPER: ${stats.claimedCount} tasks completed today - Unlimited`;
+ }else{
+   superBadge.style.display="none";
+   planInfo.textContent=`Complete tasks + videos. Silver 5/₦2,500 • Gold 10/₦7,000 • SUPER unlimited (N12k upgrade).`;
+   document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${formatNaira(stats.limits.maxDaily)} - ${stats.claimedCount}/${stats.limits.taskCount} tasks`;
+ }
+
  if(currentFilter==="available"&&isDailyLimitReached()){renderDailyLimit();return;}
  if(!jobs.length){empty.style.display="block";document.getElementById("emptyTitle").textContent=currentFilter==="completed"?"No completed jobs yet":"No jobs available";list.innerHTML="";return;}
  empty.style.display="none";
@@ -131,7 +203,7 @@ function renderJobs(jobs){
   const item=document.createElement("div");item.className="job-card";
   let html=`<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(reward)}</div></div><div class="job-description">${escapeHTML(desc)}</div><div class="job-meta"><span class="meta">${escapeHTML(getJobCategory(job))}</span><span class="meta">⏱ ${escapeHTML(getJobDuration(job))}</span></div>`;
   if(completed){clearTaskTimer(id);html+=`<div class="task-box success-box"><div class="task-label">TASK COMPLETED ✓</div><div class="task-info">Reward: ${formatNaira(reward)}</div></div><button class="complete-btn completed" disabled>Completed ✓</button>`;}
-  else if(reward>stats.limits.maxDaily||wouldExceedLimit(reward)){html+=renderUpgradeCard(reward,stats.plan);}
+  else if(!stats.isSuper&&(reward>stats.limits.maxDaily||wouldExceedLimit(reward))){html+=renderUpgradeCard(reward,stats.plan);}
   else if(timerExists&&!opened){html+=`<div class="task-box wait-box"><div class="task-label">⏳ TIMER IN PROGRESS</div><div class="task-info">Claim in <strong>${secondsRemaining}</strong>s</div></div><button class="complete-btn" disabled>Wait ${secondsRemaining}s</button>`;}
   else if(opened){html+=`<div class="task-box success-box"><div class="task-label">✓ READY TO CLAIM</div><div class="task-info">Wait passed. Complete task instructions then claim.</div></div><button class="complete-btn" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(reward)} →</button>`;}
   else{html+=`<div class="task-box"><div class="task-label">TASK</div><div class="task-info">Open task, spend ${TASK_WAIT_SECONDS}s reviewing.</div></div><button class="task-open-btn" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗</button>`;}
@@ -153,8 +225,12 @@ async function openTask(jobId,btn){
  if(!accountActivated){showActivationState();return;}
  const job=allJobs.find(x=>String(getJobId(x))===String(jobId));if(!job){showMessage("Task not found");return;}
  if(taskTimers.has(String(jobId))){showMessage("Already opened - wait timer","info");renderJobs(availableJobs);return;}
- const reward=Number(job.reward||0);if(reward>getPlanLimits(getCurrentPlan()).maxDaily||wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));renderJobs(availableJobs);return;}
- if(isDailyLimitReached()){showMessage("Daily limit reached");renderJobs(availableJobs);return;}
+ const reward=Number(job.reward||0);
+ // SUPER SKIPS LIMIT CHECK
+ if(!isSuperPlan()){
+   if(reward>getPlanLimits(getCurrentPlan()).maxDaily||wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));renderJobs(availableJobs);return;}
+   if(isDailyLimitReached()){showMessage("Daily limit reached - Upgrade to SUPER");renderJobs(availableJobs);return;}
+ }
  const destFromJob=getTaskLink(job);if(!destFromJob){showMessage("No valid link");return;}
  if(btn){btn.disabled=true;btn.textContent="Opening...";}
  let popup=null;try{popup=window.open("about:blank","_blank");if(!popup){showMessage("Allow pop-ups");if(btn){btn.disabled=false;btn.textContent="Open Task ↗";}return;}try{popup.opener=null;}catch{}const resp=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/open`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});const d=await resp.json().catch(()=>({}));if(resp.status===401){popup.close();location.href="login.html";return;}if(!resp.ok){popup.close();throw new Error(d?.message||"Unable open");}const destination=safeExternalURL(d?.url||d?.link||destFromJob);if(!destination){popup.close();throw new Error("No valid link from server");}popup.location.replace(destination);startTaskTimer(jobId);showMessage(`Task opened - wait ${TASK_WAIT_SECONDS}s before claim`,"success");renderJobs(availableJobs);}catch(e){if(popup&&!popup.closed)try{popup.close();}catch{}showMessage(e.message||"Unable open");if(btn){btn.disabled=false;btn.textContent="Open Task ↗";}}
@@ -164,8 +240,11 @@ async function completeJob(jobId,btn){
  const job=allJobs.find(x=>String(getJobId(x))===String(jobId));if(!job){showMessage("Not found");return;}
  if(isCompleted(job)){showMessage("Already claimed","info");await loadAll();return;}
  if(!hasOpenedTask(job)){const rem=getTaskSecondsRemaining(jobId);showMessage(rem>0?`Wait ${rem}s more`:"Open first","error");renderJobs(availableJobs);return;}
- const reward=Number(job.reward||0);if(wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));renderJobs(availableJobs);return;}
- if(isDailyLimitReached()){showMessage("Daily limit reached");renderJobs(availableJobs);return;}
+ const reward=Number(job.reward||0);
+ if(!isSuperPlan()){
+   if(wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));renderJobs(availableJobs);return;}
+   if(isDailyLimitReached()){showMessage("Daily limit reached - Upgrade to SUPER");renderJobs(availableJobs);return;}
+ }
  if(btn){btn.disabled=true;btn.textContent="Claiming...";}
  try{const resp=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});const d=await resp.json().catch(()=>({}));if(resp.status===401){location.href="login.html";return;}if(!resp.ok)throw new Error(d?.message||"Unable claim");clearTaskTimer(jobId);const finalReward=Number(d?.reward||reward)||0;const bal=d?.walletBalance??d?.wallet_balance;if(bal!=null){document.getElementById("walletBalance").textContent=formatNaira(bal);if(currentUser)currentUser.wallet_balance=Number(bal);}showMessage(d?.message||`Claimed ${formatNaira(finalReward)}`,"success");await loadAll();}catch(e){showMessage(e.message||"Unable claim");if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(reward)} →`;}}
 }
@@ -174,7 +253,8 @@ async function loadVideos(){
  const list=document.getElementById("videosList");const loading=document.getElementById("videoLoading");const empty=document.getElementById("videoEmpty");
  try{loading.style.display="block";empty.style.display="none";list.innerHTML="";const resp=await fetch(`${API_BASE}/api/videos?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(resp.status===401){loading.style.display="none";empty.style.display="block";return;}if(!resp.ok)throw new Error("videos");const data=await resp.json();const videos=data?.videos||[];allVideos=Array.isArray(videos)?videos:[];completedVideos=allVideos.filter(v=>String(v.user_status||"").toLowerCase()==="completed");document.getElementById("videoCount").textContent=`${allVideos.length} ${allVideos.length===1?"resource":"resources"}`;loading.style.display="none";if(!allVideos.length){empty.style.display="block";return;}
   list.innerHTML=allVideos.map(video=>{
-   const id=String(video.id||"");const url=safeExternalURL(video.video_url||video.url||"");const completed=String(video.user_status||"").toLowerCase()==="completed";const reward=Number(video.reward||0);const locked=!completed&&(reward>getPlanLimits(getCurrentPlan()).maxDaily||wouldExceedLimit(reward));
+   const id=String(video.id||"");const url=safeExternalURL(video.video_url||video.url||"");const completed=String(video.user_status||"").toLowerCase()==="completed";const reward=Number(video.reward||0);
+   const locked=!isSuperPlan()&&!completed&&(reward>getPlanLimits(getCurrentPlan()).maxDaily||wouldExceedLimit(reward));
    let player="";if(url&&/\.(mp4|webm|ogg)/i.test(url)){player=`<video class="video-player" id="vid-${escapeHTML(id)}" controls preload="metadata" playsinline src="${escapeHTML(url)}"></video><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:9px;color:#756d7c;margin-top:4px">Watched: 0s / ${MIN_WATCH_SECONDS}s</div>`;}else if(url){player=`<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center"><a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--y);font-weight:900">View Resource ↗</a></div>`;}else{player=`<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center">Resource unavailable</div>`;}
    let btn="";if(completed){btn=`<button class="complete-btn completed" disabled>Completed ✓ · ${formatNaira(reward)}</button>`;}else if(locked){btn=renderUpgradeCard(reward,getCurrentPlan());}else{btn=`<button id="vbtn-${escapeHTML(id)}" class="complete-btn" disabled>Watch ${MIN_WATCH_SECONDS}s to unlock (0/${MIN_WATCH_SECONDS}s)</button>`;}
    return `<div class="video-card">${player}<div style="margin:10px 0 5px;font-size:13px;font-weight:900">${escapeHTML(video.title||"Resource")}</div><div style="margin-bottom:10px;color:var(--m);font-size:10px">${escapeHTML(video.description||"")}</div><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="meta">Academy</span><span style="color:#15803d;font-size:11px;font-weight:900">${formatNaira(reward)}</span></div>${btn}</div>`;
@@ -190,7 +270,11 @@ async function claimVideo(videoId,btn){
  const watched=watchedVideos.get(String(videoId))||0;if(watched<MIN_WATCH_SECONDS){showMessage(`Watch at least ${MIN_WATCH_SECONDS}s - Watched ${watched}s`,"error");return;}
  const video=allVideos.find(x=>String(x.id)===String(videoId));if(!video){showMessage("Video not found");return;}
  if(String(video.user_status||"").toLowerCase()==="completed"){showMessage("Already claimed","info");await loadAll();return;}
- const reward=Number(video.reward||0);if(wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));return;}if(isDailyLimitReached()){showMessage("Daily limit reached");return;}
+ const reward=Number(video.reward||0);
+ if(!isSuperPlan()){
+   if(wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));return;}
+   if(isDailyLimitReached()){showMessage("Daily limit reached - Upgrade to SUPER");return;}
+ }
  if(btn){btn.disabled=true;btn.textContent="Claiming...";}
  try{const resp=await fetch(`${API_BASE}/api/videos/${encodeURIComponent(videoId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({watchedSeconds:watched})});const d=await resp.json().catch(()=>({}));if(resp.status===401){location.href="login.html";return;}if(!resp.ok)throw new Error(d?.message||"Unable claim video");const bal=d?.walletBalance??d?.wallet_balance;if(bal!=null){document.getElementById("walletBalance").textContent=formatNaira(bal);if(currentUser)currentUser.wallet_balance=Number(bal);}showMessage(d?.message||`Claimed ${formatNaira(reward)}`,"success");await loadAll();}catch(e){showMessage(e.message||"Unable claim");if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(reward)} ✅`;}}
 }
