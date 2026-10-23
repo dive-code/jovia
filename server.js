@@ -42,7 +42,7 @@ const upload = multer({storage,limits:{fileSize: 200 * 1024 * 1024},fileFilter:(
 const dbDir=path.dirname(DB_PATH);if(!fs.existsSync(dbDir))fs.mkdirSync(dbDir,{recursive:true});
 const db=new Database(DB_PATH);db.pragma("journal_mode = WAL");db.pragma("foreign_keys = ON");db.pragma("busy_timeout = 5000");
 db.exec(`
-  CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, phone TEXT NOT NULL, password_hash TEXT NOT NULL, package TEXT NOT NULL DEFAULT 'Silver', package_amount INTEGER NOT NULL DEFAULT 9000, welcome_bonus INTEGER NOT NULL DEFAULT 0, referrer_id INTEGER, referral_code TEXT, referrals INTEGER NOT NULL DEFAULT 0, wallet_balance INTEGER NOT NULL DEFAULT 0, affiliate_balance INTEGER NOT NULL DEFAULT 0, total_earned INTEGER NOT NULL DEFAULT 0, account_status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(referrer_id) REFERENCES users(id) ON DELETE SET NULL);
+  CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, phone TEXT NOT NULL, password_hash TEXT NOT NULL, package TEXT NOT NULL DEFAULT 'Silver' CHECK(package IN ('Silver','Gold')), is_super INTEGER NOT NULL DEFAULT 0, package_amount INTEGER NOT NULL DEFAULT 9000, welcome_bonus INTEGER NOT NULL DEFAULT 0, referrer_id INTEGER, referral_code TEXT, referrals INTEGER NOT NULL DEFAULT 0, wallet_balance INTEGER NOT NULL DEFAULT 0, affiliate_balance INTEGER NOT NULL DEFAULT 0, total_earned INTEGER NOT NULL DEFAULT 0, account_status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(referrer_id) REFERENCES users(id) ON DELETE SET NULL);
   CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'General', slot TEXT NOT NULL DEFAULT 'General', reward INTEGER NOT NULL DEFAULT 0, link TEXT NOT NULL DEFAULT '', duration TEXT NOT NULL DEFAULT 'Flexible', status TEXT NOT NULL DEFAULT 'active', deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
   CREATE TABLE IF NOT EXISTS user_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, job_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', completed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, job_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE);
   CREATE TABLE IF NOT EXISTS user_job_link_opens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, job_id INTEGER NOT NULL, opened_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, job_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE);
@@ -61,9 +61,21 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, enabled INTEGER NOT NULL DEFAULT 1, title TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', channel_url TEXT NOT NULL DEFAULT 'https://t.me/jovianetwerk', channel_text TEXT NOT NULL DEFAULT 'Join Official Channel', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
   CREATE TABLE IF NOT EXISTS withdrawal_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0, used_by TEXT NOT NULL DEFAULT '', used_by_id INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, used_at TEXT, expires_at TEXT);
 `);
+// Safe, backwards-compatible migration: keep the paid Silver/Gold package intact
+// and store the SUPER entitlement separately so existing SQLite CHECK constraints remain valid.
+try { const userColumns = db.prepare("PRAGMA table_info(users)").all().map(c => c.name); if (!userColumns.includes("is_super")) db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER NOT NULL DEFAULT 0"); } catch (migrationError) { console.error("SUPER migration warning:", migrationError.message); }
+db.exec(`CREATE TABLE IF NOT EXISTS super_upgrade_codes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  code TEXT NOT NULL UNIQUE,
+  created_by TEXT NOT NULL DEFAULT 'admin',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  used_by INTEGER,
+  used_at TEXT,
+  FOREIGN KEY(used_by) REFERENCES users(id) ON DELETE SET NULL
+);`);
 function tableExists(t){return Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1").get(t));}
 function columnExists(t,c){if(!tableExists(t))return false;return db.prepare(`PRAGMA table_info(${t})`).all().some(x=>x.name===c);}
-function addColumnIfMissing(t,c,d){if(!tableExists(t)||columnExists(t,c))return false;try{db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`);return true;}catch(e){return false;}}
+function addColumnIfMissing(t,c,d){if(!tableExists(t)||columnExists(t,c))return false;db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`);return true;}
 function migrateDatabase(){
   addColumnIfMissing("users","affiliate_balance","INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing("users","welcome_bonus","INTEGER NOT NULL DEFAULT 0");
@@ -73,13 +85,6 @@ function migrateDatabase(){
   addColumnIfMissing("users","wallet_balance","INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing("users","total_earned","INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing("users","account_status","TEXT NOT NULL DEFAULT 'pending'");
-  addColumnIfMissing("users","plan","TEXT DEFAULT 'Silver'");
-  addColumnIfMissing("users","is_super","INTEGER DEFAULT 0");
-  addColumnIfMissing("users","balance","INTEGER DEFAULT 0");
-  addColumnIfMissing("users","wallet","INTEGER DEFAULT 0");
-  addColumnIfMissing("users","total_balance","INTEGER DEFAULT 0");
-  addColumnIfMissing("users","updated_at","TEXT DEFAULT CURRENT_TIMESTAMP");
-  addColumnIfMissing("users","status","TEXT DEFAULT 'active'");
   addColumnIfMissing("jobs","description","TEXT NOT NULL DEFAULT ''");
   addColumnIfMissing("jobs","category","TEXT NOT NULL DEFAULT 'General'");
   addColumnIfMissing("jobs","slot","TEXT NOT NULL DEFAULT 'General'");
@@ -132,14 +137,14 @@ function clearSessionCookie(res,n){res.setHeader("Set-Cookie",`${n}=; HttpOnly; 
 function createReference(p){return p+"_"+Date.now()+"_"+crypto.randomBytes(5).toString("hex").toUpperCase();}
 function getSessionUser(req){const t=getSessionToken(req,"jovia_session");if(!t)return null;const s=sessions.get(t);if(!s||Date.now()>s.expiresAt){sessions.delete(t);return null;}const u=db.prepare("SELECT * FROM users WHERE id=?").get(s.userId);if(!u){sessions.delete(t);return null;}return u;}
 function getAdminSession(req){const t=getSessionToken(req,"jovia_admin_session");if(!t)return null;const s=adminSessions.get(t);if(!s||Date.now()>s.expiresAt){adminSessions.delete(t);return null;}return{username:s.username,token:t};}
-function publicUser(u){if(!u)return null;return{id:u.id,full_name:u.full_name,fullName:u.full_name,username:u.username,email:u.email,phone:u.phone,package:u.package,package_amount:u.package_amount,packageAmount:u.package_amount,wallet_balance:u.wallet_balance,walletBalance:u.wallet_balance,affiliate_balance:u.affiliate_balance,affiliateBalance:u.affiliate_balance,total_earned:u.total_earned,totalEarned:u.total_earned,account_status:u.account_status,accountStatus:u.account_status,created_at:u.created_at,createdAt:u.created_at,referral_code:u.referral_code||u.username.toUpperCase(),referralCode:u.referral_code||u.username.toUpperCase(),referrals:u.referrals||0,plan:u.plan||u.package,is_super:u.is_super||0};}
+function publicUser(u){if(!u)return null;return{id:u.id,full_name:u.full_name,fullName:u.full_name,username:u.username,email:u.email,phone:u.phone,package:(Number(u.is_super||0)===1?"SUPER":u.package),is_super:Number(u.is_super||0)===1,package_amount:u.package_amount,packageAmount:u.package_amount,wallet_balance:u.wallet_balance,walletBalance:u.wallet_balance,affiliate_balance:u.affiliate_balance,affiliateBalance:u.affiliate_balance,total_earned:u.total_earned,totalEarned:u.total_earned,account_status:u.account_status,accountStatus:u.account_status,created_at:u.created_at,createdAt:u.created_at,referral_code:u.referral_code||u.username.toUpperCase(),referralCode:u.referral_code||u.username.toUpperCase(),referrals:u.referrals||0};}
 function paymentResultForUser(p){if(!p)return null;return{id:p.id,userId:p.user_id,amount:p.amount,package:p.package,paymentReference:p.payment_reference,transactionReference:p.transaction_reference,gateway:p.gateway,paymentStatus:p.payment_status,createdAt:p.created_at};}
 function withdrawalResult(r){if(!r)return null;return{id:r.id,user_id:r.user_id,userId:r.user_id,amount:r.amount,type:r.type,withdrawal_type:r.type,status:r.status,bank_name:r.bank_name,bankName:r.bank_name,account_name:r.account_name,accountName:r.account_name,account_number:r.account_number,accountNumber:r.account_number,note:r.note,gateway:r.gateway,username:r.username,full_name:r.full_name,email:r.email,created_at:r.created_at,createdAt:r.created_at,approved_by:r.approved_by,rejected_by:r.rejected_by};}
 function requireUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});req.user=u;next();}
 function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});if(u.account_status!=="active"&&u.account_status!=="approved")return res.status(403).json({success:false,message:"Account not active yet"});req.user=u;next();}
 function requireAdmin(req,res,next){const a=getAdminSession(req);if(!a)return res.status(401).json({success:false,message:"Admin authentication required"});req.admin=a;next();}
 function updateUserBalance(id,col,amt){if(col!=="wallet_balance"&&col!=="affiliate_balance")throw new Error("Invalid column");db.prepare(`UPDATE users SET ${col}=${col}+? WHERE id=?`).run(amt,id);}
-function recordWalletTransaction(uid,type,amt,btype,ref,desc){try{db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}catch(e){}}
+function recordWalletTransaction(uid,type,amt,btype,ref,desc){db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}
 function getReferralReward(referrerPackage, referredPackage){const a = String(referrerPackage||'').trim(); const b = String(referredPackage||'').trim(); if(a==="Gold" && b==="Gold") return 13000; if(a==="Gold" && b==="Silver") return 8000; if(a==="Silver" && b==="Silver") return 8000; if(a==="Silver" && b==="Gold") return 0; return 0;}
 function activateUserAndRewardsInternal(uid){const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u)throw new Error("User not found");db.prepare(`UPDATE users SET account_status='active' WHERE id=?`).run(uid);const f=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(f.welcome_bonus>0){const ex=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='welcome_bonus' LIMIT 1`).get(uid);if(!ex){updateUserBalance(uid,"wallet_balance",f.welcome_bonus);db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(f.welcome_bonus,uid);recordWalletTransaction(uid,"welcome_bonus",f.welcome_bonus,"wallet",`WELCOME_BONUS_${uid}`,"Package welcome bonus");}}if(!f.referrer_id)return;const ref=db.prepare("SELECT * FROM users WHERE id=?").get(f.referrer_id);if(!ref)return;const ex2=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? LIMIT 1`).get(uid);if(ex2)return;const rew=getReferralReward(ref.package,f.package);db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,f.package);if(rew>0){updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${f.package})`);}else{db.prepare(`UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(ref.id);}}
 function activateUserAndRewards(uid){return db.transaction(()=>activateUserAndRewardsInternal(uid))();}
@@ -179,7 +184,7 @@ async function sendBrevoEmail(toEmail, subject, htmlMessage){
   const payload = { sender:{name:BREVO_SENDER_NAME, email:BREVO_SENDER_EMAIL}, to:[{email:String(toEmail).trim()}], subject:subject, htmlContent:`<div style="font-family:Inter,Arial,sans-serif; line-height:1.7; color:#172033; max-width:600px; margin:0 auto; padding:20px"><div style="background:#5b21b6;color:white;padding:14px 18px;border-radius:12px;margin-bottom:18px;font-weight:800">Jovia Network</div><h2 style="font-size:18px">${subject}</h2><div style="font-size:14px; white-space:pre-line">${htmlMessage.replace(/\n/g,'<br>')}</div></div>` };
   return new Promise((resolve,reject)=>{const url = new URL("https://api.brevo.com/v3/smtp/email"); const body = Buffer.from(JSON.stringify(payload)); const req = https.request({protocol:url.protocol, hostname:url.hostname, port:443, path:url.pathname, method:"POST", headers:{"Content-Type":"application/json","api-key":BREVO_API_KEY,"Content-Length":body.length}, timeout:15000}, (res)=>{const chunks=[]; res.on("data",c=>chunks.push(c)); res.on("end",()=>{const raw=Buffer.concat(chunks).toString("utf8"); let parsed={}; try{parsed=JSON.parse(raw);}catch{parsed={raw};} if(res.statusCode>=200 && res.statusCode<300) resolve(parsed); else reject(new Error(parsed?.message || raw));});}); req.on("error",reject); req.on("timeout",()=>{req.destroy(new Error("Brevo timeout"));}); req.write(body); req.end(); });
 }
-app.get("/api/health",(req,res)=>{res.json({success:true,service:"Jovia Network API V7 FINAL FIXED",status:"ok",minimums:WITHDRAWAL_MINIMUMS,codeFee:WITHDRAWAL_CODE_FEE,regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),time:nowIso()});});
+app.get("/api/health",(req,res)=>{res.json({success:true,service:"Jovia Network API V4 60K+10K CODE 1=1 FULL FIXED",status:"ok",minimums:WITHDRAWAL_MINIMUMS,codeFee:WITHDRAWAL_CODE_FEE,regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),time:nowIso()});});
 app.get("/api/referral/:code",(req,res)=>{try{const code = String(req.params.code||"").trim().toUpperCase(); if(!code) return res.status(400).json({success:false,message:"Code required"}); const user = db.prepare("SELECT username, referral_code FROM users WHERE UPPER(referral_code)=? OR UPPER(username)=? LIMIT 1").get(code, code); if(!user) return res.status(404).json({success:false,message:"Invalid referral code"}); return res.json({success:true, username:user.username, code:user.referral_code||user.username.toUpperCase()});}catch(e){ return res.status(500).json({success:false}); }});
 app.get("/api/settings/withdrawals",(req,res)=>{return res.json({success:true, enabled:isRegularWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codesEnabled:isWithdrawalCodesEnabled(), minimums:WITHDRAWAL_MINIMUMS, codeFee:WITHDRAWAL_CODE_FEE});});
 app.get("/api/settings/affiliate-withdrawals",(req,res)=>{return res.json({success:true, enabled:isAffiliateWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), minimums:WITHDRAWAL_MINIMUMS});});
@@ -196,90 +201,83 @@ app.post("/api/webhooks/monnify",async(req,res)=>{try{if(!webhookSignatureValid(
 app.get("/api/jobs", requireActiveUser, (req,res)=>{try{let jobs; try{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' AND (j.deleted_at IS NULL OR j.deleted_at='') ORDER BY j.id DESC`).all(req.user.id, req.user.id);}catch{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' ORDER BY j.id DESC`).all(req.user.id, req.user.id);} return res.json({success:true, jobs:jobs.map((job)=>({id:job.id, title:job.title, description:job.description||"", category:job.category||"General", slot:job.slot||"General", reward:Number(job.reward||0), link:job.link||"", url:job.link||"", duration:job.duration||"Flexible", status:job.status, user_status:job.user_status, link_opened:job.link_opened, linkOpened:Boolean(job.link_opened), completed:job.user_status==="completed", started:job.user_status==="started"}))});}catch(err){return res.status(500).json({success:false, message:"Unable to load jobs"});}});
 app.post("/api/jobs/:id/open", requireActiveUser, function(req, res){try{const jobId = toPositiveInteger(req.params.id); if(!jobId) return res.status(400).json({success:false, message:"Invalid job."}); let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); } if(!job) return res.status(404).json({success:false, message:"Job not found"}); db.prepare("INSERT OR IGNORE INTO user_job_link_opens (user_id,job_id) VALUES (?,?)").run(req.user.id, jobId); const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId); if(!existing){db.prepare("INSERT INTO user_jobs (user_id,job_id,status) VALUES (?,?, 'started')").run(req.user.id, jobId);} else if(existing.status === "pending"){db.prepare("UPDATE user_jobs SET status='started' WHERE user_id=? AND job_id=?").run(req.user.id, jobId);} return res.json({success:true, linkOpened:true, url:job.link||"", link:job.link||"", title:job.title, message:"Task opened - now claim"});}catch(e){return res.status(400).json({success:false, message:e.message});}});
 
-app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
-  try{
+// === FIXED DAILY LIMIT - Jobs + Videos together - Blocks 700 bug ===
+app.post("/api/jobs/:id/complete", requireActiveUser, (req,res)=>{
+  try {
     const jobId = toPositiveInteger(req.params.id);
-    if(!jobId) return res.status(400).json({success:false, message:"Invalid job."});
-    const pkgRaw = String(req.user.package||req.user.plan||req.user.package_name||"").toLowerCase();
-    const isSuper = pkgRaw.includes("super") || req.user.is_super==1 || req.headers['x-super-force']==="1" || req.body?.forceSuper==1;
-    if(isSuper){
-      let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); }catch{ job = null; }
-      let reward = job ? Number(job.reward||500) : 500;
-      const newBalance = db.transaction(function(){
-        db.prepare("UPDATE users SET wallet_balance = wallet_balance + ?, balance = COALESCE(balance,0)+?, wallet = COALESCE(wallet,0)+?, total_earned = total_earned + ? WHERE id=?").run(reward, reward, reward, reward, req.user.id);
-        const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId);
-        if(existing){ db.prepare("UPDATE user_jobs SET status='completed', completed_at=CURRENT_TIMESTAMP WHERE user_id=? AND job_id=?").run(req.user.id, jobId); }
-        else { db.prepare("INSERT INTO user_jobs (user_id,job_id,status, completed_at) VALUES (?,?, 'completed', CURRENT_TIMESTAMP)").run(req.user.id, jobId); }
-        try{ db.prepare("INSERT INTO wallet_transactions (user_id, amount, type, description, reference, balance_type) VALUES (?,?,?,?,?,?)").run(req.user.id, reward, 'job_reward', 'Job SUPER: ' + (job?job.title:jobId), 'JOB_'+jobId+'_'+Date.now(), 'wallet'); }catch{}
-        const updatedUser = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id); return updatedUser? updatedUser.wallet_balance : 0;
-      })();
-      console.log(`👑 SUPER JOB ${jobId} reward ${reward} user ${req.user.email} NewBal ${newBalance}`);
-      return res.json({ success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward:reward, walletBalance:newBalance, wallet_balance:newBalance, balance:newBalance, isSuper:true });
-    }
-    const userPlan = String(req.user.package||"Silver").toLowerCase().includes("gold")? "Gold" : "Silver";
-    const limits = userPlan==="Gold"? {maxJobs:10, perTask:700, maxDaily:7000} : {maxJobs:5, perTask:500, maxDaily:2500};
-    const today = getTodayStats(req.user.id);
-    if(today.totalCount >= limits.maxJobs){
-      return res.status(400).json({ success:false, message:`Daily limit reached! ${userPlan} max ${limits.maxJobs} tasks today (Jobs+Videos). Upgrade to Super.`, plan: userPlan, limit: limits.maxJobs, maxDaily: limits.maxDaily });
-    }
-    let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); }
-    if(!job) return res.status(404).json({success:false, message:"Job not found"});
-    const opened = db.prepare("SELECT * FROM user_job_link_opens WHERE user_id=? AND job_id=?").get(req.user.id, jobId);
-    if(!opened){ return res.status(400).json({success:false, message:"Open the task first before claiming."}); }
-    const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId);
-    if(existing && (existing.status === "completed" || existing.status === "claimed")){
-      const wallet = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id);
-      return res.json({success:true, message:"Already completed", reward:Number(job.reward||limits.perTask), walletBalance:wallet? wallet.wallet_balance : 0});
-    }
-    let reward = Number(job.reward || 0);
-    if(reward <=0) reward = limits.perTask;
-    if((today.totalEarned + reward) > limits.maxDaily){
-      return res.status(400).json({success:false, message:`This job of N${reward} would exceed daily N${limits.maxDaily.toLocaleString()} limit. Earned today: N${today.totalEarned}. Upgrade to JOVIA Super for full offers.`, earned: today.totalEarned, maxDaily: limits.maxDaily});
-    }
-    const newBalance = db.transaction(function(){
-      db.prepare("UPDATE users SET wallet_balance = wallet_balance +?, total_earned = total_earned +? WHERE id=?").run(reward, reward, req.user.id);
-      if(existing){ db.prepare("UPDATE user_jobs SET status='completed', completed_at=CURRENT_TIMESTAMP WHERE user_id=? AND job_id=?").run(req.user.id, jobId); }
-      else { db.prepare("INSERT INTO user_jobs (user_id,job_id,status, completed_at) VALUES (?,?, 'completed', CURRENT_TIMESTAMP)").run(req.user.id, jobId); }
-      try{ db.prepare("INSERT INTO wallet_transactions (user_id, amount, type, description, reference, balance_type) VALUES (?,?,?,?,?,?)").run(req.user.id, reward, 'job_reward', 'Job completed: ' + job.title + ` [${userPlan} ${today.totalCount+1}/${limits.maxJobs}]`, 'JOB_'+jobId+'_'+Date.now(), 'wallet'); }catch(err){}
-      const updatedUser = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id); return updatedUser? updatedUser.wallet_balance : 0;
+    if (!jobId) return res.status(400).json({success:false,message:"Invalid job."});
+    const isSuper = Number(req.user.is_super||0) === 1;
+    const plan = isSuper ? "SUPER" : (String(req.user.package||"Silver").toLowerCase().includes("gold") ? "Gold" : "Silver");
+    const limits = isSuper ? {maxJobs:Infinity, perTask:700, maxDaily:Infinity} : (plan === "Gold" ? {maxJobs:10,perTask:700,maxDaily:7000} : {maxJobs:5,perTask:500,maxDaily:2500});
+    let job;
+    try { job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }
+    catch { job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); }
+    if (!job) return res.status(404).json({success:false,message:"Job not found."});
+    const opened = db.prepare("SELECT id FROM user_job_link_opens WHERE user_id=? AND job_id=?").get(req.user.id,jobId);
+    if (!opened) return res.status(400).json({success:false,message:"Open the task first before claiming."});
+    const reward = Number(job.reward||0) > 0 ? Number(job.reward) : limits.perTask;
+    const reference = `JOB_REWARD_${req.user.id}_${jobId}`;
+    const result = db.transaction(()=>{
+      const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id,jobId);
+      const credited = db.prepare("SELECT id FROM wallet_transactions WHERE reference=? LIMIT 1").get(reference);
+      if (credited || (existing && ["completed","claimed"].includes(String(existing.status)))) {
+        const current = db.prepare("SELECT wallet_balance,total_earned FROM users WHERE id=?").get(req.user.id);
+        return {already:true,balance:Number(current?.wallet_balance||0),totalEarned:Number(current?.total_earned||0)};
+      }
+      const today = getTodayStats(req.user.id);
+      if (!isSuper && today.totalCount >= limits.maxJobs) throw new Error(`Daily limit reached! ${plan} maximum is ${limits.maxJobs} jobs/videos per day.`);
+      if (!isSuper && today.totalEarned + reward > limits.maxDaily) throw new Error(`This task would exceed your daily N${limits.maxDaily.toLocaleString()} earning limit.`);
+      if (existing) db.prepare("UPDATE user_jobs SET status='completed',completed_at=CURRENT_TIMESTAMP WHERE user_id=? AND job_id=?").run(req.user.id,jobId);
+      else db.prepare("INSERT INTO user_jobs (user_id,job_id,status,completed_at) VALUES (?,?,'completed',CURRENT_TIMESTAMP)").run(req.user.id,jobId);
+      db.prepare("UPDATE users SET wallet_balance=wallet_balance+?,total_earned=total_earned+? WHERE id=?").run(reward,reward,req.user.id);
+      recordWalletTransaction(req.user.id,"job_reward",reward,"wallet",reference,`Job completed: ${job.title}`);
+      const current = db.prepare("SELECT wallet_balance,total_earned FROM users WHERE id=?").get(req.user.id);
+      return {already:false,balance:Number(current?.wallet_balance||0),totalEarned:Number(current?.total_earned||0)};
     })();
-    return res.json({ success:true, message:`N${reward} credited! ${today.totalCount+1}/${limits.maxJobs} today.`, reward:reward, walletBalance:newBalance, wallet_balance:newBalance, plan: userPlan, completedToday: today.totalCount+1, maxJobs: limits.maxJobs, maxDaily: limits.maxDaily });
-  }catch(e){ return res.status(400).json({success:false, message:e.message}); }
+    return res.json({success:true,alreadyCompleted:result.already,message:result.already?"This job has already been credited.":`N${reward.toLocaleString()} credited.`,reward:result.already?0:reward,walletBalance:result.balance,wallet_balance:result.balance,totalEarned:result.totalEarned,plan,unlimited:isSuper});
+  } catch (e) { return res.status(400).json({success:false,message:e.message||"Unable to complete job."}); }
 });
-
 app.get("/api/wallet",requireUser,(req,res)=>{try{const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance,total_earned FROM users WHERE id=?`).get(req.user.id);if(!user)return res.status(404).json({success:false,message:"User not found."});const transactions=db.prepare(`SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC`).all(req.user.id);return res.json({success:true,walletBalance:Number(user.wallet_balance||0),affiliateBalance:Number(user.affiliate_balance||0),totalEarned:Number(user.total_earned||0),transactions:transactions.map((item)=>({id:item.id,type:item.type,amount:Number(item.amount||0),balanceType:item.balance_type,reference:item.reference,description:item.description,createdAt:item.created_at}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load wallet."});}});
 
+// ===== STRICT VERIFY - ONLY ADMIN GENERATED CODES - jovia-hhhh BLOCKED =====
 app.post("/api/withdrawals/verify-code",requireUser,(req,res)=>{
  try{
  if(!isWithdrawalCodesEnabled()) return res.json({success:true,valid:true,message:"Codes disabled - free withdrawal"});
  const raw=cleanString(req.body?.code??req.body?.withdrawalCode??req.body?.withdrawal_code,50).toUpperCase().trim();
  const reqType = String(req.body?.type||"regular").toLowerCase();
  if(reqType==="affiliate") return res.json({success:true,valid:true,message:"Affiliate FREE - no code needed"});
- if(!raw) return res.json({success:false,valid:false,message:"Enter code"});
- if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"❌ INVALID FORMAT"});
+ if(!raw) return res.json({success:false,valid:false,message:"Enter code - Only codes from Admin Dashboard work - Buy on Telegram"});
+ if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"❌ INVALID FORMAT - Must be JOVIA-XXXXXXXX - jovia-hhhh is FAKE - Only Admin codes work"});
+ if(raw.length < 12) return res.json({success:false,valid:false,message:"❌ INVALID LENGTH - Valid code like JOVIA-A1B2C3D4"});
+ const suffix = raw.replace("JOVIA-","");
+ if(/^([A-Z])\1+$/.test(suffix)){
+ return res.json({success:false,valid:false,message:"❌ FAKE CODE PATTERN - jovia-hhhh / jovia-aaaa REJECTED - Only Admin codes work"});
+ }
  const row=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(raw);
- if(!row) return res.json({success:false,valid:false,message:"❌ Invalid code - NOT FOUND"});
- if(row.used) return res.json({success:false,valid:false,used:true,message:`❌ CODE ALREADY USED by ${row.used_by}`});
- return res.json({success:true,valid:true,message:"✅ Valid code",code:row.code});
+ if(!row) return res.json({success:false,valid:false,message:"❌ Invalid code - NOT FOUND IN DATABASE - jovia-hhhh is FAKE - Only codes generated from Admin Dashboard (/api/admin/withdrawal-codes) work - Buy at @customer_support_team0001"});
+ if(row.used) return res.json({success:false,valid:false,used:true,message:`❌ CODE ALREADY USED by ${row.used_by} on ${row.used_at} - 1 CODE = 1 ACCOUNT ONLY. Buy new code N${WITHDRAWAL_CODE_FEE.toLocaleString()}`});
+ if(row.expires_at && new Date(row.expires_at) < new Date()) return res.json({success:false,valid:false,message:"Code expired - Buy new code"});
+ return res.json({success:true,valid:true,message:"✅ Valid code from Admin Dashboard - Will be invalid after use",code:row.code});
  }catch(e){return res.status(500).json({success:false,valid:false,message:e.message});}
 });
 app.post("/api/withdrawal-codes/verify",requireUser,(req,res)=>{
  try{
  const raw=cleanString(req.body?.code??req.body?.withdrawalCode,50).toUpperCase().trim();
  if(!raw) return res.json({success:false,valid:false,message:"Enter code"});
- if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"❌ Must be JOVIA-XXXXXXXX"});
+ if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"❌ Must be JOVIA-XXXXXXXX - jovia-hhhh FAKE"});
  const row=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(raw);
- if(!row) return res.json({success:false,valid:false,message:"❌ Not in DB"});
- if(row.used) return res.json({success:false,valid:false,used:true,message:`USED by ${row.used_by}`});
+ if(!row) return res.json({success:false,valid:false,message:"❌ Not in DB - Only Admin generated codes work"});
+ if(row.used) return res.json({success:false,valid:false,used:true,message:`USED by ${row.used_by} - 1 CODE = 1 ACCOUNT`});
  return res.json({success:true,valid:true,message:"Valid Admin code"});
  }catch(e){return res.status(500).json({success:false});}
 });
 
+// ===== WITHDRAWALS - 60k MIN, ANY AMOUNT ABOVE - NOT FULL =====
 app.post("/api/withdrawals",requireActiveUser,(req,res)=>{try{
  const body=req.body||{};
  const type=String(body.type||body.withdrawalType||"regular").toLowerCase()==="affiliate"?"affiliate":"regular";
- if(type==="regular" &&!isRegularWithdrawalsEnabled()) return res.status(403).json({success:false,message:"Regular withdrawals disabled"});
- if(type==="affiliate" &&!isAffiliateWithdrawalsEnabled()) return res.status(403).json({success:false,message:"Affiliate withdrawals disabled"});
+ if(type==="regular" &&!isRegularWithdrawalsEnabled()) return res.status(403).json({success:false,message:"Regular withdrawals disabled by admin. Affiliate still works."});
+ if(type==="affiliate" &&!isAffiliateWithdrawalsEnabled()) return res.status(403).json({success:false,message:"Affiliate withdrawals disabled. Regular still works."});
  const amount=toPositiveInteger(body.amount);
  const bankName=cleanString(body.bankName??body.bank_name??body.bank??body.provider??body.bankName??body.country,120);
  const accountNumber=cleanString(body.accountNumber??body.account_number??body.number??body.account??body.usdtAddress??body.accountNumber,100).replace(/\s+/g,"");
@@ -287,36 +285,40 @@ app.post("/api/withdrawals",requireActiveUser,(req,res)=>{try{
  const note=cleanString(body.note,500);
  const codeRaw=cleanString(body.withdrawalCode??body.code??body.withdrawal_code??body.withdrawal_code_input,50).toUpperCase().trim();
  if(!amount)return res.status(400).json({success:false,message:"Enter a valid withdrawal amount."});
- if(!accountNumber && type==="regular")return res.status(400).json({success:false,message:"Account number required."});
+ if(!accountNumber && type==="regular")return res.status(400).json({success:false,message:"Account number / Momo number required."});
  const minimum=WITHDRAWAL_MINIMUMS[type];
- if(amount<minimum)return res.status(400).json({success:false,message:`Minimum ${type} withdrawal is N${minimum.toLocaleString()}`});
+ if(amount<minimum)return res.status(400).json({success:false,message:`Minimum ${type} withdrawal is N${minimum.toLocaleString()}. You can withdraw 60k, 70k, 100k etc - Any amount >=${minimum.toLocaleString()}`});
  const balanceColumn=type==="affiliate"?"affiliate_balance":"wallet_balance";
  const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance FROM users WHERE id=? LIMIT 1`).get(req.user.id);
  if(!user)return res.status(404).json({success:false,message:"User not found."});
  const currentBalance=Number(user[balanceColumn]||0);
  if(currentBalance<amount)return res.status(400).json({success:false,message:"Insufficient balance."});
+ // REMOVED FULL CHECK - Now 60k,70k,100k allowed
  if(type==="regular" && isWithdrawalCodesEnabled()){
- if(!codeRaw) return res.status(400).json({success:false,message:`CODE required - Min N${minimum.toLocaleString()}`});
+ if(!codeRaw) return res.status(400).json({success:false,message:`CODE required - Min N${minimum.toLocaleString()} - Buy N${WITHDRAWAL_CODE_FEE.toLocaleString()} Telegram https://t.me/jovianetwerk`});
+ if(!codeRaw.startsWith("JOVIA-")) return res.status(400).json({success:false,message:"Invalid format - Must be JOVIA-XXXXXXXX - jovia-hhhh FAKE"});
+ const suffix = codeRaw.replace("JOVIA-","");
+ if(/^([A-Z])\1+$/.test(suffix)) return res.status(400).json({success:false,message:"Fake pattern jovia-hhhh REJECTED"});
  const codeRow=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(codeRaw);
- if(!codeRow) return res.status(400).json({success:false,message:"❌ NOT FOUND"});
- if(codeRow.used) return res.status(400).json({success:false,message:`ALREADY USED by ${codeRow.used_by}`});
+ if(!codeRow) return res.status(400).json({success:false,message:"❌ NOT FOUND IN DATABASE - Only Admin codes work"});
+ if(codeRow.used) return res.status(400).json({success:false,message:`ALREADY USED by ${codeRow.used_by} - 1 CODE=1 ACCOUNT - Buy new N${WITHDRAWAL_CODE_FEE.toLocaleString()}`});
  }
  const withdrawal=db.transaction(()=>{
  if(type==="regular" && isWithdrawalCodesEnabled() && codeRaw){
  const fresh=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(codeRaw);
- if(!fresh || fresh.used) throw new Error(`Code already used`);
+ if(!fresh || fresh.used) throw new Error(`Code already used - 1 CODE=1 ACCOUNT`);
  }
  updateUserBalance(req.user.id,balanceColumn,-amount);
  const result=db.prepare(`INSERT INTO withdrawals (user_id,amount,type,status,bank_name,account_name,account_number,note,gateway) VALUES (?,?,?, 'pending',?,?,?,?, 'manual')`).run(req.user.id,amount,type,bankName||"Bank",accountNameInput||req.user.username,accountNumber||"N/A",note);
  const withdrawalId=Number(result.lastInsertRowid);
- recordWalletTransaction(req.user.id,"withdrawal",-amount,type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_${withdrawalId}`,`Withdrawal ${type} N${amount}`);
+ recordWalletTransaction(req.user.id,"withdrawal",-amount,type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_${withdrawalId}`,`Withdrawal ${type} N${amount} - Code ${codeRaw||'FREE-AFF'} - 1 CODE=1 ACCOUNT`);
  if(isWithdrawalCodesEnabled() && codeRaw && type==="regular"){
  db.prepare("UPDATE withdrawal_codes SET used=1, used_by=?, used_by_id=?, used_at=CURRENT_TIMESTAMP WHERE code=?").run(req.user.username, req.user.id, codeRaw);
  }
  addWithdrawalEvent(withdrawalId,"withdrawal_requested",req.user.username,{amount,type,codeUsed:codeRaw||"FREE-AFFILIATE"});
  return db.prepare(`SELECT * FROM withdrawals WHERE id=? LIMIT 1`).get(withdrawalId);
  })();
- return res.status(201).json({success:true,message:`Withdrawal N${amount.toLocaleString()} submitted`,withdrawal:withdrawalResult(withdrawal),received:amount});
+ return res.status(201).json({success:true,message:`Withdrawal N${amount.toLocaleString()} submitted - Min 60k any amount above`,withdrawal:withdrawalResult(withdrawal),received:amount});
 }catch(error){return res.status(400).json({success:false,message:error.message});}});
 
 app.get("/api/withdrawals",requireUser,(req,res)=>{try{const rows=db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC LIMIT 100").all(req.user.id);return res.json({success:true,withdrawals:rows.map(withdrawalResult)});}catch(e){return res.status(500).json({success:false});}});
@@ -328,30 +330,30 @@ app.post("/api/admin/login",async(req,res)=>{try{const username=cleanString(req.
 app.post("/api/admin/logout",(req,res)=>{const token=getSessionToken(req,"jovia_admin_session"); if(token) adminSessions.delete(token); const userToken=getSessionToken(req,"jovia_session"); if(userToken) sessions.delete(userToken); clearSessionCookie(res,"jovia_admin_session"); clearSessionCookie(res,"jovia_session"); return res.json({success:true});});
 app.get("/api/admin/me",requireAdmin,(req,res)=>{return res.json({success:true,admin:{username:req.admin.username}});});
 app.get("/api/admin/dashboard",requireAdmin,(req,res)=>{try{const users=db.prepare(`SELECT COUNT(*) AS count FROM users`).get().count;const activeUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status IN ('active','approved')`).get().count;const pendingUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status='pending'`).get().count;const pendingWithdrawals=db.prepare(`SELECT COUNT(*) AS count FROM withdrawals WHERE status='pending'`).get().count;const totalVideos=db.prepare(`SELECT COUNT(*) AS count FROM videos`).get().count;return res.json({success:true,users,activeUsers,pendingUsers,videos:totalVideos,withdrawals:{pending:pendingWithdrawals},withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),withdrawals_enabled:isWithdrawalsEnabled()? '1':'0'});}catch(error){return res.status(500).json({success:false,message:"Unable to load dashboard."});}});
-app.get("/api/admin/users",requireAdmin,(req,res)=>{try{const rows=db.prepare(`SELECT id,full_name,username,email,phone,package,package_amount,wallet_balance,affiliate_balance,total_earned,account_status,created_at,referral_code,referrer_id,referrals,plan,is_super FROM users ORDER BY id DESC`).all();return res.json({success:true,users:rows.map((user)=>({id:user.id,fullName:user.full_name,full_name:user.full_name,username:user.username,email:user.email,phone:user.phone,package:user.package,plan:user.plan,packageAmount:Number(user.package_amount||0),walletBalance:Number(user.wallet_balance||0),wallet_balance:user.wallet_balance,affiliateBalance:Number(user.affiliate_balance||0),affiliate_balance:user.affiliate_balance,totalEarned:Number(user.total_earned||0),total_earned:user.total_earned,accountStatus:user.account_status,account_status:user.account_status,createdAt:user.created_at,created_at:user.created_at,referral_code:user.referral_code,referrer_id:user.referrer_id,referrals:user.referrals,is_super:user.is_super}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load users."});}});
+app.get("/api/admin/users",requireAdmin,(req,res)=>{try{const rows=db.prepare(`SELECT id,full_name,username,email,phone,package,is_super,package_amount,wallet_balance,affiliate_balance,total_earned,account_status,created_at,referral_code,referrer_id,referrals FROM users ORDER BY id DESC`).all();return res.json({success:true,users:rows.map((user)=>({id:user.id,fullName:user.full_name,full_name:user.full_name,username:user.username,email:user.email,phone:user.phone,package:(Number(user.is_super||0)===1?"SUPER":user.package),is_super:Number(user.is_super||0)===1,packageAmount:Number(user.package_amount||0),walletBalance:Number(user.wallet_balance||0),wallet_balance:user.wallet_balance,affiliateBalance:Number(user.affiliate_balance||0),affiliate_balance:user.affiliate_balance,totalEarned:Number(user.total_earned||0),total_earned:user.total_earned,accountStatus:user.account_status,account_status:user.account_status,createdAt:user.created_at,created_at:user.created_at,referral_code:user.referral_code,referrer_id:user.referrer_id,referrals:user.referrals}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load users."});}});
 app.get("/api/admin/settings",requireAdmin,(req,res)=>{try{const allSettings = db.prepare("SELECT key, value, updated_at FROM settings").all(); const obj = {}; for(const s of allSettings){ obj[s.key] = s.value; } return res.json({success:true, settings: obj, withdrawalsEnabled: isWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codesEnabled:isWithdrawalCodesEnabled(), minimums:WITHDRAWAL_MINIMUMS, codeFee:WITHDRAWAL_CODE_FEE, withdrawals_enabled: isWithdrawalsEnabled()? '1' : '0'});}catch(e){ return res.status(500).json({success:false,message:e.message}); }});
 app.post("/api/admin/settings/withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.regularEnabled?? req.body?.withdrawalsEnabled;
   let type = String(req.body?.type||"regular").toLowerCase();
   if(typeof enabled === 'string'){ enabled = enabled === '1' || enabled.toLowerCase() === 'true' || enabled.toLowerCase() === 'on'; } else { enabled = Boolean(enabled); }
-  if(type==="affiliate"){ setAffiliateWithdrawalsEnabled(enabled); return res.json({success:true, message: enabled? "Affiliate ENABLED" : "Affiliate DISABLED", enabled, affiliateEnabled:enabled, type:'affiliate'}); }
+  if(type==="affiliate"){ setAffiliateWithdrawalsEnabled(enabled); return res.json({success:true, message: enabled? "Affiliate ENABLED" : "Affiliate DISABLED - Regular still works", enabled, affiliateEnabled:enabled, type:'affiliate'}); }
   setRegularWithdrawalsEnabled(enabled); setSettingValue('withdrawals_enabled', enabled?'1':'0');
-  return res.json({success:true, message: enabled? "Regular ENABLED" : "Regular DISABLED", enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, type:'regular'});
+  return res.json({success:true, message: enabled? "Regular ENABLED - Affiliate still works" : "Regular DISABLED - Affiliate still works", enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, type:'regular'});
 }catch(e){ return res.status(400).json({success:false,message:e.message}); }});
 app.post("/api/admin/settings/regular-withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.regularEnabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
   setRegularWithdrawalsEnabled(enabled); setSettingValue('withdrawals_enabled', enabled?'1':'0');
-  return res.json({success:true, enabled, regularEnabled:enabled, message: enabled?"Regular ON":"Regular OFF"});
+  return res.json({success:true, enabled, regularEnabled:enabled, message: enabled?"Regular ON":"Regular OFF - Affiliate still works"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
 app.post("/api/admin/settings/affiliate-withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.affiliateEnabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
   setAffiliateWithdrawalsEnabled(enabled);
-  return res.json({success:true, enabled, affiliateEnabled:enabled, message: enabled?"Affiliate ON":"Affiliate OFF"});
+  return res.json({success:true, enabled, affiliateEnabled:enabled, message: enabled?"Affiliate ON":"Affiliate OFF - Regular still works"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
 app.post("/api/admin/settings/withdrawal-codes",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
   setWithdrawalCodesEnabled(enabled);
-  return res.json({success:true, enabled, codesEnabled:enabled, message: enabled?`Codes ENABLED`:"Codes DISABLED"});
+  return res.json({success:true, enabled, codesEnabled:enabled, message: enabled?`Codes ENABLED - 1 CODE=1 ACCOUNT - N${WITHDRAWAL_CODE_FEE} FULL`:"Codes DISABLED - free withdrawals"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
 app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
   const count= Math.min(100, Math.max(1, Number(req.body?.count||1)||1));
@@ -360,7 +362,7 @@ app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
     let code=generateWithdrawalCode();
     try{ db.prepare("INSERT INTO withdrawal_codes (code) VALUES (?)").run(code); codes.push(code); }catch{ i--; }
   }
-  return res.json({success:true, codes, count:codes.length, message:`${codes.length} codes generated`});
+  return res.json({success:true, codes, count:codes.length, message:`${codes.length} codes generated - Each 1 ACCOUNT ONLY - Sell N${WITHDRAWAL_CODE_FEE} - FULL amount no deduction`});
 }catch(e){return res.status(500).json({success:false,message:e.message});}});
 app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
@@ -431,14 +433,14 @@ app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
 app.post("/api/admin/email/send",requireAdmin,async(req,res)=>{
   try{
     const {recipients, subject, message} = req.body||{};
-    if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients"});
+    if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients - select Active / Pending / All users"});
     const cleanSub = cleanString(subject,200);
     const cleanMsg = cleanString(message,10000);
     if(!cleanSub) return res.status(400).json({success:false,message:"Subject required"});
     if(!cleanMsg) return res.status(400).json({success:false,message:"Message required"});
     const unique = [...new Set(recipients.map(e=>normalizeEmail(e)).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))];
     if(!unique.length) return res.status(400).json({success:false,message:"No valid emails"});
-    if(!BREVO_API_KEY) return res.status(400).json({success:false,message:"BREVO_API_KEY not set"});
+    if(!BREVO_API_KEY) return res.status(400).json({success:false,message:"BREVO_API_KEY not set in.env"});
     let sent=0, failed=0;
     const errors=[];
     for(const email of unique){
@@ -476,13 +478,13 @@ app.get("/api/admin/announcement",requireAdmin,(req,res)=>{
 });
 app.get("/api/admin/withdrawals",requireAdmin,(req,res)=>{try{const status=cleanString(req.query.status,30).toLowerCase();let rows;if(["pending","processing","paid","rejected"].includes(status)){rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.status=? ORDER BY w.id DESC`).all(status);}else{rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC`).all();}return res.json({success:true,withdrawals:rows.map((row)=>({...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)}})),withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled()});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawals."});}});
 app.get("/api/admin/withdrawals/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});const row=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.id=?`).get(id);if(!row)return res.status(404).json({success:false,message:"Withdrawal not found."});const events=db.prepare(`SELECT * FROM withdrawal_events WHERE withdrawal_id=? ORDER BY id DESC`).all(id);return res.json({success:true,withdrawal:{...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)},events}});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawal."});}});
-app.post("/api/admin/withdrawals/:id/approve",requireAdmin,(req,res)=>{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});try{const transferReference=cleanString(req.body?.transferReference??req.body?.manualTransferReference,150);const withdrawal=db.transaction(()=>{const row=db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);if(!row)throw new Error("Withdrawal not found.");if(row.status!=="pending")throw new Error(`Withdrawal is already ${row.status}.`);db.prepare(`UPDATE withdrawals SET status='paid',gateway='manual',gateway_reference=COALESCE(NULLIF(?, ''), gateway_reference),gateway_status='MANUAL_TRANSFER_COMPLETED',approved_by=?,approved_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='pending'`).run(transferReference,req.admin.username,id);addWithdrawalEvent(id,"admin_approved_manual",req.admin.username,{method:"manual_bank_transfer",transferReference:transferReference||null,status:"paid",fullAmount:true});return db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);})();return res.json({success:true,message:"Withdrawal approved",withdrawal:withdrawalResult(withdrawal)});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to approve withdrawal."});}});
+app.post("/api/admin/withdrawals/:id/approve",requireAdmin,(req,res)=>{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});try{const transferReference=cleanString(req.body?.transferReference??req.body?.manualTransferReference,150);const withdrawal=db.transaction(()=>{const row=db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);if(!row)throw new Error("Withdrawal not found.");if(row.status!=="pending")throw new Error(`Withdrawal is already ${row.status}.`);db.prepare(`UPDATE withdrawals SET status='paid',gateway='manual',gateway_reference=COALESCE(NULLIF(?, ''), gateway_reference),gateway_status='MANUAL_TRANSFER_COMPLETED',approved_by=?,approved_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='pending'`).run(transferReference,req.admin.username,id);addWithdrawalEvent(id,"admin_approved_manual",req.admin.username,{method:"manual_bank_transfer",transferReference:transferReference||null,status:"paid",fullAmount:true});return db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);})();return res.json({success:true,message:"Withdrawal approved - FULL amount marked paid",withdrawal:withdrawalResult(withdrawal)});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to approve withdrawal."});}});
 app.post("/api/admin/withdrawals/:id/reject",requireAdmin,(req,res)=>{const id=toPositiveInteger(req.params.id);const reason=cleanString(req.body?.reason,500)||"Withdrawal rejected by admin.";if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});try{const row=db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);if(!row)return res.status(404).json({success:false,message:"Withdrawal not found."});if(row.status==="paid")return res.status(409).json({success:false,message:"This withdrawal has already been paid."});if(row.status==="rejected")return res.status(409).json({success:false,message:"This withdrawal is already rejected."});const refunded=refundWithdrawalIfNeeded(id,reason,req.admin.username);return res.json({success:true,message:"Withdrawal rejected and refunded.",withdrawal:withdrawalResult(refunded)});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to reject withdrawal."});}});
 app.get("/api/admin/jobs",requireAdmin,(req,res)=>{try{const jobs=db.prepare(`SELECT * FROM jobs WHERE deleted_at IS NULL OR deleted_at='' ORDER BY id DESC`).all();return res.json({success:true,jobs:jobs.map(j=>({...j,url:j.link,link:j.link}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load jobs."});}});
 app.post("/api/admin/jobs",requireAdmin,(req,res)=>{try{const title=cleanString(req.body?.title||req.body?.name,150); const description=cleanString(req.body?.description,1000); const reward=toPositiveInteger(req.body?.reward||req.body?.amount); const link=cleanString(req.body?.link||req.body?.url||req.body?.job_url||req.body?.link_url||req.body?.destination_url||req.body?.task_link,1000); const slot=cleanString(req.body?.slot||req.body?.job_slot||"1",100); const category=cleanString(req.body?.category,100); const duration=cleanString(req.body?.duration||"Flexible",100); if(!title)return res.status(400).json({success:false,message:"Job title is required."}); if(reward===null||reward<=0)return res.status(400).json({success:false,message:"Job reward must be a positive number."}); if(!link)return res.status(400).json({success:false,message:"Job link is required."}); const result=db.prepare(`INSERT INTO jobs (title,description,reward,link,slot,category,duration,status) VALUES (?,?,?,?,?,?,?, 'active')`).run(title,description,reward,link,slot,category,duration); const job=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(result.lastInsertRowid); return res.status(201).json({success:true,job:{...job,url:job.link,link:job.link},message:"Job created"});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to create job."});}});
 app.put("/api/admin/jobs/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid job."});const existing=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(id);if(!existing)return res.status(404).json({success:false,message:"Job not found."});const title=cleanString(req.body?.title??existing.title,150);const description=cleanString(req.body?.description??existing.description??"",1000);const reward=toPositiveInteger(req.body?.reward??existing.reward);const link=cleanString(req.body?.link??existing.link??"",1000);const slot=cleanString(req.body?.slot??existing.slot??"",100);const category=cleanString(req.body?.category??existing.category??"",100);const duration=cleanString(req.body?.duration??existing.duration??"",100);const requestedStatus=String(req.body?.status??existing.status??"active").toLowerCase();let status;if(requestedStatus==="active")status="active";else status="inactive";if(!title)return res.status(400).json({success:false,message:"Job title is required."});if(reward===null||reward<=0)return res.status(400).json({success:false,message:"Job reward must be a positive number."});if(!link)return res.status(400).json({success:false,message:"Job link is required."});db.prepare(`UPDATE jobs SET title=?,description=?,reward=?,link=?,slot=?,category=?,duration=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(title,description,reward,link,slot,category,duration,status,id);const job=db.prepare(`SELECT * FROM jobs WHERE id=?`).get(id);return res.json({success:true,job});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to update job."});}});
 app.post("/api/admin/jobs/:id/status",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id) return res.status(400).json({success:false,message:"Invalid job"});const s=String(req.body?.status||"active").toLowerCase();db.prepare("UPDATE jobs SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").run(s==="inactive"?"inactive":"active",id);return res.json({success:true,message:"Status updated"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.delete("/api/admin/jobs/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid job."});const existing=db.prepare("SELECT id FROM jobs WHERE id=?").get(id); if(!existing) return res.status(404).json({success:false,message:"Job not found"}); db.prepare("DELETE FROM user_job_link_opens WHERE job_id=?").run(id); db.prepare("DELETE FROM user_jobs WHERE job_id=?").run(id); db.prepare("DELETE FROM jobs WHERE id=?").run(id); return res.json({success:true,message:"Job deleted permanently"});}catch(error){return res.status(500).json({success:false,message:error.message||"Unable to delete job."});}});
+app.delete("/api/admin/jobs/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid job."});const existing=db.prepare("SELECT id FROM jobs WHERE id=?").get(id); if(!existing) return res.status(404).json({success:false,message:"Job not found"}); db.prepare("DELETE FROM user_job_link_opens WHERE job_id=?").run(id); db.prepare("DELETE FROM user_jobs WHERE job_id=?").run(id); db.prepare("DELETE FROM jobs WHERE id=?").run(id); return res.json({success:true,message:"Job deleted permanently - real delete"});}catch(error){return res.status(500).json({success:false,message:error.message||"Unable to delete job."});}});
 app.get("/api/admin/links",requireAdmin,(req,res)=>{try{const links=db.prepare("SELECT * FROM links ORDER BY id DESC").all();return res.json({success:true,links});}catch(e){return res.status(500).json({success:false,message:"Unable to load links"});}});
 app.post("/api/admin/links",requireAdmin,(req,res)=>{try{const name=cleanString(req.body?.name||req.body?.title,150);const url=cleanString(req.body?.url,1000); const desc=cleanString(req.body?.description,1000);const cat=cleanString(req.body?.category,100);const st=cleanString(req.body?.status,20)||"active"; if(!name) return res.status(400).json({success:false,message:"Name required"}); if(!url) return res.status(400).json({success:false,message:"URL required"}); const r=db.prepare("INSERT INTO links (name,title,url,description,category,status) VALUES (?,?,?,?,?,?)").run(name,name,url,desc,cat||"General",st); return res.status(201).json({success:true,message:"Link added",link:db.prepare("SELECT * FROM links WHERE id=?").get(r.lastInsertRowid)});}catch(e){return res.status(400).json({success:false,message:e.message});}});
 app.put("/api/admin/links/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id) return res.status(400).json({success:false,message:"Invalid"}); const ex=db.prepare("SELECT * FROM links WHERE id=?").get(id);if(!ex) return res.status(404).json({success:false,message:"Not found"}); const name=cleanString(req.body?.name??ex.name,150);const url=cleanString(req.body?.url??ex.url,1000); const desc=cleanString(req.body?.description??ex.description,1000);const cat=cleanString(req.body?.category??ex.category,100);const st=cleanString(req.body?.status??ex.status,20); db.prepare("UPDATE links SET name=?,title=?,url=?,description=?,category=?,status=?,updated_at=CURRENT_TIMESTAMP WHERE id=?").run(name,name,url,desc,cat,st,id); return res.json({success:true,message:"Updated",link:db.prepare("SELECT * FROM links WHERE id=?").get(id)});}catch(e){return res.status(400).json({success:false,message:e.message});}});
@@ -497,95 +499,82 @@ app.delete("/api/admin/videos/:id", requireAdmin, (req,res)=>{try{const id=toPos
 app.get("/api/videos", requireActiveUser, (req,res)=>{try{const vids=db.prepare(`SELECT v.*, COALESCE(uv.status,'pending') as user_status FROM videos v LEFT JOIN user_videos uv ON uv.video_id=v.id AND uv.user_id=? WHERE v.status='active' ORDER BY v.id DESC`).all(req.user.id); return res.json({success:true, videos: vids.map(v=>({id:v.id,title:v.title,description:v.description,video_url:v.video_url,url:v.video_url,thumbnail_url:v.thumbnail_url, reward:Number(v.reward||0),duration:Number(v.duration||0),status:v.status, user_status:v.user_status,completed:v.user_status==='completed'}))});}catch(e){return res.status(500).json({success:false,message:"Unable to load videos"});}});
 app.post("/api/videos/:id/open", requireActiveUser, (req,res)=>{try{const videoId=toPositiveInteger(req.params.id); if(!videoId) return res.status(400).json({success:false,message:"Invalid video"}); const video=db.prepare("SELECT * FROM videos WHERE id=? AND status='active'").get(videoId); if(!video) return res.status(404).json({success:false,message:"Video not found"}); db.prepare("INSERT INTO user_videos (user_id,video_id,status) VALUES (?,?, 'started') ON CONFLICT(user_id, video_id) DO UPDATE SET status='started' WHERE status='pending'").run(req.user.id, videoId); return res.json({success:true, message:"Video started"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
 
-app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{try{
-  const videoId=toPositiveInteger(req.params.id);
-  if(!videoId) return res.status(400).json({success:false,message:"Invalid video"});
-  const pkgRaw = String(req.user.package||req.user.plan||"").toLowerCase();
-  const isSuper = pkgRaw.includes("super") || req.user.is_super==1 || req.headers['x-super-force']==="1" || req.body?.forceSuper==1;
-  if(isSuper){
-    const result=db.transaction(()=>{
-      const video=db.prepare("SELECT * FROM videos WHERE id=? AND status='active'").get(videoId);
-      if(!video) throw new Error("Video not found");
-      const started = db.prepare("SELECT * FROM user_videos WHERE user_id=? AND video_id=?").get(req.user.id, videoId);
-      const rewardRef=`VIDEO_REWARD_${req.user.id}_${videoId}`;
-      const already=db.prepare("SELECT id FROM wallet_transactions WHERE reference=? LIMIT 1").get(rewardRef);
-      if(already || (started && started.status==='completed')){return {already:true, reward:0};}
-      db.prepare("INSERT INTO user_videos (user_id,video_id,status,completed_at) VALUES (?,?, 'completed', CURRENT_TIMESTAMP) ON CONFLICT(user_id, video_id) DO UPDATE SET status='completed', completed_at=CURRENT_TIMESTAMP").run(req.user.id, videoId);
-      db.prepare("UPDATE users SET wallet_balance = wallet_balance + ?, balance = COALESCE(balance,0)+?, wallet = COALESCE(wallet,0)+?, total_earned = total_earned + ? WHERE id=?").run(Number(video.reward), Number(video.reward), Number(video.reward), Number(video.reward), req.user.id);
-      db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(req.user.id, "video_reward", Number(video.reward), "wallet", rewardRef, `SUPER Video: ${video.title}`);
-      return {already:false, reward:Number(video.reward)};
+// FIXED VIDEO COMPLETE - Includes daily limit check + full reward
+app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{
+  try {
+    const videoId = toPositiveInteger(req.params.id);
+    if (!videoId) return res.status(400).json({success:false,message:"Invalid video."});
+    const isSuper = Number(req.user.is_super||0) === 1;
+    const plan = isSuper ? "SUPER" : (String(req.user.package||"Silver").toLowerCase().includes("gold") ? "Gold" : "Silver");
+    const limits = isSuper ? {maxJobs:Infinity,maxDaily:Infinity} : (plan === "Gold" ? {maxJobs:10,maxDaily:7000} : {maxJobs:5,maxDaily:2500});
+    const reference = `VIDEO_REWARD_${req.user.id}_${videoId}`;
+    const result = db.transaction(()=>{
+      const video = db.prepare("SELECT * FROM videos WHERE id=? AND status='active'").get(videoId);
+      if (!video) throw new Error("Video not found.");
+      const started = db.prepare("SELECT * FROM user_videos WHERE user_id=? AND video_id=?").get(req.user.id,videoId);
+      if (!started) throw new Error("Open and start the video before claiming its reward.");
+      const credited = db.prepare("SELECT id FROM wallet_transactions WHERE reference=? LIMIT 1").get(reference);
+      if (credited || started.status === "completed") {
+        const current = db.prepare("SELECT wallet_balance,total_earned FROM users WHERE id=?").get(req.user.id);
+        return {already:true,reward:0,balance:Number(current?.wallet_balance||0),totalEarned:Number(current?.total_earned||0)};
+      }
+      const today = getTodayStats(req.user.id);
+      const reward = Math.max(0,Number(video.reward||0));
+      if (!isSuper && today.totalCount >= limits.maxJobs) throw new Error(`Daily limit reached! ${plan} maximum is ${limits.maxJobs} jobs/videos per day.`);
+      if (!isSuper && today.totalEarned + reward > limits.maxDaily) throw new Error(`This video would exceed your daily N${limits.maxDaily.toLocaleString()} earning limit.`);
+      db.prepare("UPDATE user_videos SET status='completed',completed_at=CURRENT_TIMESTAMP WHERE user_id=? AND video_id=?").run(req.user.id,videoId);
+      updateUserBalance(req.user.id,"wallet_balance",reward);
+      db.prepare("UPDATE users SET total_earned=total_earned+? WHERE id=?").run(reward,req.user.id);
+      recordWalletTransaction(req.user.id,"video_reward",reward,"wallet",reference,`Reward for video: ${video.title}`);
+      const current = db.prepare("SELECT wallet_balance,total_earned FROM users WHERE id=?").get(req.user.id);
+      return {already:false,reward,balance:Number(current?.wallet_balance||0),totalEarned:Number(current?.total_earned||0)};
     })();
-    const userBal = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id);
-    console.log(`👑 SUPER VIDEO ${videoId} reward ${result.reward} user ${req.user.email} NewBal ${userBal.wallet_balance}`);
-    return res.json({success:true, message: result.already? "Already completed" : `N${result.reward} credited as SUPER unlimited`, reward: result.reward, alreadyCompleted: result.already, walletBalance: userBal.wallet_balance, wallet_balance:userBal.wallet_balance, balance:userBal.wallet_balance, isSuper:true});
-  }
-  const userPlan = String(req.user.package||"Silver").toLowerCase().includes("gold")? "Gold" : "Silver";
-  const limits = userPlan==="Gold"? {maxJobs:10, maxDaily:7000} : {maxJobs:5, maxDaily:2500};
-  const today = getTodayStats(req.user.id);
-  if(today.totalCount >= limits.maxJobs){
-    return res.status(400).json({ success:false, message:`Daily limit reached! ${userPlan} max ${limits.maxJobs} tasks today. Come back tomorrow.` });
-  }
-  const result=db.transaction(()=>{
-    const video=db.prepare("SELECT * FROM videos WHERE id=? AND status='active'").get(videoId);
-    if(!video) throw new Error("Video not found");
-    if((today.totalEarned + Number(video.reward||0)) > limits.maxDaily){
-      throw new Error(`This video would exceed daily N${limits.maxDaily.toLocaleString()} limit. Earned: N${today.totalEarned}. Upgrade to Super.`);
-    }
-    const started = db.prepare("SELECT * FROM user_videos WHERE user_id=? AND video_id=?").get(req.user.id, videoId);
-    const rewardRef=`VIDEO_REWARD_${req.user.id}_${videoId}`;
-    const already=db.prepare("SELECT id FROM wallet_transactions WHERE reference=? LIMIT 1").get(rewardRef);
-    if(already || (started && started.status==='completed')){return {already:true, reward:0};}
-    db.prepare("INSERT INTO user_videos (user_id,video_id,status,completed_at) VALUES (?,?, 'completed', CURRENT_TIMESTAMP) ON CONFLICT(user_id, video_id) DO UPDATE SET status='completed', completed_at=CURRENT_TIMESTAMP").run(req.user.id, videoId);
-    updateUserBalance(req.user.id,"wallet_balance", Number(video.reward));
-    db.prepare("UPDATE users SET total_earned=total_earned+? WHERE id=?").run(Number(video.reward), req.user.id);
-    recordWalletTransaction(req.user.id,"video_reward",Number(video.reward),"wallet",rewardRef,`Reward for video: ${video.title}`);
-    return {already:false, reward:Number(video.reward)};
-  })();
-  const userBal = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id);
-  return res.json({success:true, message: result.already? "Already completed" : `N${result.reward} credited`, reward: result.reward, alreadyCompleted: result.already, walletBalance: userBal.wallet_balance});
-}catch(e){return res.status(400).json({success:false,message:e.message});}});
-
+    return res.json({success:true,alreadyCompleted:result.already,message:result.already?"Video reward has already been credited.":`Video completed successfully. N${result.reward.toLocaleString()} credited.`,reward:result.reward,walletBalance:result.balance,totalEarned:result.totalEarned,plan,unlimited:isSuper});
+  } catch (e) { return res.status(400).json({success:false,message:e.message||"Unable to complete video."}); }
+});
 app.get("/api/history", requireUser, (req,res)=>{try{const tx = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC").all(req.user.id); const wd = db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC").all(req.user.id); return res.json({success:true, history: tx, transactions: tx, withdrawals: wd, wallet:{transactions: tx}});}catch(e){ return res.json({success:true, history:[], transactions:[], withdrawals:[], wallet:{transactions:[]}});}});
 app.post("/api/selar/activate", async (req, res) => { try { const email = normalizeEmail(req.body?.email || req.body?.customer_email || req.body?.buyer_email || req.query?.email || req.body?.data?.email); let plan = packageFromInput(req.body?.plan) || null; const amountStr = String(req.body?.amount || req.body?.price || ""); const planStr = String(req.body?.plan || "").toLowerCase(); if (!plan) { if (amountStr.includes("15000") || planStr.includes("gold")) plan = "Gold"; else plan = "Silver"; } if (!email) return res.status(400).json({ success: false, message: "Email required" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if (!user) { return res.status(404).json({ success: false, message: "User not found for email " + email + ". Register first." }); } if (user.account_status === "active" || user.account_status === "approved") { return res.json({ success: true, alreadyActive: true, message: "Already ACTIVE", user: publicUser(user) }); } if (plan && plan!== user.package) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewards(user.id); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); return res.json({ success: true, message: "Account activated - admin now ACTIVE", user: publicUser(updated) }); } catch (e) { return res.status(500).json({ success: false, message: e.message }); } });
 app.post("/api/webhooks/selar", async (req, res) => { try { const data = req.body || {}; const email = normalizeEmail(data.email || data.customer_email || data.buyer_email || data?.data?.email || data?.customer?.email || req.query?.email); if (!email) return res.status(200).json({ success: true, message: "No email" }); let plan = "Silver"; const amountStr = String(data.amount || data.total || data.price || ""); if(amountStr.includes("15000") || String(data.plan || "").toLowerCase().includes("gold")) plan = "Gold"; let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if(user && user.account_status!== 'active' && user.account_status!== 'approved'){ if (plan!== user.package) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewards(user.id); } return res.json({ success: true }); } catch (e) { return res.json({ success: false }); } });
 app.get("/api/activate", async (req, res) => { try { const email = normalizeEmail(req.query?.email || req.query?.customer_email || req.body?.email || ""); const username = cleanString(req.query?.username || "", 50); let plan = packageFromInput(req.query?.plan || req.query?.package) || "Silver"; let targetEmail = email; if (!targetEmail && username) { const byUser = db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (byUser) targetEmail = byUser.email; } if (!targetEmail) return res.status(400).json({ success: false, message: "Email required for activation" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if (!user && username) user = db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (!user) return res.status(404).json({ success: false, message: "User not found: " + targetEmail }); if (user.account_status === "active" || user.account_status === "approved") return res.json({ success: true, alreadyActive: true, user: publicUser(user) }); if (plan && plan!== user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); activateUserAndRewards(user.id); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); console.log(`AUTO-ACTIVATED via /api/activate: ${updated.email} -> ${plan}`); return res.json({ success: true, message: "Account activated", user: publicUser(updated) }); } catch (e) { console.error("ACTIVATE ERROR", e); return res.status(500).json({ success: false, message: e.message }); } });
 app.post("/api/activate", async (req,res)=>{ try{ const email = normalizeEmail(req.body?.email || req.query?.email || ""); const username = cleanString(req.body?.username || req.query?.username || "",50); let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver"; let targetEmail = email; if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; } if(!targetEmail) return res.status(400).json({success:false}); let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(!user) return res.status(404).json({success:false}); if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true}); if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); activateUserAndRewards(user.id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false}); } });
-
-// === EMERGENCY FIX - BYPASS PACKAGE CHECK ===
-app.post("/api/debug/emergency-super", (req,res)=>{
-  try{
-    let email = String(req.body?.email||req.query?.email||"").toLowerCase().trim();
-    if(!email) return res.json({success:false, message:"email required"});
-    let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?)").get(email);
-    if(!user) return res.json({success:false, message:"User not found "+email});
-    try{ db.prepare("UPDATE users SET plan='SUPER' WHERE id=?").run(user.id); }catch(e){}
-    try{ db.prepare("UPDATE users SET is_super=1 WHERE id=?").run(user.id); }catch(e){}
-    try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(user.id); }catch(e){}
-    let fresh = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
-    console.log(`✅ EMERGENCY SUPER: ${fresh.email} is_super=${fresh.is_super} plan=${fresh.plan}`);
-    return res.json({success:true, message:`✅ ${fresh.email} is now SUPER - unlimited`, user:fresh});
-  }catch(e){ return res.json({success:false, error:e.message}); }
+// SUPER upgrade codes: creation is admin-only; redemption is tied to the signed-in session.
+function makeSuperCode(){ return "SUPER-" + crypto.randomBytes(5).toString("hex").toUpperCase(); }
+app.post("/api/admin/super-codes/generate", requireAdmin, (req,res)=>{
+  try {
+    const requested = Number(req.body?.count ?? 1);
+    const count = Number.isFinite(requested) ? Math.max(1,Math.min(100,Math.floor(requested))) : 1;
+    const created = [];
+    const insert = db.prepare("INSERT INTO super_upgrade_codes (code,created_by) VALUES (?,?)");
+    const tx = db.transaction(()=>{ for(let i=0;i<count;i++){ let code; for(let attempt=0;attempt<5;attempt++){ code=makeSuperCode(); try{insert.run(code,String(req.admin.username||"admin"));created.push(code);break;}catch(err){if(!String(err.message).includes("UNIQUE constraint failed"))throw err;} } if(!code || created.length < i+1) throw new Error("Could not generate a unique code. Try again."); } });
+    tx();
+    return res.json({success:true,count:created.length,codes:created});
+  } catch(e) { return res.status(500).json({success:false,message:e.message||"Unable to generate SUPER codes."}); }
 });
-
-app.post("/api/debug/emergency-add-money", (req,res)=>{
-  try{
-    let email = String(req.body?.email||"").toLowerCase().trim();
-    let amount = Number(req.body?.amount||500);
-    if(!email) return res.json({success:false});
-    let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?)").get(email);
-    if(!user) return res.json({success:false, message:"User not found"});
-    let cur = Number(user.wallet_balance||0);
-    let newBal = cur + amount;
-    db.prepare("UPDATE users SET wallet_balance=?, balance=?, wallet=?, total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(newBal, newBal, newBal, amount, user.id);
-    db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(user.id, "video_reward", amount, "wallet", "EMERGENCY_"+Date.now(), "Emergency add");
-    let fresh = db.prepare("SELECT wallet_balance, balance, wallet, total_earned, package, plan, is_super FROM users WHERE id=?").get(user.id);
-    return res.json({success:true, message:`Added ₦${amount}`, newBal:fresh.wallet_balance, user:fresh});
-  }catch(e){ return res.json({success:false, error:e.message}); }
+app.get("/api/admin/super-codes", requireAdmin, (req,res)=>{
+  try { const codes=db.prepare("SELECT id,code,created_by,created_at,used_by,used_at FROM super_upgrade_codes ORDER BY id DESC LIMIT 500").all(); return res.json({success:true,codes}); }
+  catch(e) { return res.status(500).json({success:false,message:"Unable to load SUPER codes."}); }
 });
-
-require('./jovia-codes-plugin')(app, db);
+app.post("/api/super/upgrade", requireUser, (req,res)=>{
+  try {
+    const code=String(req.body?.code||"").trim().toUpperCase();
+    if(!/^SUPER-[A-F0-9]{10}$/.test(code)) return res.status(400).json({success:false,message:"Enter a valid SUPER upgrade code."});
+    const result=db.transaction(()=>{
+      const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+      if(!user) throw new Error("User not found.");
+      if(Number(user.is_super||0)===1) return {already:true,user};
+      const row=db.prepare("SELECT * FROM super_upgrade_codes WHERE code=?").get(code);
+      if(!row) throw new Error("Invalid SUPER upgrade code.");
+      if(row.used_at || row.used_by) throw new Error("This SUPER upgrade code has already been used.");
+      const changed=db.prepare("UPDATE super_upgrade_codes SET used_by=?,used_at=CURRENT_TIMESTAMP WHERE id=? AND used_at IS NULL AND used_by IS NULL").run(user.id,row.id);
+      if(changed.changes!==1) throw new Error("This SUPER upgrade code has already been used.");
+      db.prepare("UPDATE users SET is_super=1 WHERE id=?").run(user.id);
+      return {already:false,user:db.prepare("SELECT * FROM users WHERE id=?").get(user.id)};
+    })();
+    return res.json({success:true,alreadySuper:result.already,message:result.already?"Your account is already SUPER.":"SUPER has been activated for your account.",user:publicUser(result.user)});
+  } catch(e) { return res.status(400).json({success:false,message:e.message||"Unable to apply SUPER code."}); }
+});
 
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
-if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA V7 FINAL - EMERGENCY FIX - SUPER UNLIMITED + WALLET ADDS"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log("=========================================="); console.log("");});}
+if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA V5 SECURE - SUPER UNLIMITED + ONE-USE SUPER CODES + WITHDRAWAL + DAILY LIMIT FIX"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Minimums: Regular 60K FULL / Affiliate 20K / Code Fee 10K`); console.log(` Fixes: SUPER unlimited server-side, one-use codes, job/video rewards idempotent, Silver/Gold daily limits`); console.log("=========================================="); console.log("");});}
 module.exports = app;
