@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JOVIA Codes - Admin Only</title>
+<style>body{font-family:Arial;background:#0f172a;color:#fff;padding:20px}.card{background:#1e293b;padding:20px;border-radius:12px;max-width:500px;margin:auto}input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;box-sizing:border-box}button{width:100%;padding:12px;background:#22c55e;color:#000;font-weight:bold;border:none;border-radius:8px;cursor:pointer;margin-top:8px}.code-box{margin-top:15px;background:#000;padding:15px;border-radius:8px;text-align:center;display:none}.code-text{font-size:22px;letter-spacing:2px;color:#22c55e;font-weight:bold;word-break:break-all}.item{background:#0f172a;padding:10px;margin:5px 0;border-radius:6px;font-size:13px;display:flex;justify-content:space-between}</style>
+</head><body><div class="card">
+<h2>JOVIA Withdraw Code</h2>
+<input id="railwayUrl" placeholder="Paste Railway URL e.g https://jovia-production.up.railway.app">
+<input id="codeEmail" placeholder="User Email or General">
+<input id="codeNote" placeholder="Note">
+<button onclick="generate()">Generate Code</button>
+<div id="codeResult" class="code-box"><div id="codeText" class="code-text"></div><button onclick="copyCode()">Copy</button></div>
+<h3>Recent Codes</h3><button onclick="loadCodes()">Refresh List</button><div id="codeList"></div>
+</div>
+<script>
+let lastCode="";
+function getBase(){let u=document.getElementById('railwayUrl').value.trim(); if(!u){alert('Paste Railway URL first'); throw new Error();} localStorage.setItem('jovia_railway_url',u); return u.replace(/\/$/,'');}
+async function generate(){
+ try{
+  const base=getBase();
+  const email=document.getElementById('codeEmail').value;
+  const note=document.getElementById('codeNote').value;
+  const res=await fetch(`${base}/api/generate-code`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,note})});
+  const data=await res.json();
+  if(data.success){lastCode=data.code; document.getElementById('codeResult').style.display='block'; document.getElementById('codeText').textContent=data.code; loadCodes();}
+  else alert('Failed: '+data.message);
+ }catch(e){alert('Error: '+e.message)}
+}
+async function loadCodes(){
+ try{ const base=getBase(); const res=await fetch(`${base}/api/codes`); const rows=await res.json(); document.getElementById('codeList').innerHTML=rows.map(r=>`<div class="item"><span><b>${r.code}</b> - ${r.email}</span><span style="color:${r.used?'red':'#22c55e'}">${r.used?'USED':'ACTIVE'}</span></div>`).join(''); }catch(e){}
+}
+function copyCode(){navigator.clipboard.writeText(lastCode); alert('Copied: '+lastCode);}
+(function(){const u=localStorage.getItem('jovia_railway_url'); if(u) document.getElementById('railwayUrl').value=u;})();
+</script></body></html>
