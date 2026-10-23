@@ -24,7 +24,7 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
 .summary-label{color:#d8cfe0;font-size:9px;font-weight:700;margin-bottom:6px;letter-spacing:.5px}
 .summary-value{font-size:18px;font-weight:900;overflow-wrap:anywhere}
-.super-badge{display:inline-flex;margin-top:10px;padding:6px 12px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:10px;font-weight:900;animation:pulse 2s infinite}
+.super-badge{display:inline-flex;margin-top:12px;padding:8px 14px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:11px;font-weight:900;animation:pulse 2s infinite}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
 .section{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.03)}
 .section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
@@ -94,11 +94,10 @@ const taskTimers=new Map();
 const TASK_TIMER_STORAGE_KEY="jovia_task_waits_v1"; 
 let taskTimerInterval=null;
 
-// FIXED: SUPER = UNLIMITED
 const PLAN_CONFIG={
   Silver:{maxDaily:2500,taskCount:5,upgrade:"SUPER",label:"Silver"},
   Gold:{maxDaily:7000,taskCount:10,upgrade:"SUPER",label:"Gold"},
-  Super:{maxDaily:999999999,taskCount:999,upgrade:"SUPER",label:"SUPER"}
+  Super:{maxDaily:999999999,taskCount:9999,upgrade:"SUPER",label:"SUPER"}
 };
 
 function formatNaira(v){const n=Number(v);return"₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{maximumFractionDigits:2});}
@@ -118,19 +117,28 @@ function normalizePlan(v){
 }
 function getCurrentPlan(){
   try{
-    const pkg=currentUser?.package||currentUser?.plan||currentUser?.package_name||localStorage.getItem("jovia_plan")||"Silver";
+    const local1 = localStorage.getItem("jovia_plan")||"";
+    const local2 = localStorage.getItem("jovia_package")||"";
+    if(String(local1).toLowerCase().includes("super") || String(local2).toLowerCase().includes("super")) return "Super";
+    const pkg=currentUser?.package||currentUser?.plan||currentUser?.package_name||"Silver";
     return normalizePlan(pkg);
   }catch{return"Silver";}
 }
-function isSuperPlan(){return getCurrentPlan()==="Super";}
+function isSuperPlan(){
+  try{
+    const l1 = String(localStorage.getItem("jovia_plan")||"").toLowerCase();
+    const l2 = String(localStorage.getItem("jovia_package")||"").toLowerCase();
+    if(l1.includes("super") || l2.includes("super")) return true;
+  }catch(e){}
+  return getCurrentPlan()==="Super";
+}
 function getPlanLimits(plan){return PLAN_CONFIG[normalizePlan(plan)]||PLAN_CONFIG.Silver;}
 function getAccountStatus(u){return String(u?.account_status||u?.status||u?.accountStatus||"").toLowerCase();}
 function isSuspended(u){return["suspended","banned","blocked"].includes(getAccountStatus(u));}
 function isActivated(u){
   if(!u) return false;
   if(isSuspended(u)) return false;
-  // SUPER is always activated
-  const pkg = String(u.package||u.plan||"").toLowerCase();
+  const pkg = String(u.package||u.plan||localStorage.getItem("jovia_plan")||"").toLowerCase();
   if(pkg.includes("super")) return true;
   const s=getAccountStatus(u);
   return ["active","approved","activated","silver","gold","super"].includes(s)||s.includes("super");
@@ -140,7 +148,7 @@ function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance?
 
 function getDailyStats(){
   if(isSuperPlan()){
-    return {plan:"Super",limits:PLAN_CONFIG.Super,earned:0,claimedCount:completedJobs.length+completedVideos.length,remainingAmount:999999999,isSuper:true};
+    return {plan:"Super",limits:PLAN_CONFIG.Super,earned:dailyStatsFromServer?.earnedToday||0,claimedCount:completedJobs.length+completedVideos.length,remainingAmount:999999999,isSuper:true};
   }
   const plan=getCurrentPlan();const limits=getPlanLimits(plan);let earned=0,claimedCount=0;
   if(dailyStatsFromServer){
@@ -151,14 +159,8 @@ function getDailyStats(){
   }
   return {plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned),isSuper:false};
 }
-function isDailyLimitReached(){
-  if(isSuperPlan()) return false;
-  const s=getDailyStats(); return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;
-}
-function wouldExceedLimit(reward){
-  if(isSuperPlan()) return false;
-  const s=getDailyStats();const a=Number(reward)||0;return a>s.limits.maxDaily||s.earned+a>s.limits.maxDaily;
-}
+function isDailyLimitReached(){ if(isSuperPlan()) return false; const s=getDailyStats(); return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount; }
+function wouldExceedLimit(reward){ if(isSuperPlan()) return false; const s=getDailyStats();const a=Number(reward)||0;return a>s.limits.maxDaily||s.earned+a>s.limits.maxDaily; }
 function getUpgradeMessage(plan){
   if(normalizePlan(plan)==="Silver") return "Daily limit reached. Upgrade to SUPER (N16k code) for unlimited access.";
   if(normalizePlan(plan)==="Gold") return "Daily limit reached. Upgrade to SUPER (N12k code) for unlimited access.";
@@ -199,8 +201,8 @@ function renderJobs(jobs){
  const planInfo=document.getElementById("planInfoText");
  if(stats.isSuper){
    superBadge.style.display="inline-flex";
-   planInfo.textContent="👑 SUPER ACTIVE - Unlimited jobs, unlimited earnings, all future features unlocked.";
-   document.getElementById("dailyEarnedText").textContent=`👑 SUPER: ${stats.claimedCount} tasks completed today - Unlimited access`;
+   planInfo.innerHTML="👑 <b>SUPER ACTIVE</b> - Unlimited jobs, unlimited earnings, all future features unlocked. Your code is <b>USED - One time only ✓</b>";
+   document.getElementById("dailyEarnedText").textContent=`👑 SUPER: ${stats.claimedCount} tasks completed today - Unlimited access - No daily limit`;
  }else{
    superBadge.style.display="none";
    planInfo.textContent=`Complete tasks + videos. Silver 5/₦2,500 • Gold 10/₦7,000 • SUPER unlimited (N12k/N16k upgrade).`;
@@ -214,8 +216,8 @@ function renderJobs(jobs){
   const id=String(getJobId(job));const title=getJobTitle(job);const desc=getJobDescription(job);const reward=Number(job.reward||0);const completed=String(job.user_status||job.status||"").toLowerCase()==="completed"||job.completed===true;
   const opened=hasOpenedTask(job);const timerExists=taskTimers.has(id);const secondsRemaining=getTaskSecondsRemaining(id);
   const item=document.createElement("div");item.className="job-card";
-  let html=`<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(reward)}</div></div><div class="job-description">${escapeHTML(desc)}</div><div class="job-meta"><span class="meta">${escapeHTML(getJobCategory(job))}</span><span class="meta">⏱ ${escapeHTML(getJobDuration(job))}</span>${stats.isSuper?'<span class="meta" style="background:#fff7ed;border-color:#f59e0b;color:#92400e">👑 SUPER</span>':''}</div>`;
-  if(completed){clearTaskTimer(id);html+=`<div class="task-box success-box"><div class="task-label">TASK COMPLETED ✓</div><div class="task-info">Reward: ${formatNaira(reward)}</div></div><button class="complete-btn completed" disabled>Completed ✓</button>`;}
+  let html=`<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(reward)}</div></div><div class="job-description">${escapeHTML(desc)}</div><div class="job-meta"><span class="meta">${escapeHTML(getJobCategory(job))}</span><span class="meta">⏱ ${escapeHTML(getJobDuration(job))}</span>${stats.isSuper?'<span class="meta" style="background:#fff7ed;border-color:#f59e0b;color:#92400e">👑 SUPER UNLIMITED</span>':''}</div>`;
+  if(completed){clearTaskTimer(id);html+=`<div class="task-box success-box"><div class="task-label">TASK COMPLETED ✓</div><div class="task-info">Reward: ${formatNaira(reward)} - Code USED - One time claim</div></div><button class="complete-btn completed" disabled>Completed ✓</button>`;}
   else if(!stats.isSuper&&(reward>stats.limits.maxDaily||wouldExceedLimit(reward))){html+=renderUpgradeCard(reward,stats.plan);}
   else if(timerExists&&!opened){html+=`<div class="task-box wait-box"><div class="task-label">⏳ TIMER IN PROGRESS - ${secondsRemaining}s</div><div class="task-info">Stay on task page, claim will unlock after ${TASK_WAIT_SECONDS}s</div></div><button class="complete-btn" disabled>Wait ${secondsRemaining}s ⏳</button>`;}
   else if(opened){html+=`<div class="task-box success-box"><div class="task-label">✓ READY TO CLAIM</div><div class="task-info">Timer passed. Complete the task instructions then claim your reward.</div></div><button class="complete-btn" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(reward)} →</button>`;}
@@ -228,6 +230,14 @@ async function loadAll(){
  if(loadingAll)return;loadingAll=true;
  const loading=document.getElementById("loadingState");const error=document.getElementById("errorState");
  try{
+  // Instant SUPER check from localStorage before server loads
+  try{
+    const lp = String(localStorage.getItem("jovia_plan")||localStorage.getItem("jovia_package")||"").toLowerCase();
+    if(lp.includes("super")){
+      document.getElementById("superActiveBadge").style.display="inline-flex";
+      document.getElementById("planInfoText").innerHTML="👑 <b>SUPER ACTIVE</b> - Loading unlimited jobs...";
+    }
+  }catch(e){}
   loading.style.display="block";error.style.display="none";
   const user=await getCurrentUser();
   if(isSuspended(user)){showSuspendedState();return;}
