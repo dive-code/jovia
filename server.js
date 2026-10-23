@@ -523,10 +523,83 @@ app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{try{
     recordWalletTransaction(req.user.id,"video_reward",Number(video.reward),"wallet",rewardRef,`Reward for video: ${video.title}`);
     return {already:false, reward:Number(video.reward)};
   })();
-app.post("/api/activate", async (req,res)=>{ try{ const email = normalizeEmail(req.body?.email  req.query?.email  ""); const username = cleanString(req.body?.username  req.query?.username  "",50); let plan = packageFromInput(req.body?.plan  req.query?.plan)  "Silver"; let targetEmail = email; if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; } if(!targetEmail) return res.status(400).json({success:false}); let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(!user) return res.status(404).json({success:false}); if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true}); if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); activateUserAndRewards(user.id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false}); } });
-// === JOVIA CODES ROUTES - DB VERSION - PERSISTENT === try { db.exec(CREATE TABLE IF NOT EXISTS jovia_codes ( code TEXT PRIMARY KEY, email TEXT, note TEXT, used INTEGER DEFAULT 0, created_at TEXT, used_at TEXT )); } catch(e){console.log("codes table error", e.message)}
-function genJoviaCode() { const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let v = ""; for(let i=0;i<6;i++) v+=chars[Math.floor(Math.random()*chars.length)]; return "JOVIA-" + v; }
-app.post('/api/generate-code', (req, res) => { try{ const { email, note } = req.body; const code = genJoviaCode(); db.prepare("INSERT INTO jovia_codes (code, email, note, used, created_at) VALUES (?,?,?,?,?)") .run(code, email  "General", note  "", 0, new Date().toISOString()); res.json({ success: true, code }); }catch(e){ res.status(500).json({success:false, message:e.message}) } });
-app.post('/api/validate-code', (req, res) => { try{ const code = (req.body.code || "").trim().toUpperCase(); if(!code) return res.json({ success: false, message: "No code" }); const row = db.prepare("SELECT * FROM jovia_codes WHERE code=? AND used=0 LIMIT 1").get(code); if(!row) return res.json({ success: false, message: "Invalid or used" }); db.prepare("UPDATE jovia_codes SET used=1, used_at=? WHERE code=?").run(new Date().toISOString(), code); res.json({ success: true }); }catch(e){ res.status(500).json({success:false}) } });
-app.get('/api/codes', (req, res) => { try{ const rows = db.prepare("SELECT * FROM jovia_codes ORDER BY created_at DESC LIMIT 100").all(); res.json(rows); }catch(e){ res.json([]) } }); // === END JOVIA CODES ROUTES ===
-app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:API endpoint not found: ${req.method} ${req.originalUrl}});});
+app.post("/api/activate", async (req,res)=>{ 
+  try{ 
+    const email = normalizeEmail(req.body?.email || req.query?.email || ""); 
+    const username = cleanString(req.body?.username || req.query?.username || "",50); 
+    let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver"; 
+    let targetEmail = email; 
+    if(!targetEmail && username){ 
+      const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); 
+      if(u) targetEmail=u.email; 
+    } 
+    if(!targetEmail) return res.status(400).json({success:false}); 
+    let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); 
+    if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); 
+    if(!user) return res.status(404).json({success:false}); 
+    if(user.account_status==="active" || user.account_status==="approved") return res.json({success:true}); 
+    if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); 
+    activateUserAndRewards(user.id); 
+    return res.json({success:true}); 
+  }catch(e){ 
+    return res.status(500).json({success:false}); 
+  } 
+});
+
+// === JOVIA CODES - ONE USE ONLY - PASTE THIS BEFORE THE /api CATCH ALL ===
+const ADMIN_CODE_PASS = process.env.ADMIN_CODE_PASS || "Jovia2024";
+
+function genJoviaCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let v = "";
+  for (let i = 0; i < 6; i++) v += chars[Math.floor(Math.random() * chars.length)];
+  return "JOVIA-" + v;
+}
+
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
+    code TEXT PRIMARY KEY,
+    used INTEGER DEFAULT 0,
+    created_at TEXT,
+    used_at TEXT,
+    used_by TEXT
+  )`);
+} catch(e){}
+
+app.post("/api/generate-code", (req,res)=>{
+  try{
+    const pass = req.body?.adminPass || req.headers['x-admin-pass'] || req.query?.adminPass;
+    if(pass !== ADMIN_CODE_PASS) return res.status(401).json({success:false, message:"Wrong admin password"});
+    const code = genJoviaCode();
+    db.prepare("INSERT INTO jovia_codes (code, used, created_at) VALUES (?,?,?)").run(code, 0, new Date().toISOString());
+    return res.json({success:true, code});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+
+app.post("/api/validate-code", (req,res)=>{
+  try{
+    const code = (req.body?.code || "").trim().toUpperCase();
+    const email = (req.body?.email || req.query?.email || "").trim().toLowerCase();
+    if(!code) return res.json({success:false, message:"No code"});
+    const row = db.prepare("SELECT * FROM jovia_codes WHERE code=? LIMIT 1").get(code);
+    if(!row) return res.json({success:false, message:"Invalid code"});
+    if(row.used === 1) return res.json({success:false, message:`Already USED on ${row.used_at} by ${row.used_by}`});
+    db.prepare("UPDATE jovia_codes SET used=1, used_at=?, used_by=? WHERE code=?").run(new Date().toISOString(), email || 'unknown', code);
+    return res.json({success:true, message:"Code valid - marked USED"});
+  }catch(e){ return res.status(500).json({success:false}); }
+});
+
+app.get("/api/codes", (req,res)=>{
+  try{
+    const pass = req.body?.adminPass || req.headers['x-admin-pass'] || req.query?.adminPass;
+    if(pass !== ADMIN_CODE_PASS) return res.status(401).json({success:false});
+    const rows = db.prepare("SELECT * FROM jovia_codes ORDER BY created_at DESC LIMIT 200").all();
+    return res.json(rows);
+  }catch(e){ return res.json([]); }
+});
+// === END JOVIA CODES ===
+
+app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
+app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message || "Internal server error."});});
+if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA V5 SECURE - 60K REGULAR FULL + 20K AFFILIATE FREE + 10K CODE 1=1 FULL + NO RANDOM CODE + DAILY LIMIT FIX"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log(` Minimums: Regular 60K FULL / Affiliate 20K / Code Fee 10K`); console.log(` Fixes: 700 bug FIXED, random code BLOCKED, FULL amount ENFORCED, Jobs+Videos daily limit`); console.log("=========================================="); console.log("");});}
+module.exports = app;
