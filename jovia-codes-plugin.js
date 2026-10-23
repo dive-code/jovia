@@ -20,54 +20,35 @@ module.exports = (app, db) => {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         used_at TEXT
       );
-      CREATE INDEX IF NOT EXISTS idx_jovia_used ON jovia_codes(used);
-      CREATE INDEX IF NOT EXISTS idx_jovia_type ON jovia_codes(type);
     `);
-    for(let k in codes){
-      try{
-        db.prepare("INSERT OR IGNORE INTO jovia_codes (code,type,price,used,used_by,used_by_name,used_by_email,used_by_id,created_at,used_at) VALUES (?,?,?,?,?,?,?,?,?,?)")
-          .run(codes[k].code, codes[k].type, codes[k].price||0, codes[k].used?1:0, codes[k].used_by||'', codes[k].used_by_name||'', codes[k].used_by_email||'', codes[k].used_by_id||null, codes[k].created_at||new Date().toISOString(), codes[k].used_at||null);
-      }catch(e){}
-    }
-    try{
-      const cols = db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
-      if(!cols.includes('package')) db.exec("ALTER TABLE users ADD COLUMN package TEXT DEFAULT 'Silver'");
-      if(!cols.includes('plan')) try{ db.exec("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'Silver'"); }catch(e){}
-      if(!cols.includes('is_super')) try{ db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER DEFAULT 0"); }catch(e){}
-      if(!cols.includes('updated_at')) try{ db.exec("ALTER TABLE users ADD COLUMN updated_at TEXT DEFAULT CURRENT_TIMESTAMP"); }catch(e){}
-      if(!cols.includes('wallet_balance')) try{ db.exec("ALTER TABLE users ADD COLUMN wallet_balance INTEGER DEFAULT 0"); }catch(e){}
-      if(!cols.includes('balance')) try{ db.exec("ALTER TABLE users ADD COLUMN balance INTEGER DEFAULT 0"); }catch(e){}
-      if(!cols.includes('wallet')) try{ db.exec("ALTER TABLE users ADD COLUMN wallet INTEGER DEFAULT 0"); }catch(e){}
-    }catch(e){}
-  } catch(e){ console.log("DB init error:", e.message); }
+    const cols = db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
+    if(!cols.includes('package')) db.exec("ALTER TABLE users ADD COLUMN package TEXT DEFAULT 'Silver'");
+    if(!cols.includes('plan')) try{ db.exec("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'Silver'"); }catch(e){}
+    if(!cols.includes('is_super')) try{ db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER DEFAULT 0"); }catch(e){}
+    if(!cols.includes('wallet_balance')) try{ db.exec("ALTER TABLE users ADD COLUMN wallet_balance INTEGER DEFAULT 0"); }catch(e){}
+    if(!cols.includes('balance')) try{ db.exec("ALTER TABLE users ADD COLUMN balance INTEGER DEFAULT 0"); }catch(e){}
+    if(!cols.includes('wallet')) try{ db.exec("ALTER TABLE users ADD COLUMN wallet INTEGER DEFAULT 0"); }catch(e){}
+    if(!cols.includes('total_earnings')) try{ db.exec("ALTER TABLE users ADD COLUMN total_earnings INTEGER DEFAULT 0"); }catch(e){}
+    if(!cols.includes('total_balance')) try{ db.exec("ALTER TABLE users ADD COLUMN total_balance INTEGER DEFAULT 0"); }catch(e){}
+  } catch(e){}
 
   const getUserFromRequest = (req) => {
     try{
-      const tryEmails = [
-        req.body?.email, req.body?.userEmail, req.body?.customer_email,
-        req.body?.username, req.query?.email,
-        req.headers['x-user-email'], req.headers['x-user-email'.toLowerCase()],
-        req.headers['X-USER-EMAIL'], req.user?.email
-      ].filter(Boolean);
+      const headersEmail = req.headers['x-user-email']||req.headers['x-user-email'.toLowerCase()];
+      const bodyEmail = req.body?.email||req.body?.userEmail;
+      const allEmails = [bodyEmail, headersEmail, req.query?.email, req.user?.email].filter(Boolean).map(v=>String(v).toLowerCase().trim());
       
-      // 1. Try req.user.id
-      if(req.user?.id){ 
+      if(req.user?.id){
         try{ const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id); if(u) return u; }catch(e){}
       }
-      // 2. Try emails from body/header - MOST IMPORTANT FOR SUPER BYPASS
-      for(let em of tryEmails){
+      for(let em of allEmails){
         try{
-          let u = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(String(em).toLowerCase().trim());
+          let u = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(em);
           if(u) return u;
         }catch(e){}
       }
-      // 3. Try userId from body
-      if(req.body?.userId || req.body?.user_id){
-        try{ const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.body.userId||req.body.user_id); if(u) return u; }catch(e){}
-      }
-      // 4. Fallback req.user
-      if(req.user?.email){
-        try{ const u = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(req.user.email); if(u) return u; }catch(e){}
+      if(req.body?.userId){
+        try{ const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.body.userId); if(u) return u; }catch(e){}
       }
     }catch(e){}
     return req.user || null;
@@ -76,7 +57,7 @@ module.exports = (app, db) => {
   const isSuperUser = (user)=>{
     if(!user) return false;
     try{
-      let pkg = String(user.package||user.plan||user.package_name||"").toLowerCase();
+      let pkg = String(user.package||user.plan||"").toLowerCase();
       if(pkg.includes("super")) return true;
       if(user.is_super==1) return true;
     }catch(e){}
@@ -92,32 +73,51 @@ module.exports = (app, db) => {
 
   const addMoneyToWallet = (userId, amount, type)=>{
     amount = Number(amount)||0;
-    if(amount<=0 || !userId) return 0;
+    if(!userId || amount<=0) { console.log(`❌ addMoney invalid userId=${userId} amount=${amount}`); return 0; }
     let newBal = 0;
     try{
       let user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
-      if(!user) return 0;
+      if(!user){ console.log(`❌ User ${userId} not found`); return 0; }
       let cur = Number(user.wallet_balance||user.balance||user.wallet||0);
       newBal = cur + amount;
-      // Update ALL wallet columns so dashboard reads correctly
-      try{ db.prepare("UPDATE users SET wallet_balance=?, balance=?, wallet=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").run(newBal, newBal, newBal, userId); }catch(e){
-        try{ db.prepare("UPDATE users SET wallet_balance=?, balance=? WHERE id=?").run(newBal, newBal, userId); }catch(e2){
-          try{ db.prepare("UPDATE users SET wallet_balance=? WHERE id=?").run(newBal, userId); }catch(e3){}
+      console.log(`💰 ADDING ₦${amount} to user ${user.email} ID=${userId} | Old=${cur} New=${newBal} | Type=${type}`);
+
+      // UPDATE users table - TRY ALL COLUMNS
+      try{ db.prepare("UPDATE users SET wallet_balance=?, balance=?, wallet=?, total_earnings=COALESCE(total_earnings,0)+?, total_balance=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").run(newBal, newBal, newBal, amount, newBal, userId); console.log(`✅ Updated users table`); }catch(e){
+        console.log(`⚠️ users update 1 fail: ${e.message}`);
+        try{ db.prepare("UPDATE users SET wallet_balance=?, balance=? WHERE id=?").run(newBal, newBal, userId); console.log(`✅ Updated wallet_balance,balance`); }catch(e2){
+          try{ db.prepare("UPDATE users SET wallet_balance=? WHERE id=?").run(newBal, userId); console.log(`✅ Updated wallet_balance only`); }catch(e3){ console.log(`❌ All users update fail: ${e3.message}`); }
         }
       }
-      // Insert into EVERY possible history table - so money shows in dashboard/history
-      const tablesToTry = [
-        {sql:"INSERT INTO wallet_transactions (user_id, amount, type, status, created_at) VALUES (?,?,?,?, datetime('now','localtime'))", vals:[userId, amount, type, "completed"]},
-        {sql:"INSERT INTO transactions (user_id, amount, type, status, created_at) VALUES (?,?,?,?, datetime('now','localtime'))", vals:[userId, amount, type, "completed"]},
-        {sql:"INSERT INTO transactions (user_id, type, amount, status, created_at) VALUES (?,?,?,?, datetime('now','localtime'))", vals:[userId, type, amount, "completed"]},
-        {sql:"INSERT INTO earnings (user_id, amount, source, created_at) VALUES (?,?,?, datetime('now','localtime'))", vals:[userId, amount, type]},
-        {sql:"INSERT INTO user_earnings (user_id, amount, created_at) VALUES (?,?, datetime('now','localtime'))", vals:[userId, amount]},
-        {sql:"INSERT INTO history (user_id, amount, type, created_at) VALUES (?,?,?, datetime('now','localtime'))", vals:[userId, amount, type]},
-        {sql:"INSERT INTO wallet_history (user_id, amount, type, created_at) VALUES (?,?,?, datetime('now','localtime'))", vals:[userId, amount, type]},
-        {sql:"INSERT INTO job_completions (user_id, amount, type, created_at) VALUES (?,?,?, datetime('now','localtime'))", vals:[userId, amount, type]},
+
+      // UPDATE wallets table if exists (some apps use separate wallet table)
+      try{
+        let walletTables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND (name='wallets' OR name='user_wallets' OR name='user_wallet')").all();
+        for(let wt of walletTables){
+          try{
+            let cols = db.prepare(`PRAGMA table_info(${wt.name})`).all().map(c=>c.name);
+            if(cols.includes('user_id') && cols.includes('balance')){
+              db.prepare(`UPDATE ${wt.name} SET balance=balance+? WHERE user_id=?`).run(amount, userId);
+              // If no row, insert
+              let exists = db.prepare(`SELECT * FROM ${wt.name} WHERE user_id=?`).get(userId);
+              if(!exists){
+                db.prepare(`INSERT INTO ${wt.name} (user_id, balance) VALUES (?,?)`).run(userId, newBal);
+              }
+              console.log(`✅ Updated ${wt.name} table`);
+            }
+          }catch(e){ console.log(`⚠️ ${wt.name} update fail: ${e.message}`); }
+        }
+      }catch(e){}
+
+      // INSERT history
+      const tries = [
+        `INSERT INTO wallet_transactions (user_id, amount, type, status, created_at) VALUES (${userId}, ${amount}, '${type}', 'completed', datetime('now','localtime'))`,
+        `INSERT INTO transactions (user_id, amount, type, status, created_at) VALUES (${userId}, ${amount}, '${type}', 'completed', datetime('now','localtime'))`,
+        `INSERT INTO earnings (user_id, amount, source, created_at) VALUES (${userId}, ${amount}, '${type}', datetime('now','localtime'))`,
       ];
-      for(let t of tablesToTry){ try{ db.prepare(t.sql).run(...t.vals); }catch(e){} }
-    }catch(e){ console.log("addMoney error", e.message); }
+      for(let sql of tries){ try{ db.prepare(sql).run(); }catch(e){} }
+
+    }catch(e){ console.log(`❌ addMoneyToWallet error: ${e.message}`); }
     return newBal;
   };
 
@@ -133,121 +133,134 @@ module.exports = (app, db) => {
       try{ db.prepare("INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,?,?)").run(code,type,newCode.price,0,newCode.created_at); }catch(e){}
     }
     save();
-    res.json({success:true,codes:out,total:out.length});
+    res.json({success:true,codes:out});
   });
 
   app.post("/api/upgrade/apply", (req,res) => {
-    let raw = String(req.body?.code||req.body?.superCode||"").toUpperCase().trim();
-    if(!raw) return res.json({success:false,message:"No code sent"});
+    let raw = String(req.body?.code||"").toUpperCase().trim();
     let row = find(raw);
-    if(!row) return res.json({success:false,message:`INVALID: ${raw} not found`});
-    if(row.used) return res.json({success:false,message:`❌ Already USED by ${row.used_by||row.used_by_name} on ${row.used_at}`});
-    if(row.type==="withdraw") return res.json({success:false,message:"Use SUPER- code"});
-
+    if(!row) return res.json({success:false,message:`INVALID: ${raw}`});
+    if(row.used) return res.json({success:false,message:`❌ Already USED by ${row.used_by}`});
     let user = getUserFromRequest(req);
-    let rawEmail = req.body?.email||req.user?.email||'guest';
-    let rawUsername = req.body?.username||req.body?.fullName||'';
-    let email = user?.email||rawEmail;
-    let username = user?.username||user?.full_name||rawUsername||email.split('@')[0]||'User';
-    let displayName = email.includes('@')?`${username} (${email})`:username;
+    if(!user) return res.json({success:false,message:"User not found"});
+    let email = user.email||'';
+    let username = user.username||email.split('@')[0]||'User';
+    let displayName = `${username} (${email})`;
     let now = new Date().toLocaleString('en-NG', {timeZone:'Africa/Lagos', hour12:true});
-
-    if(!user){
-      try{ db.prepare("UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_at=? WHERE code=?").run(displayName, username, email, now, raw); }catch(e){}
-      return res.json({success:true,message:`✅ Code accepted for ${displayName}`, package:'SUPER'});
-    }
-
-    let curPkg = String(user.package||user.plan||"").toLowerCase();
-    if(curPkg.includes("silver") && row.type==="super-gold") return res.json({success:false,message:"❌ You are SILVER, need SUPER-SILVER N16k"});
-    if(curPkg.includes("gold") && row.type==="super-silver") return res.json({success:false,message:"❌ You are GOLD, need SUPER-GOLD N12k"});
-
-    try{ db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active', updated_at=CURRENT_TIMESTAMP WHERE id=?").run(user.id); }catch(e){
-      try{ db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1 WHERE id=?").run(user.id); }catch(e2){}
-    }
-
+    try{ db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=?").run(user.id); }catch(e){}
     try{ db.prepare("UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_by_id=?, used_at=? WHERE code=?").run(displayName, username, email, user.id, now, raw); }catch(e){}
-    if(codes[raw]){ codes[raw].used=1; codes[raw].used_by=displayName; codes[raw].used_by_name=username; codes[raw].used_by_email=email; codes[raw].used_at=now; save(); }
-
-    const freshUser = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
-    console.log(`[UPGRADED] ${email} -> SUPER, Code ${raw} now USED`);
-
-    return res.json({success:true, message:`✅ SUCCESS! ${displayName} upgraded to SUPER - Code USED`, package:'SUPER', user:freshUser});
+    if(codes[raw]){ codes[raw].used=1; codes[raw].used_by=displayName; save(); }
+    res.json({success:true, message:`✅ Upgraded to SUPER - Code USED`, user:db.prepare("SELECT * FROM users WHERE id=?").get(user.id)});
   });
 
-  // === FIXED BYPASS: SUPER UNLIMITED + WALLET ADDS FOR REAL ===
-  app.post("/api/videos/:id/complete", (req,res,next)=>{
+  // === CRITICAL: BYPASS MUST BE FIRST ===
+  const videoBypass = (req,res,next)=>{
     try{
       let user = getUserFromRequest(req);
-      let isForce = req.headers['x-super-force']==="1" || req.body?.forceSuper==1 || String(req.headers['x-jovia-plan']||"").toUpperCase()==="SUPER";
-      if((user && isSuperUser(user)) || isForce){
+      let isForce = req.headers['x-super-force']==="1" || req.body?.forceSuper==1;
+      let pkg = user ? String(user.package||user.plan||"").toLowerCase() : "";
+      let isSuper = (user && (pkg.includes("super") || user.is_super==1)) || isForce;
+
+      if(isSuper){
         if(!user && isForce){
           let email = req.headers['x-user-email']||req.body?.email||"";
           if(email) user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(String(email).toLowerCase().trim());
         }
-        if(!user) return next();
-        let videoId = req.params.id;
-        let video = null;
-        try{ video = db.prepare("SELECT * FROM videos WHERE id=?").get(videoId); }catch(e){}
-        try{ if(!video) video = db.prepare("SELECT * FROM jovia_videos WHERE id=?").get(videoId); }catch(e){}
-        let reward = video ? Number(video.reward||video.amount||500) : 500;
-        console.log(`👑 SUPER video bypass ${videoId} reward ${reward} for ${user.email} - ADDING`);
+        if(!user){
+          console.log(`⚠️ SUPER bypass but user not found - headers: ${JSON.stringify(req.headers)} body: ${JSON.stringify(req.body)}`);
+          return next();
+        }
+        let reward = 500;
+        try{
+          let v = db.prepare("SELECT * FROM videos WHERE id=?").get(req.params.id);
+          if(v) reward = Number(v.reward||500);
+        }catch(e){}
+        console.log(`👑 SUPER VIDEO BYPASS ${req.params.id} reward=${reward} user=${user.email} - ADDING TO WALLET NOW`);
         let newBal = addMoneyToWallet(user.id, reward, "video_reward");
-        return res.json({success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward, walletBalance:newBal, wallet_balance:newBal, balance:newBal});
+        console.log(`✅ VIDEO WALLET UPDATED NewBal=${newBal}`);
+        return res.json({success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward, walletBalance:newBal, wallet_balance:newBal, balance:newBal, newBalance:newBal});
       }
       next();
     }catch(e){ console.log("video bypass error", e.message); next(); }
-  });
+  };
 
-  app.post("/api/jobs/:id/complete", (req,res,next)=>{
+  const jobBypass = (req,res,next)=>{
     try{
       let user = getUserFromRequest(req);
-      let isForce = req.headers['x-super-force']==="1" || req.body?.forceSuper==1 || String(req.headers['x-jovia-plan']||"").toUpperCase()==="SUPER";
-      if((user && isSuperUser(user)) || isForce){
+      let isForce = req.headers['x-super-force']==="1" || req.body?.forceSuper==1;
+      let pkg = user ? String(user.package||user.plan||"").toLowerCase() : "";
+      let isSuper = (user && (pkg.includes("super") || user.is_super==1)) || isForce;
+      if(isSuper){
         if(!user && isForce){
           let email = req.headers['x-user-email']||req.body?.email||"";
           if(email) user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(String(email).toLowerCase().trim());
         }
         if(!user) return next();
-        let jobId = req.params.id;
-        let job = null;
-        try{ job = db.prepare("SELECT * FROM jobs WHERE id=?").get(jobId); }catch(e){}
-        let reward = job ? Number(job.reward||500) : 500;
-        console.log(`👑 SUPER job bypass ${jobId} reward ${reward} for ${user.email} - ADDING`);
+        let reward = 500;
+        try{ let j = db.prepare("SELECT * FROM jobs WHERE id=?").get(req.params.id); if(j) reward = Number(j.reward||500); }catch(e){}
+        console.log(`👑 SUPER JOB BYPASS ${req.params.id} reward=${reward} user=${user.email} - ADDING`);
         let newBal = addMoneyToWallet(user.id, reward, "job_reward");
-        return res.json({success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward, walletBalance:newBal, wallet_balance:newBal, balance:newBal});
+        return res.json({success:true, message:`Claimed ₦${reward} as SUPER`, reward, walletBalance:newBal, wallet_balance:newBal, balance:newBal});
       }
       next();
     }catch(e){ console.log("job bypass error", e.message); next(); }
+  };
+
+  app.post("/api/videos/:id/complete", videoBypass);
+  app.post("/api/jobs/:id/complete", jobBypass);
+
+  // MOVE OUR BYPASS TO FRONT OF ROUTER STACK - SO IT RUNS BEFORE ORIGINAL
+  try{
+    if(app._router && app._router.stack){
+      let stack = app._router.stack;
+      // Find our 2 bypass routes (last added)
+      let videoLayer = null, jobLayer = null;
+      for(let i=stack.length-1; i>=0; i--){
+        let layer = stack[i];
+        if(layer.route && layer.route.path==="/api/videos/:id/complete" && layer.route.methods.post){
+          videoLayer = stack.splice(i,1)[0];
+          break;
+        }
+      }
+      for(let i=stack.length-1; i>=0; i--){
+        let layer = stack[i];
+        if(layer.route && layer.route.path==="/api/jobs/:id/complete" && layer.route.methods.post){
+          jobLayer = stack.splice(i,1)[0];
+          break;
+        }
+      }
+      // Put them at front (after express json parser)
+      if(videoLayer) stack.unshift(videoLayer);
+      if(jobLayer) stack.unshift(jobLayer);
+      console.log("✅ Moved SUPER bypass to FRONT of router - Will run before N7k check");
+    }
+  }catch(e){ console.log("Router reorder fail", e.message); }
+
+  // DEBUG ENDPOINTS TO TEST WALLET
+  app.post("/api/debug/add-money", (req,res)=>{
+    try{
+      let {email, amount} = req.body||{};
+      amount = Number(amount)||500;
+      email = String(email||"").toLowerCase().trim();
+      let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?)").get(email);
+      if(!user) return res.json({success:false, message:"User not found"});
+      let newBal = addMoneyToWallet(user.id, amount, "debug_add");
+      res.json({success:true, message:`Added ₦${amount}`, newBal, user:db.prepare("SELECT * FROM users WHERE id=?").get(user.id)});
+    }catch(e){ res.json({success:false, error:e.message}); }
   });
 
   app.post("/api/debug/force-super-me", (req,res)=>{
     try{
-      let email = String(req.body?.email||req.user?.email||"").toLowerCase().trim();
+      let email = String(req.body?.email||"").toLowerCase().trim();
       let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?)").get(email);
-      if(!user) return res.json({success:false, message:"User not found"});
+      if(!user) return res.json({success:false});
       db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=?").run(user.id);
-      res.json({success:true, message:"Forced to SUPER", user:db.prepare("SELECT * FROM users WHERE id=?").get(user.id)});
+      res.json({success:true, user:db.prepare("SELECT * FROM users WHERE id=?").get(user.id)});
     }catch(e){ res.json({success:false, error:e.message}); }
   });
 
-  app.post("/api/withdraw/apply-code", (req,res) => {
-    let raw = String(req.body?.code||"").toUpperCase().trim();
-    let row = find(raw);
-    if(!row) return res.json({success:false,message:`INVALID: ${raw}`});
-    if(row.used) return res.json({success:false,message:`❌ Already USED by ${row.used_by} on ${row.used_at}`});
-    let user = getUserFromRequest(req);
-    let email = user?.email||req.body?.email||'guest';
-    let username = user?.username||'User';
-    let displayName = `${username} (${email})`;
-    let now = new Date().toLocaleString('en-NG', {timeZone:'Africa/Lagos', hour12:true});
-    try{ db.prepare("UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_by_id=?, used_at=? WHERE code=?").run(displayName, username, email, user?.id||0, now, raw); }catch(e){}
-    if(codes[raw]){ codes[raw].used=1; codes[raw].used_by=displayName; save(); }
-    res.json({success:true, message:`✅ Verified`, used_by:displayName});
-  });
-
   app.get("/api/admin/codes/list", (req,res)=>{ try{ let all=db.prepare("SELECT * FROM jovia_codes ORDER BY created_at DESC").all(); res.json({success:true,codes:all}); }catch(e){ res.json({success:true,codes:Object.values(codes)}); } });
-  app.get("/api/admin/codes/check/:code", (req,res)=>{ let r=find(req.params.code); if(!r) return res.json({success:false,exists:false}); res.json({success:true,exists:true,code:r.code,type:r.type,price:r.price,used:!!r.used,used_by:r.used_by,used_at:r.used_at}); });
-  app.get("/api/debug/users-schema", (req,res)=>{ try{ const cols=db.prepare("PRAGMA table_info(users)").all(); res.json({success:true, columnNames:cols.map(c=>c.name)}); }catch(e){ res.json({success:false, error:e.message}); } });
+  app.get("/api/debug/users-schema", (req,res)=>{ try{ const cols=db.prepare("PRAGMA table_info(users)").all(); const tables=db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map(t=>t.name); res.json({success:true, columns:cols.map(c=>c.name), tables}); }catch(e){ res.json({success:false, error:e.message}); } });
 
-  console.log("✅ JOVIA PLUGIN FIXED - USED INSTANTLY + WALLET ADDS TO DASHBOARD + SUPER UNLIMITED - NO N7K");
+  console.log("✅ JOVIA PLUGIN FINAL - FRONT BYPASS + WALLET ADDS FOR REAL + NO N7K");
 };
