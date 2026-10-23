@@ -11,7 +11,7 @@
 body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
 button:disabled{opacity:.65;cursor:not-allowed}
 .app{max-width:680px;min-height:100vh;margin:0 auto;padding-bottom:92px}
-.topbar{position:sticky;top:0;z-index:50;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b)}
+.topbar{position:sticky;top:0;z-index:50;height:64px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b);backdrop-filter:blur(10px)}
 .brand{font-size:23px;font-weight:900;color:var(--p)} .brand span{color:var(--y)}
 .content{padding:20px 15px 25px}
 .page-heading h1{font-size:24px;font-weight:900;margin-bottom:7px} .page-heading p{font-size:12px;color:var(--m);line-height:1.6}
@@ -19,74 +19,82 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .message.success{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .message.error-message{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
 .message.info-message{display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:18px;margin:18px 0}
+.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:18px;margin:18px 0;box-shadow:0 10px 30px rgba(59,7,88,.25)}
 .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
-.summary-label{color:#d8cfe0;font-size:9px;font-weight:700;margin-bottom:6px}
+.summary-label{color:#d8cfe0;font-size:9px;font-weight:700;margin-bottom:6px;letter-spacing:.5px}
 .summary-value{font-size:18px;font-weight:900;overflow-wrap:anywhere}
-.super-badge{display:inline-flex;margin-top:8px;padding:5px 10px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:10px;font-weight:900}
-.section{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden}
+.super-badge{display:inline-flex;margin-top:10px;padding:6px 12px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:10px;font-weight:900;animation:pulse 2s infinite}
+@keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+.section{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.03)}
 .section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
-.section-title{font-size:15px;font-weight:900} .section-count{color:var(--m);font-size:10px;font-weight:800}
-.filter-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
-.filter-btn{flex:0 0 auto;border:1px solid var(--b);background:#fff;color:#776e7d;padding:9px 15px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer}
-.filter-btn.active{background:var(--y);border-color:var(--y);color:#281d00}
-.job-card{padding:17px 16px;border-bottom:1px solid #f1edf3}
+.section-title{font-size:15px;font-weight:900} .section-count{color:var(--m);font-size:10px;font-weight:800;background:#f5f3f7;padding:4px 8px;border-radius:10px}
+.filter-row{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;padding-bottom:2px}
+.filter-btn{flex:0 0 auto;border:1px solid var(--b);background:#fff;color:#776e7d;padding:10px 16px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer;transition:.2s}
+.filter-btn.active{background:var(--y);border-color:var(--y);color:#281d00;box-shadow:0 4px 12px rgba(255,196,0,.3)}
+.job-card{padding:17px 16px;border-bottom:1px solid #f1edf3;transition:.2s}
+.job-card:hover{background:#fcfbff}
 .job-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
-.job-title{font-size:14px;font-weight:900} .job-reward{color:var(--g);font-size:14px;font-weight:900}
+.job-title{font-size:14px;font-weight:900;line-height:1.4} .job-reward{color:var(--g);font-size:14px;font-weight:900;white-space:nowrap}
 .job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.6}
 .job-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
 .meta{display:inline-flex;background:#faf8fb;border:1px solid var(--b);color:#746b7a;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:800}
 .task-box{padding:12px;margin-bottom:11px;border-radius:13px;background:#fffbeb;border:1px solid #fde68a}
 .task-box.success-box{background:#f0fdf4;border-color:#bbf7d0} .task-box.upgrade-box{background:linear-gradient(135deg,#fff7ed,#fffbeb);border:1px solid #f59e0b} .task-box.wait-box{background:#f5f3ff;border-color:#ddd6fe}
-.task-label{margin-bottom:5px;font-size:9px;font-weight:900} .task-info{font-size:10px;line-height:1.65}
-.task-open-btn,.complete-btn,.upgrade-btn{width:100%;border:none;padding:12px 14px;border-radius:10px;font-size:11px;font-weight:900;cursor:pointer}
-.task-open-btn{background:var(--y);color:#241900} .complete-btn{background:var(--p);color:#fff;margin-top:9px} .complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.task-label{margin-bottom:5px;font-size:9px;font-weight:900;letter-spacing:.5px} .task-info{font-size:10px;line-height:1.65}
+.task-open-btn,.complete-btn,.upgrade-btn{width:100%;border:none;padding:13px 14px;border-radius:12px;font-size:11px;font-weight:900;cursor:pointer;transition:.2s}
+.task-open-btn{background:var(--y);color:#241900} .task-open-btn:active{transform:scale(.98)}
+.complete-btn{background:var(--p);color:#fff;margin-top:9px} .complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .upgrade-btn{display:block;background:linear-gradient(135deg,#ff9a00,#ffd83d);color:#3a2600;margin-top:9px;text-align:center;text-decoration:none;border:1px solid #f59e0b}
-.loading{padding:34px 20px;text-align:center;color:var(--m);font-size:12px} .empty{display:none;padding:35px 20px;text-align:center}
-.error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center}
+.loading{padding:34px 20px;text-align:center;color:var(--m);font-size:12px} .empty{display:none;padding:35px 20px;text-align:center;color:var(--m)}
+.error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center;border-radius:12px;margin:12px}
 .activation-box,.suspended-box{padding:42px 20px;text-align:center}
 .video-card{padding:16px;border-bottom:1px solid #f1edf3} .video-player{width:100%;max-height:235px;border-radius:13px;background:#000}
-.watch-progress{height:4px;margin:8px 0 10px;background:#e7e4e8;border-radius:999px} .watch-bar{height:100%;width:0%;background:var(--y);transition:width .25s}
-.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;height:72px;display:flex;justify-content:space-around;background:rgba(255,255,255,.98);border-top:1px solid var(--b)}
-.nav-item{min-width:60px;border:none;background:transparent;color:#9b939f;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:800;text-decoration:none}
+.watch-progress{height:4px;margin:8px 0 10px;background:#e7e4e8;border-radius:999px;overflow:hidden} .watch-bar{height:100%;width:0%;background:var(--y);transition:width .25s}
+.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;height:72px;display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,.98);border-top:1px solid var(--b);backdrop-filter:blur(15px);z-index:100}
+.nav-item{min-width:60px;border:none;background:transparent;color:#9b939f;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:800;text-decoration:none;padding:6px}
 .nav-item.active{color:var(--p)} .nav-icon{font-size:20px}
-.popup-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.68);z-index:200} .popup-overlay.show{display:flex}
-.popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center}
-.popup-btn{display:block;width:100%;padding:12px;border-radius:11px;background:var(--y);color:#241900;font-weight:900;text-decoration:none}
+.popup-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.75);backdrop-filter:blur(8px);z-index:200} .popup-overlay.show{display:flex}
+.popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.popup-btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--y);color:#241900;font-weight:900;text-decoration:none;margin-top:14px}
 </style>
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="brand">JOVIA<span>.</span></div><div style="font-size:13px;font-weight:800;color:#655b6d">Jobs</div></header>
+<header class="topbar"><div class="brand">JOVIA<span>.</span></div><div style="font-size:11px;font-weight:800;color:#655b6d;background:#f5f3f7;padding:6px 10px;border-radius:20px">Jobs</div></header>
 <main class="content">
 <div class="page-heading"><h1>Available Jobs</h1><p id="planInfoText">Complete tasks + videos. Silver 5/₦2,500 • Gold 10/₦7,000 • SUPER unlimited.</p></div>
 <div id="message" class="message"></div>
-<section class="summary-card"><div class="summary-grid"><div class="summary-item"><div class="summary-label">Available</div><div class="summary-value" id="availableCount">0</div></div><div class="summary-item"><div class="summary-label">Completed Today</div><div class="summary-value" id="completedCount">0</div></div><div class="summary-item"><div class="summary-label">Wallet</div><div class="summary-value" id="walletBalance">₦0</div></div></div><div id="dailyEarnedText" style="margin-top:10px;font-size:10px;color:#d8cfe0">Earned today: ₦0</div><div id="superActiveBadge" style="display:none" class="super-badge">👑 SUPER - FULL ACCESS UNLIMITED</div></section>
+<section class="summary-card"><div class="summary-grid"><div class="summary-item"><div class="summary-label">Available</div><div class="summary-value" id="availableCount">0</div></div><div class="summary-item"><div class="summary-label">Completed Today</div><div class="summary-value" id="completedCount">0</div></div><div class="summary-item"><div class="summary-label">Wallet</div><div class="summary-value" id="walletBalance">₦0</div></div></div><div id="dailyEarnedText" style="margin-top:12px;font-size:11px;color:#d8cfe0">Earned today: ₦0</div><div id="superActiveBadge" style="display:none" class="super-badge">👑 SUPER ACTIVE - UNLIMITED ACCESS</div></section>
 
-<section class="section" id="videoSection"><div class="section-header"><h2 class="section-title">📚 JOVIA Academy</h2><span class="section-count" id="videoCount">0 resources</span></div><div class="loading" id="videoLoading">Loading academy...</div><div id="videosList"></div><div class="empty" id="videoEmpty"><div>📚</div><h3>No resources yet</h3></div></section>
+<section class="section" id="videoSection"><div class="section-header"><h2 class="section-title">📚 JOVIA Academy</h2><span class="section-count" id="videoCount">0 resources</span></div><div class="loading" id="videoLoading">Loading academy...</div><div id="videosList"></div><div class="empty" id="videoEmpty"><div style="font-size:24px">📚</div><h3 style="margin-top:8px">No resources yet</h3><p style="font-size:11px;margin-top:4px">New videos will appear here.</p></div></section>
 
 <div class="filter-row" id="filterRow"><button class="filter-btn active" type="button" data-filter="available">Available</button><button class="filter-btn" type="button" data-filter="completed">Completed</button></div>
 
 <section class="section"><div class="section-header"><h2 class="section-title" id="sectionTitle">Available Jobs</h2><span class="section-count" id="jobCount">0 jobs</span></div>
-<div class="loading" id="loadingState">Checking account...</div>
-<div class="activation-box" id="activationState" style="display:none"><div style="font-size:28px">🔒</div><h3>Account Not Activated</h3><p>Activate to access jobs.</p><a href="payment.html" style="display:inline-flex;padding:11px 20px;border-radius:10px;background:var(--y);color:#281d00;font-weight:900;text-decoration:none">Activate →</a></div>
-<div class="suspended-box" id="suspendedState" style="display:none"><div style="font-size:28px">⚠️</div><h3>Account Suspended</h3></div>
-<div id="errorState" class="error">Unable to load jobs.<br><br><button type="button" id="retryButton" class="task-open-btn">Try Again</button></div>
-<div id="emptyState" class="empty"><div>💼</div><h3 id="emptyTitle">No jobs</h3><p id="emptyText">New jobs will appear.</p></div>
+<div class="loading" id="loadingState">Checking account status...</div>
+<div class="activation-box" id="activationState" style="display:none"><div style="font-size:32px">🔒</div><h3 style="margin-top:10px">Account Not Activated</h3><p style="margin:10px 0 18px;font-size:12px;color:var(--m)">Activate your account to access jobs.</p><a href="payment.html" style="display:inline-flex;padding:12px 22px;border-radius:12px;background:var(--y);color:#281d00;font-weight:900;text-decoration:none">Activate Now →</a></div>
+<div class="suspended-box" id="suspendedState" style="display:none"><div style="font-size:32px">⚠️</div><h3 style="margin-top:10px">Account Suspended</h3><p style="font-size:11px;color:var(--m);margin-top:6px">Contact support.</p></div>
+<div id="errorState" class="error">Unable to load jobs.<br><br><button type="button" id="retryButton" class="task-open-btn" style="width:auto;padding:10px 20px">Try Again</button></div>
+<div id="emptyState" class="empty"><div style="font-size:28px">💼</div><h3 id="emptyTitle" style="margin-top:8px">No jobs</h3><p id="emptyText" style="font-size:11px;margin-top:4px">New jobs will appear soon.</p></div>
 <div id="jobsList"></div></section>
 </main>
 </div>
 <nav class="bottom-nav"><a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a><a class="nav-item active" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a><a class="nav-item" href="history.html"><span class="nav-icon">🧾</span><span>History</span></a><a class="nav-item" href="profile.html"><span class="nav-icon">👤</span><span>Profile</span></a></nav>
-<div class="popup-overlay" id="inactivePopup"><div class="popup-box"><div style="font-size:28px">🔒</div><h3>Account Not Activated</h3><p style="margin:10px 0 18px;font-size:12px;color:var(--m)">Activate to access jobs.</p><a href="payment.html" class="popup-btn">Activate Now →</a><button type="button" class="popup-close" id="popupClose" style="margin-top:11px;border:none;background:transparent;color:#9b939f">Close</button></div></div>
+<div class="popup-overlay" id="inactivePopup"><div class="popup-box"><div style="font-size:32px">🔒</div><h3 style="margin-top:10px">Account Not Activated</h3><p style="margin:10px 0 18px;font-size:12px;color:var(--m);line-height:1.6">Your account is not activated yet. Activate to access all jobs and videos.</p><a href="payment.html" class="popup-btn">Activate Now →</a><button type="button" class="popup-close" id="popupClose" style="margin-top:14px;border:none;background:transparent;color:#9b939f;font-size:11px;font-weight:800;cursor:pointer">Close</button></div></div>
 
 <script>
 "use strict";
-const API_BASE=""; const TASK_WAIT_SECONDS=30; const MIN_WATCH_SECONDS=60;
+const API_BASE=""; 
+const TASK_WAIT_SECONDS=30; 
+const MIN_WATCH_SECONDS=60;
 let allJobs=[],availableJobs=[],completedJobs=[],allVideos=[],completedVideos=[],currentFilter="available",accountActivated=false,currentUser=null,messageTimer=null,dailyStatsFromServer=null,loadingAll=false;
-const watchedVideos=new Map(); const taskTimers=new Map(); const TASK_TIMER_STORAGE_KEY="jovia_task_waits_v1"; let taskTimerInterval=null;
+const watchedVideos=new Map(); 
+const taskTimers=new Map(); 
+const TASK_TIMER_STORAGE_KEY="jovia_task_waits_v1"; 
+let taskTimerInterval=null;
 
-// FIXED: ADD SUPER - UNLIMITED
+// FIXED: SUPER = UNLIMITED
 const PLAN_CONFIG={
   Silver:{maxDaily:2500,taskCount:5,upgrade:"SUPER",label:"Silver"},
   Gold:{maxDaily:7000,taskCount:10,upgrade:"SUPER",label:"Gold"},
@@ -96,9 +104,12 @@ const PLAN_CONFIG={
 function formatNaira(v){const n=Number(v);return"₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{maximumFractionDigits:2});}
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 function safeExternalURL(v){if(typeof v!=="string"||!v.trim())return"";let c=v.trim();if(c.startsWith("www."))c="https://"+c;try{const p=new URL(c,location.origin);if(!["http:","https:"].includes(p.protocol))return"";return p.href;}catch{return"";}}
-function getJobId(j){return j?.id??"";} function getJobTitle(j){return j?.title||"Job";} function getJobDescription(j){return j?.description||"Complete to earn.";} function getJobDuration(j){return j?.duration||"Flexible";} function getJobCategory(j){return j?.category||"General";}
+function getJobId(j){return j?.id??"";} 
+function getJobTitle(j){return j?.title||"Job";} 
+function getJobDescription(j){return j?.description||"Complete to earn.";} 
+function getJobDuration(j){return j?.duration||"Flexible";} 
+function getJobCategory(j){return j?.category||"General";}
 
-// FIXED: NORMALIZE PLAN WITH SUPER
 function normalizePlan(v){
   const p=String(v||"").toLowerCase().trim();
   if(p.includes("super")) return "Super";
@@ -107,50 +118,53 @@ function normalizePlan(v){
 }
 function getCurrentPlan(){
   try{
-    const pkg=currentUser?.package||currentUser?.plan||localStorage.getItem("jovia_plan")||"Silver";
+    const pkg=currentUser?.package||currentUser?.plan||currentUser?.package_name||localStorage.getItem("jovia_plan")||"Silver";
     return normalizePlan(pkg);
   }catch{return"Silver";}
 }
 function isSuperPlan(){return getCurrentPlan()==="Super";}
 function getPlanLimits(plan){return PLAN_CONFIG[normalizePlan(plan)]||PLAN_CONFIG.Silver;}
-function getAccountStatus(u){return String(u?.account_status||u?.status||"").toLowerCase();}
+function getAccountStatus(u){return String(u?.account_status||u?.status||u?.accountStatus||"").toLowerCase();}
 function isSuspended(u){return["suspended","banned","blocked"].includes(getAccountStatus(u));}
 function isActivated(u){
-  if(!u||isSuspended(u))return false;
+  if(!u) return false;
+  if(isSuspended(u)) return false;
+  // SUPER is always activated
+  const pkg = String(u.package||u.plan||"").toLowerCase();
+  if(pkg.includes("super")) return true;
   const s=getAccountStatus(u);
-  return ["active","approved","silver","gold","super"].includes(s)||s.includes("super");
+  return ["active","approved","activated","silver","gold","super"].includes(s)||s.includes("super");
 }
 function showMessage(m,t="error"){const box=document.getElementById("message");if(messageTimer)clearTimeout(messageTimer);box.textContent=String(m||"");box.className="message "+(t==="success"?"success":t==="info"?"info-message":"error-message");messageTimer=setTimeout(()=>{box.className="message";box.textContent="";},7000);}
-function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance??0;document.getElementById("walletBalance").textContent=formatNaira(b);}
+function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance??u.balance??0;document.getElementById("walletBalance").textContent=formatNaira(b);}
 
 function getDailyStats(){
-  // SUPER HAS NO LIMIT
   if(isSuperPlan()){
     return {plan:"Super",limits:PLAN_CONFIG.Super,earned:0,claimedCount:completedJobs.length+completedVideos.length,remainingAmount:999999999,isSuper:true};
   }
   const plan=getCurrentPlan();const limits=getPlanLimits(plan);let earned=0,claimedCount=0;
   if(dailyStatsFromServer){
-    earned=Number(dailyStatsFromServer.earnedToday??dailyStatsFromServer.todayEarned??0)||0;
-    claimedCount=Number(dailyStatsFromServer.claimedToday??dailyStatsFromServer.todayClaimed??0)||0;
+    earned=Number(dailyStatsFromServer.earnedToday??dailyStatsFromServer.todayEarned??dailyStatsFromServer.today_earned??0)||0;
+    claimedCount=Number(dailyStatsFromServer.claimedToday??dailyStatsFromServer.todayClaimed??dailyStatsFromServer.claimed_today??0)||0;
   }else{
     claimedCount=completedJobs.length+completedVideos.length;
   }
   return {plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned),isSuper:false};
 }
 function isDailyLimitReached(){
-  if(isSuperPlan()) return false; // SUPER NEVER REACHES LIMIT
+  if(isSuperPlan()) return false;
   const s=getDailyStats(); return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;
 }
 function wouldExceedLimit(reward){
-  if(isSuperPlan()) return false; // SUPER CAN CLAIM ANY AMOUNT
+  if(isSuperPlan()) return false;
   const s=getDailyStats();const a=Number(reward)||0;return a>s.limits.maxDaily||s.earned+a>s.limits.maxDaily;
 }
 function getUpgradeMessage(plan){
-  if(normalizePlan(plan)==="Silver") return "Daily limit reached. Upgrade to SUPER (N12k code) for full unlimited access.";
+  if(normalizePlan(plan)==="Silver") return "Daily limit reached. Upgrade to SUPER (N16k code) for unlimited access.";
   if(normalizePlan(plan)==="Gold") return "Daily limit reached. Upgrade to SUPER (N12k code) for unlimited access.";
   return "Upgrade to SUPER for unlimited access.";
 }
-function restoreTaskTimers(){try{const saved=JSON.parse(sessionStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");const now=Date.now();Object.entries(saved).forEach(([id,ts])=>{const t=Number(ts);if(id&&Number.isFinite(t)&&t>now-30000&&t<now+35000)taskTimers.set(String(id),{claimAvailableAt:t});});}catch{taskTimers.clear();}}
+function restoreTaskTimers(){try{const saved=JSON.parse(sessionStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");const now=Date.now();Object.entries(saved).forEach(([id,ts])=>{const t=Number(ts);if(id&&Number.isFinite(t)&&t>now-60000&&t<now+60000)taskTimers.set(String(id),{claimAvailableAt:t});});}catch{taskTimers.clear();}}
 function saveTaskTimers(){try{const o={};taskTimers.forEach((s,id)=>{if(s&&Number.isFinite(s.claimAvailableAt))o[id]=s.claimAvailableAt;});sessionStorage.setItem(TASK_TIMER_STORAGE_KEY,JSON.stringify(o));}catch{}}
 function startTaskTimer(jobId){taskTimers.set(String(jobId),{claimAvailableAt:Date.now()+TASK_WAIT_SECONDS*1000});saveTaskTimers();startTaskTimerTicker();}
 function clearTaskTimer(jobId){taskTimers.delete(String(jobId));saveTaskTimers();}
@@ -159,12 +173,12 @@ function hasOpenedTask(job){const s=taskTimers.get(String(getJobId(job)));return
 function startTaskTimerTicker(){if(taskTimerInterval)return;taskTimerInterval=setInterval(()=>{if(!taskTimers.size){clearInterval(taskTimerInterval);taskTimerInterval=null;return;}if(accountActivated&&currentFilter==="available")renderJobs(availableJobs);},1000);}
 
 function renderUpgradeCard(reward,plan){
-  return `<div class="task-box upgrade-box"><div class="task-label">🔒 UPGRADE TO SUPER</div><div class="task-info"><strong>${escapeHTML(getUpgradeMessage(plan))}</strong><br><br>Task reward: ${formatNaira(reward)} • SUPER gets unlimited access.</div></div><a href="dashboard.html" class="upgrade-btn">🚀 Upgrade to SUPER - N12k Code →</a>`;
+  return `<div class="task-box upgrade-box"><div class="task-label">🔒 UPGRADE TO SUPER</div><div class="task-info"><strong>${escapeHTML(getUpgradeMessage(plan))}</strong><br><br>Task reward: ${formatNaira(reward)} • SUPER gets unlimited access + future features.</div></div><a href="dashboard.html" class="upgrade-btn">🚀 Upgrade to SUPER →</a>`;
 }
 function renderDailyLimit(){
   const list=document.getElementById("jobsList");const s=getDailyStats();
-  if(s.isSuper) return; // SHOULD NEVER SHOW FOR SUPER
-  list.innerHTML=`<div style="padding:30px 20px;text-align:center"><div style="font-size:28px">🎯</div><h3 style="margin-top:10px">Daily limit reached</h3><p style="margin-top:8px;color:#756d7c;font-size:11px">Earned ${formatNaira(s.earned)} / ${formatNaira(s.limits.maxDaily)} today.<br>${s.claimedCount}/${s.limits.taskCount} tasks.</p><a href="dashboard.html" class="upgrade-btn">🚀 Upgrade to SUPER (N12k Code) →</a><p style="margin-top:10px;font-size:10px;color:#8a8196">SUPER users get unlimited jobs + future features.</p></div>`;
+  if(s.isSuper) return;
+  list.innerHTML=`<div style="padding:30px 20px;text-align:center"><div style="font-size:32px">🎯</div><h3 style="margin-top:10px;font-size:16px">Daily limit reached</h3><p style="margin-top:8px;color:#756d7c;font-size:11px;line-height:1.6">Earned ${formatNaira(s.earned)} / ${formatNaira(s.limits.maxDaily)} today.<br>${s.claimedCount}/${s.limits.taskCount} tasks completed.</p><a href="dashboard.html" class="upgrade-btn" style="margin-top:16px">🚀 Upgrade to SUPER (N12k/N16k) →</a><p style="margin-top:12px;font-size:10px;color:#8a8196">SUPER users get unlimited jobs + all future features unlocked.</p></div>`;
 }
 function hideJobContent(){document.getElementById("loadingState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("emptyState").style.display="none";document.getElementById("jobsList").innerHTML="";}
 function showJobsState(){accountActivated=true;document.getElementById("loadingState").style.display="none";document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("filterRow").style.display="flex";document.getElementById("sectionTitle").textContent=currentFilter==="completed"?"Completed Jobs":"Available Jobs";}
@@ -181,16 +195,15 @@ function renderJobs(jobs){
  document.getElementById("availableCount").textContent=String(availableJobs.length);
  document.getElementById("jobCount").textContent=`${jobs.length} ${jobs.length===1?"job":"jobs"}`;
  
- // SUPER UI
  const superBadge=document.getElementById("superActiveBadge");
  const planInfo=document.getElementById("planInfoText");
  if(stats.isSuper){
    superBadge.style.display="inline-flex";
    planInfo.textContent="👑 SUPER ACTIVE - Unlimited jobs, unlimited earnings, all future features unlocked.";
-   document.getElementById("dailyEarnedText").textContent=`SUPER: ${stats.claimedCount} tasks completed today - Unlimited`;
+   document.getElementById("dailyEarnedText").textContent=`👑 SUPER: ${stats.claimedCount} tasks completed today - Unlimited access`;
  }else{
    superBadge.style.display="none";
-   planInfo.textContent=`Complete tasks + videos. Silver 5/₦2,500 • Gold 10/₦7,000 • SUPER unlimited (N12k upgrade).`;
+   planInfo.textContent=`Complete tasks + videos. Silver 5/₦2,500 • Gold 10/₦7,000 • SUPER unlimited (N12k/N16k upgrade).`;
    document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${formatNaira(stats.limits.maxDaily)} - ${stats.claimedCount}/${stats.limits.taskCount} tasks`;
  }
 
@@ -201,68 +214,120 @@ function renderJobs(jobs){
   const id=String(getJobId(job));const title=getJobTitle(job);const desc=getJobDescription(job);const reward=Number(job.reward||0);const completed=String(job.user_status||job.status||"").toLowerCase()==="completed"||job.completed===true;
   const opened=hasOpenedTask(job);const timerExists=taskTimers.has(id);const secondsRemaining=getTaskSecondsRemaining(id);
   const item=document.createElement("div");item.className="job-card";
-  let html=`<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(reward)}</div></div><div class="job-description">${escapeHTML(desc)}</div><div class="job-meta"><span class="meta">${escapeHTML(getJobCategory(job))}</span><span class="meta">⏱ ${escapeHTML(getJobDuration(job))}</span></div>`;
+  let html=`<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(reward)}</div></div><div class="job-description">${escapeHTML(desc)}</div><div class="job-meta"><span class="meta">${escapeHTML(getJobCategory(job))}</span><span class="meta">⏱ ${escapeHTML(getJobDuration(job))}</span>${stats.isSuper?'<span class="meta" style="background:#fff7ed;border-color:#f59e0b;color:#92400e">👑 SUPER</span>':''}</div>`;
   if(completed){clearTaskTimer(id);html+=`<div class="task-box success-box"><div class="task-label">TASK COMPLETED ✓</div><div class="task-info">Reward: ${formatNaira(reward)}</div></div><button class="complete-btn completed" disabled>Completed ✓</button>`;}
   else if(!stats.isSuper&&(reward>stats.limits.maxDaily||wouldExceedLimit(reward))){html+=renderUpgradeCard(reward,stats.plan);}
-  else if(timerExists&&!opened){html+=`<div class="task-box wait-box"><div class="task-label">⏳ TIMER IN PROGRESS</div><div class="task-info">Claim in <strong>${secondsRemaining}</strong>s</div></div><button class="complete-btn" disabled>Wait ${secondsRemaining}s</button>`;}
-  else if(opened){html+=`<div class="task-box success-box"><div class="task-label">✓ READY TO CLAIM</div><div class="task-info">Wait passed. Complete task instructions then claim.</div></div><button class="complete-btn" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(reward)} →</button>`;}
-  else{html+=`<div class="task-box"><div class="task-label">TASK</div><div class="task-info">Open task, spend ${TASK_WAIT_SECONDS}s reviewing.</div></div><button class="task-open-btn" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗</button>`;}
+  else if(timerExists&&!opened){html+=`<div class="task-box wait-box"><div class="task-label">⏳ TIMER IN PROGRESS - ${secondsRemaining}s</div><div class="task-info">Stay on task page, claim will unlock after ${TASK_WAIT_SECONDS}s</div></div><button class="complete-btn" disabled>Wait ${secondsRemaining}s ⏳</button>`;}
+  else if(opened){html+=`<div class="task-box success-box"><div class="task-label">✓ READY TO CLAIM</div><div class="task-info">Timer passed. Complete the task instructions then claim your reward.</div></div><button class="complete-btn" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(reward)} →</button>`;}
+  else{html+=`<div class="task-box"><div class="task-label">📋 TASK INSTRUCTION</div><div class="task-info">Open task, spend ${TASK_WAIT_SECONDS}s reviewing instructions.</div></div><button class="task-open-btn" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗</button>`;}
   item.innerHTML=html;list.appendChild(item);
  });
 }
-async function getCurrentUser(){const r=await fetch(`${API_BASE}/api/me?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(r.status===401){location.href="login.html";throw new Error("expired");}if(!r.ok)throw new Error("verify failed");const d=await r.json();const u=d?.user||d;currentUser=u;updateWallet(u);return u;}
+async function getCurrentUser(){const r=await fetch(`${API_BASE}/api/me?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(r.status===401){location.href="login.html";throw new Error("expired");}if(!r.ok)throw new Error("verify failed");const d=await r.json();const u=d?.user||d?.data?.user||d;currentUser=u;updateWallet(u);return u;}
 async function loadAll(){
  if(loadingAll)return;loadingAll=true;
  const loading=document.getElementById("loadingState");const error=document.getElementById("errorState");
- try{loading.style.display="block";error.style.display="none";const user=await getCurrentUser();if(isSuspended(user)){showSuspendedState();return;}if(!isActivated(user)){showActivationState();return;}showJobsState();await loadVideos();
-  const resp=await fetch(`${API_BASE}/api/jobs?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(resp.status===401){location.href="login.html";return;}if(resp.status===403){showActivationState();return;}if(!resp.ok)throw new Error("load jobs");
-  const data=await resp.json();const jobs=data?.jobs||[];allJobs=Array.isArray(jobs)?jobs:[];availableJobs=allJobs.filter(j=>!isCompleted(j));completedJobs=allJobs.filter(j=>isCompleted(j));dailyStatsFromServer=data?.dailyStats||data?.stats||null;renderJobs(currentFilter==="completed"?completedJobs:availableJobs);
- }catch(e){loading.style.display="none";if(!document.getElementById("inactivePopup").classList.contains("show"))error.style.display="block";}finally{loadingAll=false;}
+ try{
+  loading.style.display="block";error.style.display="none";
+  const user=await getCurrentUser();
+  if(isSuspended(user)){showSuspendedState();return;}
+  if(!isActivated(user)){showActivationState();return;}
+  showJobsState();
+  await loadVideos();
+  const resp=await fetch(`${API_BASE}/api/jobs?t=${Date.now()}`,{credentials:"include",cache:"no-store"});
+  if(resp.status===401){location.href="login.html";return;}
+  if(resp.status===403){showActivationState();return;}
+  if(!resp.ok)throw new Error("load jobs");
+  const data=await resp.json();const jobs=data?.jobs||[];allJobs=Array.isArray(jobs)?jobs:[];availableJobs=allJobs.filter(j=>!isCompleted(j));completedJobs=allJobs.filter(j=>isCompleted(j));dailyStatsFromServer=data?.dailyStats||data?.stats||data?.daily||null;
+  renderJobs(currentFilter==="completed"?completedJobs:availableJobs);
+ }catch(e){
+  console.error(e);
+  loading.style.display="none";
+  if(!document.getElementById("inactivePopup").classList.contains("show"))error.style.display="block";
+ }finally{loadingAll=false;}
 }
-function isCompleted(job){return String(job.user_status||"").toLowerCase()==="completed"||job.completed===true;}
-function getTaskLink(job){return safeExternalURL(job.link||job.url||"");}
+function isCompleted(job){return String(job.user_status||job.status||"").toLowerCase()==="completed"||job.completed===true;}
+function getTaskLink(job){return safeExternalURL(job.link||job.url||job.task_url||"");}
 async function openTask(jobId,btn){
  if(!accountActivated){showActivationState();return;}
  const job=allJobs.find(x=>String(getJobId(x))===String(jobId));if(!job){showMessage("Task not found");return;}
- if(taskTimers.has(String(jobId))){showMessage("Already opened - wait timer","info");renderJobs(availableJobs);return;}
+ if(taskTimers.has(String(jobId))){showMessage("Already opened - wait for timer","info");renderJobs(availableJobs);return;}
  const reward=Number(job.reward||0);
- // SUPER SKIPS LIMIT CHECK
  if(!isSuperPlan()){
    if(reward>getPlanLimits(getCurrentPlan()).maxDaily||wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));renderJobs(availableJobs);return;}
    if(isDailyLimitReached()){showMessage("Daily limit reached - Upgrade to SUPER");renderJobs(availableJobs);return;}
  }
- const destFromJob=getTaskLink(job);if(!destFromJob){showMessage("No valid link");return;}
+ const destFromJob=getTaskLink(job);if(!destFromJob){showMessage("No valid link for this task");return;}
  if(btn){btn.disabled=true;btn.textContent="Opening...";}
- let popup=null;try{popup=window.open("about:blank","_blank");if(!popup){showMessage("Allow pop-ups");if(btn){btn.disabled=false;btn.textContent="Open Task ↗";}return;}try{popup.opener=null;}catch{}const resp=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/open`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});const d=await resp.json().catch(()=>({}));if(resp.status===401){popup.close();location.href="login.html";return;}if(!resp.ok){popup.close();throw new Error(d?.message||"Unable open");}const destination=safeExternalURL(d?.url||d?.link||destFromJob);if(!destination){popup.close();throw new Error("No valid link from server");}popup.location.replace(destination);startTaskTimer(jobId);showMessage(`Task opened - wait ${TASK_WAIT_SECONDS}s before claim`,"success");renderJobs(availableJobs);}catch(e){if(popup&&!popup.closed)try{popup.close();}catch{}showMessage(e.message||"Unable open");if(btn){btn.disabled=false;btn.textContent="Open Task ↗";}}
+ let popup=null;
+ try{
+  popup=window.open("about:blank","_blank");
+  if(!popup){showMessage("Please allow pop-ups to open tasks");if(btn){btn.disabled=false;btn.textContent="Open Task ↗";}return;}
+  try{popup.opener=null;}catch{}
+  const resp=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/open`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});
+  const d=await resp.json().catch(()=>({}));
+  if(resp.status===401){popup.close();location.href="login.html";return;}
+  if(!resp.ok){popup.close();throw new Error(d?.message||"Unable to open task");}
+  const destination=safeExternalURL(d?.url||d?.link||destFromJob);
+  if(!destination){popup.close();throw new Error("No valid link from server");}
+  popup.location.replace(destination);
+  startTaskTimer(jobId);
+  showMessage(`Task opened - wait ${TASK_WAIT_SECONDS}s before claim`,"success");
+  renderJobs(availableJobs);
+ }catch(e){
+  if(popup&&!popup.closed)try{popup.close();}catch{}
+  showMessage(e.message||"Unable to open task");
+  if(btn){btn.disabled=false;btn.textContent="Open Task ↗";}
+ }
 }
 async function completeJob(jobId,btn){
  if(!accountActivated){showActivationState();return;}
  const job=allJobs.find(x=>String(getJobId(x))===String(jobId));if(!job){showMessage("Not found");return;}
  if(isCompleted(job)){showMessage("Already claimed","info");await loadAll();return;}
- if(!hasOpenedTask(job)){const rem=getTaskSecondsRemaining(jobId);showMessage(rem>0?`Wait ${rem}s more`:"Open first","error");renderJobs(availableJobs);return;}
+ if(!hasOpenedTask(job)){const rem=getTaskSecondsRemaining(jobId);showMessage(rem>0?`Wait ${rem}s more before claim`:"Open task first","error");renderJobs(availableJobs);return;}
  const reward=Number(job.reward||0);
  if(!isSuperPlan()){
    if(wouldExceedLimit(reward)){showMessage(getUpgradeMessage(getCurrentPlan()));renderJobs(availableJobs);return;}
    if(isDailyLimitReached()){showMessage("Daily limit reached - Upgrade to SUPER");renderJobs(availableJobs);return;}
  }
  if(btn){btn.disabled=true;btn.textContent="Claiming...";}
- try{const resp=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});const d=await resp.json().catch(()=>({}));if(resp.status===401){location.href="login.html";return;}if(!resp.ok)throw new Error(d?.message||"Unable claim");clearTaskTimer(jobId);const finalReward=Number(d?.reward||reward)||0;const bal=d?.walletBalance??d?.wallet_balance;if(bal!=null){document.getElementById("walletBalance").textContent=formatNaira(bal);if(currentUser)currentUser.wallet_balance=Number(bal);}showMessage(d?.message||`Claimed ${formatNaira(finalReward)}`,"success");await loadAll();}catch(e){showMessage(e.message||"Unable claim");if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(reward)} →`;}}
+ try{
+  const resp=await fetch(`${API_BASE}/api/jobs/${encodeURIComponent(jobId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store"});
+  const d=await resp.json().catch(()=>({}));
+  if(resp.status===401){location.href="login.html";return;}
+  if(!resp.ok)throw new Error(d?.message||"Unable to claim");
+  clearTaskTimer(jobId);
+  const finalReward=Number(d?.reward||reward)||0;
+  const bal=d?.walletBalance??d?.wallet_balance??d?.balance;
+  if(bal!=null){document.getElementById("walletBalance").textContent=formatNaira(bal);if(currentUser)currentUser.wallet_balance=Number(bal);}
+  showMessage(d?.message||`Claimed ${formatNaira(finalReward)} successfully!`,"success");
+  await loadAll();
+ }catch(e){
+  showMessage(e.message||"Unable to claim");
+  if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(reward)} →`;}
+ }
 }
 function filterJobs(filter,button){if(!accountActivated)return;currentFilter=filter;document.querySelectorAll(".filter-btn").forEach(x=>x.classList.toggle("active",x===button));document.getElementById("sectionTitle").textContent=filter==="completed"?"Completed Jobs":"Available Jobs";renderJobs(filter==="completed"?completedJobs:availableJobs);}
 async function loadVideos(){
  const list=document.getElementById("videosList");const loading=document.getElementById("videoLoading");const empty=document.getElementById("videoEmpty");
- try{loading.style.display="block";empty.style.display="none";list.innerHTML="";const resp=await fetch(`${API_BASE}/api/videos?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(resp.status===401){loading.style.display="none";empty.style.display="block";return;}if(!resp.ok)throw new Error("videos");const data=await resp.json();const videos=data?.videos||[];allVideos=Array.isArray(videos)?videos:[];completedVideos=allVideos.filter(v=>String(v.user_status||"").toLowerCase()==="completed");document.getElementById("videoCount").textContent=`${allVideos.length} ${allVideos.length===1?"resource":"resources"}`;loading.style.display="none";if(!allVideos.length){empty.style.display="block";return;}
+ try{
+  loading.style.display="block";empty.style.display="none";list.innerHTML="";
+  const resp=await fetch(`${API_BASE}/api/videos?t=${Date.now()}`,{credentials:"include",cache:"no-store"});
+  if(resp.status===401){loading.style.display="none";empty.style.display="block";return;}
+  if(!resp.ok)throw new Error("videos");
+  const data=await resp.json();const videos=data?.videos||[];allVideos=Array.isArray(videos)?videos:[];completedVideos=allVideos.filter(v=>String(v.user_status||"").toLowerCase()==="completed");document.getElementById("videoCount").textContent=`${allVideos.length} ${allVideos.length===1?"resource":"resources"}`;loading.style.display="none";
+  if(!allVideos.length){empty.style.display="block";return;}
   list.innerHTML=allVideos.map(video=>{
    const id=String(video.id||"");const url=safeExternalURL(video.video_url||video.url||"");const completed=String(video.user_status||"").toLowerCase()==="completed";const reward=Number(video.reward||0);
    const locked=!isSuperPlan()&&!completed&&(reward>getPlanLimits(getCurrentPlan()).maxDaily||wouldExceedLimit(reward));
-   let player="";if(url&&/\.(mp4|webm|ogg)/i.test(url)){player=`<video class="video-player" id="vid-${escapeHTML(id)}" controls preload="metadata" playsinline src="${escapeHTML(url)}"></video><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:9px;color:#756d7c;margin-top:4px">Watched: 0s / ${MIN_WATCH_SECONDS}s</div>`;}else if(url){player=`<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center"><a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--y);font-weight:900">View Resource ↗</a></div>`;}else{player=`<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center">Resource unavailable</div>`;}
+   let player="";if(url&&/\.(mp4|webm|ogg)/i.test(url)){player=`<video class="video-player" id="vid-${escapeHTML(id)}" controls preload="metadata" playsinline src="${escapeHTML(url)}"></video><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:9px;color:#756d7c;margin-top:4px">Watched: 0s / ${MIN_WATCH_SECONDS}s</div>`;}else if(url){player=`<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center"><a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer" style="color:var(--y);font-weight:900;text-decoration:none">View Resource ↗</a></div>`;}else{player=`<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center;font-size:11px">Resource unavailable</div>`;}
    let btn="";if(completed){btn=`<button class="complete-btn completed" disabled>Completed ✓ · ${formatNaira(reward)}</button>`;}else if(locked){btn=renderUpgradeCard(reward,getCurrentPlan());}else{btn=`<button id="vbtn-${escapeHTML(id)}" class="complete-btn" disabled>Watch ${MIN_WATCH_SECONDS}s to unlock (0/${MIN_WATCH_SECONDS}s)</button>`;}
-   return `<div class="video-card">${player}<div style="margin:10px 0 5px;font-size:13px;font-weight:900">${escapeHTML(video.title||"Resource")}</div><div style="margin-bottom:10px;color:var(--m);font-size:10px">${escapeHTML(video.description||"")}</div><div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="meta">Academy</span><span style="color:#15803d;font-size:11px;font-weight:900">${formatNaira(reward)}</span></div>${btn}</div>`;
+   return `<div class="video-card">${player}<div style="margin:10px 0 5px;font-size:13px;font-weight:900">${escapeHTML(video.title||"Resource")}</div><div style="margin-bottom:10px;color:var(--m);font-size:10px;line-height:1.5">${escapeHTML(video.description||"")}</div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span class="meta">Academy</span><span style="color:#15803d;font-size:11px;font-weight:900">${formatNaira(reward)}</span></div>${btn}</div>`;
   }).join("");
   allVideos.forEach(video=>{
    const id=String(video.id||"");const player=document.getElementById(`vid-${id}`);const btn=document.getElementById(`vbtn-${id}`);const bar=document.getElementById(`bar-${id}`);const wt=document.getElementById(`watchText-${id}`);
-   if(player){if(!watchedVideos.has(id))watchedVideos.set(id,0);player.addEventListener("play",()=>{fetch(`${API_BASE}/api/videos/${encodeURIComponent(id)}/open`,{method:"POST",credentials:"include",cache:"no-store"}).catch(()=>{});});player.addEventListener("timeupdate",()=>{const sec=Math.floor(player.currentTime);const prev=watchedVideos.get(id)||0;if(sec>prev+2){watchedVideos.set(id,prev+1);}else{watchedVideos.set(id,Math.max(prev,sec));}const tracked=watchedVideos.get(id)||0;if(bar)bar.style.width=Math.min(100,tracked/MIN_WATCH_SECONDS*100)+"%";if(wt)wt.textContent=`Watched: ${tracked}s / ${MIN_WATCH_SECONDS}s - ${tracked>=MIN_WATCH_SECONDS?"Ready!":MIN_WATCH_SECONDS-tracked+"s left"}`;if(btn&&tracked>=MIN_WATCH_SECONDS){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}});player.addEventListener("ended",()=>{const tracked=watchedVideos.get(id)||0;if(tracked>=MIN_WATCH_SECONDS&&btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}});}
-   if(btn){btn.addEventListener("click",()=>claimVideo(id,btn));}
+   if(player){if(!watchedVideos.has(id))watchedVideos.set(id,0);player.addEventListener("play",()=>{fetch(`${API_BASE}/api/videos/${encodeURIComponent(id)}/open`,{method:"POST",credentials:"include",cache:"no-store"}).catch(()=>{});});player.addEventListener("timeupdate",()=>{const sec=Math.floor(player.currentTime);const prev=watchedVideos.get(id)||0;if(sec>prev+2){watchedVideos.set(id,prev+1);}else{watchedVideos.set(id,Math.max(prev,sec));}const tracked=watchedVideos.get(id)||0;if(bar)bar.style.width=Math.min(100,tracked/MIN_WATCH_SECONDS*100)+"%";if(wt)wt.textContent=`Watched: ${tracked}s / ${MIN_WATCH_SECONDS}s - ${tracked>=MIN_WATCH_SECONDS?"Ready to claim!":MIN_WATCH_SECONDS-tracked+"s left"}`;if(btn&&tracked>=MIN_WATCH_SECONDS){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}});player.addEventListener("ended",()=>{const tracked=watchedVideos.get(id)||0;if(tracked>=MIN_WATCH_SECONDS&&btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}});}
+   if(btn&&!completedVideos.find(v=>String(v.id)===id)){btn.addEventListener("click",()=>claimVideo(id,btn));}
   });
  }catch(e){loading.style.display="none";document.getElementById("videoCount").textContent="0 resources";empty.style.display="block";}
 }
@@ -276,7 +341,7 @@ async function claimVideo(videoId,btn){
    if(isDailyLimitReached()){showMessage("Daily limit reached - Upgrade to SUPER");return;}
  }
  if(btn){btn.disabled=true;btn.textContent="Claiming...";}
- try{const resp=await fetch(`${API_BASE}/api/videos/${encodeURIComponent(videoId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({watchedSeconds:watched})});const d=await resp.json().catch(()=>({}));if(resp.status===401){location.href="login.html";return;}if(!resp.ok)throw new Error(d?.message||"Unable claim video");const bal=d?.walletBalance??d?.wallet_balance;if(bal!=null){document.getElementById("walletBalance").textContent=formatNaira(bal);if(currentUser)currentUser.wallet_balance=Number(bal);}showMessage(d?.message||`Claimed ${formatNaira(reward)}`,"success");await loadAll();}catch(e){showMessage(e.message||"Unable claim");if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(reward)} ✅`;}}
+ try{const resp=await fetch(`${API_BASE}/api/videos/${encodeURIComponent(videoId)}/complete`,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},cache:"no-store",body:JSON.stringify({watchedSeconds:watched})});const d=await resp.json().catch(()=>({}));if(resp.status===401){location.href="login.html";return;}if(!resp.ok)throw new Error(d?.message||"Unable claim video");const bal=d?.walletBalance??d?.wallet_balance;if(bal!=null){document.getElementById("walletBalance").textContent=formatNaira(bal);if(currentUser)currentUser.wallet_balance=Number(bal);}showMessage(d?.message||`Claimed ${formatNaira(reward)}`,"success");await loadAll();}catch(e){showMessage(e.message||"Unable claim video");if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(reward)} ✅`;}}
 }
 document.getElementById("jobsList").addEventListener("click",async e=>{const b=e.target.closest("button[data-action]");if(!b||b.disabled)return;const action=b.dataset.action;const jobId=b.dataset.jobId;if(!jobId)return;if(action==="open")await openTask(jobId,b);else if(action==="complete")await completeJob(jobId,b);});
 document.getElementById("filterRow").addEventListener("click",e=>{const b=e.target.closest(".filter-btn");if(!b)return;filterJobs(b.dataset.filter,b);});
