@@ -39,6 +39,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
 
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
+  const ADMIN_USER = process.env.ADMIN_USERNAME || "admin";
 
   const userGuard = (req, res, next) => {
     if (typeof requireUser !== "function") return res.status(503).json({ success: false, message: "User auth not configured." });
@@ -53,33 +54,57 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     if (req.session && req.session.isAdmin === true) return next();
     if (typeof requireAdmin === "function") {
       try{
-        return requireAdmin(req, res, next);
+        return requireAdmin(req, res, (err)=>{
+          if(err) return res.status(401).json({ success: false, message: "Admin authentication required" });
+          // if requireAdmin succeeded but session not set, set it
+          if(req.session) req.session.isAdmin = true;
+          return next();
+        });
       }catch(e){
-        // fallback to session check
         return res.status(401).json({ success: false, message: "Admin authentication required" });
       }
     }
     return res.status(401).json({ success: false, message: "Admin authentication required" });
   };
 
-  // === ADMIN LOGIN - NEW ===
-  app.post("/api/admin/login", (req, res) => {
+  // === ADMIN LOGIN - FIXED TO ACCEPT USERNAME + PASSWORD ===
+  const handleAdminLogin = (req, res) => {
     try{
-      const p = String(req.body?.password || "").trim();
-      if (p !== ADMIN_PASS) {
+      const body = req.body || {};
+      const username = String(body.username || body.user || body.admin || "").trim();
+      const password = String(body.password || body.pass || body.adminPassword || "").trim();
+
+      // FIX FOR YOUR ERROR: Username and password are required
+      if(!username || !password){
+        return res.status(400).json({ success: false, message: "Username and password are required." });
+      }
+
+      // Check password (username can be admin or anything, we check pass)
+      if (password !== ADMIN_PASS) {
         return res.status(401).json({ success: false, message: "Wrong admin password" });
       }
+
       if (req.session) {
         req.session.isAdmin = true;
+        req.session.username = username;
         req.session.adminLoggedAt = new Date().toISOString();
       }
       return res.json({ success: true, message: "Admin logged in" });
     }catch(err){
+      console.error("Admin login error:", err);
       return res.status(500).json({ success: false, message: "Login failed" });
     }
-  });
+  };
+
+  // Two endpoints to avoid clash
+  app.post("/api/admin/login", handleAdminLogin);
+  app.post("/api/admin/codes/login", handleAdminLogin);
 
   app.post("/api/admin/logout", (req, res) => {
+    if (req.session) req.session.isAdmin = false;
+    return res.json({ success: true, message: "Admin logged out" });
+  });
+  app.post("/api/admin/codes/logout", (req, res) => {
     if (req.session) req.session.isAdmin = false;
     return res.json({ success: true, message: "Admin logged out" });
   });
@@ -127,23 +152,19 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         if (!code) throw new Error("INVALID_CODE");
         if (code.type !== "super-gold" && code.type !== "super-silver") throw new Error("WRONG_CODE_TYPE");
         if (Number(code.used) === 1) throw new Error("CODE_ALREADY_USED");
-
         const assignments = ["package = ?", "is_super = ?"];
         const values = ["SUPER", 1];
         if (hasColumn("plan")) { assignments.push("plan = ?"); values.push("SUPER"); }
         if (hasColumn("account_status")) { assignments.push("account_status = ?"); values.push("active"); }
         if (hasColumn("status")) { assignments.push("status = ?"); values.push("active"); }
         values.push(user.id);
-
         const updateUser = db.prepare(`UPDATE users SET ${assignments.join(", ")} WHERE id = ?`).run(...values);
         if (updateUser.changes !== 1) throw new Error("USER_UPDATE_FAILED");
-
         const email = String(user.email || "");
         const username = String(user.username || email.split("@")[0] || "User");
         const displayName = `${username} (${email})`;
         const markCode = db.prepare(`UPDATE jovia_codes SET used = 1, used_by = ?, used_by_name = ?, used_by_email = ?, used_by_id = ?, used_at = datetime('now') WHERE code = ? AND used = 0`).run(displayName, username, email, user.id, raw);
         if (markCode.changes !== 1) throw new Error("CODE_REDEMPTION_FAILED");
-
         return db.prepare(`SELECT id, full_name, username, email, package, plan, is_super FROM users WHERE id = ?`).get(user.id);
       });
       const updatedUser = upgradeTransaction();
@@ -156,7 +177,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // WITHDRAW CODE APPLY - NEW (was missing before)
   app.post("/api/withdraw/apply", userGuard, (req, res) => {
     const raw = normalizeCode(req.body?.code);
     if (!raw) return res.status(400).json({ success: false, message: "Enter withdrawal code." });
@@ -191,5 +211,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  console.log("✅ JOVIA Codes plugin loaded - FIXED - Admin login + SUPER + Withdraw - SECURE PRODUCTION");
+  console.log("✅ JOVIA Codes plugin loaded - FINAL FIX - Username+Password + Admin login + SUPER + Withdraw");
 };
