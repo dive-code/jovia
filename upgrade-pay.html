@@ -50,9 +50,13 @@ body{font-family:Arial,sans-serif;background:#f7f5f9;color:#211827;padding-botto
       <strong>How to upgrade:</strong><br>
       1. Pay exact amount to account above<br>
       2. Click "I Have Made Payment" below<br>
-      3. You will be taken to Telegram @customer_support_team0001 — send proof of payment + your username<br>
+      3. You will be taken to Telegram @customer_support_team0001 — send proof + your username<br>
       4. We will send you SUPER code immediately: <code>SUPER-XXXXXXXX</code><br>
-      5. Go to dashboard → Enter code → You become SUPER unlimited!
+      5. Go to dashboard → Enter code → You become SUPER unlimited!<br><br>
+      <strong style="color:#3b0758">Pricing Locked:</strong><br>
+      • Silver (9k package) → SUPER = <strong>₦16,000</strong> = SUPER-SILVER code<br>
+      • Gold (15k package) → SUPER = <strong>₦12,000</strong> = SUPER-GOLD code<br>
+      • Wrong code type will be rejected automatically.
     </div>
     <button class="btn btn-yellow" id="paidBtn">✅ I Have Made Payment — Confirm</button>
     <button class="btn btn-purple" id="supportBtn">💬 Contact Support on Telegram</button>
@@ -65,26 +69,76 @@ function copyText(t){navigator.clipboard.writeText(t).then(()=>alert('Copied: '+
 const TG_USERNAME = "customer_support_team0001";
 const TG_LINK = `https://t.me/${TG_USERNAME}`;
 const params = new URLSearchParams(location.search);
-let type = (params.get('type') || 'super-gold').toLowerCase();
+let typeParam = (params.get('type') || '').toLowerCase();
 const amountEl = document.getElementById('amountText');
 const typeText = document.getElementById('typeText');
 const title = document.getElementById('title');
 const badge = document.getElementById('typeBadge');
-if(type.includes('silver') || type==='super-silver'){
-  amountEl.textContent='₦16,000';
-  typeText.textContent='For Silver users → SUPER (Unlimited)';
-  title.textContent='Upgrade Silver → SUPER';
-  badge.textContent='SILVER → SUPER: ₦16,000';
-} else {
-  amountEl.textContent='₦12,000';
-  typeText.textContent='For Gold users → SUPER (Unlimited)';
-  title.textContent='Upgrade Gold → SUPER';
-  badge.textContent='GOLD → SUPER: ₦12,000';
+const subtitle = document.getElementById('subtitle');
+
+function applyPricing(finalType){
+  const isSilver = finalType.includes('silver') || finalType === 'super-silver' || finalType.includes('9k') || finalType === 'silver';
+  if(isSilver){
+    amountEl.textContent='₦16,000';
+    typeText.textContent='For Silver users (9k) → SUPER (Unlimited) = 16k';
+    title.textContent='Upgrade Silver (9k) → SUPER';
+    badge.textContent='SILVER → SUPER: ₦16,000';
+    subtitle.textContent='You are on Silver package (9k). Pay ₦16,000 to become SUPER unlimited.';
+    return 'super-silver';
+  } else {
+    amountEl.textContent='₦12,000';
+    typeText.textContent='For Gold users (15k) → SUPER (Unlimited) = 12k';
+    title.textContent='Upgrade Gold (15k) → SUPER';
+    badge.textContent='GOLD → SUPER: ₦12,000';
+    subtitle.textContent='You are on Gold package (15k). Pay ₦12,000 to become SUPER unlimited.';
+    return 'super-gold';
+  }
 }
+
+// Try auto-detect from localStorage / user object
+let detectedType = typeParam;
+try{
+  const stored = JSON.parse(localStorage.getItem('jovia_user') || localStorage.getItem('user') || 'null');
+  if(stored){
+    const pkg = String(stored.package || stored.plan || '').toLowerCase();
+    if(pkg.includes('silver') || pkg.includes('9')) detectedType = 'super-silver';
+    else if(pkg.includes('gold') || pkg.includes('15')) detectedType = 'super-gold';
+  }
+} catch(e){}
+
+// If still empty, try from ?package= param
+const pkgParam = (params.get('package') || '').toLowerCase();
+if(!detectedType && pkgParam){
+  if(pkgParam.includes('silver') || pkgParam.includes('9')) detectedType = 'super-silver';
+  else if(pkgParam.includes('gold') || pkgParam.includes('15')) detectedType = 'super-gold';
+}
+
+// Default to gold if still empty, but pricing is now locked and backend will reject wrong type
+if(!detectedType) detectedType = 'super-gold';
+
+let finalType = applyPricing(detectedType);
+
+// Also try fetch /api/me to be 100% sure (if logged in)
+fetch('/api/me', {credentials:'include'}).then(r=>r.json()).then(data=>{
+  const u = data.user || data;
+  if(u && (u.package || u.plan)){
+    const p = String(u.package || u.plan || '').toLowerCase();
+    if(p.includes('silver') || p.includes('9')) finalType = applyPricing('super-silver');
+    else if(p.includes('gold') || p.includes('15')) finalType = applyPricing('super-gold');
+  }
+}).catch(()=>{});
+
 document.getElementById('supportBtn').addEventListener('click', ()=>{window.open(TG_LINK,'_blank');});
 document.getElementById('paidBtn').addEventListener('click', ()=>{
   const amount = amountEl.textContent;
-  const msg = `Hello Jovia Support (@${TG_USERNAME}), I have paid ${amount} for ${type.toUpperCase()} upgrade. My Jovia username is: [TYPE YOUR USERNAME HERE]. I paid to 1850772192 Kredi MFB. Please send me SUPER code. Here is my proof:`;
+  let usernameHint = '[TYPE YOUR USERNAME HERE]';
+  try{
+    const stored = JSON.parse(localStorage.getItem('jovia_user') || localStorage.getItem('user') || 'null');
+    if(stored && (stored.username || stored.full_name || stored.email)){
+      usernameHint = stored.username || stored.full_name || stored.email;
+    }
+  } catch(e){}
+  const msg = `Hello Jovia Support (@${TG_USERNAME}), I have paid ${amount} for ${finalType.toUpperCase()} upgrade (${finalType === 'super-silver' ? 'Silver 9k -> SUPER 16k' : 'Gold 15k -> SUPER 12k'}). My Jovia username is: ${usernameHint}. I paid to 1850772192 Kredi MFB. Please send me ${finalType.toUpperCase()} code. Here is my proof:`;
   const tgLink = `https://t.me/${TG_USERNAME}?text=${encodeURIComponent(msg)}`;
   window.open(tgLink, '_blank');
   setTimeout(()=>{
