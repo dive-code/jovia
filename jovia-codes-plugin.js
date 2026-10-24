@@ -2,6 +2,11 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
+  // ============================================================
+  // JOVIA CODES PLUGIN
+  // SUPER upgrades, withdrawal codes, admin checks and user audit
+  // ============================================================
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS jovia_codes (
       code TEXT PRIMARY KEY,
@@ -17,176 +22,719 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     );
   `);
 
-  const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
-  let cols = userColumns();
-  if (!cols.includes("package")) db.exec("ALTER TABLE users ADD COLUMN package TEXT DEFAULT 'Silver'");
-  cols = userColumns();
-  if (!cols.includes("plan")) db.exec("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'Silver'");
-  cols = userColumns();
-  if (!cols.includes("is_super")) db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER DEFAULT 0");
-  cols = userColumns();
-  if (!cols.includes("account_status")) try{ db.exec("ALTER TABLE users ADD COLUMN account_status TEXT DEFAULT 'active'"); }catch(e){}
-  if (!cols.includes("status")) try{ db.exec("ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'active'"); }catch(e){}
-  cols = userColumns();
-  if (!cols.includes("username")) try{ db.exec("ALTER TABLE users ADD COLUMN username TEXT"); }catch(e){}
-  if (!cols.includes("full_name")) try{ db.exec("ALTER TABLE users ADD COLUMN full_name TEXT"); }catch(e){}
+  // ------------------------------------------------------------
+  // SAFE SCHEMA CHECKS
+  // ------------------------------------------------------------
 
-  const hasColumn = (name) => userColumns().includes(name);
+  const userColumns = () =>
+    db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+
+  const addUserColumnIfMissing = (name, definition) => {
+    if (!userColumns().includes(name)) {
+      db.exec(`ALTER TABLE users ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addUserColumnIfMissing("package", "TEXT DEFAULT 'Silver'");
+  addUserColumnIfMissing("plan", "TEXT DEFAULT 'Silver'");
+  addUserColumnIfMissing("is_super", "INTEGER DEFAULT 0");
+
+  // Optional legacy columns. Check again after every schema change.
+  if (!userColumns().includes("account_status")) {
+    try {
+      addUserColumnIfMissing("account_status", "TEXT DEFAULT 'active'");
+    } catch (error) {
+      console.error("Could not add account_status:", error.message);
+    }
+  }
+
+  if (!userColumns().includes("status")) {
+    try {
+      addUserColumnIfMissing("status", "TEXT DEFAULT 'active'");
+    } catch (error) {
+      console.error("Could not add status:", error.message);
+    }
+  }
+
+  if (!userColumns().includes("username")) {
+    try {
+      addUserColumnIfMissing("username", "TEXT");
+    } catch (error) {
+      console.error("Could not add username:", error.message);
+    }
+  }
+
+  if (!userColumns().includes("full_name")) {
+    try {
+      addUserColumnIfMissing("full_name", "TEXT");
+    } catch (error) {
+      console.error("Could not add full_name:", error.message);
+    }
+  }
+
+  // Also migrate existing code tables created by older versions.
+  const codeColumns = () =>
+    db.prepare("PRAGMA table_info(jovia_codes)").all().map(c => c.name);
+
+  const addCodeColumnIfMissing = (name, definition) => {
+    if (!codeColumns().includes(name)) {
+      db.exec(`ALTER TABLE jovia_codes ADD COLUMN ${name} ${definition}`);
+    }
+  };
+
+  addCodeColumnIfMissing("used_by", "TEXT DEFAULT ''");
+  addCodeColumnIfMissing("used_by_name", "TEXT DEFAULT ''");
+  addCodeColumnIfMissing("used_by_email", "TEXT DEFAULT ''");
+  addCodeColumnIfMissing("used_by_id", "INTEGER");
+  addCodeColumnIfMissing("created_at", "TEXT");
+  addCodeColumnIfMissing("used_at", "TEXT");
+
+  // ------------------------------------------------------------
+  // HELPERS
+  // ------------------------------------------------------------
+
+  const normalizeCode = value =>
+    String(value || "").trim().toUpperCase();
+
   const randomCode = (length, prefix) => {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let s = "";
-    for (let i = 0; i < length; i++) s += alphabet[crypto.randomInt(0, alphabet.length)];
-    return prefix + s;
+    let suffix = "";
+
+    for (let i = 0; i < length; i++) {
+      suffix += alphabet[crypto.randomInt(0, alphabet.length)];
+    }
+
+    return prefix + suffix;
   };
-  const normalizeCode = (v) => String(v || "").trim().toUpperCase();
-  const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
+
+  const getTotalCodes = () =>
+    db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
+
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
 
-  // SURE USERNAME FUNCTION - NO MORE UNKNOWN
-  const getSureUser = (user) => {
+  // Derive identity ONLY from the authenticated database user.
+  const getSureUser = user => {
     const email = String(user.email || "").trim();
     const username = String(user.username || "").trim();
     const fullName = String(user.full_name || "").trim();
     const id = user.id;
-    
-    // Priority: username -> full_name -> email prefix -> id
-    let sureName = username;
-    if(!sureName) sureName = fullName;
-    if(!sureName) sureName = email.split("@")[0];
-    if(!sureName) sureName = "User"+id;
-    
-    let sureEmail = email || `${sureName}@noemail.com`;
-    let display = `${sureName} (${sureEmail})`;
-    
-    return { sureName, sureEmail, display, id };
+
+    const sureName =
+      fullName ||
+      username ||
+      (email ? email.split("@")[0] : "") ||
+      `User${id}`;
+
+    const sureEmail = email;
+    const display = sureEmail
+      ? `${sureName} (${sureEmail})`
+      : `${sureName} (User ID ${id})`;
+
+    return {
+      sureName,
+      sureEmail,
+      display,
+      id
+    };
   };
 
   const userGuard = (req, res, next) => {
-    if (typeof requireUser !== "function") return res.status(503).json({ success: false, message: "User auth not configured." });
+    if (typeof requireUser !== "function") {
+      return res.status(503).json({
+        success: false,
+        message: "User authentication is not configured."
+      });
+    }
+
     return requireUser(req, res, () => {
-      if (!req.user || !req.user.id) return res.status(401).json({ success: false, message: "Please log in." });
+      if (!req.user || !req.user.id) {
+        return res.status(401).json({
+          success: false,
+          message: "Please log in to continue."
+        });
+      }
+
       next();
     });
   };
 
   const adminGuard = (req, res, next) => {
-    const headerPass = req.headers['x-admin-password'] || req.headers['x-admin-pass'] || req.body?.adminPass || req.body?.password;
-    const bodyPass = String(req.body?.password || "").trim();
-    if(headerPass === ADMIN_PASS || bodyPass === ADMIN_PASS) return next();
-    if (req.session && req.session.isAdmin === true) return next();
-    return res.status(401).json({ success: false, message: "Admin authentication required" });
+    const headerPass =
+      req.headers["x-admin-password"] ||
+      req.headers["x-admin-pass"];
+
+    const bodyPass = String(
+      req.body?.adminPass ||
+      req.body?.password ||
+      ""
+    ).trim();
+
+    if (
+      headerPass === ADMIN_PASS ||
+      bodyPass === ADMIN_PASS ||
+      req.session?.isAdmin === true
+    ) {
+      return next();
+    }
+
+    return res.status(401).json({
+      success: false,
+      message: "Admin authentication required."
+    });
   };
 
-  app.post("/api/admin/codes/login", (req, res) => {
-    const p = String(req.body?.password || "").trim();
-    const u = String(req.body?.username || "admin").trim();
-    if(!u || !p) return res.status(400).json({ success: false, message: "Username and password are required." });
-    if(p !== ADMIN_PASS) return res.status(401).json({ success: false, message: "Wrong password" });
-    if(req.session){ req.session.isAdmin = true; req.session.save(()=>{}); }
-    return res.json({ success: true });
-  });
-  app.post("/api/admin/login", (req, res) => {
-    const p = String(req.body?.password || "").trim();
-    const u = String(req.body?.username || "admin").trim();
-    if(!u || !p) return res.status(400).json({ success: false, message: "Username and password are required." });
-    if(p !== ADMIN_PASS) return res.status(401).json({ success: false, message: "Wrong password" });
-    if(req.session){ req.session.isAdmin = true; req.session.save(()=>{}); }
-    return res.json({ success: true });
-  });
+  const safeCodeRecord = row => {
+    const used = Number(row.used) === 1;
+
+    return {
+      code: row.code,
+      type: row.type,
+      price: row.price,
+      used,
+      status: used ? "USED" : "UNUSED",
+      used_by: row.used_by || "",
+      used_by_name: row.used_by_name || "",
+      used_by_email: row.used_by_email || "",
+      used_by_id: row.used_by_id ?? null,
+      user_details: used
+        ? {
+            name:
+              row.used_by_name ||
+              row.used_by ||
+              "Name not saved",
+            email: row.used_by_email || "",
+            user_id: row.used_by_id ?? null
+          }
+        : null,
+      created_at: row.created_at || null,
+      used_at: row.used_at || null
+    };
+  };
+
+  // ------------------------------------------------------------
+  // ADMIN LOGIN
+  // ------------------------------------------------------------
+
+  const adminLoginHandler = (req, res) => {
+    const password = String(req.body?.password || "").trim();
+    const username = String(req.body?.username || "admin").trim();
+
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Username and password are required."
+      });
+    }
+
+    if (password !== ADMIN_PASS) {
+      return res.status(401).json({
+        success: false,
+        message: "Wrong password."
+      });
+    }
+
+    if (req.session) {
+      req.session.isAdmin = true;
+
+      return req.session.save(error => {
+        if (error) {
+          console.error("Admin session save failed:", error);
+
+          return res.status(500).json({
+            success: false,
+            message: "Could not save the admin session."
+          });
+        }
+
+        return res.json({ success: true });
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Password accepted. Session middleware is not configured."
+    });
+  };
+
+  app.post("/api/admin/codes/login", adminLoginHandler);
+  app.post("/api/admin/login", adminLoginHandler);
+
+  // ------------------------------------------------------------
+  // GENERATE CODES
+  // ------------------------------------------------------------
 
   app.post("/api/admin/codes/generate", adminGuard, (req, res) => {
     try {
-      const t = String(req.body?.type || "").toLowerCase();
-      const type = t === "gold" || t === "super-gold" ? "super-gold" : t === "silver" || t === "super-silver" ? "super-silver" : t === "withdraw" ? "withdraw" : null;
-      if (!type) return res.status(400).json({ success: false, message: "Invalid type" });
-      const count = Number(req.body?.count) || 1;
-      const price = type === "super-gold" ? 12000 : type === "super-silver" ? 16000 : 0;
+      const requestedType = String(req.body?.type || "").toLowerCase();
+
+      const type =
+        requestedType === "gold" ||
+        requestedType === "super-gold"
+          ? "super-gold"
+          : requestedType === "silver" ||
+            requestedType === "super-silver"
+            ? "super-silver"
+            : requestedType === "withdraw"
+              ? "withdraw"
+              : null;
+
+      if (!type) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid code type."
+        });
+      }
+
+      const count = Number(req.body?.count ?? 1);
+
+      if (!Number.isInteger(count) || count < 1 || count > 50) {
+        return res.status(400).json({
+          success: false,
+          message: "Choose a quantity between 1 and 50."
+        });
+      }
+
+      const price =
+        type === "super-gold"
+          ? 12000
+          : type === "super-silver"
+            ? 16000
+            : 0;
+
       const prefix = type === "withdraw" ? "JOVIA-" : "SUPER-";
       const length = type === "withdraw" ? 6 : 8;
-      const gen = db.transaction(() => {
-        const arr = [];
-        while(arr.length < count){
+
+      const generateTransaction = db.transaction(() => {
+        const generated = [];
+
+        while (generated.length < count) {
           const code = randomCode(length, prefix);
-          const r = db.prepare(`INSERT OR IGNORE INTO jovia_codes (code, type, price, used, created_at) VALUES (?, ?, ?, 0, datetime('now'))`).run(code, type, price);
-          if(r.changes === 1) arr.push({ code, type, price });
+
+          const result = db.prepare(`
+            INSERT OR IGNORE INTO jovia_codes
+              (code, type, price, used, used_by, used_by_name,
+               used_by_email, used_by_id, created_at, used_at)
+            VALUES (?, ?, ?, 0, '', '', '', NULL, datetime('now'), NULL)
+          `).run(code, type, price);
+
+          if (result.changes === 1) {
+            generated.push({
+              code,
+              type,
+              price,
+              used: false,
+              status: "UNUSED"
+            });
+          }
         }
-        return arr;
+
+        return generated;
       });
-      const codes = gen();
-      return res.json({ success: true, codes, total: getTotalCodes() });
-    } catch (e) { return res.status(500).json({ success: false, message: "Could not generate" }); }
+
+      const codes = generateTransaction();
+
+      return res.json({
+        success: true,
+        codes,
+        total: getTotalCodes()
+      });
+    } catch (error) {
+      console.error("Jovia code generation failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not generate codes."
+      });
+    }
   });
+
+  // ------------------------------------------------------------
+  // LIST ALL CODES, INCLUDING THE REDEEMING USER
+  // ------------------------------------------------------------
 
   app.get("/api/admin/codes/list", adminGuard, (req, res) => {
-    const codes = db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all();
-    return res.json({ success: true, total: codes.length, codes });
+    try {
+      const rows = db.prepare(`
+        SELECT *
+        FROM jovia_codes
+        ORDER BY created_at DESC, code ASC
+      `).all();
+
+      return res.json({
+        success: true,
+        total: rows.length,
+        codes: rows.map(safeCodeRecord)
+      });
+    } catch (error) {
+      console.error("Jovia code list failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not load codes."
+      });
+    }
   });
+
+  // ------------------------------------------------------------
+  // CHECK ONE CODE
+  // ------------------------------------------------------------
 
   app.get("/api/admin/codes/check/:code", adminGuard, (req, res) => {
-    const code = normalizeCode(req.params.code);
-    const row = db.prepare("SELECT * FROM jovia_codes WHERE code = ?").get(code);
-    if(!row) return res.json({ success: true, exists: false });
-    return res.json({ success: true, exists: true, code: row.code, type: row.type, price: row.price, used: row.used, used_by: row.used_by, used_by_name: row.used_by_name, used_by_email: row.used_by_email, used_by_id: row.used_by_id, created_at: row.created_at, used_at: row.used_at });
+    try {
+      const code = normalizeCode(req.params.code);
+
+      const row = db.prepare(`
+        SELECT *
+        FROM jovia_codes
+        WHERE code = ?
+      `).get(code);
+
+      if (!row) {
+        return res.status(404).json({
+          success: false,
+          exists: false,
+          message: "Code not found."
+        });
+      }
+
+      return res.json({
+        success: true,
+        exists: true,
+        ...safeCodeRecord(row)
+      });
+    } catch (error) {
+      console.error("Jovia code check failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not check this code."
+      });
+    }
   });
 
-  // UPGRADE - WITH SURE USERNAME
+  // ------------------------------------------------------------
+  // APPLY SUPER UPGRADE
+  // Save the upgrade and code redemption in one transaction.
+  // ------------------------------------------------------------
+
   app.post("/api/upgrade/apply", userGuard, (req, res) => {
     const raw = normalizeCode(req.body?.code);
-    if(!raw) return res.status(400).json({ success: false, message: "Enter code" });
-    try{
-      const tx = db.transaction(()=>{
-        const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.id);
-        if(!user) throw new Error("USER_NOT_FOUND");
-        const code = db.prepare("SELECT * FROM jovia_codes WHERE code = ?").get(raw);
-        if(!code) throw new Error("INVALID");
-        if(Number(code.used) === 1) throw new Error("USED");
-        if(code.type !== "super-gold" && code.type !== "super-silver") throw new Error("WRONG");
+
+    if (!raw) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a SUPER code."
+      });
+    }
+
+    try {
+      const redeemTransaction = db.transaction(() => {
+        const user = db.prepare(
+          "SELECT * FROM users WHERE id = ?"
+        ).get(req.user.id);
+
+        if (!user) throw new Error("USER_NOT_FOUND");
+
+        const code = db.prepare(
+          "SELECT * FROM jovia_codes WHERE code = ?"
+        ).get(raw);
+
+        if (!code) throw new Error("INVALID");
+        if (Number(code.used) === 1) throw new Error("USED");
+
+        if (
+          code.type !== "super-gold" &&
+          code.type !== "super-silver"
+        ) {
+          throw new Error("WRONG");
+        }
 
         const sure = getSureUser(user);
-        
-        db.prepare(`UPDATE users SET package='SUPER', is_super=1 WHERE id=?`).run(user.id);
-        db.prepare(`UPDATE jovia_codes SET used=1, used_by=?, used_by_name=?, used_by_email=?, used_by_id=?, used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display, sure.sureName, sure.sureEmail, sure.id, raw);
-        return sure;
+
+        // Update available plan columns.
+        const assignments = ["package = ?", "is_super = ?"];
+        const values = ["SUPER", 1];
+
+        if (hasColumn("plan")) {
+          assignments.push("plan = ?");
+          values.push("SUPER");
+        }
+
+        if (hasColumn("account_status")) {
+          assignments.push("account_status = ?");
+          values.push("active");
+        }
+
+        if (hasColumn("status")) {
+          assignments.push("status = ?");
+          values.push("active");
+        }
+
+        values.push(user.id);
+
+        const userUpdate = db.prepare(`
+          UPDATE users
+          SET ${assignments.join(", ")}
+          WHERE id = ?
+        `).run(...values);
+
+        if (userUpdate.changes !== 1) {
+          throw new Error("USER_UPDATE_FAILED");
+        }
+
+        // Claim the code only if it is still unused.
+        const codeUpdate = db.prepare(`
+          UPDATE jovia_codes
+          SET used = 1,
+              used_by = ?,
+              used_by_name = ?,
+              used_by_email = ?,
+              used_by_id = ?,
+              used_at = datetime('now')
+          WHERE code = ? AND used = 0
+        `).run(
+          sure.display,
+          sure.sureName,
+          sure.sureEmail,
+          sure.id,
+          raw
+        );
+
+        if (codeUpdate.changes !== 1) {
+          throw new Error("CODE_UPDATE_FAILED");
+        }
+
+        const savedCode = db.prepare(`
+          SELECT *
+          FROM jovia_codes
+          WHERE code = ?
+        `).get(raw);
+
+        const savedUser = db.prepare(`
+          SELECT id, full_name, username, email, package, plan, is_super
+          FROM users
+          WHERE id = ?
+        `).get(user.id);
+
+        return {
+          sure,
+          savedCode,
+          savedUser
+        };
       });
-      const sure = tx();
-      return res.json({ success: true, message: `SUPER upgrade successful for ${sure.sureName}!` });
-    }catch(e){
-      if(e.message==="INVALID") return res.status(404).json({ success: false, message: "Invalid code" });
-      if(e.message==="USED") return res.status(409).json({ success: false, message: "Code already used" });
-      if(e.message==="WRONG") return res.status(400).json({ success: false, message: "Wrong code type" });
-      return res.status(500).json({ success: false, message: "Upgrade failed" });
+
+      const result = redeemTransaction();
+
+      return res.json({
+        success: true,
+        message: `SUPER upgrade successful for ${result.sure.sureName}!`,
+        user: result.savedUser,
+        code: safeCodeRecord(result.savedCode)
+      });
+    } catch (error) {
+      const responses = {
+        USER_NOT_FOUND: [404, "User not found."],
+        INVALID: [404, "Invalid code."],
+        USED: [409, "Code already used."],
+        WRONG: [400, "This is not a SUPER upgrade code."],
+        USER_UPDATE_FAILED: [500, "Account update failed."],
+        CODE_UPDATE_FAILED: [409, "Code could not be redeemed. Please try again."]
+      };
+
+      if (responses[error.message]) {
+        const [status, message] = responses[error.message];
+
+        return res.status(status).json({
+          success: false,
+          message
+        });
+      }
+
+      console.error("Jovia SUPER upgrade failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Upgrade failed. Please try again."
+      });
     }
   });
 
-  // WITHDRAW - WITH SURE USERNAME - FIXED
+  // ------------------------------------------------------------
+  // APPLY WITHDRAWAL CODE
+  // ------------------------------------------------------------
+
   app.post("/api/withdraw/apply", userGuard, (req, res) => {
     const raw = normalizeCode(req.body?.code);
-    if (!raw) return res.status(400).json({ success: false, message: "Enter withdrawal code." });
+
+    if (!raw) {
+      return res.status(400).json({
+        success: false,
+        message: "Enter a withdrawal code."
+      });
+    }
+
     try {
-      const user = db.prepare("SELECT * FROM users WHERE id = ?").get(req.user.id);
-      if(!user) return res.status(404).json({ success: false, message: "User not found" });
-      
-      const row = db.prepare("SELECT * FROM jovia_codes WHERE code = ?").get(raw);
-      if (!row) return res.status(404).json({ success: false, message: "Invalid withdrawal code." });
-      if (row.type !== "withdraw") return res.status(400).json({ success: false, message: "Wrong code type." });
-      if (Number(row.used) === 1) {
-        const who = row.used_by_name || row.used_by_email || row.used_by || `User ID ${row.used_by_id}`;
-        return res.status(409).json({ success: false, message: `❌ Already USED by ${who}` });
+      const redeemTransaction = db.transaction(() => {
+        const user = db.prepare(
+          "SELECT * FROM users WHERE id = ?"
+        ).get(req.user.id);
+
+        if (!user) throw new Error("USER_NOT_FOUND");
+
+        const row = db.prepare(
+          "SELECT * FROM jovia_codes WHERE code = ?"
+        ).get(raw);
+
+        if (!row) throw new Error("INVALID");
+        if (row.type !== "withdraw") throw new Error("WRONG");
+
+        if (Number(row.used) === 1) {
+          const who =
+            row.used_by_name ||
+            row.used_by_email ||
+            row.used_by ||
+            `User ID ${row.used_by_id || "unknown"}`;
+
+          throw new Error(`USED:${who}`);
+        }
+
+        const sure = getSureUser(user);
+
+        const update = db.prepare(`
+          UPDATE jovia_codes
+          SET used = 1,
+              used_by = ?,
+              used_by_name = ?,
+              used_by_email = ?,
+              used_by_id = ?,
+              used_at = datetime('now')
+          WHERE code = ? AND used = 0
+        `).run(
+          sure.display,
+          sure.sureName,
+          sure.sureEmail,
+          sure.id,
+          raw
+        );
+
+        if (update.changes !== 1) {
+          throw new Error("CODE_UPDATE_FAILED");
+        }
+
+        const savedCode = db.prepare(
+          "SELECT * FROM jovia_codes WHERE code = ?"
+        ).get(raw);
+
+        return { sure, savedCode };
+      });
+
+      const result = redeemTransaction();
+
+      return res.json({
+        success: true,
+        message: `Withdrawal code accepted for ${result.sure.sureName}.`,
+        user: result.sure,
+        code: safeCodeRecord(result.savedCode)
+      });
+    } catch (error) {
+      if (error.message === "USER_NOT_FOUND") {
+        return res.status(404).json({
+          success: false,
+          message: "User not found."
+        });
       }
-      
-      const sure = getSureUser(user);
-      
-      // MARK AS USED WITH SURE USERNAME
-      const update = db.prepare(`UPDATE jovia_codes SET used = 1, used_by = ?, used_by_name = ?, used_by_email = ?, used_by_id = ?, used_at = datetime('now') WHERE code = ? AND used = 0`).run(sure.display, sure.sureName, sure.sureEmail, sure.id, raw);
-      
-      if(update.changes !== 1) return res.status(409).json({ success: false, message: "Code just used by someone else" });
-      
-      return res.json({ success: true, message: `Withdrawal code accepted for ${sure.sureName}`, user: sure });
-    } catch (e) {
-      console.error(e);
-      return res.status(500).json({ success: false, message: "Check failed" });
+
+      if (error.message === "INVALID") {
+        return res.status(404).json({
+          success: false,
+          message: "Invalid withdrawal code."
+        });
+      }
+
+      if (error.message === "WRONG") {
+        return res.status(400).json({
+          success: false,
+          message: "Wrong code type."
+        });
+      }
+
+      if (error.message.startsWith("USED:")) {
+        return res.status(409).json({
+          success: false,
+          message: `Code already used by ${error.message.slice(5)}.`
+        });
+      }
+
+      if (error.message === "CODE_UPDATE_FAILED") {
+        return res.status(409).json({
+          success: false,
+          message: "Code was just used by another request."
+        });
+      }
+
+      console.error("Jovia withdrawal code failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not process withdrawal code."
+      });
     }
   });
 
-  console.log("✅ JOVIA Codes FINAL - SURE USERNAME - No more unknown");
+  // ------------------------------------------------------------
+  // OPTIONAL: LOOK UP THE USER WHO REDEEMED A CODE BY USER ID
+  // ------------------------------------------------------------
+
+  app.get("/api/admin/codes/:code/user", adminGuard, (req, res) => {
+    try {
+      const code = normalizeCode(req.params.code);
+
+      const row = db.prepare(`
+        SELECT *
+        FROM jovia_codes
+        WHERE code = ?
+      `).get(code);
+
+      if (!row) {
+        return res.status(404).json({
+          success: false,
+          message: "Code not found."
+        });
+      }
+
+      if (Number(row.used) !== 1) {
+        return res.json({
+          success: true,
+          used: false,
+          message: "This code has not been used."
+        });
+      }
+
+      let user = null;
+
+      if (row.used_by_id != null) {
+        user = db.prepare(`
+          SELECT id, full_name, username, email, phone, package, plan
+          FROM users
+          WHERE id = ?
+        `).get(row.used_by_id) || null;
+      }
+
+      return res.json({
+        success: true,
+        used: true,
+        code: safeCodeRecord(row),
+        user
+      });
+    } catch (error) {
+      console.error("Redeemer lookup failed:", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Could not look up the user."
+      });
+    }
+  });
+
+  console.log("JOVIA Codes plugin loaded successfully.");
 };
