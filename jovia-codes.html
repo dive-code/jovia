@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Codes - Withdraw + SUPER</title>
+<title>JOVIA Codes - Withdraw + SUPER - FIXED</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
@@ -40,7 +40,7 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 <p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password to manage codes</p>
 <input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
-<p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none">❌ Wrong password</p>
+<p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
 </div></div>
 
 <div class="top">
@@ -107,7 +107,6 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 
 <script>
-const ADMIN_PASSWORD = "Divine@@1";
 let currentTab='withdraw';
 let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
 let allServerCodes = [];
@@ -115,18 +114,36 @@ let allServerCodes = [];
 if(localStorage.getItem('jovia_ok')==='yes'){
   document.getElementById('lock').style.display='none';
 }
-function unlock(){
-  const val = document.getElementById('passInput').value;
-  if(val===ADMIN_PASSWORD){
+
+async function unlock(){
+  const val = document.getElementById('passInput').value.trim();
+  const err = document.getElementById('passError');
+  err.style.display='none';
+  if(!val){ err.innerText='❌ Enter password'; err.style.display='block'; return; }
+  try{
+    const res = await fetch('/api/admin/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      body: JSON.stringify({password: val})
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || data.success===false){
+      throw new Error(data.message || 'Wrong password - Admin auth required');
+    }
     localStorage.setItem('jovia_ok','yes');
-    document.getElementById('lock').style.display='none'; 
-    loadFromServer();
-  } else {
-    document.getElementById('passError').style.display='block';
-    setTimeout(()=>document.getElementById('passError').style.display='none',2000);
+    document.getElementById('lock').style.display='none';
+    await loadFromServer();
+  }catch(e){
+    err.innerText='❌ '+e.message;
+    err.style.display='block';
   }
 }
-function logoutAdmin(){
+
+async function logoutAdmin(){
+  try{
+    await fetch('/api/admin/logout',{method:'POST', credentials:'include'});
+  }catch(e){}
   localStorage.removeItem('jovia_ok');
   location.reload();
 }
@@ -146,16 +163,18 @@ async function generate(type){
   const btn = document.getElementById(btnId);
   const oldText = btn.innerHTML;
   btn.innerHTML = "⏳ Generating..."; btn.disabled = true;
-  
   try {
     const res = await fetch('/api/admin/codes/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials:'include',
       body: JSON.stringify({ type: type, count: 1 })
     });
     const data = await res.json();
-    
-    if(data.success && data.codes && data.codes.length > 0){
+    if(!data.success){
+      throw new Error(data.message || 'Admin authentication required - login again');
+    }
+    if(data.codes && data.codes.length > 0){
       const newCode = data.codes[0].code;
       if(type==='withdraw'){
         lastWithdraw=newCode;
@@ -174,29 +193,33 @@ async function generate(type){
         document.getElementById('superTypeLabel').innerText='SILVER → SUPER - SAVED TO DB';
         document.getElementById('superPriceLabel').innerHTML='Price: <b>N16,000</b> - For SILVER users only<br><small>Will show real name when used</small>';
       }
-      if(data.codes.length > 1){
-        alert(`✅ Generated ${data.codes.length} codes! Showing first: ${newCode}\nAll saved permanently. Check list below.`);
-      }
       await loadFromServer();
-    } else {
-      alert('❌ Failed: ' + (data.message || 'Unknown error'));
     }
   } catch(e){
-    alert('❌ Server error: ' + e.message);
+    alert('❌ '+e.message);
+    if(e.message.toLowerCase().includes('admin')){
+      localStorage.removeItem('jovia_ok');
+      document.getElementById('lock').style.display='flex';
+    }
   }
   btn.innerHTML = oldText; btn.disabled = false;
 }
 
 async function loadFromServer(){
   try {
-    const res = await fetch('/api/admin/codes/list?t='+Date.now());
+    const res = await fetch('/api/admin/codes/list?t='+Date.now(),{credentials:'include'});
     const data = await res.json();
-    if(data.success){
-      allServerCodes = data.codes || [];
-      filterList();
+    if(!data.success){
+      throw new Error(data.message || 'Admin auth required');
     }
+    allServerCodes = data.codes || [];
+    filterList();
   } catch(e){
-    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">❌ Server not connected<br><small>Push new jovia-codes-plugin.js</small></p>';
+    if(e.message.toLowerCase().includes('admin') || e.message.toLowerCase().includes('auth')){
+      document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 Admin login required<br><small>'+e.message+'</small><br><br><button onclick="document.getElementById(\'lock\').style.display=\'flex\'" style="padding:8px 16px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800">Login Again</button></p>';
+      return;
+    }
+    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">❌ Server not connected<br><small>'+e.message+'</small></p>';
   }
 }
 
@@ -227,7 +250,6 @@ function renderServer(filtered, totalAll){
     let badgeColor = c.type==='withdraw' ? '#dcfce7' : c.type==='super-gold' ? '#fef3c7' : '#e0e7ff';
     let dateText = '';
     try{ dateText = c.created_at ? new Date(c.created_at).toLocaleString('en-NG') : ''; }catch(e){ dateText = c.created_at||''; }
-    
     return `<div class="item ${used?'used':''}">
       <div style="flex:1;min-width:0">
         <b style="font-size:14px;letter-spacing:1px;word-break:break-all">${c.code}</b><br>
@@ -245,10 +267,7 @@ function renderServer(filtered, totalAll){
   }).join('');
 }
 
-function copyOne(code){
-  navigator.clipboard.writeText(code);
-  alert('✅ Copied: '+code);
-}
+function copyOne(code){ navigator.clipboard.writeText(code); alert('✅ Copied: '+code); }
 function copyCode(tab){
   const code=tab==='withdraw'?lastWithdraw:lastSuper;
   if(!code){ alert('⚠️ Generate code first'); return; }
@@ -267,17 +286,20 @@ async function validate(){
   if(!code){ r.innerHTML=''; return; }
   r.innerHTML='⏳ Checking server...';
   try{
-    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now());
+    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{credentials:'include'});
     const data = await res.json();
+    if(!data.success){
+      throw new Error(data.message||'Admin auth required');
+    }
     if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid code<br><small>Not found on server DB</small></span>'; return; }
     if(data.used){ 
-      let by = data.used_by || data.used_by_name || 'unknown user';
+      let by = data.used_by || 'unknown user';
       r.innerHTML=`<span style="color:#ef4444">❌ Already USED<br><span style="font-size:11px;color:#0f172a">By: ${by}<br>On: ${data.used_at||'unknown date'}<br>Type: ${data.type}</span></span>`; 
       return; 
     }
     r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active on SERVER<br><span style="font-size:11px;color:#0f172a">Code: ${data.code}<br>Type: ${data.type} - N${data.price}<br>Not used yet - Ready</span></span>`;
   } catch(e){
-    r.innerHTML='<span style="color:red">❌ Server error<br><small>Push new plugin</small></span>';
+    r.innerHTML='<span style="color:red">❌ '+e.message+'</span>';
   }
 }
 
