@@ -38,6 +38,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   const normalizeCode = (value) => String(value || "").trim().toUpperCase();
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
 
+  const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
+
   const userGuard = (req, res, next) => {
     if (typeof requireUser !== "function") return res.status(503).json({ success: false, message: "User auth not configured." });
     return requireUser(req, res, () => {
@@ -45,10 +47,47 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       next();
     });
   };
+
+  // FIXED ADMIN GUARD - accepts session.isAdmin + requireAdmin
   const adminGuard = (req, res, next) => {
-    if (typeof requireAdmin !== "function") return res.status(503).json({ success: false, message: "Admin auth not configured." });
-    return requireAdmin(req, res, next);
+    if (req.session && req.session.isAdmin === true) return next();
+    if (typeof requireAdmin === "function") {
+      try{
+        return requireAdmin(req, res, next);
+      }catch(e){
+        // fallback to session check
+        return res.status(401).json({ success: false, message: "Admin authentication required" });
+      }
+    }
+    return res.status(401).json({ success: false, message: "Admin authentication required" });
   };
+
+  // === ADMIN LOGIN - NEW ===
+  app.post("/api/admin/login", (req, res) => {
+    try{
+      const p = String(req.body?.password || "").trim();
+      if (p !== ADMIN_PASS) {
+        return res.status(401).json({ success: false, message: "Wrong admin password" });
+      }
+      if (req.session) {
+        req.session.isAdmin = true;
+        req.session.adminLoggedAt = new Date().toISOString();
+      }
+      return res.json({ success: true, message: "Admin logged in" });
+    }catch(err){
+      return res.status(500).json({ success: false, message: "Login failed" });
+    }
+  });
+
+  app.post("/api/admin/logout", (req, res) => {
+    if (req.session) req.session.isAdmin = false;
+    return res.json({ success: true, message: "Admin logged out" });
+  });
+
+  app.get("/api/admin/me", (req, res) => {
+    const isAdmin = !!(req.session && req.session.isAdmin);
+    return res.json({ success: true, isAdmin });
+  });
 
   app.post("/api/admin/codes/generate", adminGuard, (req, res) => {
     try {
@@ -72,6 +111,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const generated = generateTransaction();
       return res.json({ success: true, codes: generated, total: getTotalCodes() });
     } catch (error) {
+      console.error("Generate error:", error);
       return res.status(500).json({ success: false, message: "Could not generate codes." });
     }
   });
@@ -116,12 +156,27 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
+  // WITHDRAW CODE APPLY - NEW (was missing before)
+  app.post("/api/withdraw/apply", userGuard, (req, res) => {
+    const raw = normalizeCode(req.body?.code);
+    if (!raw) return res.status(400).json({ success: false, message: "Enter withdrawal code." });
+    try {
+      const row = db.prepare("SELECT * FROM jovia_codes WHERE code = ?").get(raw);
+      if (!row) return res.status(404).json({ success: false, message: "Invalid withdrawal code." });
+      if (row.type !== "withdraw") return res.status(400).json({ success: false, message: "Wrong code type." });
+      if (Number(row.used) === 1) return res.status(409).json({ success: false, message: "Code already used." });
+      return res.json({ success: true, message: "Withdrawal code valid - ready to use", code: row });
+    } catch (e) {
+      return res.status(500).json({ success: false, message: "Check failed" });
+    }
+  });
+
   app.get("/api/admin/codes/check/:code", adminGuard, (req, res) => {
     try {
       const code = normalizeCode(req.params.code);
       const row = db.prepare("SELECT * FROM jovia_codes WHERE code = ?").get(code);
       if (!row) return res.json({ success: true, exists: false, total: getTotalCodes() });
-      return res.json({ success: true, exists: true, code: row.code, type: row.type, price: row.price, used: row.used, used_by: row.used_by, created_at: row.created_at, used_at: row.used_at });
+      return res.json({ success: true, exists: true, code: row.code, type: row.type, price: row.price, used: row.used, used_by: row.used_by, used_by_name: row.used_by_name, used_by_email: row.used_by_email, created_at: row.created_at, used_at: row.used_at, total: getTotalCodes() });
     } catch (error) {
       return res.status(500).json({ success: false, message: "Could not check." });
     }
@@ -136,5 +191,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  console.log("✅ JOVIA Codes plugin loaded - SECURE PRODUCTION - SUPER UNLIMITED ACTIVE");
+  console.log("✅ JOVIA Codes plugin loaded - FIXED - Admin login + SUPER + Withdraw - SECURE PRODUCTION");
 };
