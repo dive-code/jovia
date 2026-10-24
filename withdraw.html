@@ -7,7 +7,6 @@ function getSelectedBalance(){return document.getElementById("withdrawalType").v
 function getWithdrawalTypeLabel(t){return t==="affiliate"?"Affiliate Earnings":"Regular Earnings";}
 function showInactivePopup(){const o=document.getElementById("inactiveOverlay");o.classList.add("show");o.style.display="flex";document.body.style.overflow="hidden";}
 async function loadWithdrawalSettings(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{credentials:"include",cache:"no-store"});if(!r.ok) throw new Error("settings failed");const d=await r.json();regularWithdrawalsEnabled=d.regularEnabled!==false;affiliateWithdrawalsEnabled=d.affiliateEnabled!==false;}catch(e){} finally {
-  // ✅ NEVER SHOW BANNER - Always hidden
   const banner=document.getElementById("withdrawalDisabledBanner");
   if(banner){ banner.style.display="none"; banner.innerHTML=""; }
 }}
@@ -30,6 +29,14 @@ function openConfirmModal(){if(!pendingWithdrawal)return;document.getElementById
 function closeConfirmModal(){if(submittingWithdrawal)return;document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";}
 document.getElementById("confirmModal").addEventListener("click",function(e){if(e.target===this)closeConfirmModal();});
 function openActivationModal(){
+  const wt = pendingWithdrawal?.withdrawalType || document.getElementById("withdrawalType").value;
+  const isPortalOpen = wt==="affiliate" ? affiliateWithdrawalsEnabled : regularWithdrawalsEnabled;
+  if(!isPortalOpen){
+    document.getElementById("confirmModal").classList.remove("show");
+    document.body.style.overflow="";
+    showMessage("Withdrawal portal is currently closed. Please contact @customer_support_team0001 for next opening time.","error");
+    return;
+  }
   if(!pendingWithdrawal){showMessage("Please enter amount and details first","error");return;}
   const amt=Number(pendingWithdrawal.amount||0);
   const min=getMinimumWithdrawal(pendingWithdrawal.withdrawalType);
@@ -92,6 +99,11 @@ async function confirmWithdrawalWithCode(){
 async function submitWithdrawal(){
   clearMessage();
   const wt=document.getElementById("withdrawalType").value;
+  const isPortalOpen = wt==="affiliate" ? affiliateWithdrawalsEnabled : regularWithdrawalsEnabled;
+  if(!isPortalOpen){
+    showMessage("Withdrawal portal is currently closed. Code entry is disabled until portal opens.","error");
+    return;
+  }
   if(!currentUser){showMessage("Account loading...","error");return;}
   const sel=getSelectedBalance(),min=getMinimumWithdrawal(wt),amt=Number(document.getElementById("amount").value);
   if(!Number.isFinite(amt)||amt<=0){showMessage("Enter valid amount","error");return;}
