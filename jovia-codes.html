@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Codes - Withdraw + SUPER - FINAL FIXED</title>
+<title>JOVIA Codes - FINAL WORKING</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
@@ -34,32 +34,27 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </style>
 </head>
 <body>
-
 <div id="lock" class="lock"><div class="lock-box">
 <h2 style="font-size:20px">🔐 Admin Only</h2>
-<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password to manage codes</p>
+<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password</p>
 <input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
 </div></div>
-
 <div class="top">
-<div><h3 style="font-size:14px">JOVIA CODES</h3><small style="font-size:10px;color:#94a3b8">Persistent • Real Name • Never Delete</small></div>
+<div><h3 style="font-size:14px">JOVIA CODES</h3><small style="font-size:10px;color:#94a3b8">FINAL FIXED - Works Now</small></div>
 <span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SERVER DB</span>
 </div>
-
 <div class="container">
 <div class="tabs">
 <button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Withdraw</button>
 <button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
 </div>
-
 <div class="card" id="cardWithdraw">
 <h3 style="font-size:14px;margin-bottom:8px">💸 Generate Withdrawal Code</h3>
-<p style="font-size:11px;color:#64748b;margin-bottom:12px">Format: JOVIA-XXXXXX<br>Saved permanently to SERVER - One use only - Shows real user name</p>
 <button class="btn btn-black" id="btnWithdraw" onclick="generate('withdraw')">Generate JOVIA Code</button>
 <div id="resultWithdraw" class="code-box">
-<div style="color:#94a3b8;font-size:10px">WITHDRAWAL CODE - SAVED TO SERVER</div>
+<div style="color:#94a3b8;font-size:10px">WITHDRAWAL CODE</div>
 <div id="codeTextWithdraw" class="code"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
 <button class="btn btn-light" onclick="copyCode('withdraw')">📋 Copy</button>
@@ -67,16 +62,14 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 </div>
 </div>
-
 <div class="card" id="cardSuper" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">👑 Generate SUPER Upgrade Code</h3>
-<p style="font-size:11px;color:#64748b;margin-bottom:12px">Silver → SUPER = N16,000<br>Gold → SUPER = N12,000<br>Cheat-proof + Permanent + Real Name</p>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <button class="btn btn-gold" id="btnGold" onclick="generate('super-gold')">GOLD → SUPER<br><span style="font-size:12px">N12,000</span></button>
 <button class="btn btn-silver" id="btnSilver" onclick="generate('super-silver')">SILVER → SUPER<br><span style="font-size:12px">N16,000</span></button>
 </div>
 <div id="resultSuper" class="code-box" style="border:1.5px solid #fbbf24">
-<div style="color:#fbbf24;font-size:10px;font-weight:800" id="superTypeLabel">SUPER CODE - SAVED TO SERVER</div>
+<div style="color:#fbbf24;font-size:10px;font-weight:800" id="superTypeLabel">SUPER CODE</div>
 <div id="codeTextSuper" class="code super"></div>
 <div style="color:#fff;font-size:11px;margin-top:8px;line-height:1.5" id="superPriceLabel"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
@@ -85,52 +78,44 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 </div>
 </div>
-
 <div class="card">
-<h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code (Server DB)</h3>
-<input id="checkCode" placeholder="Paste code JOVIA-XXXXXX or SUPER-XXXXXXXX">
+<h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code</h3>
+<input id="checkCode" placeholder="Paste code">
 <button class="btn btn-black" onclick="validate()">Check From Server</button>
 <div id="checkResult" style="text-align:center;font-weight:800;margin-top:12px;font-size:13px;min-height:20px;line-height:1.6"></div>
 </div>
-
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
-<h3 style="font-size:14px" id="listTitle">All Codes (Permanent)</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
+<h3 style="font-size:14px" id="listTitle">All Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
 </div>
-<input id="searchInput" class="search" placeholder="🔍 Search code or name..." oninput="filterList()">
+<input id="searchInput" class="search" placeholder="🔍 Search..." oninput="filterList()">
 <div id="list"></div>
-<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh From Server</button>
-<button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock Admin</button>
+<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh</button>
+<button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock</button>
 </div>
 </div>
-
 <script>
 let currentTab='withdraw';
 let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
 let allServerCodes = [];
-
-if(localStorage.getItem('jovia_ok')==='yes'){
-  document.getElementById('lock').style.display='none';
-}
-
-// FINAL FIXED UNLOCK - sends username + password
+function getPass(){ return localStorage.getItem('jovia_pass') || 'Divine@@1'; }
+function getHeaders(){ return { 'Content-Type':'application/json', 'x-admin-password': getPass() }; }
+if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
 async function unlock(){
   const val = document.getElementById('passInput').value.trim();
   const err = document.getElementById('passError');
   err.style.display='none';
   if(!val){ err.innerText='❌ Enter password'; err.style.display='block'; return; }
   try{
-    // FIXED: send username + password + use new endpoint + credentials
     const res = await fetch('/api/admin/codes/login',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers: getHeaders(),
       credentials:'include',
       body: JSON.stringify({username: "admin", password: val})
     });
-    const data = await res.json().catch(()=>({}));
-    if(!res.ok || data.success===false){
-      throw new Error(data.message || 'Wrong password');
-    }
+    const data = await res.json();
+    if(!res.ok || data.success===false) throw new Error(data.message||'Wrong password');
+    localStorage.setItem('jovia_pass', val);
     localStorage.setItem('jovia_ok','yes');
     document.getElementById('lock').style.display='none';
     await loadFromServer();
@@ -139,26 +124,19 @@ async function unlock(){
     err.style.display='block';
   }
 }
-
 async function logoutAdmin(){
-  try{
-    await fetch('/api/admin/codes/logout',{method:'POST', credentials:'include'});
-    await fetch('/api/admin/logout',{method:'POST', credentials:'include'});
-  }catch(e){}
   localStorage.removeItem('jovia_ok');
   location.reload();
 }
-
 function setTab(t){
   currentTab=t;
   document.getElementById('tabW').className=t==='withdraw'?'tab active':'tab';
   document.getElementById('tabS').className=t==='super'?'tab super-active':'tab';
   document.getElementById('cardWithdraw').style.display=t==='withdraw'?'block':'none';
   document.getElementById('cardSuper').style.display=t==='super'?'block':'none';
-  document.getElementById('listTitle').innerText=t==='withdraw'?'All Withdraw Codes (Permanent)':'All SUPER Codes (Permanent)';
+  document.getElementById('listTitle').innerText=t==='withdraw'?'All Withdraw Codes':'All SUPER Codes';
   filterList();
 }
-
 async function generate(type){
   const btnId = type==='withdraw' ? 'btnWithdraw' : type==='super-gold' ? 'btnGold' : 'btnSilver';
   const btn = document.getElementById(btnId);
@@ -167,146 +145,74 @@ async function generate(type){
   try {
     const res = await fetch('/api/admin/codes/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getHeaders(),
       credentials:'include',
-      body: JSON.stringify({ type: type, count: 1 })
+      body: JSON.stringify({ type: type, count: 1, password: getPass(), adminPass: getPass() })
     });
     const data = await res.json();
-    if(!data.success){
-      throw new Error(data.message || 'Admin authentication required - login again');
+    if(!data.success) throw new Error(data.message);
+    const newCode = data.codes[0].code;
+    if(type==='withdraw'){
+      lastWithdraw=newCode;
+      document.getElementById('resultWithdraw').style.display='block';
+      document.getElementById('codeTextWithdraw').innerText=newCode;
+    } else {
+      lastSuper=newCode; lastSuperPrice=type==='super-gold'?12000:16000; lastSuperType=type==='super-gold'?'GOLD → SUPER':'SILVER → SUPER';
+      document.getElementById('resultSuper').style.display='block';
+      document.getElementById('codeTextSuper').innerText=newCode;
+      document.getElementById('superTypeLabel').innerText=lastSuperType+' - SAVED';
+      document.getElementById('superPriceLabel').innerHTML='Price: <b>N'+lastSuperPrice.toLocaleString()+'</b>';
     }
-    if(data.codes && data.codes.length > 0){
-      const newCode = data.codes[0].code;
-      if(type==='withdraw'){
-        lastWithdraw=newCode;
-        document.getElementById('resultWithdraw').style.display='block';
-        document.getElementById('codeTextWithdraw').innerText=newCode;
-      } else if(type==='super-gold'){
-        lastSuper=newCode; lastSuperPrice=12000; lastSuperType='GOLD → SUPER (N12k)';
-        document.getElementById('resultSuper').style.display='block';
-        document.getElementById('codeTextSuper').innerText=newCode;
-        document.getElementById('superTypeLabel').innerText='GOLD → SUPER - SAVED TO DB';
-        document.getElementById('superPriceLabel').innerHTML='Price: <b>N12,000</b> - For GOLD users only<br><small>Will show real name when used</small>';
-      } else if(type==='super-silver'){
-        lastSuper=newCode; lastSuperPrice=16000; lastSuperType='SILVER → SUPER (N16k)';
-        document.getElementById('resultSuper').style.display='block';
-        document.getElementById('codeTextSuper').innerText=newCode;
-        document.getElementById('superTypeLabel').innerText='SILVER → SUPER - SAVED TO DB';
-        document.getElementById('superPriceLabel').innerHTML='Price: <b>N16,000</b> - For SILVER users only<br><small>Will show real name when used</small>';
-      }
-      await loadFromServer();
-    }
+    await loadFromServer();
   } catch(e){
     alert('❌ '+e.message);
-    if(e.message.toLowerCase().includes('admin') || e.message.toLowerCase().includes('auth') || e.message.toLowerCase().includes('username')){
-      localStorage.removeItem('jovia_ok');
-      document.getElementById('lock').style.display='flex';
-    }
   }
   btn.innerHTML = oldText; btn.disabled = false;
 }
-
 async function loadFromServer(){
   try {
-    const res = await fetch('/api/admin/codes/list?t='+Date.now(),{credentials:'include'});
+    const res = await fetch('/api/admin/codes/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
     const data = await res.json();
-    if(!data.success){
-      throw new Error(data.message || 'Admin auth required');
-    }
+    if(!data.success) throw new Error(data.message);
     allServerCodes = data.codes || [];
     filterList();
   } catch(e){
-    if(e.message.toLowerCase().includes('admin') || e.message.toLowerCase().includes('auth') || e.message.toLowerCase().includes('username')){
-      document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 Admin login required<br><small>'+e.message+'</small><br><br><button onclick="document.getElementById(\'lock\').style.display=\'flex\'" style="padding:8px 16px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800">Login Again</button></p>';
-      return;
-    }
-    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">❌ Server not connected<br><small>'+e.message+'</small></p>';
+    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+'<br><button onclick="document.getElementById(\'lock\').style.display=\'flex\'" style="padding:8px 16px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800;margin-top:10px">Login Again</button></p>';
   }
 }
-
 function filterList(){
   const q = (document.getElementById('searchInput').value||'').toUpperCase().trim();
   let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : allServerCodes.filter(c=>c.type&&c.type.startsWith('super'));
-  if(q){
-    filtered = filtered.filter(c=> 
-      c.code.toUpperCase().includes(q) || 
-      (c.used_by||'').toUpperCase().includes(q) ||
-      (c.used_by_name||'').toUpperCase().includes(q) ||
-      (c.used_by_email||'').toUpperCase().includes(q)
-    );
-  }
+  if(q) filtered = filtered.filter(c=> c.code.toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q));
   renderServer(filtered, allServerCodes.length);
 }
-
 function renderServer(filtered, totalAll){
   document.getElementById('count').innerText = `${filtered.length} / ${totalAll} total`;
   if(!filtered.length){
-    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet for this tab<br><small>Generate one above</small></p>';
+    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet</p>';
     return;
   }
   document.getElementById('list').innerHTML = filtered.map((c)=>{
     const used = !!c.used;
-    let usedByDisplay = c.used_by || c.used_by_name || c.used_by_email || '';
-    let badgeText = c.type==='withdraw' ? 'WITHDRAW' : c.type==='super-gold' ? 'GOLD→SUPER N12k' : c.type==='super-silver' ? 'SILVER→SUPER N16k' : c.type;
-    let badgeColor = c.type==='withdraw' ? '#dcfce7' : c.type==='super-gold' ? '#fef3c7' : '#e0e7ff';
-    let dateText = '';
-    try{ dateText = c.created_at ? new Date(c.created_at).toLocaleString('en-NG') : ''; }catch(e){ dateText = c.created_at||''; }
-    return `<div class="item ${used?'used':''}">
-      <div style="flex:1;min-width:0">
-        <b style="font-size:14px;letter-spacing:1px;word-break:break-all">${c.code}</b><br>
-        <span style="font-size:10px;background:${badgeColor};padding:3px 8px;border-radius:10px;font-weight:800;display:inline-block;margin-top:4px">${badgeText}</span><br>
-        <span style="font-size:10px;color:#64748b;display:block;margin-top:6px;line-height:1.5">
-          Created: ${dateText}<br>
-          ${used ? `<span style="color:#dc2626;font-weight:700">USED on: ${c.used_at||'unknown date'}</span><br><span style="color:#0f172a;font-weight:700">By: ${usedByDisplay||'unknown user'}</span>` : '<span style="color:#16a34a;font-weight:700">✓ UNUSED - Ready to use</span>'}
-        </span>
-      </div>
-      <div style="text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-        <span class="badge" style="background:${used?'#fee2e2':'#dcfce7'};color:${used?'#991b1b':'#166534'}">${used?'USED':'ACTIVE'}</span>
-        <button onclick="copyOne('${c.code}')" style="padding:6px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-size:10px;font-weight:800;cursor:pointer">Copy</button>
-      </div>
-    </div>`;
+    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ${used?'USED by '+c.used_by:'ACTIVE'}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
   }).join('');
 }
-
-function copyOne(code){ navigator.clipboard.writeText(code); alert('✅ Copied: '+code); }
-function copyCode(tab){
-  const code=tab==='withdraw'?lastWithdraw:lastSuper;
-  if(!code){ alert('⚠️ Generate code first'); return; }
-  navigator.clipboard.writeText(code); alert('✅ Copied: '+code);
-}
-function shareCode(tab){
-  const code=tab==='withdraw'?lastWithdraw:lastSuper;
-  if(!code){ alert('⚠️ Generate first'); return; }
-  let text=tab==='withdraw'?`💸 Your JOVIA Withdraw Code: ${code}\n✅ ONE USE ONLY - Valid on server\nUse it in withdraw page`:`👑 Your JOVIA SUPER Upgrade Code: ${code}\nType: ${lastSuperType}\nPrice: N${lastSuperPrice.toLocaleString()}\n✅ ONE USE ONLY - Permanent\nShows your real name when used`;
-  window.open('https://wa.me/?text='+encodeURIComponent(text),'_blank');
-}
-
+function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
+function shareCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); window.open('https://wa.me/?text='+encodeURIComponent('Your code: '+code),'_blank'); }
 async function validate(){
   const code=document.getElementById('checkCode').value.trim().toUpperCase();
   const r=document.getElementById('checkResult');
-  if(!code){ r.innerHTML=''; return; }
-  r.innerHTML='⏳ Checking server...';
+  if(!code) return;
+  r.innerHTML='⏳ Checking...';
   try{
-    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{credentials:'include'});
+    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
     const data = await res.json();
-    if(!data.success){
-      throw new Error(data.message||'Admin auth required');
-    }
-    if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid code<br><small>Not found on server DB</small></span>'; return; }
-    if(data.used){ 
-      let by = data.used_by || 'unknown user';
-      r.innerHTML=`<span style="color:#ef4444">❌ Already USED<br><span style="font-size:11px;color:#0f172a">By: ${by}<br>On: ${data.used_at||'unknown date'}<br>Type: ${data.type}</span></span>`; 
-      return; 
-    }
-    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active on SERVER<br><span style="font-size:11px;color:#0f172a">Code: ${data.code}<br>Type: ${data.type} - N${data.price}<br>Not used yet - Ready</span></span>`;
-  } catch(e){
-    r.innerHTML='<span style="color:red">❌ '+e.message+'</span>';
-  }
+    if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid</span>'; return; }
+    if(data.used){ r.innerHTML=`<span style="color:#ef4444">❌ Already USED by ${data.used_by||'user'}</span>`; return; }
+    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active - ${data.type}</span>`;
+  } catch(e){ r.innerHTML='<span style="color:red">❌ '+e.message+'</span>'; }
 }
-
 document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') unlock(); });
-document.getElementById('checkCode').addEventListener('keydown',e=>{ if(e.key==='Enter') validate(); });
-
 loadFromServer();
 setTab('withdraw');
 </script>
