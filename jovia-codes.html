@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Codes - Withdraw + SUPER - FIXED</title>
+<title>JOVIA Codes - Withdraw + SUPER - FINAL FIXED</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
@@ -49,7 +49,6 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 
 <div class="container">
-
 <div class="tabs">
 <button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Withdraw</button>
 <button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
@@ -103,7 +102,6 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 <button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh From Server</button>
 <button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock Admin</button>
 </div>
-
 </div>
 
 <script>
@@ -115,21 +113,23 @@ if(localStorage.getItem('jovia_ok')==='yes'){
   document.getElementById('lock').style.display='none';
 }
 
+// FINAL FIXED UNLOCK - sends username + password
 async function unlock(){
   const val = document.getElementById('passInput').value.trim();
   const err = document.getElementById('passError');
   err.style.display='none';
   if(!val){ err.innerText='❌ Enter password'; err.style.display='block'; return; }
   try{
-    const res = await fetch('/api/admin/login',{
+    // FIXED: send username + password + use new endpoint + credentials
+    const res = await fetch('/api/admin/codes/login',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       credentials:'include',
-      body: JSON.stringify({password: val})
+      body: JSON.stringify({username: "admin", password: val})
     });
     const data = await res.json().catch(()=>({}));
     if(!res.ok || data.success===false){
-      throw new Error(data.message || 'Wrong password - Admin auth required');
+      throw new Error(data.message || 'Wrong password');
     }
     localStorage.setItem('jovia_ok','yes');
     document.getElementById('lock').style.display='none';
@@ -142,6 +142,7 @@ async function unlock(){
 
 async function logoutAdmin(){
   try{
+    await fetch('/api/admin/codes/logout',{method:'POST', credentials:'include'});
     await fetch('/api/admin/logout',{method:'POST', credentials:'include'});
   }catch(e){}
   localStorage.removeItem('jovia_ok');
@@ -197,7 +198,7 @@ async function generate(type){
     }
   } catch(e){
     alert('❌ '+e.message);
-    if(e.message.toLowerCase().includes('admin')){
+    if(e.message.toLowerCase().includes('admin') || e.message.toLowerCase().includes('auth') || e.message.toLowerCase().includes('username')){
       localStorage.removeItem('jovia_ok');
       document.getElementById('lock').style.display='flex';
     }
@@ -215,7 +216,7 @@ async function loadFromServer(){
     allServerCodes = data.codes || [];
     filterList();
   } catch(e){
-    if(e.message.toLowerCase().includes('admin') || e.message.toLowerCase().includes('auth')){
+    if(e.message.toLowerCase().includes('admin') || e.message.toLowerCase().includes('auth') || e.message.toLowerCase().includes('username')){
       document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 Admin login required<br><small>'+e.message+'</small><br><br><button onclick="document.getElementById(\'lock\').style.display=\'flex\'" style="padding:8px 16px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800">Login Again</button></p>';
       return;
     }
