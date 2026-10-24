@@ -3,8 +3,7 @@ const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
   // --------------------------------------------------
-  // JOVIA CODES PLUGIN
-  // Secure code generation, checking and SUPER upgrades
+  // JOVIA CODES PLUGIN — CORRECTED SUPER HANDLING
   // --------------------------------------------------
 
   db.exec(`
@@ -22,14 +21,13 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     );
   `);
 
-  // Add required user columns if they do not exist.
   const userColumns = () =>
     db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
 
   let columns = userColumns();
 
-  if (!columns.includes("package")) {
-    db.exec("ALTER TABLE users ADD COLUMN package TEXT DEFAULT 'Silver'");
+  if (!columns.includes("is_super")) {
+    db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER NOT NULL DEFAULT 0");
   }
 
   columns = userColumns();
@@ -38,13 +36,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     db.exec("ALTER TABLE users ADD COLUMN plan TEXT DEFAULT 'Silver'");
   }
 
-  columns = userColumns();
-
-  if (!columns.includes("is_super")) {
-    db.exec("ALTER TABLE users ADD COLUMN is_super INTEGER DEFAULT 0");
-  }
-
-  const hasColumn = (name) => userColumns().includes(name);
+  const hasColumn = name => userColumns().includes(name);
 
   const randomCode = (length, prefix) => {
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -57,13 +49,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return prefix + suffix;
   };
 
-  const normalizeCode = (value) =>
+  const normalizeCode = value =>
     String(value || "").trim().toUpperCase();
 
   const getTotalCodes = () =>
-    db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
+    Number(db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total);
 
-  // Fail closed if the server has not supplied authentication middleware.
   const userGuard = (req, res, next) => {
     if (typeof requireUser !== "function") {
       return res.status(503).json({
@@ -73,13 +64,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
 
     return requireUser(req, res, () => {
-      if (!req.user || !req.user.id) {
+      if (!req.user?.id) {
         return res.status(401).json({
           success: false,
           message: "Please log in to continue."
         });
       }
-
       next();
     });
   };
@@ -164,7 +154,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     } catch (error) {
       console.error("JOVIA code generation failed:", error.message);
-
       return res.status(500).json({
         success: false,
         message: "Could not generate codes."
@@ -174,6 +163,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   // --------------------------------------------------
   // APPLY SUPER CODE — AUTHENTICATED MEMBER ONLY
+  // IMPORTANT: package remains Silver/Gold due to DB constraint.
+  // is_super is the authoritative SUPER access flag.
   // --------------------------------------------------
 
   app.post("/api/upgrade/apply", userGuard, (req, res) => {
@@ -188,25 +179,29 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
     try {
       const upgradeTransaction = db.transaction(() => {
-        // Always use the authenticated session's user ID.
-        // Never identify the account from a submitted email/userId.
         const user = db.prepare(
           "SELECT * FROM users WHERE id = ?"
         ).get(req.user.id);
 
-        if (!user) {
-          throw new Error("USER_NOT_FOUND");
+        if (!user) throw new Error("USER_NOT_FOUND");
+
+        if (Number(user.is_super) === 1) {
+          return {
+            alreadySuper: true,
+            user: db.prepare(`
+              SELECT id, username, email, package, is_super
+              FROM users WHERE id = ?
+            `).get(user.id)
+          };
         }
 
         const code = db.prepare(
           "SELECT * FROM jovia_codes WHERE code = ?"
         ).get(raw);
 
-        if (!code) {
-          throw new Error("INVALID_CODE");
-        }
+        if (!code) throw new Error("INVALID_CODE");
 
-        if (code.type !== "super-gold" && code.type !== "super-silver") {
+        if (!["super-gold", "super-silver"].includes(code.type)) {
           throw new Error("WRONG_CODE_TYPE");
         }
 
@@ -214,9 +209,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           throw new Error("CODE_ALREADY_USED");
         }
 
-        // Build an update using columns that actually exist.
-        const assignments = ["package = ?", "is_super = ?"];
-        const values = ["SUPER", 1];
+        // Do NOT set package = 'SUPER'.
+        // The users.package CHECK constraint permits only Silver/Gold.
+        const assignments = ["is_super = 1"];
+        const values = [];
 
         if (hasColumn("plan")) {
           assignments.push("plan = ?");
@@ -235,17 +231,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
         values.push(user.id);
 
-        const updateUser = db.prepare(`
+        const update = db.prepare(`
           UPDATE users
           SET ${assignments.join(", ")}
           WHERE id = ?
         `).run(...values);
 
-        if (updateUser.changes !== 1) {
+        if (update.changes !== 1) {
           throw new Error("USER_UPDATE_FAILED");
         }
 
-        // Mark the code as used only if it is still unused.
         const email = String(user.email || "");
         const username = String(
           user.username || email.split("@")[0] || "User"
@@ -269,20 +264,28 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
         const updatedUser = db.prepare(`
           SELECT id, full_name, username, email,
-                 package, plan, is_super
+                 package, is_super
           FROM users
           WHERE id = ?
         `).get(user.id);
 
-        return updatedUser;
+        return { alreadySuper: false, user: updatedUser };
       });
 
-      const updatedUser = upgradeTransaction();
+      const result = upgradeTransaction();
 
       return res.json({
         success: true,
-        message: "SUPER upgrade successful.",
-        user: updatedUser
+        message: result.alreadySuper
+          ? "This account is already SUPER."
+          : "SUPER upgrade successful.",
+        user: {
+          ...result.user,
+          is_super: Number(result.user.is_super) === 1,
+          package: Number(result.user.is_super) === 1
+            ? "SUPER"
+            : result.user.package
+        }
       });
     } catch (error) {
       const messages = {
@@ -295,17 +298,17 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       };
 
       if (messages[error.message]) {
-        return res.status(
+        const status =
           error.message === "INVALID_CODE" ? 404 :
-          error.message === "CODE_ALREADY_USED" ? 409 : 400
-        ).json({
+          error.message === "CODE_ALREADY_USED" ? 409 : 400;
+
+        return res.status(status).json({
           success: false,
           message: messages[error.message]
         });
       }
 
       console.error("JOVIA SUPER upgrade failed:", error.message);
-
       return res.status(500).json({
         success: false,
         message: "Upgrade failed. Please try again."
@@ -320,7 +323,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   app.get("/api/admin/codes/check/:code", adminGuard, (req, res) => {
     try {
       const code = normalizeCode(req.params.code);
-
       const row = db.prepare(
         "SELECT * FROM jovia_codes WHERE code = ?"
       ).get(code);
@@ -348,7 +350,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     } catch (error) {
       console.error("JOVIA code check failed:", error.message);
-
       return res.status(500).json({
         success: false,
         message: "Could not check this code."
@@ -377,7 +378,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     } catch (error) {
       console.error("JOVIA code list failed:", error.message);
-
       return res.status(500).json({
         success: false,
         message: "Could not load code history."
@@ -385,5 +385,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  console.log("JOVIA Codes plugin loaded.");
+  console.log("JOVIA Codes plugin loaded — corrected SUPER handling.");
 };
