@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upgrade to SUPER - Pay</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#f7f5f9;color:#211827;padding-bottom:40px}
+.app{max-width:480px;margin:0 auto;padding:20px 16px}
+.top{height:60px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-bottom:1px solid #ebe6ef;padding:0 16px;position:sticky;top:0;z-index:10}
+.brand{font-weight:900;font-size:20px;color:#3b0758}.brand span{color:#ffc400}
+.card{background:#fff;border:1px solid #ebe6ef;border-radius:20px;padding:20px;margin-top:18px;box-shadow:0 8px 20px rgba(0,0,0,.05)}
+.title{font-size:20px;font-weight:900;margin-bottom:6px}.sub{font-size:12px;color:#756d7c;line-height:1.6;margin-bottom:14px}
+.badge{display:inline-flex;padding:6px 12px;border-radius:20px;background:#fff7ed;border:1px solid #f59e0b;color:#92400e;font-size:11px;font-weight:900;margin-bottom:12px}
+.account-box{background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:16px;padding:18px;margin:14px 0}
+.acc-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:13px}
+.acc-row:last-child{border:none}
+.acc-label{color:#d8cfe0;font-size:11px;min-width:110px}
+.acc-value{font-weight:900;letter-spacing:.3px;text-align:right;flex:1;word-break:break-all}
+.copy-btn{border:none;background:#ffc400;color:#281d00;padding:5px 10px;border-radius:8px;font-size:10px;font-weight:900;cursor:pointer;margin-left:8px;flex-shrink:0}
+.amount-box{background:#fef3c7;border:1px solid #fde68a;border-radius:12px;padding:12px;text-align:center;margin:12px 0}
+.amount{font-size:26px;font-weight:900;color:#92400e}
+.btn{width:100%;border:none;padding:14px;border-radius:12px;font-weight:900;cursor:pointer;font-size:13px;margin-top:10px}
+.btn-yellow{background:#ffc400;color:#281d00}
+.btn-purple{background:#3b0758;color:#fff}
+.btn-outline{background:#fff;border:1px solid #ebe6ef;color:#3b0758}
+.note{font-size:11px;color:#756d7c;line-height:1.6;margin-top:12px;background:#faf8fb;padding:12px;border-radius:10px}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">JOVIA<span>.</span></div><a href="jobs.html" style="font-size:11px;font-weight:800;text-decoration:none;color:#3b0758">← Back to Jobs</a></div>
+<div class="app">
+  <div class="card">
+    <div id="typeBadge" class="badge">SUPER UPGRADE</div>
+    <div class="title" id="title">Upgrade to SUPER</div>
+    <div class="sub" id="subtitle">Pay to get unlimited jobs & videos. No daily limit.</div>
+    <div class="amount-box">
+      <div style="font-size:11px;color:#92400e;font-weight:800">AMOUNT TO PAY</div>
+      <div class="amount" id="amountText">₦12,000</div>
+      <div style="font-size:10px;color:#92400e;margin-top:4px" id="typeText">For Gold users → SUPER</div>
+    </div>
+    <div class="account-box">
+      <div style="font-size:11px;color:#d8cfe0;margin-bottom:8px;font-weight:800">PAY TO THIS ACCOUNT</div>
+      <div class="acc-row"><span class="acc-label">Bank Name</span><span class="acc-value">Kredi Money MFB Ltd <button class="copy-btn" onclick="copyText('Kredi Money MFB Ltd')">Copy</button></span></div>
+      <div class="acc-row"><span class="acc-label">Account Number</span><span class="acc-value">1850772192 <button class="copy-btn" onclick="copyText('1850772192')">Copy</button></span></div>
+      <div class="acc-row"><span class="acc-label">Account Name</span><span class="acc-value">Raenest/Divine Ogheneovie Abanum <button class="copy-btn" onclick="copyText('Raenest/Divine Ogheneovie Abanum')">Copy</button></span></div>
+    </div>
+    <div class="note">
+      <strong>How to upgrade:</strong><br>
+      1. Pay exact amount to account above<br>
+      2. Click "I Have Made Payment" below<br>
+      3. You will be taken to Telegram @customer_support_team0001 — send proof of payment + your username<br>
+      4. We will send you SUPER code immediately: <code>SUPER-XXXXXXXX</code><br>
+      5. Go to dashboard → Enter code → You become SUPER unlimited!
+    </div>
+    <button class="btn btn-yellow" id="paidBtn">✅ I Have Made Payment — Confirm</button>
+    <button class="btn btn-purple" id="supportBtn">💬 Contact Support on Telegram</button>
+    <button class="btn btn-outline" onclick="location.href='jobs.html'">← Back to Jobs</button>
+    <div style="margin-top:14px;text-align:center;font-size:10px;color:#9b939f">Your payment will be verified within 5-10 mins — @customer_support_team0001</div>
+  </div>
+</div>
+<script>
+function copyText(t){navigator.clipboard.writeText(t).then(()=>alert('Copied: '+t)).catch(()=>{prompt('Copy manually:',t);});}
+const TG_USERNAME = "customer_support_team0001";
+const TG_LINK = `https://t.me/${TG_USERNAME}`;
+const params = new URLSearchParams(location.search);
+let type = (params.get('type') || 'super-gold').toLowerCase();
+const amountEl = document.getElementById('amountText');
+const typeText = document.getElementById('typeText');
+const title = document.getElementById('title');
+const badge = document.getElementById('typeBadge');
+if(type.includes('silver') || type==='super-silver'){
+  amountEl.textContent='₦16,000';
+  typeText.textContent='For Silver users → SUPER (Unlimited)';
+  title.textContent='Upgrade Silver → SUPER';
+  badge.textContent='SILVER → SUPER: ₦16,000';
+} else {
+  amountEl.textContent='₦12,000';
+  typeText.textContent='For Gold users → SUPER (Unlimited)';
+  title.textContent='Upgrade Gold → SUPER';
+  badge.textContent='GOLD → SUPER: ₦12,000';
+}
+document.getElementById('supportBtn').addEventListener('click', ()=>{window.open(TG_LINK,'_blank');});
+document.getElementById('paidBtn').addEventListener('click', ()=>{
+  const amount = amountEl.textContent;
+  const msg = `Hello Jovia Support (@${TG_USERNAME}), I have paid ${amount} for ${type.toUpperCase()} upgrade. My Jovia username is: [TYPE YOUR USERNAME HERE]. I paid to 1850772192 Kredi MFB. Please send me SUPER code. Here is my proof:`;
+  const tgLink = `https://t.me/${TG_USERNAME}?text=${encodeURIComponent(msg)}`;
+  window.open(tgLink, '_blank');
+  setTimeout(()=>{
+    if(confirm('✅ Payment confirmation sent to Telegram! Have you sent proof? Click OK to go back to dashboard to enter your SUPER code once you receive it.')){
+      location.href='dashboard.html';
+    }
+  }, 800);
+});
+</script>
+</body>
+</html>
