@@ -14,15 +14,28 @@ function applyWithdrawalPortalStatus(){
   else { const type=document.getElementById("withdrawalType")?.value||"regular"; isOpen= type==="affiliate" ? affiliateWithdrawalsEnabled : regularWithdrawalsEnabled; }
   const banner=document.getElementById("withdrawalDisabledBanner");
   const btn=document.getElementById("withdrawButton");
+  function applyWithdrawalPortalStatus(){
+  let isOpen;
+  if(WITHDRAWAL_PORTAL_OPEN!==null) isOpen=WITHDRAWAL_PORTAL_OPEN;
+  else { 
+    const type=document.getElementById("withdrawalType")?.value||"regular"; 
+    isOpen= type==="affiliate" ? affiliateWithdrawalsEnabled : regularWithdrawalsEnabled; 
+  }
+  const banner=document.getElementById("withdrawalDisabledBanner");
+  const btn=document.getElementById("withdrawButton");
+  
+  // NEVER show discouraging banner
+  banner.style.display="none";
+  banner.innerHTML="";
+
   if(!isOpen){
-    banner.style.display="block";
-    banner.innerHTML="⛔ <b>Withdrawal Portal Closed</b><br>Same code system applies when open — <b>JOVIA-XXXXXX = ₦10,000</b><br>Contact @customer_support_team0001 for next opening time.";
-    btn.disabled=true; btn.textContent="Withdrawal Closed";
+    btn.disabled=true; 
+    btn.textContent="Withdrawal Closed";
     document.getElementById("statusText").textContent="Closed";
     document.getElementById("statusDot").style.background="#c83c3c";
   } else {
-    banner.style.display="none";
-    btn.disabled=false; btn.textContent="Request Withdrawal";
+    btn.disabled=false; 
+    btn.textContent="Request Withdrawal";
     document.getElementById("statusText").textContent="Available";
     document.getElementById("statusDot").style.background="#65d89a";
   }
