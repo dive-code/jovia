@@ -116,7 +116,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":null;
       if(!type) return res.status(400).json({success:false,message:"Invalid type."});
       const count=Number(req.body?.count??1); if(!Number.isInteger(count)||count<1||count>50) return res.status(400).json({success:false,message:"1-50 only"});
-      const price=type==="super-gold"?12000:type==="super-silver"?16000:0;
+      // ✅ FIXED: Added withdraw = 10000
+      const price=type==="super-gold"?12000:type==="super-silver"?16000:type==="withdraw"?10000:0;
       const prefix=type==="withdraw"?"JOVIA-":"SUPER-"; const len=type==="withdraw"?6:8;
       const tx=db.transaction(()=>{ const arr=[]; while(arr.length<count){ const c=randomCode(len,prefix); const r=db.prepare(`INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,0,datetime('now'))`).run(c,type,price); if(r.changes===1) arr.push({code:c,type,price}); } return arr; });
       return res.json({success:true,codes:tx(),total:getTotalCodes()});
@@ -167,7 +168,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // WITHDRAW - STRICT - NO RANDOM
+  // WITHDRAW - STRICT - NO RANDOM - ₦10,000
   app.post("/api/withdraw/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     if(!raw) return res.status(400).json({success:false,message:"Enter withdrawal code."});
@@ -184,14 +185,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         if(upd.changes!==1) throw new Error("JUST_USED");
         return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
       });
-      const saved=tx(); return res.json({success:true,message:`Withdrawal code accepted for ${saved.used_by_name}.`,code:safeCodeRecord(saved)});
+      const saved=tx(); return res.json({success:true,message:`Withdrawal code accepted for ${saved.used_by_name}. Price: ₦10,000`,code:safeCodeRecord(saved)});
     }catch(e){
-      if(e.message==="INVALID") return res.status(404).json({success:false,message:"❌ Invalid code — this code does NOT exist in DB. Generate from admin. Random numbers will never work."});
+      if(e.message==="INVALID") return res.status(404).json({success:false,message:"❌ Invalid code — this code does NOT exist in DB. Generate from admin for ₦10,000. Random numbers will never work."});
       if(e.message==="WRONG_TYPE") return res.status(400).json({success:false,message:"❌ This is a SUPER code, not withdrawal code."});
       if(e.message.startsWith("USED:")) return res.status(409).json({success:false,message:`❌ Already USED by ${e.message.slice(5)}`});
       return res.status(500).json({success:false,message:"Withdraw failed: "+e.message});
     }
   });
 
-  console.log("✅ JOVIA ULTIMATE FINAL: Silver 9k->16k, Gold 15k->12k, Withdraw STRICT (no random)");
+  console.log("✅ JOVIA FINAL: Silver 9k->16k (₦16k), Gold 15k->12k (₦12k), Withdraw JOVIA- ₦10k STRICT (no random)");
 };
