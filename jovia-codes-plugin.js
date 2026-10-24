@@ -50,14 +50,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return requireAdmin(req, res, next);
   };
 
-  // SECURE SUPER CHECK - DB ONLY
-  function isSuperUserDB(u){
-    if(!u) return false;
-    const pkg = String(u.package||"").toLowerCase().trim();
-    const plan = String(u.plan||"").toLowerCase().trim();
-    return pkg==="super" || plan==="super" || Number(u.is_super)===1 || u.is_super===true;
-  }
-
   app.post("/api/admin/codes/generate", adminGuard, (req, res) => {
     try {
       const requestedType = String(req.body?.type || "").toLowerCase();
@@ -115,10 +107,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         return db.prepare(`SELECT id, full_name, username, email, package, plan, is_super FROM users WHERE id = ?`).get(user.id);
       });
       const updatedUser = upgradeTransaction();
-      return res.json({ success: true, message: "SUPER upgrade successful.", user: updatedUser });
+      return res.json({ success: true, message: "SUPER upgrade successful - unlimited jobs!", user: updatedUser });
     } catch (error) {
-      const messages = { USER_NOT_FOUND: "Account not found.", INVALID_CODE: "Invalid SUPER code.", WRONG_CODE_TYPE: "Wrong code type.", CODE_ALREADY_USED: "Code already used.", USER_UPDATE_FAILED: "Update failed.", CODE_REDEMPTION_FAILED: "Could not redeem." };
+      const messages = { USER_NOT_FOUND: "Account not found.", INVALID_CODE: "Invalid SUPER code.", WRONG_CODE_TYPE: "Wrong code type - use SUPER code.", CODE_ALREADY_USED: "Code already used.", USER_UPDATE_FAILED: "Update failed.", CODE_REDEMPTION_FAILED: "Could not redeem." };
       if (messages[error.message]) return res.status(error.message === "INVALID_CODE" ? 404 : error.message === "CODE_ALREADY_USED" ? 409 : 400).json({ success: false, message: messages[error.message] });
+      console.error("Upgrade error:", error);
       return res.status(500).json({ success: false, message: "Upgrade failed." });
     }
   });
@@ -143,36 +136,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // === EMERGENCY FIX FOR YOUR ID 1 - DELETE AFTER USE ===
-  app.get("/api/emergency/make-me-super-now", (req,res)=>{
-    try{
-      db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=1").run();
-      db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1 WHERE lower(email)=lower(?)").run('divineabanum8@gmail.com');
-      const user = db.prepare("SELECT id, email, package, plan, is_super FROM users WHERE id=1").get();
-      return res.json({success:true, message:"YOU ARE NOW SUPER - RELOAD /api/me", user});
-    }catch(e){ return res.json({success:false, error:e.message}); }
-  });
-
-  // === SECURE UNLIMITED FOR ANY SUPER - MUST BE ADDED TO SERVER.JS BUT WE ADD HERE TOO ===
-  // This will override daily limit for SUPER
-  app.post("/api/jobs/:id/complete-super", userGuard, (req,res)=>{
-    try{
-      const user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
-      if(!isSuperUserDB(user)) return res.status(403).json({success:false, message:"Only SUPER can use unlimited"});
-      const jobId = req.params.id;
-      const job = db.prepare("SELECT * FROM jobs WHERE id=?").get(jobId);
-      if(!job) return res.status(404).json({success:false, message:"Job not found"});
-      const reward = Number(job.reward||500);
-      const newBal = db.transaction(()=>{
-        const cur = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(user.id);
-        const nb = Number(cur.wallet_balance||0)+reward;
-        db.prepare("UPDATE users SET wallet_balance=?, balance=?, wallet=? WHERE id=?").run(nb, nb, nb, user.id);
-        try{ db.prepare("INSERT INTO user_jobs (user_id, job_id, status) VALUES (?,?, 'completed') ON CONFLICT(user_id, job_id) DO UPDATE SET status='completed'").run(user.id, jobId); }catch(e){ try{ db.prepare("INSERT OR REPLACE INTO user_jobs (user_id, job_id, status) VALUES (?,?, 'completed')").run(user.id, jobId); }catch(e2){} }
-        return nb;
-      })();
-      return res.json({success:true, message:`SUPER unlimited: ₦${reward}`, reward, walletBalance:newBal, isSuper:true});
-    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-  });
-
-  console.log("JOVIA Codes plugin loaded - SECURE + EMERGENCY SUPER FIX ACTIVE");
+  console.log("✅ JOVIA Codes plugin loaded - SECURE PRODUCTION - SUPER UNLIMITED ACTIVE");
 };
