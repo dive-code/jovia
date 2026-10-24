@@ -1,4 +1,5 @@
 
+
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
@@ -23,7 +24,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   `);
 
   // ------------------------------------------------------------
-  // SAFE SCHEMA CHECKS
+  // DATABASE MIGRATIONS
   // ------------------------------------------------------------
 
   const userColumns = () =>
@@ -39,40 +40,21 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   addUserColumnIfMissing("plan", "TEXT DEFAULT 'Silver'");
   addUserColumnIfMissing("is_super", "INTEGER DEFAULT 0");
 
-  // Optional legacy columns. Check again after every schema change.
-  if (!userColumns().includes("account_status")) {
+  for (const [name, definition] of [
+    ["account_status", "TEXT DEFAULT 'active'"],
+    ["status", "TEXT DEFAULT 'active'"],
+    ["username", "TEXT"],
+    ["full_name", "TEXT"]
+  ]) {
     try {
-      addUserColumnIfMissing("account_status", "TEXT DEFAULT 'active'");
+      addUserColumnIfMissing(name, definition);
     } catch (error) {
-      console.error("Could not add account_status:", error.message);
+      console.error(`Could not migrate users.${name}:`, error.message);
     }
   }
 
-  if (!userColumns().includes("status")) {
-    try {
-      addUserColumnIfMissing("status", "TEXT DEFAULT 'active'");
-    } catch (error) {
-      console.error("Could not add status:", error.message);
-    }
-  }
+  const hasColumn = name => userColumns().includes(name);
 
-  if (!userColumns().includes("username")) {
-    try {
-      addUserColumnIfMissing("username", "TEXT");
-    } catch (error) {
-      console.error("Could not add username:", error.message);
-    }
-  }
-
-  if (!userColumns().includes("full_name")) {
-    try {
-      addUserColumnIfMissing("full_name", "TEXT");
-    } catch (error) {
-      console.error("Could not add full_name:", error.message);
-    }
-  }
-
-  // Also migrate existing code tables created by older versions.
   const codeColumns = () =>
     db.prepare("PRAGMA table_info(jovia_codes)").all().map(c => c.name);
 
@@ -112,31 +94,158 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
 
-  // Derive identity ONLY from the authenticated database user.
+  // Get identity from the authenticated database account.
   const getSureUser = user => {
     const email = String(user.email || "").trim();
     const username = String(user.username || "").trim();
     const fullName = String(user.full_name || "").trim();
-    const id = user.id;
 
     const sureName =
       fullName ||
       username ||
       (email ? email.split("@")[0] : "") ||
-      `User${id}`;
+      `User${user.id}`;
 
     const sureEmail = email;
     const display = sureEmail
       ? `${sureName} (${sureEmail})`
-      : `${sureName} (User ID ${id})`;
+      : `${sureName} (User ID ${user.id})`;
 
     return {
       sureName,
       sureEmail,
       display,
-      id
+      id: user.id
     };
   };
+
+  // Recover a redeemer from stored information.
+  // This does not guess a person's identity.
+  const getRedeemer = row => {
+    let user = null;
+
+    if (row.used_by_id != null) {
+      user = db.prepare(`
+        SELECT id, full_name, username, email, phone, package, plan
+        FROM users
+        WHERE id = ?
+      `).get(row.used_by_id) || null;
+    }
+
+    // Older versions may have saved an email or username but no ID.
+    if (!user) {
+      const savedEmail = String(row.used_by_email || "").trim();
+      const savedName = String(row.used_by_name || "").trim();
+
+      if (savedEmail && hasColumn("email")) {
+        user = db.prepare(`
+          SELECT id, full_name, username, email, phone, package, plan
+          FROM users
+          WHERE LOWER(TRIM(email)) = LOWER(TRIM(?))
+          LIMIT 1
+        `).get(savedEmail) || null;
+      }
+
+      if (!user && savedName) {
+        const userCols = userColumns();
+        const possibleConditions = [];
+
+        if (userCols.includes("username")) {
+          possibleConditions.push("LOWER(TRIM(username)) = LOWER(TRIM(?))");
+        }
+
+        if (userCols.includes("full_name")) {
+          possibleConditions.push("LOWER(TRIM(full_name)) = LOWER(TRIM(?))");
+        }
+
+        if (possibleConditions.length) {
+          const query = `
+            SELECT id, full_name, username, email, phone, package, plan
+            FROM users
+            WHERE ${possibleConditions.join(" OR ")}
+            LIMIT 1
+          `;
+
+          const params = possibleConditions.map(() => savedName);
+
+          user = db.prepare(query).get(...params) || null;
+        }
+      }
+    }
+
+    const storedName = String(row.used_by_name || "").trim();
+    const storedEmail = String(row.used_by_email || "").trim();
+
+    const recoveredName = user
+      ? String(
+          user.full_name ||
+          user.username ||
+          user.email ||
+          `User ID ${user.id}`
+        ).trim()
+      : "";
+
+    const recoveredEmail = user
+      ? String(user.email || "").trim()
+      : "";
+
+    const name =
+      recoveredName ||
+      storedName ||
+      "";
+
+    const email =
+      recoveredEmail ||
+      storedEmail ||
+      "";
+
+    const id =
+      user?.id ??
+      row.used_by_id ??
+      null;
+
+    return {
+      user,
+      name,
+      email,
+      id,
+      display: name
+        ? (email ? `${name} (${email})` : name)
+        : id != null
+          ? `User ID ${id} (name unavailable)`
+          : "Name not saved for this code"
+    };
+  };
+
+  const safeCodeRecord = row => {
+    const used = Number(row.used) === 1;
+    const redeemer = used ? getRedeemer(row) : null;
+
+    return {
+      code: row.code,
+      type: row.type,
+      price: row.price,
+      used,
+      status: used ? "USED" : "UNUSED",
+      used_by: row.used_by || "",
+      used_by_name: redeemer?.name || row.used_by_name || "",
+      used_by_email: redeemer?.email || row.used_by_email || "",
+      used_by_id: redeemer?.id ?? null,
+      user_details: used
+        ? {
+            name: redeemer.name || "Name not saved",
+            email: redeemer.email || "",
+            user_id: redeemer.id ?? null
+          }
+        : null,
+      created_at: row.created_at || null,
+      used_at: row.used_at || null
+    };
+  };
+
+  // ------------------------------------------------------------
+  // AUTHENTICATION
+  // ------------------------------------------------------------
 
   const userGuard = (req, res, next) => {
     if (typeof requireUser !== "function") {
@@ -183,34 +292,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     });
   };
 
-  const safeCodeRecord = row => {
-    const used = Number(row.used) === 1;
-
-    return {
-      code: row.code,
-      type: row.type,
-      price: row.price,
-      used,
-      status: used ? "USED" : "UNUSED",
-      used_by: row.used_by || "",
-      used_by_name: row.used_by_name || "",
-      used_by_email: row.used_by_email || "",
-      used_by_id: row.used_by_id ?? null,
-      user_details: used
-        ? {
-            name:
-              row.used_by_name ||
-              row.used_by ||
-              "Name not saved",
-            email: row.used_by_email || "",
-            user_id: row.used_by_id ?? null
-          }
-        : null,
-      created_at: row.created_at || null,
-      used_at: row.used_at || null
-    };
-  };
-
   // ------------------------------------------------------------
   // ADMIN LOGIN
   // ------------------------------------------------------------
@@ -233,26 +314,26 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }
 
-    if (req.session) {
-      req.session.isAdmin = true;
-
-      return req.session.save(error => {
-        if (error) {
-          console.error("Admin session save failed:", error);
-
-          return res.status(500).json({
-            success: false,
-            message: "Could not save the admin session."
-          });
-        }
-
-        return res.json({ success: true });
+    if (!req.session) {
+      return res.status(503).json({
+        success: false,
+        message: "Session middleware is not configured."
       });
     }
 
-    return res.json({
-      success: true,
-      message: "Password accepted. Session middleware is not configured."
+    req.session.isAdmin = true;
+
+    return req.session.save(error => {
+      if (error) {
+        console.error("Admin session save failed:", error);
+
+        return res.status(500).json({
+          success: false,
+          message: "Could not save the admin session."
+        });
+      }
+
+      return res.json({ success: true });
     });
   };
 
@@ -268,11 +349,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const requestedType = String(req.body?.type || "").toLowerCase();
 
       const type =
-        requestedType === "gold" ||
-        requestedType === "super-gold"
+        requestedType === "gold" || requestedType === "super-gold"
           ? "super-gold"
-          : requestedType === "silver" ||
-            requestedType === "super-silver"
+          : requestedType === "silver" || requestedType === "super-silver"
             ? "super-silver"
             : requestedType === "withdraw"
               ? "withdraw"
@@ -295,11 +374,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       }
 
       const price =
-        type === "super-gold"
-          ? 12000
-          : type === "super-silver"
-            ? 16000
-            : 0;
+        type === "super-gold" ? 12000 :
+        type === "super-silver" ? 16000 : 0;
 
       const prefix = type === "withdraw" ? "JOVIA-" : "SUPER-";
       const length = type === "withdraw" ? 6 : 8;
@@ -331,15 +407,13 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         return generated;
       });
 
-      const codes = generateTransaction();
-
       return res.json({
         success: true,
-        codes,
+        codes: generateTransaction(),
         total: getTotalCodes()
       });
     } catch (error) {
-      console.error("Jovia code generation failed:", error);
+      console.error("Code generation failed:", error);
 
       return res.status(500).json({
         success: false,
@@ -349,7 +423,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
 
   // ------------------------------------------------------------
-  // LIST ALL CODES, INCLUDING THE REDEEMING USER
+  // LIST ALL CODES
   // ------------------------------------------------------------
 
   app.get("/api/admin/codes/list", adminGuard, (req, res) => {
@@ -366,7 +440,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         codes: rows.map(safeCodeRecord)
       });
     } catch (error) {
-      console.error("Jovia code list failed:", error);
+      console.error("Code list failed:", error);
 
       return res.status(500).json({
         success: false,
@@ -403,7 +477,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         ...safeCodeRecord(row)
       });
     } catch (error) {
-      console.error("Jovia code check failed:", error);
+      console.error("Code check failed:", error);
 
       return res.status(500).json({
         success: false,
@@ -414,7 +488,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   // ------------------------------------------------------------
   // APPLY SUPER UPGRADE
-  // Save the upgrade and code redemption in one transaction.
   // ------------------------------------------------------------
 
   app.post("/api/upgrade/apply", userGuard, (req, res) => {
@@ -451,7 +524,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
         const sure = getSureUser(user);
 
-        // Update available plan columns.
         const assignments = ["package = ?", "is_super = ?"];
         const values = ["SUPER", 1];
 
@@ -482,7 +554,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           throw new Error("USER_UPDATE_FAILED");
         }
 
-        // Claim the code only if it is still unused.
         const codeUpdate = db.prepare(`
           UPDATE jovia_codes
           SET used = 1,
@@ -504,11 +575,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           throw new Error("CODE_UPDATE_FAILED");
         }
 
-        const savedCode = db.prepare(`
-          SELECT *
-          FROM jovia_codes
-          WHERE code = ?
-        `).get(raw);
+        const savedCode = db.prepare(
+          "SELECT * FROM jovia_codes WHERE code = ?"
+        ).get(raw);
 
         const savedUser = db.prepare(`
           SELECT id, full_name, username, email, package, plan, is_super
@@ -516,11 +585,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           WHERE id = ?
         `).get(user.id);
 
-        return {
-          sure,
-          savedCode,
-          savedUser
-        };
+        return { sure, savedCode, savedUser };
       });
 
       const result = redeemTransaction();
@@ -550,7 +615,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         });
       }
 
-      console.error("Jovia SUPER upgrade failed:", error);
+      console.error("SUPER upgrade failed:", error);
 
       return res.status(500).json({
         success: false,
@@ -588,14 +653,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         if (!row) throw new Error("INVALID");
         if (row.type !== "withdraw") throw new Error("WRONG");
 
+        // Recover details when an old code was already used.
         if (Number(row.used) === 1) {
-          const who =
-            row.used_by_name ||
-            row.used_by_email ||
-            row.used_by ||
-            `User ID ${row.used_by_id || "unknown"}`;
+          const redeemer = getRedeemer(row);
 
-          throw new Error(`USED:${who}`);
+          throw new Error(`USED:${redeemer.display}`);
         }
 
         const sure = getSureUser(user);
@@ -661,7 +723,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if (error.message.startsWith("USED:")) {
         return res.status(409).json({
           success: false,
-          message: `Code already used by ${error.message.slice(5)}.`
+          used: true,
+          message: `❌ Already USED by ${error.message.slice(5)}`
         });
       }
 
@@ -672,7 +735,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         });
       }
 
-      console.error("Jovia withdrawal code failed:", error);
+      console.error("Withdrawal code failed:", error);
 
       return res.status(500).json({
         success: false,
@@ -682,18 +745,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
 
   // ------------------------------------------------------------
-  // OPTIONAL: LOOK UP THE USER WHO REDEEMED A CODE BY USER ID
+  // LOOK UP THE USER ASSOCIATED WITH A USED CODE
   // ------------------------------------------------------------
 
   app.get("/api/admin/codes/:code/user", adminGuard, (req, res) => {
     try {
       const code = normalizeCode(req.params.code);
 
-      const row = db.prepare(`
-        SELECT *
-        FROM jovia_codes
-        WHERE code = ?
-      `).get(code);
+      const row = db.prepare(
+        "SELECT * FROM jovia_codes WHERE code = ?"
+      ).get(code);
 
       if (!row) {
         return res.status(404).json({
@@ -710,21 +771,19 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         });
       }
 
-      let user = null;
-
-      if (row.used_by_id != null) {
-        user = db.prepare(`
-          SELECT id, full_name, username, email, phone, package, plan
-          FROM users
-          WHERE id = ?
-        `).get(row.used_by_id) || null;
-      }
+      const redeemer = getRedeemer(row);
 
       return res.json({
         success: true,
         used: true,
         code: safeCodeRecord(row),
-        user
+        user: redeemer.user,
+        redeemer: {
+          name: redeemer.name || "",
+          email: redeemer.email || "",
+          id: redeemer.id,
+          display: redeemer.display
+        }
       });
     } catch (error) {
       console.error("Redeemer lookup failed:", error);
