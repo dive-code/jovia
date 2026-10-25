@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
+  // ===== EXISTING: jovia_codes table (keep as you have) =====
   db.exec(`
     CREATE TABLE IF NOT EXISTS jovia_codes (
       code TEXT PRIMARY KEY,
@@ -15,6 +16,80 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       used_at TEXT
     );
   `);
+
+  // ===== NEW: JOVIA GAMES - SEPARATE TABLES (Phase 1) =====
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS jovia_game_accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER UNIQUE NOT NULL,
+      game_balance INTEGER DEFAULT 0,
+      points INTEGER DEFAULT 0,
+      total_deposits INTEGER DEFAULT 0,
+      total_withdrawals INTEGER DEFAULT 0,
+      total_wins INTEGER DEFAULT 0,
+      total_losses INTEGER DEFAULT 0,
+      candy_high_score INTEGER DEFAULT 0,
+      flight_high_multiplier REAL DEFAULT 0,
+      ludo_wins INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS game_transactions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      type TEXT NOT NULL,
+      amount INTEGER DEFAULT 0,
+      points_change INTEGER DEFAULT 0,
+      game_type TEXT DEFAULT '',
+      reference TEXT DEFAULT '',
+      status TEXT DEFAULT 'completed',
+      balance_before INTEGER DEFAULT 0,
+      balance_after INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS game_deposits (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
+      reference TEXT UNIQUE NOT NULL,
+      payment_method TEXT DEFAULT 'manual',
+      status TEXT DEFAULT 'pending',
+      confirmed_by INTEGER DEFAULT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      confirmed_at TEXT,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS game_withdrawals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      amount INTEGER NOT NULL,
+      status TEXT DEFAULT 'pending',
+      requested_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      processed_at TEXT,
+      processed_by INTEGER DEFAULT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS game_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      game_type TEXT NOT NULL,
+      score INTEGER DEFAULT 0,
+      multiplier REAL DEFAULT 0,
+      result TEXT DEFAULT '',
+      win_amount INTEGER DEFAULT 0,
+      is_demo INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+  `);
+
+  console.log("✅ JOVIA GAMES TABLES CREATED: game_accounts, transactions, deposits, withdrawals, history - SEPARATE WALLET");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, definition) => {
@@ -90,6 +165,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     };
   };
 
+  // ===== NEW GAME HELPERS =====
+  const getOrCreateGameAccount = (userId) => {
+    let acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
+    if(!acc){
+      db.prepare(`INSERT INTO jovia_game_accounts (user_id, game_balance, points) VALUES (?, 0, 0)`).run(userId);
+      acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
+    }
+    return acc;
+  };
+
   const userGuard=(req,res,next)=>{
     if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."});
     return requireUser(req,res,()=>{ if(!req.user||!req.user.id) return res.status(401).json({success:false,message:"Please log in."}); next(); });
@@ -116,7 +201,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":null;
       if(!type) return res.status(400).json({success:false,message:"Invalid type."});
       const count=Number(req.body?.count??1); if(!Number.isInteger(count)||count<1||count>50) return res.status(400).json({success:false,message:"1-50 only"});
-      // ✅ FIXED: Added withdraw = 10000
       const price=type==="super-gold"?12000:type==="super-silver"?16000:type==="withdraw"?10000:0;
       const prefix=type==="withdraw"?"JOVIA-":"SUPER-"; const len=type==="withdraw"?6:8;
       const tx=db.transaction(()=>{ const arr=[]; while(arr.length<count){ const c=randomCode(len,prefix); const r=db.prepare(`INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,0,datetime('now'))`).run(c,type,price); if(r.changes===1) arr.push({code:c,type,price}); } return arr; });
@@ -128,7 +212,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   app.get("/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false,message:"Not found"}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
   app.get("/api/admin/codes/:code/user",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false,message:"Not found"}); if(Number(row.used)!==1) return res.json({success:true,used:false}); const rd=getRedeemer(row); return res.json({success:true,used:true,code:safeCodeRecord(row),user:rd.user,redeemer:rd}); });
 
-  // UPGRADE - FIXED PACKAGE LOCK
   app.post("/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     if(!raw) return res.status(400).json({success:false,message:"Enter SUPER code."});
@@ -168,7 +251,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // WITHDRAW - STRICT - NO RANDOM - ₦10,000
   app.post("/api/withdraw/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     if(!raw) return res.status(400).json({success:false,message:"Enter withdrawal code."});
@@ -194,5 +276,80 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  console.log("✅ JOVIA FINAL: Silver 9k->16k (₦16k), Gold 15k->12k (₦12k), Withdraw JOVIA- ₦10k STRICT (no random)");
+  // ===== NEW: JOVIA GAMES API ROUTES - SEPARATE WALLET =====
+
+  // Get game account - Phase 1: inspection ready
+  app.get("/api/games/me", userGuard, (req,res)=>{
+    try{
+      const acc = getOrCreateGameAccount(req.user.id);
+      const txs = db.prepare(`SELECT * FROM game_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+      return res.json({success:true, gameAccount: acc, transactions: txs});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  // Deposit request - Phase 2: duplicate protection
+  app.post("/api/games/deposit", userGuard, (req,res)=>{
+    try{
+      const amount = Number(req.body?.amount);
+      const reference = String(req.body?.reference||"").trim().toUpperCase();
+      if(!amount || amount < 100) return res.status(400).json({success:false,message:"Min deposit ₦100"});
+      if(!reference) return res.status(400).json({success:false,message:"Reference required"});
+      const exists = db.prepare(`SELECT id FROM game_deposits WHERE reference = ?`).get(reference);
+      if(exists) return res.status(409).json({success:false,message:"Duplicate payment - reference already used"});
+      
+      db.prepare(`INSERT INTO game_deposits (user_id, amount, reference, status) VALUES (?, ?, ?, 'pending')`).run(req.user.id, amount, reference);
+      return res.json({success:true,message:"Deposit request received - pending confirmation", reference});
+    }catch(e){ 
+      if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate payment protection - reference exists"});
+      return res.status(500).json({success:false,message:e.message}); 
+    }
+  });
+
+  // Save game score - non-cash points only (Candy Match)
+  app.post("/api/games/score", userGuard, (req,res)=>{
+    try{
+      const { game_type, score } = req.body;
+      const validGames = ["candy","flight","ludo"];
+      if(!validGames.includes(String(game_type))) return res.status(400).json({success:false,message:"Invalid game"});
+      
+      const acc = getOrCreateGameAccount(req.user.id);
+      const points = Math.floor(Number(score)||0);
+      
+      db.prepare(`INSERT INTO game_history (user_id, game_type, score, is_demo) VALUES (?, ?, ?, 1)`).run(req.user.id, game_type, points);
+      
+      if(game_type==="candy" && points > acc.candy_high_score){
+        db.prepare(`UPDATE jovia_game_accounts SET candy_high_score = ?, points = points + ?, updated_at = datetime('now') WHERE user_id = ?`).run(points, Math.floor(points/10), req.user.id);
+      }
+      return res.json({success:true,message:"Score saved", points: acc.points + Math.floor(points/10)});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  // Admin: view game accounts
+  app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{
+    const rows = db.prepare(`SELECT g.*, u.email, u.username FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all();
+    return res.json({success:true,total:rows.length,accounts:rows});
+  });
+
+  // Admin: confirm deposit (audit log)
+  app.post("/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
+    try{
+      const { depositId } = req.body;
+      const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
+      if(!dep) return res.status(404).json({success:false,message:"Deposit not found"});
+      if(dep.status === "confirmed") return res.status(409).json({success:false,message:"Already confirmed"});
+      
+      const tx = db.transaction(()=>{
+        const acc = getOrCreateGameAccount(dep.user_id);
+        const newBal = acc.game_balance + dep.amount;
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, dep.amount, dep.user_id);
+        db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
+        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal);
+      });
+      tx();
+      return res.json({success:true,message:"Deposit confirmed"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  console.log("✅ JOVIA GAMES API: /api/games/me, /api/games/deposit, /api/games/score + ADMIN game routes");
+  console.log("✅ JOVIA FINAL: Silver 9k->16k, Gold 15k->12k, Withdraw JOVIA- ₦10k + GAMES SEPARATE WALLET");
 };
