@@ -27,33 +27,6 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .summary-value{font-size:18px;font-weight:900;overflow-wrap:anywhere}
 .super-badge{display:inline-flex;margin-top:12px;padding:8px 14px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:11px;font-weight:900;animation:pulse 2s infinite}
 @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
-
-/* ===== NEW: JOVIA GAMES SPOT ===== */
-.games-spot{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.03)}
-.games-header{padding:16px 16px 12px;display:flex;justify-content:space-between;align-items:center}
-.games-title{font-size:15px;font-weight:900;display:flex;align-items:center;gap:6px}
-.games-badge{font-size:9px;font-weight:900;background:linear-gradient(135deg,#3b0758,#7c2ae8);color:#fff;padding:5px 10px;border-radius:20px}
-.games-sub{padding:0 16px 12px;font-size:11px;color:var(--m);line-height:1.5}
-.games-balance-row{display:flex;gap:8px;padding:0 16px 14px}
-.games-balance-item{flex:1;background:#faf8fb;border:1px solid var(--b);border-radius:12px;padding:10px 12px}
-.games-balance-label{font-size:9px;font-weight:800;color:var(--m);letter-spacing:.5px;margin-bottom:4px}
-.games-balance-value{font-size:14px;font-weight:900}
-.games-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 16px 16px}
-.game-card{border:1px solid var(--b);border-radius:14px;padding:12px 8px;text-align:center;background:#fff;position:relative;transition:.2s;cursor:pointer}
-.game-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(59,7,88,.12)}
-.game-icon{font-size:26px;margin-bottom:6px}
-.game-name{font-size:11px;font-weight:900;margin-bottom:4px}
-.game-desc{font-size:8px;color:var(--m);line-height:1.4;margin-bottom:8px}
-.game-status{font-size:8px;font-weight:900;padding:4px 8px;border-radius:20px;display:inline-block}
-.status-soon{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.status-live{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
-.game-card.locked{opacity:.85}
-.game-card.locked:after{content:"🔒";position:absolute;top:6px;right:6px;font-size:10px}
-.games-footer{padding:10px 16px 14px;display:flex;gap:8px}
-.games-btn{flex:1;border:none;border-radius:12px;padding:12px;font-size:11px;font-weight:900;cursor:pointer}
-.games-btn.primary{background:var(--p);color:#fff}
-.games-btn.secondary{background:#f5f3f7;color:var(--p);border:1px solid var(--b)}
-
 .section{background:var(--c);border:1px solid var(--b);border-radius:19px;margin-bottom:17px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.03)}
 .section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
 .section-title{font-size:15px;font-weight:900}.section-count{color:var(--m);font-size:10px;font-weight:800;background:#f5f3f7;padding:4px 8px;border-radius:10px}
@@ -61,7 +34,6 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .filter-btn{flex:0 0 auto;border:1px solid var(--b);background:#fff;color:#776e7d;padding:10px 16px;border-radius:999px;font-size:11px;font-weight:800;cursor:pointer;transition:.2s}
 .filter-btn.active{background:var(--y);border-color:var(--y);color:#281d00;box-shadow:0 4px 12px rgba(255,196,0,.3)}
 .job-card{padding:17px 16px;border-bottom:1px solid #f1edf3;transition:.2s}
-.job-card:hover{background:#fcfbff}
 .job-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
 .job-title{font-size:14px;font-weight:900;line-height:1.4}.job-reward{color:var(--g);font-size:14px;font-weight:900;white-space:nowrap}
 .job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.6}
@@ -73,7 +45,7 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .task-box.wait-box{background:#f5f3ff;border-color:#ddd6fe}
 .task-label{margin-bottom:5px;font-size:9px;font-weight:900;letter-spacing:.5px}.task-info{font-size:10px;line-height:1.65}
 .task-open-btn,.complete-btn,.upgrade-btn{width:100%;border:none;padding:13px 14px;border-radius:12px;font-size:11px;font-weight:900;cursor:pointer;transition:.2s}
-.task-open-btn{background:var(--y);color:#241900}.task-open-btn:active{transform:scale(.98)}
+.task-open-btn{background:var(--y);color:#241900}
 .complete-btn{background:var(--p);color:#fff;margin-top:9px}.complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .upgrade-btn{display:block;background:linear-gradient(135deg,#ff9a00,#ffd83d);color:#3a2600;margin-top:9px;text-align:center;text-decoration:none;border:1px solid #f59e0b}
 .loading{padding:34px 20px;text-align:center;color:var(--m);font-size:12px}
@@ -91,7 +63,19 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .popup-overlay.show{display:flex}
 .popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .popup-btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--y);color:#241900;font-weight:900;text-decoration:none;margin-top:14px}
-@media(max-width:380px){.summary-grid{gap:5px}.summary-item{padding:10px 6px}.summary-value{font-size:15px}.games-grid{grid-template-columns:repeat(3,1fr);gap:6px}.game-card{padding:10px 5px}}
+
+/* === FLOATING GAMES BUTTON - CORNER ONLY === */
+.games-fab{position:fixed;right:14px;bottom:88px;z-index:90;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#3b0758,#7c2ae8);border:2px solid #ffc400;box-shadow:0 8px 22px rgba(59,7,88,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;animation:fabPulse 2s infinite}
+@keyframes fabPulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+.games-fab b{font-size:22px;line-height:1}
+.games-fab i{font-style:normal;font-size:8px;font-weight:900;background:#ffc400;color:#000;padding:1px 5px;border-radius:10px;margin-top:1px}
+
+/* === FULL GAMES OVERLAY - OPENS WHEN CLICKED === */
+.games-overlay{position:fixed;inset:0;z-index:160;display:none;background:var(--bg);overflow-y:auto}
+.games-overlay.show{display:block}
+.overlay-top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--b);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+.games-lobby{max-width:680px;margin:0 auto;padding:18px 15px 100px}
+@media(max-width:380px){.summary-grid{gap:5px}.summary-item{padding:10px 6px}.summary-value{font-size:15px}}
 </style>
 </head>
 <body>
@@ -109,53 +93,6 @@ button:disabled{opacity:.65;cursor:not-allowed}
 <div id="dailyEarnedText" style="margin-top:12px;font-size:11px;color:#d8cfe0">Earned today: ₦0</div>
 <div id="superActiveBadge" style="display:none" class="super-badge">👑 SUPER ACTIVE - UNLIMITED ACCESS - NO DAILY LIMIT</div>
 </section>
-
-<!-- ===== NEW JOVIA GAMES SPOT - INSIDE JOB HTML ===== -->
-<section class="games-spot" id="joviaGamesSpot">
-<div class="games-header">
-<h2 class="games-title">🎮 JOVIA Games</h2>
-<span class="games-badge">NEW • SEPARATE WALLET</span>
-</div>
-<div class="games-sub">Play games with a separate game wallet. Your main Jovia wallet is safe and untouched. Game balance, deposits, and withdrawals are tracked separately.</div>
-
-<div class="games-balance-row">
-<div class="games-balance-item">
-<div class="games-balance-label">Game Balance</div>
-<div class="games-balance-value" id="gameBalance">₦0</div>
-</div>
-<div class="games-balance-item">
-<div class="games-balance-label">Points</div>
-<div class="games-balance-value" id="gamePoints">0 pts</div>
-</div>
-</div>
-
-<div class="games-grid">
-<div class="game-card locked" onclick="openGamesSoon('Candy Match')">
-<div class="game-icon">🍬</div>
-<div class="game-name">Candy Match</div>
-<div class="game-desc">Match-3 • Levels & scoring</div>
-<span class="game-status status-soon">COMING SOON</span>
-</div>
-<div class="game-card locked" onclick="openGamesSoon('Jovia Flight')">
-<div class="game-icon">✈️</div>
-<div class="game-name">Jovia Flight</div>
-<div class="game-desc">Flight multiplier • Demo</div>
-<span class="game-status status-soon">COMING SOON</span>
-</div>
-<div class="game-card locked" onclick="openGamesSoon('Ludo')">
-<div class="game-icon">🎲</div>
-<div class="game-name">Ludo</div>
-<div class="game-desc">Board • Multiplayer rooms</div>
-<span class="game-status status-soon">COMING SOON</span>
-</div>
-</div>
-
-<div class="games-footer">
-<button class="games-btn primary" onclick="openGamesSoon('Games Lobby')">Open Games Lobby →</button>
-<button class="games-btn secondary" onclick="openGamesSoon('Deposit')">Deposit</button>
-</div>
-</section>
-<!-- ===== END JOVIA GAMES SPOT ===== -->
 
 <section class="section" id="videoSection">
 <div class="section-header"><h2 class="section-title">📚 JOVIA Academy</h2><span class="section-count" id="videoCount">0 resources</span></div>
@@ -178,6 +115,59 @@ button:disabled{opacity:.65;cursor:not-allowed}
 </section>
 </main>
 </div>
+
+<!-- FLOATING CORNER BUTTON ONLY -->
+<div class="games-fab" onclick="openGamesLobby()">
+<b>🎮</b><i>GAMES</i>
+</div>
+
+<!-- HIDDEN FULL GAMES PAGE - ONLY OPENS WHEN FAB CLICKED -->
+<div class="games-overlay" id="gamesOverlay">
+<div class="overlay-top">
+<div style="font-weight:900">🎮 JOVIA Games <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:20px;margin-left:6px">SEPARATE WALLET</span></div>
+<button onclick="closeGamesLobby()" style="border:none;background:#f5f3f7;padding:8px 14px;border-radius:20px;font-weight:900;font-size:12px;cursor:pointer">✕ Close</button>
+</div>
+<div class="games-lobby">
+<div style="background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:19px;padding:18px;margin-bottom:16px">
+<div style="display:flex;justify-content:space-between">
+<div><div style="font-size:9px;opacity:.7">GAME BALANCE</div><div style="font-size:20px;font-weight:900;margin-top:4px" id="gameBalance">₦0</div></div>
+<div style="text-align:right"><div style="font-size:9px;opacity:.7">POINTS</div><div style="font-size:20px;font-weight:900;margin-top:4px" id="gamePoints">0 pts</div></div>
+</div>
+<div style="margin-top:10px;font-size:11px;color:#d8cfe0">Separate from main Jovia wallet. Your main wallet is untouched.</div>
+<div style="display:flex;gap:8px;margin-top:14px">
+<button style="flex:1;background:#ffc400;color:#000;border:none;padding:11px;border-radius:12px;font-weight:900;font-size:11px" onclick="alert('Deposit - Coming in Phase 2 (separate game accounts)')">Deposit</button>
+<button style="flex:1;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:11px;border-radius:12px;font-weight:900;font-size:11px" onclick="alert('Withdraw - Coming in Phase 2')">Withdraw</button>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr;gap:12px">
+<div style="background:#fff;border:1px solid #ebe6ef;border-radius:19px;padding:16px;display:flex;gap:14px;align-items:center">
+<div style="font-size:36px">🍬</div>
+<div style="flex:1"><div style="font-weight:900;font-size:14px">Candy Match</div><div style="font-size:11px;color:#756d7c;margin-top:2px">Match-3 • Levels, scoring, saved history • Non-cash points</div></div>
+<span style="font-size:9px;font-weight:900;background:#fef3c7;color:#92400e;padding:5px 10px;border-radius:20px">COMING SOON</span>
+</div>
+<div style="background:#fff;border:1px solid #ebe6ef;border-radius:19px;padding:16px;display:flex;gap:14px;align-items:center">
+<div style="font-size:36px">✈️</div>
+<div style="flex:1"><div style="font-weight:900;font-size:14px">Jovia Flight</div><div style="font-size:11px;color:#756d7c;margin-top:2px">Plane animation, multiplier, transparent verification • Demo first</div></div>
+<span style="font-size:9px;font-weight:900;background:#fef3c7;color:#92400e;padding:5px 10px;border-radius:20px">COMING SOON</span>
+</div>
+<div style="background:#fff;border:1px solid #ebe6ef;border-radius:19px;padding:16px;display:flex;gap:14px;align-items:center">
+<div style="font-size:36px">🎲</div>
+<div style="flex:1"><div style="font-weight:900;font-size:14px">Ludo</div><div style="font-size:11px;color:#756d7c;margin-top:2px">Board, dice, multiplayer rooms, anti-cheat</div></div>
+<span style="font-size:9px;font-weight:900;background:#fef3c7;color:#92400e;padding:5px 10px;border-radius:20px">COMING SOON</span>
+</div>
+</div>
+
+<div style="margin-top:18px;padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;font-size:11px;line-height:1.6;color:#92400e">
+<b>Development Plan:</b><br>
+Phase 1: Backend & separate game-account records (game_balance, not wallet)<br>
+Phase 2: Deposit records, withdrawal, duplicate-payment protection<br>
+Phase 3-6: Games homepage, Candy Match, Flight (non-cash demo), Ludo<br>
+Phase 7-8: Admin dashboard & security checks
+</div>
+</div>
+</div>
+
 <nav class="bottom-nav">
 <a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a>
 <a class="nav-item active" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a>
@@ -190,15 +180,6 @@ button:disabled{opacity:.65;cursor:not-allowed}
 <p style="margin:10px 0 18px;font-size:12px;color:var(--m);line-height:1.6">Your account is not activated yet. Activate to access all jobs and videos.</p>
 <a href="payment.html" class="popup-btn">Activate Now →</a>
 <button type="button" id="popupClose" style="margin-top:14px;border:none;background:transparent;color:#9b939f;font-size:11px;font-weight:800;cursor:pointer">Close</button>
-</div>
-</div>
-
-<!-- Games Soon Popup -->
-<div class="popup-overlay" id="gamesPopup">
-<div class="popup-box">
-<div style="font-size:32px">🎮</div><h3 style="margin-top:10px" id="gamesPopupTitle">JOVIA Games - Coming Soon</h3>
-<p style="margin:10px 0 18px;font-size:12px;color:var(--m);line-height:1.6" id="gamesPopupText">This game will have its own wallet, deposits, and withdrawals - completely separate from your main Jovia wallet. We're building the backend now.</p>
-<button type="button" class="popup-btn" onclick="closeGamesPopup()">Got it →</button>
 </div>
 </div>
 
@@ -223,14 +204,7 @@ function isSuspended(u){return ["suspended","banned","blocked"].includes(getAcco
 function isActivated(u){if(!u||isSuspended(u))return false;const status=getAccountStatus(u);return ["active","approved","activated"].includes(status);}
 function showMessage(m,t="error"){const box=document.getElementById("message");if(messageTimer)clearTimeout(messageTimer);box.textContent=String(m||"");box.className="message "+(t==="success"?"success":t==="info"?"info-message":"error-message");messageTimer=setTimeout(()=>{box.className="message";box.textContent="";},7000);}
 function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance??u.balance??u.wallet??0;document.getElementById("walletBalance").textContent=formatNaira(b);}
-// NEW: Separate Game Balance (Phase 1 - will connect to second server later)
-function updateGameBalance(u){
-  // For now shows 0 - Phase 2 will connect to /api/games/me
-  const gameBal = u?.game_balance ?? 0;
-  const points = u?.game_points ?? 0;
-  document.getElementById("gameBalance").textContent = formatNaira(gameBal);
-  document.getElementById("gamePoints").textContent = points + " pts";
-}
+function updateGameBalance(u){const gameBal=u?.game_balance??0;const points=u?.game_points??0;const gb=document.getElementById("gameBalance");const gp=document.getElementById("gamePoints");if(gb)gb.textContent=formatNaira(gameBal);if(gp)gp.textContent=points+" pts";}
 function getDailyStats(){const plan=getCurrentPlan();const limits=getPlanLimits(plan);let earned=0;let claimedCount=completedJobs.length+completedVideos.length;if(dailyStatsFromServer){earned=Number(dailyStatsFromServer.earnedToday??dailyStatsFromServer.todayEarned??dailyStatsFromServer.today_earned??0)||0;claimedCount=Number(dailyStatsFromServer.claimedToday??dailyStatsFromServer.todayClaimed??dailyStatsFromServer.claimed_today??claimedCount)||0;}if(isSuperPlan()){return{plan:"Super",limits:PLAN_CONFIG.Super,earned,claimedCount,remainingAmount:Infinity,isSuper:true};}return{plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned),isSuper:false};}
 function isDailyLimitReached(){if(isSuperPlan())return false;const s=getDailyStats();return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;}
 function wouldExceedLimit(reward){if(isSuperPlan())return false;const s=getDailyStats();const amount=Number(reward)||0;return amount>s.limits.maxDaily||s.earned+amount>s.limits.maxDaily;}
@@ -274,15 +248,8 @@ else{html+=`<div class="task-box"><div class="task-label">📋 TASK</div></div><
 item.innerHTML=html;list.appendChild(item);
 });
 }
-
-// NEW GAMES FUNCTIONS
-function openGamesSoon(gameName){
-  document.getElementById("gamesPopupTitle").textContent = gameName + " - Coming Soon";
-  document.getElementById("gamesPopupText").textContent = gameName + " will use a separate game wallet. Phase 1: backend inspection. Phase 2: separate deposits/withdrawals. Your main Jovia wallet remains untouched.";
-  document.getElementById("gamesPopup").classList.add("show");
-}
-function closeGamesPopup(){ document.getElementById("gamesPopup").classList.remove("show"); }
-
+function openGamesLobby(){document.getElementById("gamesOverlay").classList.add("show");}
+function closeGamesLobby(){document.getElementById("gamesOverlay").classList.remove("show");}
 async function getCurrentUser(){const r=await fetch(`${API_BASE}/api/me?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(r.status===401){location.href="login.html";throw new Error("Your session has expired. Please log in again.");}if(!r.ok)throw new Error("Could not verify your account.");const d=await r.json();const u=d?.user||d?.data?.user||d;if(!u||typeof u!=="object")throw new Error("Invalid account response.");currentUser=u;updateWallet(u);updateGameBalance(u);return u;}
 async function loadAll(){
 if(loadingAll)return;loadingAll=true;const loading=document.getElementById("loadingState");const error=document.getElementById("errorState");
@@ -341,7 +308,6 @@ document.getElementById("jobsList").addEventListener("click",async e=>{const b=e
 document.getElementById("filterRow").addEventListener("click",e=>{const b=e.target.closest(".filter-btn");if(!b)return;filterJobs(b.dataset.filter,b);});
 document.getElementById("popupClose").addEventListener("click",closePopup);
 document.getElementById("inactivePopup").addEventListener("click",e=>{if(e.target.id==="inactivePopup")closePopup();});
-document.getElementById("gamesPopup").addEventListener("click",e=>{if(e.target.id==="gamesPopup")closeGamesPopup();});
 document.getElementById("retryButton").addEventListener("click",loadAll);
 document.addEventListener("DOMContentLoaded",()=>{restoreTaskTimers();startTaskTimerTicker();loadAll();});
 </script>
