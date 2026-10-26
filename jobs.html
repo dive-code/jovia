@@ -59,26 +59,22 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
 .popup-overlay.show{display:flex}
 .popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center}
 .popup-btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--y);color:#241900;font-weight:900;text-decoration:none;margin-top:14px}
-
-/* FLOATING BUTTON - BALANCED */
 .games-fab{position:fixed;right:16px;bottom:90px;z-index:90;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#3b0758,#7c2ae8);border:2px solid #ffc400;box-shadow:0 8px 22px rgba(59,7,88,.4);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer}
 .games-fab b{font-size:24px;line-height:1}.games-fab i{font-style:normal;font-size:8px;font-weight:900;background:#ffc400;color:#000;padding:2px 6px;border-radius:10px;margin-top:2px}
-
-/* GAMES OVERLAY - BALANCED */
 .games-overlay{position:fixed;inset:0;z-index:160;display:none;background:var(--bg);overflow-y:auto}
 .games-overlay.show{display:block}
 .overlay-top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--b);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
 .games-lobby{max-width:680px;margin:0 auto;padding:18px 15px 100px}
-
-/* CANDY - BALANCED 6x6 */
 .candy-wrap{max-width:380px;margin:0 auto}
 .candy-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .candy-stat{background:#fff;border:1px solid var(--b);border-radius:12px;padding:10px;text-align:center}
 .candy-stat b{display:block;font-size:18px}.candy-stat span{font-size:9px;color:var(--m);font-weight:800}
-.candy-board{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;background:#fff;border:1px solid var(--b);border-radius:16px;padding:10px;box-shadow:0 4px 15px rgba(0,0,0,.05)}
+.candy-board{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;background:#fff;border:1px solid var(--b);border-radius:16px;padding:10px}
 .candy-cell{aspect-ratio:1;background:#faf8fb;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:.15s;border:2px solid transparent}
 .candy-cell.selected{border-color:var(--y);background:#fffbeb;transform:scale(1.08)}
 .candy-card{cursor:pointer;background:#fff;border:1px solid var(--b);border-radius:19px;padding:16px;display:flex;gap:14px;align-items:center;margin-bottom:10px}
+.flight-board{background:#211827;border-radius:16px;padding:20px;text-align:center;color:#fff;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ludo-board{background:#fff;border:1px solid var(--b);border-radius:16px;padding:16px;min-height:200px}
 </style>
 </head>
 <body>
@@ -122,29 +118,44 @@ body{font-family:Arial,sans-serif;background:var(--bg);color:var(--t);min-height
 
 <div class="games-overlay" id="gamesOverlay">
 <div class="overlay-top"><div style="font-weight:900">🎮 JOVIA Games <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:20px;margin-left:6px">SEPARATE WALLET</span></div><button onclick="closeGamesLobby()" style="border:none;background:#f5f3f7;padding:8px 14px;border-radius:20px;font-weight:900;font-size:12px;cursor:pointer">✕ Close</button></div>
-
 <div class="games-lobby">
 <div style="background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:19px;padding:18px;margin-bottom:16px">
 <div style="display:flex;justify-content:space-between"><div><div style="font-size:9px;opacity:.7">GAME BALANCE</div><div style="font-size:20px;font-weight:900;margin-top:4px" id="gameBalance">₦0</div></div><div style="text-align:right"><div style="font-size:9px;opacity:.7">POINTS</div><div style="font-size:20px;font-weight:900;margin-top:4px" id="gamePoints">0 pts</div></div></div>
 <div style="margin-top:10px;font-size:11px;color:#d8cfe0">Separate from main Jovia wallet. Main wallet is safe.</div>
-<div style="display:flex;gap:8px;margin-top:14px"><button style="flex:1;background:#ffc400;color:#000;border:none;padding:11px;border-radius:12px;font-weight:900;font-size:11px" onclick="alert('Deposit - Phase 2')">Deposit</button><button style="flex:1;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:11px;border-radius:12px;font-weight:900;font-size:11px" onclick="alert('Withdraw - Phase 2')">Withdraw</button></div>
+<div style="display:flex;gap:8px;margin-top:14px"><button style="flex:1;background:#ffc400;color:#000;border:none;padding:11px;border-radius:12px;font-weight:900;font-size:11px" onclick="doGameDeposit()">Deposit</button><button style="flex:1;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2);padding:11px;border-radius:12px;font-weight:900;font-size:11px" onclick="doGameWithdraw()">Withdraw</button></div>
 </div>
 
-<!-- LOBBY VIEW -->
 <div id="gamesLobbyView">
 <div class="candy-card" onclick="openCandy()"><div style="font-size:36px">🍬</div><div style="flex:1"><div style="font-weight:900;font-size:14px">Candy Match • PLAY NOW</div><div style="font-size:11px;color:#756d7c;margin-top:2px">6x6 board • Match 3+ • 25 moves • Non-cash points</div></div><span style="font-size:9px;font-weight:900;background:#dcfce7;color:#166534;padding:5px 10px;border-radius:20px">LIVE</span></div>
-<div class="candy-card"><div style="font-size:36px">✈️</div><div style="flex:1"><div style="font-weight:900;font-size:14px">Jovia Flight</div><div style="font-size:11px;color:#756d7c">Demo mode only • Transparent</div></div><span style="font-size:9px;font-weight:900;background:#fef3c7;color:#92400e;padding:5px 10px;border-radius:20px">SOON</span></div>
-<div class="candy-card"><div style="font-size:36px">🎲</div><div style="flex:1"><div style="font-weight:900;font-size:14px">Ludo</div><div style="font-size:11px;color:#756d7c">Board • Multiplayer rooms</div></div><span style="font-size:9px;font-weight:900;background:#fef3c7;color:#92400e;padding:5px 10px;border-radius:20px">SOON</span></div>
+<div class="candy-card" onclick="openFlight()"><div style="font-size:36px">✈️</div><div style="flex:1"><div style="font-weight:900;font-size:14px">Jovia Flight • PLAY NOW</div><div style="font-size:11px;color:#756d7c">Demo mode • Cashout before crash</div></div><span style="font-size:9px;font-weight:900;background:#dcfce7;color:#166534;padding:5px 10px;border-radius:20px">LIVE</span></div>
+<div class="candy-card" onclick="openLudo()"><div style="font-size:36px">🎲</div><div style="flex:1"><div style="font-weight:900;font-size:14px">Ludo • PLAY NOW</div><div style="font-size:11px;color:#756d7c">Roll dice • Race to home</div></div><span style="font-size:9px;font-weight:900;background:#dcfce7;color:#166534;padding:5px 10px;border-radius:20px">LIVE</span></div>
 </div>
 
-<!-- CANDY GAME VIEW -->
 <div id="candyView" style="display:none">
 <div class="candy-wrap">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><button onclick="closeCandy()" style="border:none;background:#f5f3f7;padding:8px 14px;border-radius:20px;font-weight:900;font-size:12px">← Back</button><div style="font-weight:900">🍬 Candy Match</div><button onclick="initCandy()" style="border:none;background:var(--p);color:#fff;padding:8px 14px;border-radius:20px;font-weight:900;font-size:11px">New</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><button onclick="backToLobby()" style="border:none;background:#f5f3f7;padding:8px 14px;border-radius:20px;font-weight:900;font-size:12px">← Back</button><div style="font-weight:900">🍬 Candy Match</div><button onclick="initCandy()" style="border:none;background:var(--p);color:#fff;padding:8px 14px;border-radius:20px;font-weight:900;font-size:11px">New</button></div>
 <div class="candy-stats"><div class="candy-stat"><b id="cScore">0</b><span>SCORE</span></div><div class="candy-stat"><b id="cMoves">25</b><span>MOVES</span></div><div class="candy-stat"><b id="cBest">0</b><span>BEST</span></div></div>
 <div class="candy-board" id="cBoard"></div>
-<div style="margin-top:12px;display:flex;gap:8px"><button style="flex:1;background:#ffc400;border:none;padding:13px;border-radius:12px;font-weight:900;font-size:12px" onclick="saveCandy()">💾 Save Score</button><button style="flex:1;background:#f5f3f7;border:1px solid var(--b);padding:13px;border-radius:12px;font-weight:900;font-size:12px" onclick="closeCandy()">Exit</button></div>
+<div style="margin-top:12px;display:flex;gap:8px"><button style="flex:1;background:#ffc400;border:none;padding:13px;border-radius:12px;font-weight:900;font-size:12px" onclick="saveCandy()">💾 Save Score</button><button style="flex:1;background:#f5f3f7;border:1px solid var(--b);padding:13px;border-radius:12px;font-weight:900;font-size:12px" onclick="backToLobby()">Exit</button></div>
 <div id="cMsg" style="margin-top:10px;text-align:center;font-size:12px;font-weight:800;color:var(--m)">Tap one candy, then tap neighbour to swap</div>
+</div>
+</div>
+
+<div id="flightView" style="display:none">
+<div class="candy-wrap">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><button onclick="backToLobby()" style="border:none;background:#f5f3f7;padding:8px 14px;border-radius:20px;font-weight:900;font-size:12px">← Back</button><div style="font-weight:900">✈️ Jovia Flight</div><button onclick="initFlight()" style="border:none;background:var(--p);color:#fff;padding:8px 14px;border-radius:20px;font-weight:900;font-size:11px">New</button></div>
+<div class="flight-board" id="fBoard"><div style="font-size:48px">✈️</div><div id="fMulti" style="font-size:32px;font-weight:900;margin-top:10px">1.00x</div><div id="fStatus" style="font-size:12px;margin-top:6px;opacity:.8">Press Start</div></div>
+<div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px"><button id="fStart" style="background:#ffc400;border:none;padding:13px;border-radius:12px;font-weight:900" onclick="startFlight()">Start Flight</button><button id="fCash" style="background:#22c55e;border:none;padding:13px;border-radius:12px;font-weight:900;color:#fff" onclick="cashFlight()" disabled>Cashout</button></div>
+<div id="fMsg" style="margin-top:10px;text-align:center;font-size:12px;font-weight:800;color:var(--m)">Demo mode - transparent crash</div>
+</div>
+</div>
+
+<div id="ludoView" style="display:none">
+<div class="candy-wrap">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><button onclick="backToLobby()" style="border:none;background:#f5f3f7;padding:8px 14px;border-radius:20px;font-weight:900;font-size:12px">← Back</button><div style="font-weight:900">🎲 Ludo</div><button onclick="initLudo()" style="border:none;background:var(--p);color:#fff;padding:8px 14px;border-radius:20px;font-weight:900;font-size:11px">New</button></div>
+<div class="ludo-board"><div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px" id="lBoard"></div><div style="text-align:center;margin-top:14px"><div id="lDice" style="font-size:48px">🎲</div><div id="lPos" style="font-size:14px;font-weight:900;margin-top:8px">Position: 0 / 50</div><div id="lTurn" style="font-size:11px;color:var(--m);margin-top:4px">Roll to start</div></div></div>
+<div style="margin-top:12px;display:flex;gap:8px"><button style="flex:1;background:#ffc400;border:none;padding:13px;border-radius:12px;font-weight:900" onclick="rollLudo()">🎲 Roll Dice</button><button style="flex:1;background:#f5f3f7;border:1px solid var(--b);padding:13px;border-radius:12px;font-weight:900" onclick="backToLobby()">Exit</button></div>
+<div id="lMsg" style="margin-top:10px;text-align:center;font-size:12px;font-weight:800;color:var(--m)">Roll dice to move</div>
 </div>
 </div>
 
@@ -217,70 +228,57 @@ else{html+=`<div class="task-box"><div class="task-label">📋 TASK</div></div><
 item.innerHTML=html;list.appendChild(item);
 });
 }
-function openGamesLobby(){document.getElementById("gamesOverlay").classList.add("show");document.getElementById("gamesLobbyView").style.display="block";document.getElementById("candyView").style.display="none"; fetch('/api/games/me',{credentials:'include'}).then(r=>r.json()).then(d=>{if(d.success){document.getElementById('gameBalance').textContent=formatNaira(d.gameAccount.game_balance||0);document.getElementById('gamePoints').textContent=(d.gameAccount.points||0)+' pts'; document.getElementById('cBest').textContent=d.gameAccount.candy_high_score||0;}}).catch(()=>{});}
+function openGamesLobby(){document.getElementById("gamesOverlay").classList.add("show");showLobby(); fetch('/api/games/me',{credentials:'include'}).then(r=>r.json()).then(d=>{if(d.success){document.getElementById('gameBalance').textContent=formatNaira(d.gameAccount.game_balance||0);document.getElementById('gamePoints').textContent=(d.gameAccount.points||0)+' pts'; document.getElementById('cBest').textContent=d.gameAccount.candy_high_score||0;}}).catch(()=>{});}
 function closeGamesLobby(){document.getElementById("gamesOverlay").classList.remove("show");}
-function openCandy(){document.getElementById("gamesLobbyView").style.display="none";document.getElementById("candyView").style.display="block";initCandy();}
-function closeCandy(){document.getElementById("candyView").style.display="none";document.getElementById("gamesLobbyView").style.display="block";}
+function showLobby(){document.getElementById("gamesLobbyView").style.display="block";document.getElementById("candyView").style.display="none";document.getElementById("flightView").style.display="none";document.getElementById("ludoView").style.display="none";}
+function backToLobby(){showLobby();}
+function openCandy(){document.getElementById("gamesLobbyView").style.display="none";document.getElementById("candyView").style.display="block";document.getElementById("flightView").style.display="none";document.getElementById("ludoView").style.display="none";initCandy();}
+function openFlight(){document.getElementById("gamesLobbyView").style.display="none";document.getElementById("candyView").style.display="none";document.getElementById("flightView").style.display="block";document.getElementById("ludoView").style.display="none";initFlight();}
+function openLudo(){document.getElementById("gamesLobbyView").style.display="none";document.getElementById("candyView").style.display="none";document.getElementById("flightView").style.display="none";document.getElementById("ludoView").style.display="block";initLudo();}
 
-/* CANDY - BALANCED 6x6 */
+async function doGameDeposit(){
+ const amt=Number(prompt("Enter deposit amount (min ₦100):","1000"));
+ if(!amt||amt<100) return alert("Min ₦100");
+ try{
+  const res=await fetch('/api/games/deposit',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:amt})});
+  const d=await res.json();
+  alert(d.message||"Done");
+  if(d.success) openGamesLobby();
+ }catch(e){alert("Deposit failed - check server");}
+}
+async function doGameWithdraw(){
+ const amt=Number(prompt("Enter withdraw amount (min ₦500):","500"));
+ if(!amt||amt<500) return alert("Min ₦500");
+ try{
+  const res=await fetch('/api/games/withdraw',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:amt})});
+  const d=await res.json();
+  alert(d.message||"Done");
+  if(d.success) openGamesLobby();
+ }catch(e){alert("Withdraw failed - check server");}
+}
+
+/* CANDY 6x6 */
 const CANDIES=['🍬','🍭','🍫','🍩','🍪','🧁'];
-let cBoard=[];let cScore=0;let cMoves=25;let cSel=null;let cBest=0;
-
-function initCandy(){
- cBoard=[];cScore=0;cMoves=25;cSel=null;
- for(let r=0;r<6;r++){cBoard[r]=[];for(let c=0;c<6;c++) cBoard[r][c]=Math.floor(Math.random()*6);}
- // clear initial matches
- for(let k=0;k<20;k++){let m=findMatches(); if(m.length===0) break; m.forEach(p=>cBoard[p.r][p.c]=Math.floor(Math.random()*6));}
- updateCandy();renderCandy();document.getElementById("cMsg").textContent="Tap candy, then tap neighbor to swap";
-}
-function renderCandy(){
- const el=document.getElementById("cBoard");el.innerHTML="";
- for(let r=0;r<6;r++) for(let c=0;c<6;c++){
-  const d=document.createElement("div");d.className="candy-cell";if(cSel&&cSel.r===r&&cSel.c===c)d.classList.add("selected");
-  d.textContent=CANDIES[cBoard[r][c]];d.onclick=()=>clickCandy(r,c);el.appendChild(d);
- }
-}
-function clickCandy(r,c){
- if(cMoves<=0){document.getElementById("cMsg").textContent="No moves left - Save Score or New Game";return;}
- if(!cSel){cSel={r,c};renderCandy();return;}
- const dr=Math.abs(cSel.r-r),dc=Math.abs(cSel.c-c);
- if(dr+dc!==1){cSel={r,c};renderCandy();return;}
- // swap
- let a=cBoard[cSel.r][cSel.c], b=cBoard[r][c];
- cBoard[cSel.r][cSel.c]=b; cBoard[r][c]=a;
- let matches=findMatches();
- if(matches.length===0){ // revert
-  cBoard[cSel.r][cSel.c]=a; cBoard[r][c]=b;
-  document.getElementById("cMsg").textContent="No match - try other direction";
-  cSel=null;renderCandy();return;
- }
- cMoves--; cSel=null;
- // remove loop
- let loop=0;
- while(matches.length>0 && loop<10){
-  cScore+=matches.length*10;
-  matches.forEach(m=>cBoard[m.r][m.c]=-1);
-  // drop
-  for(let col=0;col<6;col++){let w=5;for(let row=5;row>=0;row--){if(cBoard[row][col]!==-1){cBoard[w][col]=cBoard[row][col];w--;} }for(let row=w;row>=0;row--) cBoard[row][col]=Math.floor(Math.random()*6);}
-  matches=findMatches(); loop++;
- }
- updateCandy();renderCandy();
- if(cMoves<=0) document.getElementById("cMsg").textContent="Game Over! Score "+cScore+" - Tap Save Score";
-}
-function findMatches(){
- const res=[];const seen={};
- for(let r=0;r<6;r++) for(let c=0;c<4;c++){let v=cBoard[r][c]; if(v>=0&&v===cBoard[r][c+1]&&v===cBoard[r][c+2]){ [[r,c],[r,c+1],[r,c+2]].forEach(p=>{let k=p[0]+"-"+p[1]; if(!seen[k]){seen[k]=1;res.push({r:p[0],c:p[1]});}}); if(c<3&&v===cBoard[r][c+3]){let k=r+"-"+(c+3); if(!seen[k]){seen[k]=1;res.push({r,c:c+3});}}}}
- for(let c=0;c<6;c++) for(let r=0;r<4;r++){let v=cBoard[r][c]; if(v>=0&&v===cBoard[r+1][c]&&v===cBoard[r+2][c]){ [[r,c],[r+1,c],[r+2,c]].forEach(p=>{let k=p[0]+"-"+p[1]; if(!seen[k]){seen[k]=1;res.push({r:p[0],c:p[1]});}}); if(r<3&&v===cBoard[r+3][c]){let k=(r+3)+"-"+c; if(!seen[k]){seen[k]=1;res.push({r:r+3,c});}}}}
- return res;
-}
+let cBoard=[];let cScore=0;let cMoves=25;let cSel=null;
+function initCandy(){cBoard=[];cScore=0;cMoves=25;cSel=null;for(let r=0;r<6;r++){cBoard[r]=[];for(let c=0;c<6;c++) cBoard[r][c]=Math.floor(Math.random()*6);}for(let k=0;k<20;k++){let m=findMatches();if(m.length===0)break;m.forEach(p=>cBoard[p.r][p.c]=Math.floor(Math.random()*6));}updateCandy();renderCandy();document.getElementById("cMsg").textContent="Tap candy, then tap neighbour to swap";}
+function renderCandy(){const el=document.getElementById("cBoard");el.innerHTML="";for(let r=0;r<6;r++) for(let c=0;c<6;c++){const d=document.createElement("div");d.className="candy-cell";if(cSel&&cSel.r===r&&cSel.c===c)d.classList.add("selected");d.textContent=CANDIES[cBoard[r][c]];d.onclick=()=>clickCandy(r,c);el.appendChild(d);}}
+function clickCandy(r,c){if(cMoves<=0){document.getElementById("cMsg").textContent="No moves left - Save Score or New Game";return;}if(!cSel){cSel={r,c};renderCandy();return;}const dr=Math.abs(cSel.r-r),dc=Math.abs(cSel.c-c);if(dr+dc!==1){cSel={r,c};renderCandy();return;}let a=cBoard[cSel.r][cSel.c],b=cBoard[r][c];cBoard[cSel.r][cSel.c]=b;cBoard[r][c]=a;let matches=findMatches();if(matches.length===0){cBoard[cSel.r][cSel.c]=a;cBoard[r][c]=b;document.getElementById("cMsg").textContent="No match - try other direction";cSel=null;renderCandy();return;}cMoves--;cSel=null;let loop=0;while(matches.length>0&&loop<10){cScore+=matches.length*10;matches.forEach(m=>cBoard[m.r][m.c]=-1);for(let col=0;col<6;col++){let w=5;for(let row=5;row>=0;row--){if(cBoard[row][col]!==-1){cBoard[w][col]=cBoard[row][col];w--;}}for(let row=w;row>=0;row--) cBoard[row][col]=Math.floor(Math.random()*6);}matches=findMatches();loop++;}updateCandy();renderCandy();if(cMoves<=0)document.getElementById("cMsg").textContent="Game Over! Score "+cScore+" - Tap Save Score";}
+function findMatches(){const res=[];const seen={};for(let r=0;r<6;r++) for(let c=0;c<4;c++){let v=cBoard[r][c];if(v>=0&&v===cBoard[r][c+1]&&v===cBoard[r][c+2]){[[r,c],[r,c+1],[r,c+2]].forEach(p=>{let k=p[0]+"-"+p[1];if(!seen[k]){seen[k]=1;res.push({r:p[0],c:p[1]});}});if(c<3&&v===cBoard[r][c+3]){let k=r+"-"+(c+3);if(!seen[k]){seen[k]=1;res.push({r,c:c+3});}}}}for(let c=0;c<6;c++) for(let r=0;r<4;r++){let v=cBoard[r][c];if(v>=0&&v===cBoard[r+1][c]&&v===cBoard[r+2][c]){[[r,c],[r+1,c],[r+2,c]].forEach(p=>{let k=p[0]+"-"+p[1];if(!seen[k]){seen[k]=1;res.push({r:p[0],c:p[1]});}});if(r<3&&v===cBoard[r+3][c]){let k=(r+3)+"-"+c;if(!seen[k]){seen[k]=1;res.push({r:r+3,c});}}}}return res;}
 function updateCandy(){document.getElementById("cScore").textContent=cScore;document.getElementById("cMoves").textContent=cMoves;}
-function saveCandy(){
- if(cScore===0){alert("Play first!");return;}
- fetch('/api/games/score',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_type:'candy',score:cScore})}).then(r=>r.json()).then(d=>{
-  if(d.success){document.getElementById("cMsg").textContent="✅ Saved! +"+Math.floor(cScore/10)+" pts";alert("Saved! Score "+cScore+" = "+Math.floor(cScore/10)+" points (non-cash)");}
-  else{alert("Saved offline: "+cScore);}
- }).catch(()=>{document.getElementById("cMsg").textContent="Saved offline: "+cScore; alert("Saved offline "+cScore);});
-}
+function saveCandy(){if(cScore===0){alert("Play first!");return;}fetch('/api/games/score',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_type:'candy',score:cScore})}).then(r=>r.json()).then(d=>{if(d.success){document.getElementById("cMsg").textContent="✅ Saved! +"+Math.floor(cScore/10)+" pts";alert("Saved! Score "+cScore+" = "+Math.floor(cScore/10)+" points");}else{alert("Saved offline: "+cScore);}}).catch(()=>{document.getElementById("cMsg").textContent="Saved offline: "+cScore;});}
+
+/* FLIGHT */
+let fMulti=1.0;let fInterval=null;let fCrashed=false;let fPlaying=false;
+function initFlight(){fMulti=1.0;fCrashed=false;fPlaying=false;clearInterval(fInterval);document.getElementById("fMulti").textContent="1.00x";document.getElementById("fStatus").textContent="Press Start";document.getElementById("fStart").disabled=false;document.getElementById("fCash").disabled=true;document.getElementById("fBoard").style.background="#211827";document.getElementById("fMsg").textContent="Demo mode - transparent crash";}
+function startFlight(){if(fPlaying) return;initFlight();fPlaying=true;document.getElementById("fStart").disabled=true;document.getElementById("fCash").disabled=false;document.getElementById("fStatus").textContent="Flying...";let crashPoint=(Math.random()*4+1.1);fInterval=setInterval(()=>{fMulti+=0.05+Math.random()*0.08;document.getElementById("fMulti").textContent=fMulti.toFixed(2)+"x";if(fMulti>=crashPoint){crashFlight();}},200);}
+function crashFlight(){clearInterval(fInterval);fCrashed=true;fPlaying=false;document.getElementById("fBoard").style.background="#991b1b";document.getElementById("fStatus").textContent="💥 Crashed at "+fMulti.toFixed(2)+"x";document.getElementById("fCash").disabled=true;document.getElementById("fStart").disabled=false;document.getElementById("fMsg").textContent="Crashed at "+fMulti.toFixed(2)+"x - Try again";fetch('/api/games/score',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_type:'flight',score:Math.floor(fMulti*10),multiplier:fMulti})}).catch(()=>{});}
+function cashFlight(){if(!fPlaying||fCrashed) return;clearInterval(fInterval);fPlaying=false;document.getElementById("fStatus").textContent="✅ Cashed out at "+fMulti.toFixed(2)+"x";document.getElementById("fCash").disabled=true;document.getElementById("fStart").disabled=false;document.getElementById("fMsg").textContent="Cashed out "+fMulti.toFixed(2)+"x = "+Math.floor(fMulti*10)+" pts";fetch('/api/games/score',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_type:'flight',score:Math.floor(fMulti*10),multiplier:fMulti})}).then(r=>r.json()).then(d=>{document.getElementById("fMsg").textContent="Saved! +"+Math.floor(fMulti)+" pts";}).catch(()=>{});}
+
+/* LUDO */
+let lPos=0;let lTarget=50;
+function initLudo(){lPos=0;document.getElementById("lDice").textContent="🎲";document.getElementById("lPos").textContent="Position: 0 / "+lTarget;document.getElementById("lTurn").textContent="Roll to start";document.getElementById("lMsg").textContent="Roll dice to move";renderLudo();}
+function renderLudo(){const el=document.getElementById("lBoard");el.innerHTML="";for(let i=0;i<50;i++){const d=document.createElement("div");d.style.cssText="aspect-ratio:1;background:#faf8fb;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;border:1px solid var(--b)";if(i===lPos) d.style.background="#ffc400"; d.textContent=i===0?"START":i===49?"HOME":i+1; el.appendChild(d);}}
+function rollLudo(){const dice=Math.floor(Math.random()*6)+1;document.getElementById("lDice").textContent=dice; lPos+=dice; if(lPos>=lTarget){lPos=lTarget; document.getElementById("lPos").textContent="Position: "+lPos+" / "+lTarget+" - YOU WIN!"; document.getElementById("lTurn").textContent="Winner!"; document.getElementById("lMsg").textContent="🎉 You win! +10 pts"; fetch('/api/games/score',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({game_type:'ludo',score:100})}).catch(()=>{}); renderLudo(); return;} document.getElementById("lPos").textContent="Position: "+lPos+" / "+lTarget; document.getElementById("lTurn").textContent="Rolled "+dice; document.getElementById("lMsg").textContent="Moved "+dice+" steps"; renderLudo();}
 
 async function getCurrentUser(){const r=await fetch(`${API_BASE}/api/me?t=${Date.now()}`,{credentials:"include",cache:"no-store"});if(r.status===401){location.href="login.html";throw new Error("expired");}if(!r.ok)throw new Error("Could not verify");const d=await r.json();const u=d?.user||d?.data?.user||d;if(!u||typeof u!=="object")throw new Error("Invalid");currentUser=u;updateWallet(u);updateGameBalance(u);return u;}
 async function loadAll(){
