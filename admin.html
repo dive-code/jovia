@@ -1,233 +1,412 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Jovia Network | Clean Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Jovia Network administrator dashboard">
+<meta name="theme-color" content="#171124">
+<title>Jovia Network | Admin Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--primary:#5b21b6;--green:#16a34a;--green-light:#dcfce7;--red:#dc2626;--red-light:#fee2e2;--orange:#f59e0b;--orange-light:#fef3c7;--bg:#f5f7fb;--border:#e7eaf0;--text:#172033;--muted:#7b8494;--shadow:0 8px 30px rgba(15,23,42,.06);--radius:16px}
-body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-button{border:0;font-family:inherit}
+:root{--primary:#5b21b6;--primary-light:#ede9fe;--green:#16a34a;--green-light:#dcfce7;--red:#dc2626;--red-light:#fee2e2;--blue:#2563eb;--orange:#f59e0b;--orange-light:#fef3c7;--bg:#f5f7fb;--border:#e7eaf0;--text:#172033;--muted:#7b8494;--sidebar:#171124;--sidebar-hover:#251a3c;--shadow:0 8px 30px rgba(15,23,42,.06);--radius:16px}
+html{scroll-behavior:smooth;scroll-padding-top:20px;overflow-x:hidden}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button,input,textarea,select{font-family:inherit}
+button{border:0}
 button:disabled{opacity:.55;cursor:not-allowed}
+a{overflow-wrap:anywhere}
+button{padding:9px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;transition:background .18s,transform .18s}
+button:not(:disabled):active{transform:scale(.98)}
 #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top left,rgba(91,33,182,.10),transparent 35%),#f6f7fb}
 .login-box{width:100%;max-width:430px;background:#fff;padding:38px 34px;border:1px solid var(--border);border-radius:22px;box-shadow:0 25px 70px rgba(15,23,42,.10)}
-.login-logo{font-family:Poppins,sans-serif;font-size:29px;font-weight:800;text-align:center}.login-logo span{color:var(--primary)}
-.login-group{margin-bottom:18px}.login-group label{display:block;margin-bottom:7px;color:#596579;font-size:12px;font-weight:700}
+.login-badge{width:58px;height:58px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;border-radius:17px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:white;font-size:25px}
+.login-logo{font-family:Poppins,sans-serif;font-size:29px;font-weight:800;text-align:center}
+.login-logo span{color:var(--primary)}
+.login-subtitle{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 30px}
+.login-group{margin-bottom:18px}
+.login-group label{display:block;margin-bottom:7px;color:#596579;font-size:12px;font-weight:700}
 .login-group input{width:100%;padding:13px 14px;border:1px solid #dce2ea;border-radius:10px;outline:none;font-size:14px}
-.login-button{width:100%;padding:14px;margin-top:4px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.login-group input:focus,.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:#8b5cf6;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.login-button{width:100%;padding:14px;margin-top:4px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-size:14px;font-weight:800}
 .login-error{display:none;margin-bottom:17px;padding:11px 12px;border-radius:9px;background:var(--red-light);color:#b91c1c;font-size:12px}
+.login-loading{display:none;margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
 #dashboardScreen{display:none}
-.sidebar{position:fixed;z-index:1000;top:0;left:0;width:255px;height:100dvh;padding:24px 16px;overflow-y:auto;background:#171124;color:white;transition:transform .3s ease}
-.logo{padding:4px 12px 32px;font-family:Poppins,sans-serif;font-size:24px;font-weight:800}.logo span{color:#a78bfa}
+.sidebar{position:fixed;z-index:1000;top:0;left:0;width:255px;height:100dvh;padding:24px 16px;overflow-y:auto;background:linear-gradient(180deg,#171124,#120d1d);color:white;border-right:1px solid rgba(255,255,255,.04);transition:transform .3s}
+.logo{padding:4px 12px 32px;font-family:Poppins,sans-serif;font-size:24px;font-weight:800}
+.logo span{color:#a78bfa}
 .sidebar-label{padding:0 12px 9px;color:#766e85;font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
 .nav{display:flex;flex-direction:column;gap:5px}
 .nav a{display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:10px;color:#aaa3b9;text-decoration:none;font-size:12px;font-weight:600;cursor:pointer}
-.nav a:hover{background:#251a3c;color:#fff}.nav a.active{background:linear-gradient(90deg,rgba(124,58,237,.24),rgba(124,58,237,.08));color:#fff}
+.nav a:hover{background:var(--sidebar-hover);color:#fff}
+.nav a.active{background:linear-gradient(90deg,rgba(124,58,237,.24),rgba(124,58,237,.08));color:#fff}
+.nav-divider{height:1px;margin:15px 8px;background:rgba(255,255,255,.07)}
+.sidebar-footer{margin-top:35px;padding:14px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;color:#8e879b;font-size:10px;line-height:1.6}
 .main{margin-left:255px;padding:30px;min-height:100vh}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:25px}
 .topbar h1{font-family:Poppins,sans-serif;font-size:27px;font-weight:800}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:25px}
-.card{padding:19px;border:1px solid var(--border);border-radius:15px;background:#fff;box-shadow:var(--shadow);min-height:100px}
-.card p{margin-bottom:8px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase}.card h2{font-family:Poppins,sans-serif;font-size:26px;font-weight:800}
-.section-box{margin-bottom:25px;padding:23px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
-.section-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:15px}.section-header h2{font-family:Poppins,sans-serif;font-size:17px;font-weight:800}
-.search-bar{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:17px;padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:#fafbfc}.search-bar input{width:100%;border:0;outline:none;background:transparent;font-size:12px}
-.table-wrapper{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
-table{width:100%;min-width:900px;border-collapse:collapse}th,td{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid #edf0f4;font-size:11px}
-th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform:uppercase}
-.status{display:inline-flex;padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800}.pending{background:var(--orange-light);color:#9a6700}.approved,.active{background:var(--green-light);color:#15803d}.suspended,.rejected{background:var(--red-light);color:#b91c1c}
-button{padding:9px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer}
-.refresh{background:#eef2ff;color:#4338ca}.approve{background:var(--green);color:white}.suspend,.delete{background:var(--red);color:white}.pause{background:var(--orange);color:white}.action{margin-right:4px;margin-bottom:4px;padding:7px 9px;border-radius:7px;font-size:9px}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.form-group{display:flex;flex-direction:column;gap:6px}.form-group.full{grid-column:1/-1}.form-group label{color:#596579;font-size:10px;font-weight:800}
-.form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 11px;border:1px solid #dce2ea;border-radius:9px;outline:none;background:#fff;font-size:11px}.form-group textarea{resize:vertical;min-height:75px}
-.create{background:var(--green);color:white;margin-top:14px}
-.tabs{display:flex;gap:8px;margin-bottom:15px;flex-wrap:wrap}.tab{padding:8px 14px;border-radius:20px;background:#fff;border:1px solid var(--border);font-size:11px;font-weight:700;cursor:pointer}.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.withdrawal-control{margin:0 0 15px;padding:16px;border-radius:14px;border:2px solid var(--border);background:#faf9ff;display:flex;justify-content:space-between;align-items:center;gap:10px}
-.switch{position:relative;width:54px;height:30px}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;border-radius:30px;background:#cbd5e1;cursor:pointer;transition:.25s}.slider:before{content:"";position:absolute;width:22px;height:22px;left:4px;top:4px;border-radius:50%;background:white;transition:.25s}.switch input:checked+.slider{background:#16a34a}.switch input:checked+.slider:before{transform:translateX(24px)}
-@media(max-width:760px){.sidebar{transform:translateX(-100%);width:270px}.main{margin-left:0;padding:16px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{grid-template-columns:1fr}}
+.topbar p{margin-top:4px;color:var(--muted);font-size:13px}
+.admin{display:flex;align-items:center;gap:9px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:var(--shadow);font-size:12px;font-weight:700}
+.admin-avatar{width:29px;height:29px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--primary-light);color:var(--primary)}
+.hamburger{display:none;width:44px;height:44px;border-radius:11px;background:#fff;border:1px solid var(--border);font-size:20px;align-items:center;justify-content:center;flex-shrink:0}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;backdrop-filter:blur(2px)}
+.overlay.show{display:block}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:25px}
+.card{position:relative;min-height:110px;padding:19px;overflow:hidden;border:1px solid var(--border);border-radius:15px;background:#fff;box-shadow:var(--shadow)}
+.card p{margin-bottom:10px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase}
+.card h2{font-family:Poppins,sans-serif;font-size:26px;font-weight:800;overflow-wrap:anywhere}
+.card-icon{position:absolute;right:15px;top:15px;width:31px;height:31px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--primary-light);font-size:14px}
+.section-box,.users-box,.videos-box,.withdrawals-box{margin-bottom:23px;padding:23px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);min-width:0}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-bottom:9px}
+.section-header h2{font-family:Poppins,sans-serif;font-size:17px;font-weight:800}
+.info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:18px;color:var(--muted);font-size:10px}
+.live-status{display:flex;align-items:center;gap:6px}
+.live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e}
+.refresh{background:#eef2ff;color:#4338ca}
+.approve,.restore,.activate{background:var(--green);color:white}
+.reset,.edit{background:var(--blue);color:white}
+.suspend,.delete,.reject{background:var(--red);color:white}
+.pause{background:var(--orange);color:white}
+.action{margin-right:4px;margin-bottom:4px;padding:7px 9px;border-radius:7px;font-size:9px}
+.search-bar{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:15px;padding:10px 13px;border:1px solid var(--border);border-radius:10px;background:#fafbfc}
+.search-bar input{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--text);font-size:12px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;max-width:100%}
+table{width:100%;min-width:950px;border-collapse:collapse}
+th,td{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid #edf0f4;font-size:11px}
+th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform:uppercase;white-space:nowrap}
+tbody tr:hover{background:#fafcff}
+.empty{padding:30px!important;text-align:center!important;color:var(--muted)}
+.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800;text-transform:capitalize;white-space:nowrap}
+.pending{background:var(--orange-light);color:#9a6700}
+.approved,.active,.available,.paid{background:var(--green-light);color:#15803d}
+.suspended,.paused,.inactive,.closed,.rejected{background:var(--red-light);color:#b91c1c}
+.completed{background:#e0e7ff;color:#4338ca}
+.form-box{margin-bottom:18px;padding:18px;border:1px solid var(--border);border-radius:13px;background:#f8fafc}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.form-group{display:flex;flex-direction:column;gap:6px;min-width:0}
+.form-group.full{grid-column:1/-1}
+.form-group label{color:#596579;font-size:10px;font-weight:800}
+.form-group input,.form-group textarea,.form-group select{width:100%;min-width:0;padding:10px 11px;border:1px solid #dce2ea;border-radius:9px;outline:none;background:#fff;color:var(--text);font-size:11px}
+.form-group textarea{resize:vertical;min-height:75px}
+.create{margin-top:14px;background:var(--green);color:white}
+.cancel{display:none;margin-top:14px;margin-left:7px;background:#64748b;color:white}
+.recipient-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.recipient-list{max-height:280px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px}
+.recipient-item{display:flex;gap:10px;align-items:center;padding:10px;border-bottom:1px solid #edf0f4;font-size:11px}
+.recipient-item:last-child{border-bottom:0}
+.recipient-item input{flex-shrink:0}
+.recipient-item small{display:block;color:var(--muted);margin-top:3px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}
+.filter-row select{padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--text);font-size:11px;max-width:100%}
+.filter-btn{background:#f1f5f9;color:#475569}
+.filter-btn.active-filter{background:var(--primary);color:#fff}
+.withdrawal-control{margin:0 0 15px;padding:16px;border:1px solid var(--border);border-radius:13px;background:#faf9ff}
+.control-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.control-top strong{display:block;font-size:12px}
+.control-top small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.switch{position:relative;width:48px;height:27px;flex-shrink:0}
+.switch input{position:absolute;opacity:0}
+.switch-slider{position:absolute;inset:0;border-radius:30px;background:#cbd5e1;cursor:pointer}
+.switch-slider:before{content:"";position:absolute;width:19px;height:19px;left:4px;top:4px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch input:checked+.switch-slider{background:var(--green)}
+.switch input:checked+.switch-slider:before{transform:translateX(21px)}
+.withdrawal-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 15px}
+.withdrawal-tab{padding:10px 15px;background:#f1f5f9;color:#475569;border:1px solid var(--border)}
+.withdrawal-tab.active-tab{background:var(--primary);color:#fff;border-color:var(--primary)}
+.tab-count{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.22)}
+#adminToast{position:fixed;right:20px;bottom:24px;z-index:99999;max-width:360px;padding:13px 16px;border-radius:12px;color:white;font-size:12px;font-weight:700;box-shadow:0 12px 35px rgba(15,23,42,.18)}
+@media(max-width:1200px){.cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.sidebar{transform:translateX(-100%);width:270px}.sidebar.open{transform:translateX(0)}.main{margin-left:0;padding:16px}.hamburger{display:flex}.topbar{gap:10px;margin-bottom:20px}.topbar h1{font-size:21px}.topbar p{font-size:11px}.admin{padding:7px 9px;font-size:10px}.admin-avatar{width:25px;height:25px}.cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.card{min-height:100px;padding:14px}.card h2{font-size:23px}.card p{font-size:9px;max-width:75%}.section-box,.users-box,.videos-box,.withdrawals-box{padding:15px;margin-bottom:17px}.form-grid{grid-template-columns:1fr}.form-group.full{grid-column:auto}}
+@media(max-width:420px){.main{padding:12px}.topbar h1{font-size:18px}.topbar p{font-size:10px}.admin{gap:5px;padding:6px}.cards{gap:8px}.card{padding:12px}.card h2{font-size:21px}.section-box,.users-box,.videos-box,.withdrawals-box{padding:12px}.section-header h2{font-size:15px}.form-grid{gap:10px}}
 </style>
 </head>
 <body>
+
 <div id="loginScreen">
   <div class="login-box">
+    <div class="login-badge">◆</div>
     <div class="login-logo">Jovia<span>Network</span></div>
-    <p style="text-align:center;color:var(--muted);font-size:13px;margin:6px 0 26px">Clean Admin Portal</p>
+    <p class="login-subtitle">Secure Administrator Portal</p>
     <div id="loginError" class="login-error"></div>
     <form id="adminLoginForm" onsubmit="adminLogin(event)">
-      <div class="login-group"><label>Username</label><input type="text" id="adminUsername" required></div>
-      <div class="login-group"><label>Password</label><input type="password" id="adminPassword" required></div>
-      <button type="submit" class="login-button" id="loginButton">Sign in</button>
+      <div class="login-group"><label for="adminUsername">Administrator Username</label><input id="adminUsername" type="text" placeholder="Enter admin username" autocomplete="username" required></div>
+      <div class="login-group"><label for="adminPassword">Password</label><input id="adminPassword" type="password" placeholder="Enter password" autocomplete="current-password" required></div>
+      <button type="submit" class="login-button" id="loginButton">Sign in to Dashboard</button>
+      <div id="loginLoading" class="login-loading">Authenticating...</div>
     </form>
   </div>
 </div>
 
+<div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <div id="dashboardScreen">
 <aside class="sidebar" id="sidebar">
   <div class="logo">Jovia<span>Network</span></div>
-  <div class="sidebar-label">Clean Management</div>
+  <div class="sidebar-label">Management</div>
   <nav class="nav">
-    <a href="#dashboard" class="active">📊 Dashboard</a>
-    <a href="#announcement">📢 Announcement</a>
-    <a href="#privateMessages">✉️ Private Messages</a>
-    <a href="#users">👥 Users</a>
-    <a href="#jobs">💼 Jobs</a>
-    <a href="#videos">🎬 Videos (Simple)</a>
-    <a href="#withdrawals">💸 Withdrawals (Clean)</a>
-    <a href="#" onclick="adminLogout(event)">🚪 Logout</a>
+    <a href="#dashboard" class="active" onclick="setActiveNav(this)">📊 <span>Dashboard</span></a>
+    <a href="#announcement" onclick="setActiveNav(this)">📢 <span>Announcement</span></a>
+    <a href="#privateMessages" onclick="setActiveNav(this)">✉️ <span>Private Messages</span></a>
+    <a href="#users" onclick="setActiveNav(this)">👥 <span>Users</span></a>
+    <a href="#jobs" onclick="setActiveNav(this)">💼 <span>Jobs</span></a>
+    <a href="#videos" onclick="setActiveNav(this)">🎬 <span>Videos</span></a>
+    <a href="#withdrawals" onclick="setActiveNav(this)">💸 <span>Withdrawals</span><span id="navPendingCount" style="background:#f59e0b;color:white;padding:2px 6px;border-radius:10px;font-size:8px;margin-left:auto">0</span></a>
+    <div class="nav-divider"></div>
+    <a href="#" onclick="adminLogout(event)">🚪 <span>Logout</span></a>
   </nav>
+  <div class="sidebar-footer">Jovia Network Admin Console<br>Secure management portal</div>
 </aside>
+
 <main class="main">
-<div class="topbar"><h1>Admin Dashboard - Clean</h1><div style="font-size:11px;background:#fff;border:1px solid var(--border);padding:8px 12px;border-radius:10px" id="adminName">Admin</div></div>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px">
+    <button class="hamburger" onclick="openSidebar()" aria-label="Open menu">☰</button>
+    <div><h1>Admin Dashboard</h1><p>Manage users, content and withdrawals</p></div>
+  </div>
+  <div class="admin"><div class="admin-avatar">👤</div><span id="adminName">Administrator</span></div>
+</div>
 
 <section class="cards" id="dashboard">
-  <div class="card"><p>Total Users</p><h2 id="totalUsers">0</h2></div>
-  <div class="card"><p>Active</p><h2 id="approvedUsers">0</h2></div>
-  <div class="card"><p>Pending</p><h2 id="pendingUsers">0</h2></div>
-  <div class="card"><p>Pending Withdrawals</p><h2 id="pendingWithdrawalsCard">0</h2></div>
+  <div class="card"><div class="card-icon">👥</div><p>Total Users</p><h2 id="totalUsers">0</h2></div>
+  <div class="card"><div class="card-icon">⏳</div><p>Non-Active Accounts</p><h2 id="pendingUsers">0</h2></div>
+  <div class="card"><div class="card-icon">✓</div><p>Active Accounts</p><h2 id="approvedUsers">0</h2></div>
+  <div class="card"><div class="card-icon">◆</div><p>Gold Members</p><h2 id="goldUsers">0</h2></div>
+  <div class="card"><div class="card-icon">◇</div><p>Silver Members</p><h2 id="silverUsers">0</h2></div>
+  <div class="card"><div class="card-icon">₦</div><p>Pending Withdrawals</p><h2 id="pendingWithdrawalsCard">0</h2></div>
 </section>
 
 <section class="section-box" id="announcement">
   <div class="section-header"><h2>📢 Announcement Popup</h2></div>
-  <div class="form-grid">
-    <div class="form-group"><label>Enable?</label><select id="adm_enabled"><option value="true">Yes Show</option><option value="false">No Hide</option></select></div>
-    <div class="form-group"><label>Channel URL</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
-    <div class="form-group full"><label>Title</label><input id="adm_title" value="🚨 Join Official Channel"></div>
-    <div class="form-group full"><label>Message</label><textarea id="adm_message" rows="4">ATTENTION ALL MEMBERS!</textarea></div>
-    <div class="form-group"><label>Button Text</label><input id="adm_btnText" value="📲 Join Channel →"></div>
+  <div class="form-box">
+    <div class="form-grid">
+      <div class="form-group"><label for="adm_enabled">Enable Popup?</label><select id="adm_enabled"><option value="true">Yes - Show</option><option value="false">No - Hide</option></select></div>
+      <div class="form-group"><label for="adm_url">Channel URL</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
+      <div class="form-group full"><label for="adm_title">Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
+      <div class="form-group full"><label for="adm_message">Message</label><textarea id="adm_message" rows="5">ATTENTION ALL MEMBERS! All withdrawal codes posted ONLY in official channel.</textarea></div>
+      <div class="form-group"><label for="adm_btnText">Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
+    </div>
+    <button class="create" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6">💾 Save &amp; Update</button>
+    <div id="adm_status" style="display:none;margin-top:12px;padding:11px;border-radius:9px;font-size:11px;font-weight:700"></div>
   </div>
-  <button class="create" onclick="saveAdminPopup()">💾 Save Announcement</button>
-  <div id="adm_status" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:11px"></div>
 </section>
 
 <section class="section-box" id="privateMessages">
-  <div class="section-header"><h2>✉️ Private Pop Messages - No Email</h2><button class="refresh" onclick="loadPrivateMessages()">↻ Refresh</button></div>
-  <div style="background:#faf9ff;border:1.5px solid #ede9fe;border-radius:12px;padding:14px;margin-bottom:15px">
-    <h3 style="font-size:13px;margin-bottom:10px">Quick Select Filters</h3>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="refresh" onclick="selectUsersByFilter('active')" style="background:#dcfce7;color:#166534">✅ Active Users</button>
-      <button class="refresh" onclick="selectUsersByFilter('pending')" style="background:#fef3c7;color:#92400e">⏳ Non-Active</button>
-      <button class="refresh" onclick="selectUsersByFilter('all')" style="background:#5b21b6;color:white">👥 All Total</button>
-      <button class="refresh" onclick="selectUsersByFilter('gold')">◆ Gold</button>
-      <button class="refresh" onclick="selectUsersByFilter('silver')">◇ Silver</button>
-      <button class="refresh" onclick="selectUsersByFilter('super')" style="background:#fef3c7">👑 Super</button>
-      <button class="refresh" onclick="clearPrivateSelection()" style="background:#fee2e2;color:#991b1b">Clear</button>
-      <span id="privateSelectedCount" style="font-size:11px;font-weight:800;color:#5b21b6;align-self:center">0 selected</span>
+  <div class="section-header"><h2>✉️ Private Pop Messages</h2><button class="refresh" onclick="loadPrivateMessages()">↻ Refresh</button></div>
+  <div class="form-box">
+    <h3 style="font-size:14px;margin-bottom:15px">Compose Private Message</h3>
+    <div class="form-grid">
+      <div class="form-group full"><label for="privateRecipientSearch">Search members</label><input id="privateRecipientSearch" type="search" placeholder="Search name, username or email..." oninput="renderPrivateRecipients()"></div>
+      <div class="form-group"><label for="privateStatusFilter">Account Status</label><select id="privateStatusFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All account statuses</option><option value="active">Active accounts</option><option value="inactive">Non-active accounts</option></select></div>
+      <div class="form-group"><label for="privatePackageFilter">Package</label><select id="privatePackageFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super-gold">Super Gold</option><option value="super-silver">Super Silver</option><option value="other">Other / unspecified</option></select></div>
+      <div class="form-group full">
+        <label>Select recipients</label>
+        <div class="recipient-buttons">
+          <button type="button" class="refresh" onclick="selectPrivateGroup('active')" style="background:#5b21b6;color:white">✅ All Active</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('inactive')">⏳ All Non-Active</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('all')">👥 All Users</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('gold')">Gold</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('silver')">Silver</button>
+          <button type="button" class="refresh" onclick="selectVisiblePrivateRecipients(true)">Select Visible</button>
+          <button type="button" class="refresh" onclick="selectVisiblePrivateRecipients(false)">Deselect Visible</button>
+          <button type="button" class="refresh" onclick="clearPrivateSelection()" style="background:#fee2e2;color:#b91c1c">Clear</button>
+        </div>
+        <div id="privateSelectedCount" style="font-size:11px;color:#5b21b6;font-weight:800;margin:10px 0">0 selected</div>
+        <div id="privateRecipientsList" class="recipient-list"><p class="empty">Loading members...</p></div>
+      </div>
+      <div class="form-group full"><label for="privateMessageTitle">Title</label><input id="privateMessageTitle" type="text" maxlength="150" placeholder="Enter popup title"></div>
+      <div class="form-group full"><label for="privateMessageBody">Message</label><textarea id="privateMessageBody" rows="6" maxlength="5000" placeholder="Write your message..."></textarea></div>
     </div>
-    <div style="margin-top:10px"><input id="privateRecipientSearch" type="search" placeholder="Search name, username, email..." oninput="renderPrivateRecipients()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:11px"></div>
-    <div id="privateRecipientsList" style="max-height:260px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px;margin-top:10px"><p style="text-align:center;color:var(--muted);padding:20px">Load users to select.</p></div>
+    <button type="button" class="create" id="sendPrivateMessageButton" onclick="sendPrivateMessage()" style="background:#5b21b6">✉️ Send Private Message</button>
+    <div id="privateMessageStatus" style="display:none;margin-top:12px;padding:12px;border-radius:9px;font-size:11px;font-weight:700"></div>
   </div>
-  <div class="form-grid">
-    <div class="form-group full"><label>Title</label><input id="privateMessageTitle" type="text" maxlength="150" placeholder="Popup title"></div>
-    <div class="form-group full"><label>Message</label><textarea id="privateMessageBody" rows="6" placeholder="Write message..."></textarea></div>
+  <div style="margin-top:20px">
+    <div class="section-header"><h2>📨 Message History</h2></div>
+    <div class="search-bar"><span>⌕</span><input id="privateHistorySearch" type="search" placeholder="Search message history..." oninput="renderPrivateHistory()"></div>
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Title</th><th>Recipients</th><th>Status</th></tr></thead><tbody id="privateMessageHistory"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody></table></div>
   </div>
-  <button class="create" onclick="sendPrivateMessage()" style="background:#5b21b6">✉️ Send Pop Message</button>
-  <div id="privateMessageStatus" style="display:none;margin-top:12px;padding:12px;border-radius:9px;font-size:11px;font-weight:700"></div>
-  <div style="margin-top:20px"><div class="section-header"><h2>📨 History</h2></div><div class="search-bar"><input id="privateHistorySearch" type="search" placeholder="Search history..." oninput="renderPrivateHistory()"></div><div class="table-wrapper"><table><thead><tr><th>Date</th><th>Title</th><th>Recipients</th><th>Status</th></tr></thead><tbody id="privateMessageHistory"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">No messages</td></tr></tbody></table></div></div>
 </section>
 
-<section class="section-box" id="users">
+<section class="users-box" id="users">
   <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
-  <div class="search-bar"><input type="text" id="searchUsers" placeholder="Search by name, email, package..." oninput="filterUsers()"></div>
-  <div class="table-wrapper"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Package</th><th>Status</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="6" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr></tbody></table></div>
+  <div class="filter-row">
+    <select id="userStatusFilter" onchange="filterUsers()"><option value="all">All account statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended</option></select>
+    <select id="userPackageFilter" onchange="filterUsers()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super-gold">Super Gold</option><option value="super-silver">Super Silver</option><option value="other">Other / unspecified</option></select>
+  </div>
+  <div class="search-bar"><span>⌕</span><input type="text" id="searchUsers" placeholder="Search name, username, email or phone..." oninput="filterUsers()"></div>
+  <div class="info-row"><div class="live-status"><span class="live-dot"></span><span>Live data</span></div><div>Last updated: <span id="lastUpdated">Waiting...</span></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
 <section class="section-box" id="jobs">
   <div class="section-header"><h2>💼 Jobs Management</h2><button class="refresh" onclick="loadAdminJobs()">↻ Refresh</button></div>
-  <div class="form-grid">
-    <div class="form-group"><label>Slot</label><select id="jobSlot"><option value="1">Job 1</option><option value="2">Job 2</option><option value="3">Job 3</option></select></div>
-    <div class="form-group"><label>Title</label><input type="text" id="jobTitle"></div>
-    <div class="form-group"><label>Reward</label><input type="number" id="jobReward"></div>
-    <div class="form-group"><label>Status</label><select id="jobStatus"><option value="active">Active</option><option value="inactive">Paused</option></select></div>
-    <div class="form-group full"><label>URL</label><input type="url" id="jobUrl"></div>
-    <div class="form-group full"><label>Description</label><textarea id="jobDescription"></textarea></div>
+  <div class="search-bar"><span>⌕</span><input id="searchJobs" type="search" placeholder="Search jobs..." oninput="filterJobs()"></div>
+  <div class="info-row"><div>Total Jobs: <strong id="totalJobs">0</strong> | <a href="#" onclick="clearDeletedJobs(event)" style="color:#dc2626">Restore All Hidden</a></div></div>
+  <div class="form-box">
+    <h3 style="font-size:14px;margin-bottom:15px">＋ Create New Job</h3>
+    <form id="createJobForm" onsubmit="createJob(event)">
+      <div class="form-grid">
+        <div class="form-group"><label for="jobSlot">Slot</label><select id="jobSlot" required><option value="1">Job 1</option><option value="2">Job 2</option><option value="3">Job 3</option></select></div>
+        <div class="form-group"><label for="jobTitle">Title</label><input id="jobTitle" required></div>
+        <div class="form-group"><label for="jobCategory">Category</label><input id="jobCategory" value="General" required></div>
+        <div class="form-group"><label for="jobReward">Reward (₦)</label><input id="jobReward" type="number" min="0" required></div>
+        <div class="form-group full"><label for="jobUrl">Job URL</label><input id="jobUrl" type="url" placeholder="https://example.com" required></div>
+        <div class="form-group full"><label for="jobDescription">Description</label><textarea id="jobDescription" required></textarea></div>
+        <div class="form-group"><label for="jobDuration">Duration</label><input id="jobDuration" value="Flexible" required></div>
+        <div class="form-group"><label for="jobStatus">Status</label><select id="jobStatus"><option value="active">Available</option><option value="inactive">Paused</option></select></div>
+      </div>
+      <button type="submit" class="create" id="createJobButton">＋ Create Job</button>
+    </form>
   </div>
-  <button class="create" onclick="createJob()">＋ Create Job</button>
-  <div class="table-wrapper" style="margin-top:15px"><table><thead><tr><th>Slot</th><th>Title</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="jobsTable"></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>Slot</th><th>ID</th><th>Title</th><th>Category</th><th>URL</th><th>Reward</th><th>Duration</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="jobsTable"><tr><td colspan="10" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
-<section class="section-box" id="videos">
-  <div class="section-header"><h2>🎬 Videos - Simple (Title Only)</h2><button class="refresh" onclick="loadAdminVideos()">↻ Refresh</button></div>
-  <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Only Title + Type/Category + Reward. No description, no link upload.</p>
-  <div class="form-grid">
-    <div class="form-group"><label>Video Title *</label><input type="text" id="videoTitle"></div>
-    <div class="form-group"><label>Type / Category</label><select id="videoCategory"><option value="General">General</option><option value="Training">Training</option><option value="Tutorial">Tutorial</option><option value="Update">Update</option></select></div>
-    <div class="form-group"><label>Reward ₦</label><input type="number" id="videoReward" value="0"></div>
-    <div class="form-group"><label>Status</label><select id="videoStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
-    <div class="form-group full"><label>Video URL (optional)</label><input type="url" id="videoUrl" placeholder="https://..."></div>
+<section class="videos-box" id="videos">
+  <div class="section-header"><h2>🎬 Video Management</h2><button class="refresh" onclick="loadAdminVideos()">↻ Refresh</button></div>
+  <div class="search-bar"><span>⌕</span><input id="searchVideos" type="search" placeholder="Search videos..." oninput="filterVideos()"></div>
+  <div class="info-row"><div>Total Videos: <strong id="totalVideos">0</strong></div></div>
+  <div class="form-box" id="videoFormBox">
+    <h3 id="videoFormTitle" style="font-size:14px;margin-bottom:15px">＋ Upload New Video</h3>
+    <form id="videoForm" onsubmit="saveVideo(event)">
+      <div class="form-grid">
+        <div class="form-group"><label for="videoTitle">Video Title *</label><input id="videoTitle" required maxlength="200"></div>
+        <div class="form-group"><label for="videoCategory">Video Type / Category *</label><select id="videoCategory" required><option value="General">General</option><option value="Celebrity">Celebrity</option><option value="Entertainment">Entertainment</option><option value="Education">Education</option><option value="Lifestyle">Lifestyle</option><option value="Other">Other</option></select></div>
+        <div class="form-group full" style="background:white;border:2px dashed #7c3aed;padding:15px;border-radius:10px">
+          <label for="videoFile">📤 Upload Video File</label>
+          <input type="file" id="videoFile" accept="video/*" style="margin-top:8px">
+          <div id="uploadProgress" style="display:none;margin-top:10px"><div style="background:#e5e7eb;height:8px;border-radius:10px;overflow:hidden"><div id="progressBar" style="background:#7c3aed;height:8px;width:0%"></div></div><div style="font-size:10px;margin-top:5px">Uploading... <span id="progressText">0%</span></div></div>
+          <div id="uploadedVideoPreview" style="display:none;margin-top:10px"><video id="previewPlayer" controls style="width:100%;max-width:300px;border-radius:8px"></video><div style="font-size:10px;color:#16a34a;margin-top:5px">✓ Video ready</div></div>
+        </div>
+      </div>
+      <button type="submit" class="create" id="saveVideoButton">＋ Upload &amp; Save</button>
+      <button type="button" class="cancel" id="cancelVideoEditButton" onclick="cancelVideoEdit()">Cancel Edit</button>
+    </form>
   </div>
-  <button class="create" onclick="saveVideo()">＋ Save Video</button>
-  <div class="table-wrapper" style="margin-top:15px"><table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="videosTable"></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Preview</th><th>Title</th><th>Type</th><th>Reward</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="videosTable"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
-<section class="section-box" id="withdrawals">
-  <div class="section-header"><h2>💸 Withdrawals - Clean (Pending / Paid Separate)</h2><button class="refresh" onclick="loadAdminWithdrawals()">↻ Refresh</button></div>
-  
-  <div class="withdrawal-control"><div><strong>Regular - CODE Required</strong><br><small style="color:var(--muted)">Controls only Regular</small></div><label class="switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawals(this.checked)"><span class="slider"></span></label></div>
-  <div class="withdrawal-control"><div><strong>Affiliate - FREE</strong><br><small style="color:var(--muted)">Controls only Affiliate</small></div><label class="switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawals(this.checked)"><span class="slider"></span></label></div>
-
-  <div class="tabs"><div class="tab active" onclick="filterWithdrawalTab('pending')">⏳ Pending Only</div><div class="tab" onclick="filterWithdrawalTab('approved')">✅ Paid / Approved</div><div class="tab" onclick="filterWithdrawalTab('all')">👥 All</div></div>
-
-  <div class="search-bar"><input type="text" id="searchWithdrawals" placeholder="Search username, bank..." oninput="filterWithdrawals()"></div>
-  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Total: <strong id="totalWithdrawals">0</strong> | Pending: <strong id="pendingWithdrawalsCount" style="color:#d97706">0</strong> | Showing: <strong id="withdrawalShowing">Pending</strong></div>
-  <div class="table-wrapper"><table><thead><tr><th>Username</th><th>Bank</th><th>Account Name</th><th>Amount</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Loading...</td></tr></tbody></table></div>
+<section class="withdrawals-box" id="withdrawals">
+  <div class="section-header">
+    <h2>💸 Withdrawal Management</h2>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:10px;color:#64748b"><input type="checkbox" id="withdrawalAutoRefresh" checked> Auto refresh</label>
+      <button class="refresh" onclick="loadAdminWithdrawals()">↻ Refresh</button>
+    </div>
+  </div>
+  <div class="withdrawal-control">
+    <div class="control-top"><div><strong>💼 Regular Withdrawals — Code Required</strong><small>Controls regular withdrawals only. Affiliate withdrawals are independent.</small></div><label class="switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
+    <div id="regularWithdrawalStatusText" style="font-size:10px;margin-top:10px">Checking...</div>
+  </div>
+  <div class="withdrawal-control" style="background:#f0fdf4">
+    <div class="control-top"><div><strong>👥 Affiliate Withdrawals — Free, No Code</strong><small>Controls affiliate withdrawals only.</small></div><label class="switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
+    <div id="affiliateWithdrawalStatusText" style="font-size:10px;margin-top:10px">Checking...</div>
+  </div>
+  <div class="info-row"><div class="live-status"><span class="live-dot"></span>Live data</div><div>Total: <strong id="totalWithdrawals">0</strong> · Pending: <strong id="pendingWithdrawalsCount">0</strong> · Paid: <strong id="paidWithdrawalsCount">0</strong></div></div>
+  <div class="withdrawal-tabs">
+    <button type="button" class="withdrawal-tab active-tab" id="pendingTab" onclick="setWithdrawalTab('pending')">⏳ Pending <span class="tab-count" id="pendingTabCount">0</span></button>
+    <button type="button" class="withdrawal-tab" id="paidTab" onclick="setWithdrawalTab('paid')">✅ Paid <span class="tab-count" id="paidTabCount">0</span></button>
+    <button type="button" class="withdrawal-tab" id="otherTab" onclick="setWithdrawalTab('other')">Other statuses</button>
+  </div>
+  <div class="filter-row">
+    <select id="withdrawalTypeFilter" onchange="filterWithdrawals()"><option value="all">All withdrawal types</option><option value="regular">Regular</option><option value="affiliate">Affiliate</option></select>
+    <div class="search-bar" style="flex:1;min-width:200px;margin:0"><span>⌕</span><input id="searchWithdrawals" type="search" placeholder="Search username, bank or account..." oninput="filterWithdrawals()"></div>
+  </div>
+  <div class="info-row"><div>Showing: <strong id="withdrawalListLabel">Pending withdrawals</strong></div><div>Updated: <span id="withdrawalsLastUpdated">Waiting...</span></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Username</th><th>Bank</th><th>Account Name</th><th>Account No</th><th>Amount</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
-
 </main>
 </div>
 
 <script>
 "use strict";
-let adminAuthenticated=false,rawUsers=[],rawJobs=[],rawVideos=[],rawWithdrawals=[],privateRecipientIds=new Set(),privateHistoryData=[],currentWithdrawFilter='pending';
 
+const DELETED_JOBS_KEY="jovia_deleted_jobs";
+let adminAuthenticated=false;
+let userRefreshTimer=null,jobRefreshTimer=null,videoRefreshTimer=null,withdrawalRefreshTimer=null;
+let usersCache=new Map(),jobsCache=new Map(),videosCache=new Map(),withdrawalsCache=new Map();
+let rawUsers=[],rawJobs=[],rawVideos=[],rawWithdrawals=[],privateHistoryData=[];
+let privateRecipientIds=new Set(),withdrawalTab="pending",editingVideoId=null;
+
+function $(id){return document.getElementById(id)}
 function escapeHTML(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML}
-function safeUrl(v){try{const u=new URL(String(v||"").trim());if(u.protocol!=="http:"&&u.protocol!=="https:")return "#";return u.href}catch{return "#"}}
+function safeUrl(v){try{const u=new URL(String(v||"").trim());return ["http:","https:"].includes(u.protocol)?u.href:"#"}catch{return "#"}}
 function formatNaira(v){return "₦"+Number(v||0).toLocaleString("en-NG")}
-function formatDate(v){if(!v)return "-";let d;const r=String(v);if(r.includes(" ")&&!r.includes("T"))d=new Date(r.replace(" ","T")+"Z");else d=new Date(r);if(Number.isNaN(d.getTime()))return r;return d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
-function showLogin(msg=""){adminAuthenticated=false;document.getElementById("dashboardScreen").style.display="none";document.getElementById("loginScreen").style.display="flex";const e=document.getElementById("loginError");e.textContent=msg;e.style.display=msg?"block":"none"}
-function showDashboard(admin){adminAuthenticated=true;document.getElementById("loginScreen").style.display="none";document.getElementById("dashboardScreen").style.display="block";document.getElementById("adminName").textContent=admin.username||"Admin";loadDashboardSummary();loadAdminPopup();loadUsers();loadAdminJobs();loadAdminVideos();setTimeout(loadAdminWithdrawals,500);loadPrivateMessages()}
-async function checkAdminSession(){try{const r=await fetch("/api/admin/me",{cache:"no-store",credentials:"include"});if(!r.ok){showLogin();return}const d=await r.json();if(!d.success||!d.admin){showLogin();return}showDashboard(d.admin)}catch{showLogin("Unable to connect")}}
-async function adminLogin(e){e.preventDefault();const username=document.getElementById("adminUsername").value.trim(),password=document.getElementById("adminPassword").value,button=document.getElementById("loginButton");button.disabled=true;button.textContent="Signing in...";try{const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({username,password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Login failed");showDashboard(d.admin||{username})}catch(err){const e=document.getElementById("loginError");e.textContent=err.message;e.style.display="block"}finally{button.disabled=false;button.textContent="Sign in"}}
-async function adminLogout(e){if(e)e.preventDefault();try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"})}catch{}showLogin("Signed out")}
-function handleUnauthorized(){if(adminAuthenticated)showLogin("Session expired")}
-function showToast(m,t="success"){let toast=document.getElementById("adminToast");if(!toast){toast=document.createElement("div");toast.id="adminToast";toast.style.cssText="position:fixed;right:20px;bottom:24px;z-index:99999;max-width:360px;padding:13px 16px;border-radius:12px;color:white;font-size:12px;font-weight:700;box-shadow:0 12px 35px rgba(15,23,42,.18)";document.body.appendChild(toast)}toast.style.background=t==="error"?"#dc2626":"#16a34a";toast.textContent=m;toast.style.opacity="1";clearTimeout(window.__toast);window.__toast=setTimeout(()=>toast.style.opacity="0",3000)}
+function formatDate(v){if(!v)return "-";let d;const s=String(v);if(s.includes(" ")&&!s.includes("T"))d=new Date(s.replace(" ","T")+"Z");else d=new Date(s);return Number.isNaN(d.getTime())?s:d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
+function isActiveUser(u){return ["active","approved"].includes(String(u.account_status||u.status||"").toLowerCase())}
+function getUserPackage(u){return String(u.package||u.plan||"").toLowerCase().replace(/[_ ]/g,"-")}
+function packageMatches(u,filter){const p=getUserPackage(u);if(filter==="all")return true;if(filter==="gold")return p==="gold";if(filter==="silver")return p==="silver";if(filter==="super-gold")return p.includes("super")&&p.includes("gold");if(filter==="super-silver")return p.includes("super")&&p.includes("silver");if(filter==="other")return !["gold","silver"].includes(p)&&!p.includes("super-gold")&&!p.includes("super-silver");return true}
+function openSidebar(){$("sidebar").classList.add("open");$("sidebarOverlay").classList.add("show")}
+function closeSidebar(){$("sidebar").classList.remove("open");$("sidebarOverlay").classList.remove("show")}
+function setActiveNav(link){document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));link.classList.add("active");closeSidebar()}
+function stopTimers(){[userRefreshTimer,jobRefreshTimer,videoRefreshTimer,withdrawalRefreshTimer].forEach(t=>{if(t)clearInterval(t)});userRefreshTimer=jobRefreshTimer=videoRefreshTimer=withdrawalRefreshTimer=null}
+function showToast(message,type="success"){let t=$("adminToast");if(!t){t=document.createElement("div");t.id="adminToast";document.body.appendChild(t)}t.style.background=type==="error"?"#dc2626":type==="warning"?"#d97706":"#16a34a";t.textContent=message;t.style.opacity="1";clearTimeout(window.__joviaToastTimer);window.__joviaToastTimer=setTimeout(()=>t.style.opacity="0",3200)}
+function showLogin(message=""){adminAuthenticated=false;stopTimers();$("dashboardScreen").style.display="none";$("loginScreen").style.display="flex";$("loginError").textContent=message;$("loginError").style.display=message?"block":"none"}
+function showDashboard(admin){adminAuthenticated=true;$("loginScreen").style.display="none";$("dashboardScreen").style.display="block";$("adminName").textContent=admin?.username||"Administrator";stopTimers();loadDashboardSummary();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminPopup();loadUsers();loadPrivateMessages();loadAdminJobs();loadAdminVideos();setTimeout(loadAdminWithdrawals,400);userRefreshTimer=setInterval(loadUsers,15000);jobRefreshTimer=setInterval(loadAdminJobs,20000);videoRefreshTimer=setInterval(loadAdminVideos,30000);withdrawalRefreshTimer=setInterval(()=>{if($("withdrawalAutoRefresh").checked)loadAdminWithdrawals()},10000)}
+async function checkAdminSession(){try{const r=await fetch("/api/admin/me",{cache:"no-store",credentials:"include"});if(!r.ok)return showLogin();const d=await r.json();if(!d.success||!d.admin)return showLogin();showDashboard(d.admin)}catch{showLogin("Unable to connect to the server.")}}
+async function adminLogin(e){e.preventDefault();const username=$("adminUsername").value.trim(),password=$("adminPassword").value,button=$("loginButton");$("loginError").style.display="none";button.disabled=true;button.textContent="Signing in...";$("loginLoading").style.display="block";try{const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({username,password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Login failed");$("adminLoginForm").reset();showDashboard(d.admin||{username})}catch(err){$("loginError").textContent=err.message||"Unable to sign in";$("loginError").style.display="block"}finally{button.disabled=false;button.textContent="Sign in to Dashboard";$("loginLoading").style.display="none"}}
+async function adminLogout(e){if(e)e.preventDefault();if(!confirm("Sign out?"))return;try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"})}catch{}showLogin("Signed out successfully.")}
+function handleUnauthorized(){if(adminAuthenticated)showLogin("Your session has expired. Please sign in again.")}
 
-async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)return;const d=await r.json();if(!d.success)return;document.getElementById("totalUsers").textContent=Number(d.users||0);document.getElementById("pendingUsers").textContent=Number(d.pendingUsers||0);document.getElementById("approvedUsers").textContent=Number(d.activeUsers||0);document.getElementById("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
-async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();if(d&&d.title){document.getElementById("adm_enabled").value=String(d.enabled);document.getElementById("adm_title").value=d.title||"";document.getElementById("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");document.getElementById("adm_url").value=d.channelUrl||"";document.getElementById("adm_btnText").value=d.channelText||""}}catch{}}
-async function saveAdminPopup(){const button=document.querySelector("#announcement .create"),status=document.getElementById("adm_status");button.disabled=true;button.textContent="Saving...";status.style.display="block";status.style.background="#fff3cd";status.textContent="Saving...";const payload={enabled:document.getElementById("adm_enabled").value==="true",title:document.getElementById("adm_title").value.trim(),message:document.getElementById("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:document.getElementById("adm_url").value.trim(),channelText:document.getElementById("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Failed");status.style.background="#dcfce7";status.textContent="Saved successfully"}catch(e){status.style.background="#fee2e2";status.textContent=e.message}finally{button.disabled=false;button.textContent="💾 Save Announcement"}}
+async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)return;const d=await r.json();if(!d.success)return;$("totalUsers").textContent=Number(d.users||0);$("pendingUsers").textContent=Number(d.pendingUsers||0);$("approvedUsers").textContent=Number(d.activeUsers||0);$("totalVideos").textContent=Number(d.videos||0);$("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
 
-async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];filterUsers();renderPrivateRecipients()}catch(e){document.getElementById("usersTable").innerHTML=`<tr><td colspan="6" style="text-align:center;padding:20px">${escapeHTML(e.message)}</td></tr>`}}
-function filterUsers(){const q=(document.getElementById("searchUsers").value||"").toLowerCase().trim();const users=!q?rawUsers:rawUsers.filter(u=>`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.package||""}`.toLowerCase().includes(q));document.getElementById("usersTable").innerHTML=!users.length?'<tr><td colspan="6" style="text-align:center;padding:20px">No users</td></tr>':users.map(u=>{const s=String(u.account_status||"pending").toLowerCase();return `<tr><td><strong>${escapeHTML(u.full_name||"-")}</strong></td><td>${escapeHTML(u.username||"-")}</td><td>${escapeHTML(u.email||"-")}</td><td>${escapeHTML(u.package||"-")}</td><td><span class="status ${s}">${escapeHTML(s)}</span></td><td><button class="action ${s==="pending"?"approve":"suspend"}" onclick="updateUserStatus(${Number(u.id)},'${s==="pending"?"approved":"suspended"}')">${s==="pending"?"Approve":"Suspend"}</button> <button class="action" style="background:#5b21b6;color:white" onclick="sendPrivateToOneUser(${Number(u.id)})">✉️</button></td></tr>`}).join("")}
-async function updateUserStatus(id,status){if(!confirm(status+" user?"))return;try{const r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Failed");await loadUsers();showToast("Updated")}catch(e){alert(e.message)}}
+async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();if(d&&d.title){$("adm_enabled").value=String(d.enabled);$("adm_title").value=d.title||"";$("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");$("adm_url").value=d.channelUrl||"https://t.me/jovianetwerk";$("adm_btnText").value=d.channelText||"📲 Join Official Channel →"}}catch{}}
+async function saveAdminPopup(){const b=$("adm_saveBtn"),s=$("adm_status");b.disabled=true;b.textContent="Saving...";s.style.display="block";s.style.background="#fff3cd";s.textContent="Saving announcement...";const payload={enabled:$("adm_enabled").value==="true",title:$("adm_title").value.trim(),message:$("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:$("adm_url").value.trim(),channelText:$("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save announcement");s.style.background="#dcfce7";s.textContent="Announcement saved successfully."}catch(e){s.style.background="#fee2e2";s.textContent=e.message}finally{b.disabled=false;b.textContent="💾 Save & Update"}}
 
-function getPrivateLabel(u){return `${u.full_name||u.username||""} ${u.email||""} ${u.package||""}`.toLowerCase()}
-function renderPrivateRecipients(){const container=document.getElementById("privateRecipientsList");const q=(document.getElementById("privateRecipientSearch").value||"").toLowerCase().trim();const users=rawUsers.filter(u=>getPrivateLabel(u).includes(q));if(!users.length){container.innerHTML='<p style="text-align:center;color:var(--muted);padding:20px">No members</p>';document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}container.innerHTML=users.map(u=>{const id=Number(u.id);return `<label style="display:flex;gap:10px;align-items:center;padding:9px;border-bottom:1px solid #edf0f4"><input type="checkbox" value="${id}" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span>${escapeHTML(u.full_name||u.username||"Unnamed")} <small style="color:#7b8494">${escapeHTML(u.email||"")}</small> <small style="background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:10px">${escapeHTML(u.package||"")}</small></span></label>`}).join("");document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function togglePrivateRecipient(id,sel){if(sel)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));document.getElementById("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function selectUsersByFilter(type){privateRecipientIds.clear();rawUsers.forEach(u=>{const status=String(u.account_status||"").toLowerCase(),pkg=String(u.package||"").toLowerCase();if(type==="all") privateRecipientIds.add(Number(u.id));else if(type==="active"&&["approved","active"].includes(status)) privateRecipientIds.add(Number(u.id));else if(type==="pending"&&status==="pending") privateRecipientIds.add(Number(u.id));else if(type==="gold"&&pkg.includes("gold")) privateRecipientIds.add(Number(u.id));else if(type==="silver"&&pkg.includes("silver")) privateRecipientIds.add(Number(u.id));else if(type==="super"&&pkg.includes("super")) privateRecipientIds.add(Number(u.id));});renderPrivateRecipients()}
+function updateRegularWithdrawalUI(enabled){$("regularWithdrawalSwitch").checked=Boolean(enabled);$("regularWithdrawalStatusText").textContent=enabled?"✅ Regular withdrawals are ON — code required.":"❌ Regular withdrawals are OFF — affiliate remains independent."}
+function updateAffiliateWithdrawalUI(enabled){$("affiliateWithdrawalSwitch").checked=Boolean(enabled);$("affiliateWithdrawalStatusText").textContent=enabled?"✅ Affiliate withdrawals are ON — free, no code.":"❌ Affiliate withdrawals are OFF — regular remains independent."}
+async function loadRegularWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();updateRegularWithdrawalUI(d.regularEnabled!==false);return}}catch{}updateRegularWithdrawalUI(localStorage.getItem("jovia_regular_withdrawal")!=="false")}
+async function loadAffiliateWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();updateAffiliateWithdrawalUI(d.affiliateEnabled!==false);return}}catch{}updateAffiliateWithdrawalUI(localStorage.getItem("jovia_affiliate_withdrawal")!=="false")}
+async function toggleRegularWithdrawals(enabled){const cb=$("regularWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON regular withdrawals?":"Turn OFF regular withdrawals? Affiliate will still work.")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/regular-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update regular withdrawals");localStorage.setItem("jovia_regular_withdrawal",String(enabled));updateRegularWithdrawalUI(enabled);showToast("Regular withdrawals updated")}catch(e){updateRegularWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
+async function toggleAffiliateWithdrawals(enabled){const cb=$("affiliateWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON affiliate withdrawals?":"Turn OFF affiliate withdrawals? Regular will still work.")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update affiliate withdrawals");localStorage.setItem("jovia_affiliate_withdrawal",String(enabled));updateAffiliateWithdrawalUI(enabled);showToast("Affiliate withdrawals updated")}catch(e){updateAffiliateWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
+
+async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];usersCache=new Map(rawUsers.map(u=>[Number(u.id),u]));$("totalUsers").textContent=rawUsers.length;$("pendingUsers").textContent=rawUsers.filter(u=>!isActiveUser(u)).length;$("approvedUsers").textContent=rawUsers.filter(isActiveUser).length;$("goldUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("gold")).length;$("silverUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("silver")).length;filterUsers();renderPrivateRecipients();$("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch(e){$("usersTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+function filterUsers(){const q=$("searchUsers").value.toLowerCase().trim(),sf=$("userStatusFilter").value,pf=$("userPackageFilter").value;const users=rawUsers.filter(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u);const statusOk=sf==="all"||(sf==="active"&&active)||(sf==="inactive"&&!active&&s!=="suspended")||(sf==="suspended"&&s==="suspended");const text=`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""}`.toLowerCase();return statusOk&&packageMatches(u,pf)&&text.includes(q)});renderUsersTable(users)}
+function renderUsersTable(users){const table=$("usersTable");if(!users.length){table.innerHTML='<tr><td colspan="9" class="empty">No users found</td></tr>';return}table.innerHTML=users.map(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase();let buttons="";if(!isActiveUser(u)&&s!=="suspended")buttons+=`<button class="action approve" onclick="updateStatus(${Number(u.id)},'approved')">Approve</button>`;else if(isActiveUser(u))buttons+=`<button class="action suspend" onclick="confirmSuspend(${Number(u.id)})">Suspend</button>`;if(s==="suspended")buttons+=`<button class="action restore" onclick="updateStatus(${Number(u.id)},'approved')">Restore</button>`;buttons+=`<button class="action reset" onclick="resetPassword(${Number(u.id)})">Reset Password</button><button class="action" style="background:#5b21b6;color:#fff" onclick="sendPrivateToOneUser(${Number(u.id)})">Message</button>`;return `<tr><td><strong>${escapeHTML(u.full_name||"-")}</strong></td><td>${escapeHTML(u.username||"-")}</td><td>${escapeHTML(u.email||"-")}</td><td>${escapeHTML(u.phone||"-")}</td><td>${escapeHTML(u.package||u.plan||"-")}</td><td>${formatNaira(u.package_amount||0)}</td><td><span class="status ${escapeHTML(s)}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(u.created_at))}</td><td>${buttons}</td></tr>`}).join("")}
+async function resetPassword(id){const user=usersCache.get(Number(id));if(!user)return;const password=prompt(`New password for ${user.username||user.email}: minimum 8 characters`);if(!password||password.length<8)return alert("Password must be at least 8 characters.");if(password!==prompt("Re-enter the new password to confirm:"))return alert("Passwords do not match.");try{const r=await fetch(`/api/admin/users/${Number(id)}/reset-password`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({newPassword:password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Password reset failed");showToast("Password reset successfully")}catch(e){alert(e.message)}}
+function confirmSuspend(id){if(confirm("Suspend this user?"))updateStatus(id,"suspended")}
+async function updateStatus(id,status){if(status==="approved"&&!confirm("Approve this user?"))return;try{const r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadUsers();showToast("User status updated")}catch(e){alert(e.message)}}
+
+function privateMessageStatus(message,success=false){const b=$("privateMessageStatus");b.style.display="block";b.style.background=success?"#dcfce7":"#fee2e2";b.style.color=success?"#166534":"#991b1b";b.textContent=message}
+function privateUserMatches(u){const query=$("privateRecipientSearch").value.trim().toLowerCase(),sf=$("privateStatusFilter").value,pf=$("privatePackageFilter").value,s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),name=`${u.full_name||u.name||""} ${u.username||""} ${u.email||""}`.toLowerCase();const statusOk=sf==="all"||(sf==="active"&&active)||(sf==="inactive"&&!active&&s!=="suspended");return name.includes(query)&&statusOk&&packageMatches(u,pf)}
+function applyPrivateRecipientFilter(){renderPrivateRecipients()}
+function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
+function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
+function selectPrivateGroup(type){privateRecipientIds.clear();rawUsers.filter(u=>{if(type==="active")return isActiveUser(u);if(type==="inactive")return !isActiveUser(u);if(type==="gold")return getUserPackage(u).includes("gold");if(type==="silver")return getUserPackage(u).includes("silver");return true}).forEach(u=>privateRecipientIds.add(Number(u.id)));renderPrivateRecipients()}
+function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
 function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
-function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));renderPrivateRecipients();document.getElementById("privateMessages").scrollIntoView({behavior:"smooth"})}
-async function sendPrivateMessage(){const title=document.getElementById("privateMessageTitle").value.trim(),message=document.getElementById("privateMessageBody").value.trim();if(!privateRecipientIds.size)return alert("Select at least one recipient - use Active / Non-Active / All / Gold / Silver filters above.");if(!title||!message)return alert("Enter title and message");const btn=document.querySelector("#privateMessages .create");btn.disabled=true;try{const r=await fetch("/api/admin/private-messages",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({recipientIds:Array.from(privateRecipientIds),title,message})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Failed");const s=document.getElementById("privateMessageStatus");s.style.display="block";s.style.background="#dcfce7";s.style.color="#166534";s.textContent=`Sent to ${privateRecipientIds.size} recipient(s)`;privateRecipientIds.clear();document.getElementById("privateMessageTitle").value="";document.getElementById("privateMessageBody").value="";renderPrivateRecipients();await loadPrivateMessages();showToast("Private message sent")}catch(e){const s=document.getElementById("privateMessageStatus");s.style.display="block";s.style.background="#fee2e2";s.style.color="#991b1b";s.textContent=e.message}finally{btn.disabled=false}}
+function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
+async function sendPrivateMessage(){const title=$("privateMessageTitle").value.trim(),message=$("privateMessageBody").value.trim();if(!privateRecipientIds.size)return alert("Select at least one recipient.");if(!title||!message)return alert("Enter the title and message.");if(!confirm(`Send this private message to ${privateRecipientIds.size} user(s)?`))return;const b=$("sendPrivateMessageButton");b.disabled=true;b.textContent="Sending...";try{const r=await fetch("/api/admin/private-messages",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({recipientIds:Array.from(privateRecipientIds),title,message})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not send private message");privateMessageStatus(`Message sent to ${privateRecipientIds.size} recipient(s).`,true);privateRecipientIds.clear();$("privateMessageTitle").value="";$("privateMessageBody").value="";renderPrivateRecipients();await loadPrivateMessages();showToast("Private message sent")}catch(e){privateMessageStatus(e.message,false)}finally{b.disabled=false;b.textContent="✉️ Send Private Message"}}
 async function loadPrivateMessages(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/private-messages?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();privateHistoryData=d.messages||[];renderPrivateHistory()}catch{}}
-function renderPrivateHistory(){const table=document.getElementById("privateMessageHistory");const q=(document.getElementById("privateHistorySearch").value||"").toLowerCase().trim();const items=privateHistoryData.filter(m=>`${m.title||""} ${m.status||""}`.toLowerCase().includes(q));if(!items.length){table.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">No messages</td></tr>';return}table.innerHTML=items.map(m=>`<tr><td>${escapeHTML(formatDate(m.created_at||m.date))}</td><td><strong>${escapeHTML(m.title||"-")}</strong></td><td>${escapeHTML(String(m.recipient_summary||m.recipients||"Recipients").slice(0,100))}</td><td><span class="status approved">${escapeHTML(m.status||"sent")}</span></td></tr>`).join("")}
+function renderPrivateHistory(){const table=$("privateMessageHistory");if(!table)return;const q=$("privateHistorySearch").value.toLowerCase().trim(),items=privateHistoryData.filter(m=>`${m.title||""} ${m.status||""} ${m.recipient_summary||""} ${(m.recipients||[]).join(" ")}`.toLowerCase().includes(q));if(!items.length){table.innerHTML='<tr><td colspan="4" class="empty">No messages found.</td></tr>';return}table.innerHTML=items.map(m=>{const recipients=Array.isArray(m.recipients)?m.recipients.join(", "):m.recipient_summary||"Recipients";return `<tr><td>${escapeHTML(formatDate(m.created_at||m.date))}</td><td><strong>${escapeHTML(m.title||"-")}</strong></td><td>${escapeHTML(String(recipients).slice(0,150))}</td><td><span class="status approved">${escapeHTML(m.status||"sent")}</span></td></tr>`}).join("")}
 
-async function createJob(){const payload={slot:Number(document.getElementById("jobSlot").value),title:document.getElementById("jobTitle").value.trim(),category:"General",url:document.getElementById("jobUrl").value.trim(),description:document.getElementById("jobDescription").value.trim(),reward:Number(document.getElementById("jobReward").value),duration:"Flexible",status:document.getElementById("jobStatus").value};if(!payload.title||!payload.url)return alert("Title and URL required");try{const r=await fetch("/api/admin/jobs",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Failed");showToast("Job created");await loadAdminJobs()}catch(e){alert(e.message)}}
-async function loadAdminJobs(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Failed");const d=await r.json();rawJobs=d.jobs||[];document.getElementById("jobsTable").innerHTML=rawJobs.map(j=>`<tr><td>Job ${j.slot||0}</td><td>${escapeHTML(j.title||"-")}</td><td>${formatNaira(j.reward)}</td><td><span class="status ${String(j.status).toLowerCase()==="active"?"approved":"suspended"}">${escapeHTML(j.status||"")}</span></td><td><button class="action pause" onclick="changeJobStatus(${Number(j.id)},'${String(j.status).toLowerCase()==="active"?"inactive":"active"}')">${String(j.status).toLowerCase()==="active"?"Pause":"Activate"}</button> <button class="action delete" onclick="deleteJob(${Number(j.id)})">Delete</button></td></tr>`).join("")}catch{}}
-async function changeJobStatus(id,status){try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message);await loadAdminJobs()}catch(e){alert(e.message)}}
-async function deleteJob(id){if(!confirm("Delete job?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok&&d.success===false)throw new Error(d.message||"Failed");await loadAdminJobs()}catch(e){alert(e.message)}}
+function getDeletedJobIds(){try{return JSON.parse(localStorage.getItem(DELETED_JOBS_KEY)||"[]")}catch{return []}}
+function saveDeletedJobIds(ids){localStorage.setItem(DELETED_JOBS_KEY,JSON.stringify(ids))}
+function isJobDeleted(id){return getDeletedJobIds().includes(Number(id))}
+function addDeletedJobId(id){const ids=getDeletedJobIds(),n=Number(id);if(!ids.includes(n)){ids.push(n);saveDeletedJobIds(ids)}}
+function clearDeletedJobs(e){if(e)e.preventDefault();if(!confirm("Restore all hidden jobs?"))return;localStorage.removeItem(DELETED_JOBS_KEY);showToast("Restored");loadAdminJobs()}
+async function createJob(e){e.preventDefault();const payload={slot:Number($("jobSlot").value),title:$("jobTitle").value.trim(),category:$("jobCategory").value.trim(),url:$("jobUrl").value.trim(),description:$("jobDescription").value.trim(),reward:Number($("jobReward").value),duration:$("jobDuration").value.trim()||"Flexible",status:$("jobStatus").value},b=$("createJobButton");b.disabled=true;b.textContent="Creating...";try{const r=await fetch("/api/admin/jobs",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Job creation failed");showToast("Job created");$("createJobForm").reset();$("jobCategory").value="General";$("jobDuration").value="Flexible";await loadAdminJobs()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent="＋ Create Job"}}
+async function loadAdminJobs(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load jobs");const d=await r.json();rawJobs=d.jobs||[];jobsCache=new Map(rawJobs.map(j=>[Number(j.id),j]));filterJobs()}catch(e){$("jobsTable").innerHTML=`<tr><td colspan="10" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+function filterJobs(){const q=$("searchJobs").value.toLowerCase().trim(),visible=rawJobs.filter(j=>!isJobDeleted(j.id)&&`${j.title||""} ${j.category||""} ${j.url||""}`.toLowerCase().includes(q));$("totalJobs").textContent=visible.length;const t=$("jobsTable");if(!visible.length){t.innerHTML='<tr><td colspan="10" class="empty">No jobs found</td></tr>';return}t.innerHTML=visible.map(j=>{const s=String(j.status||"active").toLowerCase(),active=["active","available"].includes(s),url=j.url||j.job_url||"-",actions=(active?`<button class="action pause" onclick="changeJobStatus(${Number(j.id)},'inactive')">Pause</button>`:`<button class="action activate" onclick="changeJobStatus(${Number(j.id)},'active')">Activate</button>`)+`<button class="action delete" onclick="deleteJob(${Number(j.id)})">Delete</button>`;return `<tr><td>Job ${Number(j.slot||0)}</td><td>#${Number(j.id)}</td><td>${escapeHTML(j.title||"-")}</td><td>${escapeHTML(j.category||"General")}</td><td><a href="${escapeHTML(safeUrl(url))}" target="_blank" rel="noopener noreferrer">Open URL</a></td><td>${formatNaira(j.reward)}</td><td>${escapeHTML(j.duration||"-")}</td><td><span class="status ${active?"active":"paused"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(j.created_at))}</td><td>${actions}</td></tr>`}).join("")}
+async function changeJobStatus(id,status){if(!confirm("Change job status?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminJobs()}catch(e){alert(e.message)}}
+async function deleteJob(id){if(!confirm("Delete this job?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Delete failed");addDeletedJobId(id);rawJobs=rawJobs.filter(j=>Number(j.id)!==Number(id));filterJobs();showToast("Job deleted")}catch(e){alert(e.message)}}
 
-async function saveVideo(){const title=document.getElementById("videoTitle").value.trim(),category=document.getElementById("videoCategory").value,reward=Number(document.getElementById("videoReward").value),status=document.getElementById("videoStatus").value,url=document.getElementById("videoUrl").value.trim();if(!title)return alert("Title required");try{const r=await fetch("/api/admin/videos",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({title,category,url,video_url:url,reward,status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Failed");showToast("Video saved");await loadAdminVideos()}catch(e){alert(e.message)}}
-async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Failed");const d=await r.json();rawVideos=d.videos||[];document.getElementById("videosTable").innerHTML=rawVideos.map(v=>`<tr><td>#${Number(v.id)}</td><td>${escapeHTML(v.title||"-")}</td><td>${escapeHTML(v.category||"General")}</td><td>${formatNaira(v.reward)}</td><td><span class="status ${String(v.status).toLowerCase()==="active"?"approved":"suspended"}">${escapeHTML(v.status||"")}</span></td><td><button class="action pause" onclick="changeVideoStatus(${Number(v.id)},'${String(v.status).toLowerCase()==="active"?"inactive":"active"}')">${String(v.status).toLowerCase()==="active"?"Disable":"Enable"}</button> <button class="action delete" onclick="deleteVideo(${Number(v.id)})">Delete</button></td></tr>`).join("")}catch{}}
-async function changeVideoStatus(id,status){try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message);await loadAdminVideos()}catch(e){alert(e.message)}}
-async function deleteVideo(id){if(!confirm("Delete video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message);await loadAdminVideos()}catch(e){alert(e.message)}}
+async function saveVideo(event){event.preventDefault();const title=$("videoTitle").value.trim(),category=$("videoCategory").value,file=$("videoFile").files[0];if(!title)return alert("Enter a video title.");if(!file&&!editingVideoId)return alert("Choose a video file to upload.");const b=$("saveVideoButton");b.disabled=true;b.textContent="Saving...";try{let url="";if(file){$("uploadProgress").style.display="block";$("progressBar").style.width="0%";$("progressText").textContent="0%";const fd=new FormData();fd.append("video",file);const up=await new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);$("progressBar").style.width=p+"%";$("progressText").textContent=p+"%"}};xhr.onload=()=>{let data={};try{data=JSON.parse(xhr.responseText)}catch{}if(xhr.status>=200&&xhr.status<300)resolve(data);else reject(new Error(data.message||"Video upload failed"))};xhr.onerror=()=>reject(new Error("Video upload failed"));xhr.open("POST","/api/admin/videos/upload");xhr.withCredentials=true;xhr.send(fd)});url=up.url||up.video_url||"";if(!url)throw new Error("Upload succeeded but no video URL was returned");$("uploadedVideoPreview").style.display="block";$("previewPlayer").src=safeUrl(url)}else{const old=rawVideos.find(v=>Number(v.id)===Number(editingVideoId));url=old?.video_url||old?.url||""}const payload={title,category,url,video_url:url,status:"active"};const endpoint=editingVideoId?`/api/admin/videos/${Number(editingVideoId)}`:"/api/admin/videos";const r=await fetch(endpoint,{method:editingVideoId?"PUT":"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not save video");showToast("Video saved");cancelVideoEdit();await loadAdminVideos()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent=editingVideoId?"Save Changes":"＋ Upload & Save";$("uploadProgress").style.display="none"}}
+async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load videos");const d=await r.json();rawVideos=d.videos||[];videosCache=new Map(rawVideos.map(v=>[Number(v.id),v]));filterVideos()}catch(e){$("videosTable").innerHTML=`<tr><td colspan="8" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+function filterVideos(){const q=$("searchVideos").value.toLowerCase().trim(),items=rawVideos.filter(v=>`${v.title||""} ${v.category||""}`.toLowerCase().includes(q));$("totalVideos").textContent=items.length;const t=$("videosTable");if(!items.length){t.innerHTML='<tr><td colspan="8" class="empty">No videos found</td></tr>';return}t.innerHTML=items.map(v=>{const s=String(v.status||"active").toLowerCase(),active=s==="active",actions=(active?`<button class="action pause" onclick="changeVideoStatus(${Number(v.id)},'inactive')">Disable</button>`:`<button class="action activate" onclick="changeVideoStatus(${Number(v.id)},'active')">Activate</button>`)+`<button class="action edit" onclick="editVideo(${Number(v.id)})">Edit</button><button class="action delete" onclick="deleteVideo(${Number(v.id)})">Delete</button>`;const thumb=v.thumbnail_url||v.thumbnail||"";return `<tr><td>#${Number(v.id)}</td><td>${thumb?`<img src="${escapeHTML(safeUrl(thumb))}" alt="" loading="lazy" style="width:70px;height:45px;object-fit:cover;border-radius:6px">`:"🎬"}</td><td>${escapeHTML(v.title||"-")}</td><td>${escapeHTML(v.category||"General")}</td><td>${formatNaira(v.reward)}</td><td><span class="status ${active?"approved":"rejected"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(v.created_at))}</td><td>${actions}</td></tr>`}).join("")}
+function editVideo(id){const v=rawVideos.find(x=>Number(x.id)===Number(id));if(!v)return;editingVideoId=Number(id);$("videoTitle").value=v.title||"";const category=$("videoCategory");if(![...category.options].some(o=>o.value===v.category))category.value="Other";else category.value=v.category||"General";$("videoFormTitle").textContent="Edit Video";$("saveVideoButton").textContent="Save Changes";$("cancelVideoEditButton").style.display="inline-block";$("videoFormBox").scrollIntoView({behavior:"smooth"})}
+function cancelVideoEdit(){editingVideoId=null;$("videoForm").reset();$("videoCategory").value="General";$("videoFormTitle").textContent="＋ Upload New Video";$("saveVideoButton").textContent="＋ Upload & Save";$("cancelVideoEditButton").style.display="none";$("uploadedVideoPreview").style.display="none";$("previewPlayer").removeAttribute("src")}
+async function changeVideoStatus(id,status){if(!confirm("Change video status to "+status+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminVideos()}catch(e){alert(e.message)}}
+async function deleteVideo(id){if(!confirm("Delete this video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminVideos();showToast("Video deleted")}catch(e){alert(e.message)}}
 
-function filterWithdrawalTab(type){currentWithdrawFilter=type;document.querySelectorAll("#withdrawals .tab").forEach(t=>t.classList.remove("active"));document.querySelector(`#withdrawals .tab[onclick="filterWithdrawalTab('${type}')"]`).classList.add("active");document.getElementById("withdrawalShowing").textContent=type==="pending"?"Pending Only":type==="approved"?"Paid / Approved":"All";filterWithdrawals()}
-async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Failed");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];document.getElementById("totalWithdrawals").textContent=rawWithdrawals.length;document.getElementById("pendingWithdrawalsCount").textContent=rawWithdrawals.filter(w=>String(w.status).toLowerCase()==="pending").length;filterWithdrawals()}catch(e){document.getElementById("withdrawalsTable").innerHTML=`<tr><td colspan="8" style="text-align:center;padding:20px">${escapeHTML(e.message)}</td></tr>`}}
-function filterWithdrawals(){let items=rawWithdrawals;const q=(document.getElementById("searchWithdrawals").value||"").toLowerCase().trim();if(currentWithdrawFilter==="pending") items=items.filter(w=>String(w.status).toLowerCase()==="pending");else if(currentWithdrawFilter==="approved") items=items.filter(w=>["approved","paid","completed"].includes(String(w.status).toLowerCase()));if(q) items=items.filter(w=>`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.withdrawal_type||w.type||""}`.toLowerCase().includes(q));const table=document.getElementById("withdrawalsTable");if(!items.length){table.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">No ${currentWithdrawFilter} withdrawals found - clean list!</td></tr>`;return}table.innerHTML=items.map(w=>{const status=String(w.status||"pending").toLowerCase(),isPending=status==="pending";return `<tr><td><strong>${escapeHTML(w.username||"-")}</strong></td><td>${escapeHTML(w.bank_name||"-")}</td><td>${escapeHTML(w.account_name||"-")}</td><td>${formatNaira(w.amount)}</td><td><span style="font-size:9px;padding:3px 7px;border-radius:10px;background:${String(w.withdrawal_type||"").toLowerCase().includes("affili")?"#dcfce7":"#fef3c7"}">${escapeHTML(w.withdrawal_type||w.type||"Regular")}</span></td><td><span class="status ${isPending?"pending":"approved"}">${escapeHTML(status)}</span></td><td>${escapeHTML(formatDate(w.created_at))}</td><td>${isPending?`<button class="action approve" onclick="approveWithdrawal(${Number(w.id)})">Approve Paid</button><button class="action delete" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`:`<span style="font-size:10px;color:var(--muted)">Paid ✓</span>`}</td></tr>`}).join("")}
-async function approveWithdrawal(id){if(!confirm("Mark as PAID / APPROVED?"))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/approve`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:"approved"})});d=await r.json().catch(()=>({}))}if(!r.ok||!d.success)throw new Error(d.message||"Failed");showToast("Marked as PAID");await loadAdminWithdrawals()}catch(e){alert(e.message)}}
-async function rejectWithdrawal(id){if(!confirm("Reject withdrawal?"))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/reject`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status:"rejected"})});d=await r.json().catch(()=>({}))}if(!r.ok||!d.success)throw new Error(d.message||"Failed");await loadAdminWithdrawals()}catch(e){alert(e.message)}}
-async function toggleRegularWithdrawals(en){try{const r=await fetch("/api/admin/settings/regular-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:en})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Failed");showToast("Regular "+(en?"ON":"OFF"))}catch(e){alert(e.message)}}
-async function toggleAffiliateWithdrawals(en){try{const r=await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:en})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Failed");showToast("Affiliate "+(en?"ON":"OFF"))}catch(e){alert(e.message)}}
+async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load withdrawals");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length,paid=rawWithdrawals.filter(isPaidWithdrawal).length;$("totalWithdrawals").textContent=rawWithdrawals.length;$("pendingWithdrawalsCount").textContent=pending;$("paidWithdrawalsCount").textContent=paid;$("pendingWithdrawalsCard").textContent=pending;$("navPendingCount").textContent=pending;$("pendingTabCount").textContent=pending;$("paidTabCount").textContent=paid;$("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");filterWithdrawals()}catch(e){$("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+function isPaidWithdrawal(w){return ["approved","paid","completed","success","successful"].includes(String(w.status||"").toLowerCase())}
+function setWithdrawalTab(tab){withdrawalTab=tab;["pending","paid","other"].forEach(k=>$(k+"Tab").classList.toggle("active-tab",k===tab));$("withdrawalListLabel").textContent=tab==="pending"?"Pending withdrawals":tab==="paid"?"Paid withdrawals":"Other withdrawal statuses";filterWithdrawals()}
+function filterWithdrawals(){const q=$("searchWithdrawals").value.toLowerCase().trim(),type=$("withdrawalTypeFilter").value;const items=rawWithdrawals.filter(w=>{const status=String(w.status||"pending").toLowerCase(),isPending=status==="pending",isPaid=isPaidWithdrawal(w),t=String(w.withdrawal_type||w.type||"regular").toLowerCase(),affiliate=t.includes("affili");const tabOk=withdrawalTab==="pending"?isPending:withdrawalTab==="paid"?isPaid:!isPending&&!isPaid;const typeOk=type==="all"||(type==="affiliate"&&affiliate)||(type==="regular"&&!affiliate);const text=`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.account_number||""} ${t} ${status}`.toLowerCase();return tabOk&&typeOk&&text.includes(q)});renderWithdrawalsTable(items)}
+function renderWithdrawalsTable(items){const t=$("withdrawalsTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No withdrawals in this list.</td></tr>';return}t.innerHTML=items.map(w=>{const type=String(w.withdrawal_type||w.type||"Regular"),affiliate=type.toLowerCase().includes("affili"),status=String(w.status||"pending").toLowerCase();let actions;if(status==="pending")actions=`<button class="action approve" onclick="approveWithdrawal(${Number(w.id)})">✅ Mark Paid</button><button class="action reject" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`;else actions=`<span style="color:#64748b;font-size:10px">No pending action</span>`;return `<tr><td><strong>${escapeHTML(w.username||"-")}</strong></td><td>${escapeHTML(w.bank_name||"-")}</td><td>${escapeHTML(w.account_name||"-")}</td><td>${escapeHTML(w.account_number||"-")}</td><td><strong>${formatNaira(w.amount)}</strong></td><td><span class="status ${affiliate?"approved":"pending"}">${escapeHTML(type)}</span></td><td><span class="status ${isPaidWithdrawal(w)?"paid":status==="pending"?"pending":"rejected"}">${escapeHTML(status)}</span></td><td>${escapeHTML(formatDate(w.created_at))}</td><td>${actions}</td></tr>`}).join("")}
+async function setWithdrawalStatus(id,status){if(!confirm(`${status==="approved"?"Mark this withdrawal as paid":"Reject"} withdrawal #${id}?`))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/${status==="approved"?"approve":"reject"}`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});d=await r.json().catch(()=>({}))}if(!r.ok||!d.success)throw new Error(d.message||"Withdrawal status update failed");showToast(status==="approved"?"Withdrawal marked paid":"Withdrawal rejected");await loadAdminWithdrawals()}catch(e){alert(e.message)}}
+function approveWithdrawal(id){return setWithdrawalStatus(id,"approved")}
+function rejectWithdrawal(id){return setWithdrawalStatus(id,"rejected")}
 
 checkAdminSession();
 </script>
