@@ -62,7 +62,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  console.log("✅ JOVIA PROFESSIONAL TABLES - 20% WIN 80% LOSE");
+  console.log("✅ JOVIA PROFESSIONAL - BALANCED - 20% WIN 80% LOSE - MIN WITHDRAW 2500");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -221,7 +221,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
       const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id);
-      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, odds:{winPercent:20, lossPercent:80}});
+      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, odds:{winPercent:20, lossPercent:80}, minWithdraw:2500});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -243,7 +243,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // ============= 20% WIN - 80% LOSE =============
+  // ============= FIXED GAMES - BALANCED + PROFITABLE =============
   app.post("/api/games/play", userGuard, (req,res)=>{
     try{
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
@@ -254,23 +254,76 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}. Deposit to 1850772192`});
       
-      // 20% WIN, 80% LOSE
-      const isWin = crypto.randomInt(0,100) < 20;
-      
+      let isWin = false;
       let mult = 0;
-      if(isWin){
-        if(gameType==="spin_bottle") mult=1.5+Math.random()*1.0;
-        else if(gameType==="spin_wheel") mult=1.2+Math.random()*1.8;
-        else if(gameType==="up_down") mult=1.8;
-        else mult=2.5;
-        mult=Math.round(mult*100)/100;
+      let segmentLabel = "0x";
+      let finalSide = null; // for bottle/updown
+
+      if(gameType === "spin_bottle"){
+        // BOTTLE - UP/DOWN ONLY - VICE VERSA - 20% WIN
+        const pick = String(req.body?.prediction||"up").toLowerCase().trim(); // up or down
+        const pickNorm = pick === "down" ? "down" : "up";
+        isWin = crypto.randomInt(0,100) < 20; // 20% win
+        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up"); // if win, bottle lands on pick, if lose opposite
+        mult = isWin ? 1.8 : 0;
+        segmentLabel = finalSide.toUpperCase();
+      } else if(gameType === "up_down"){
+        // UP/DOWN TRADING - GREEN/RED - 20% WIN - VICE VERSA
+        const pick = String(req.body?.prediction||"up").toLowerCase().trim();
+        const pickNorm = pick === "down" ? "down" : "up";
+        isWin = crypto.randomInt(0,100) < 20;
+        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
+        mult = isWin ? 1.8 : 0;
+        segmentLabel = finalSide === "up" ? "GREEN" : "RED";
+      } else if(gameType === "spin_wheel"){
+        // SPIN WHEEL - PROFITABLE - NO BANKRUPTCY
+        // Segments: 0x, 0.1x, 0.2x, 0.3x, 0.5x, 0.8x, 1.2x, 2x, 5x, 20x, 100x
+        // 100x & 20x NEVER WIN - only visual attraction
+        // House keeps 80%+
+        const rand = crypto.randomInt(0,100);
+        if(rand < 35){ mult = 0; segmentLabel="0x"; isWin=false; } // 35% lose all - BEST PROFIT
+        else if(rand < 55){ mult = 0.1; segmentLabel="0.1x"; isWin=false; } // 20% returns 10%
+        else if(rand < 70){ mult = 0.2; segmentLabel="0.2x"; isWin=false; } // 15% returns 20%
+        else if(rand < 80){ mult = 0.3; segmentLabel="0.3x"; isWin=false; } // 10%
+        else if(rand < 88){ mult = 0.5; segmentLabel="0.5x"; isWin=false; } // 8%
+        else if(rand < 93){ mult = 0.8; segmentLabel="0.8x"; isWin=false; } // 5% returns 80% (small loss for house)
+        else if(rand < 97){ mult = 1.2; segmentLabel="1.2x"; isWin=true; } // 4% small win
+        else if(rand < 99){ mult = 2; segmentLabel="2x"; isWin=true; } // 2%
+        else { mult = 5; segmentLabel="5x"; isWin=true; } // 1% RARE 4th biggest - 100x & 20x NEVER
+        // Safety: never return 20x or 100x
+        if(segmentLabel==="20x" || segmentLabel==="100x"){ mult=0; segmentLabel="0x"; isWin=false; }
+      } else {
+        // number_predict and others - coming soon, but still handle as 20%
+        isWin = crypto.randomInt(0,100) < 20;
+        mult = isWin ? 2.5 : 0;
+        segmentLabel = isWin ? `${mult}x` : "0x";
       }
-      const winAmount = isWin ? Math.floor(bet*mult) : 0;
-      const newBal = isWin ? (acc.game_balance - bet + winAmount) : (acc.game_balance - bet);
-      db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, isWin?1:0, req.user.id);
-      db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, winAmount, isWin?'win':'loss', mult);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?winAmount:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
-      return res.json({success:true, result:isWin?'win':'loss', isWin, bet, winAmount, multiplier: mult.toFixed(2), newBalance:newBal, message:isWin?`WIN ₦${winAmount} (${mult}x)`:`Lose ₦${bet}`, gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), odds:{winPercent:20, lossPercent:80}});
+
+      const winAmount = isWin ? Math.floor(bet*mult) : Math.floor(bet*mult); // for wheel, 0.1x still gives small return
+      // For bottle/updown, winAmount=0 if lose
+      const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
+      const newBal = acc.game_balance - bet + finalWin;
+      
+      db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, (isWin && mult>=1)?1:0, req.user.id);
+      db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, finalWin, isWin?'win':'loss', mult);
+      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?finalWin:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
+      
+      return res.json({
+        success:true, 
+        result:isWin?'win':'loss', 
+        isWin, 
+        bet, 
+        winAmount: finalWin, 
+        multiplier: mult, 
+        segment: segmentLabel,
+        finalSide: finalSide, // up/down for bottle, GREEN/RED for updown
+        newBalance:newBal, 
+        message: gameType==="spin_bottle" ? (finalSide===String(req.body?.prediction||"up").toLowerCase() ? `BOTTLE ${finalSide.toUpperCase()} - YOU WIN ₦${finalWin}!` : `BOTTLE ${finalSide.toUpperCase()} - YOU LOSE ₦${bet}`) : 
+                 gameType==="spin_wheel" ? (finalWin===0 ? `Wheel ${segmentLabel} - LOSE ALL ₦${bet}` : finalWin<bet ? `Wheel ${segmentLabel} - Bet ₦${bet}, Return ₦${finalWin}` : `WIN! Wheel ${segmentLabel} - WIN ₦${finalWin}!`) :
+                 (isWin?`WIN ₦${finalWin} (${mult}x)`:`Lose ₦${bet}`),
+        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), 
+        minWithdraw:2500
+      });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -280,7 +333,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const bank_name = String(req.body?.bank_name||"").trim();
       const account_number = String(req.body?.account_number||"").trim();
       const account_name = String(req.body?.account_name||"").trim();
-      if(!amount || amount < 100) return res.status(400).json({success:false,message:"Minimum ₦100"});
+      if(!amount || amount < 2500) return res.status(400).json({success:false,message:"Minimum withdrawal for game is ₦2500"});
       if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Complete your bank details"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient ₦${acc.game_balance}`});
@@ -288,7 +341,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
       db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
-      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending - admin will pay from 1850772192`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
+      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending - admin will pay from 1850772192 (Min ₦2500)`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -341,5 +394,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ PROFESSIONAL JOVIA API - 20% WIN / 80% LOSE - 1850772192 KREDI MFB");
+  console.log("✅ PROFESSIONAL JOVIA API FIXED - BOTTLE UP/DOWN ONLY, SPIN PROFITABLE (100x & 20x NEVER), MIN WITHDRAW 2500");
 };
