@@ -5,11 +5,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_game_accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE NOT NULL, game_balance INTEGER DEFAULT 0, points INTEGER DEFAULT 0, total_deposits INTEGER DEFAULT 0, total_withdrawals INTEGER DEFAULT 0, total_wins INTEGER DEFAULT 0, candy_high_score INTEGER DEFAULT 0, flight_high_multiplier REAL DEFAULT 0, ludo_wins INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
   db.exec(`CREATE TABLE IF NOT EXISTS game_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, amount INTEGER DEFAULT 0, points_change INTEGER DEFAULT 0, game_type TEXT DEFAULT '', reference TEXT DEFAULT '', status TEXT DEFAULT 'completed', balance_before INTEGER DEFAULT 0, balance_after INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
   db.exec(`CREATE TABLE IF NOT EXISTS game_deposits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, reference TEXT UNIQUE NOT NULL, payment_method TEXT DEFAULT 'manual', status TEXT DEFAULT 'pending', confirmed_by INTEGER DEFAULT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, confirmed_at TEXT, FOREIGN KEY(user_id) REFERENCES users(id));`);
-  db.exec(`CREATE TABLE IF NOT EXISTS game_withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, status TEXT DEFAULT 'pending', requested_at TEXT DEFAULT CURRENT_TIMESTAMP, processed_at TEXT, processed_by INTEGER DEFAULT NULL, FOREIGN KEY(user_id) REFERENCES users(id));`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, bank_name TEXT DEFAULT '', account_number TEXT DEFAULT '', account_name TEXT DEFAULT '', status TEXT DEFAULT 'pending', requested_at TEXT DEFAULT CURRENT_TIMESTAMP, processed_at TEXT, processed_by INTEGER DEFAULT NULL, FOREIGN KEY(user_id) REFERENCES users(id));`);
   db.exec(`CREATE TABLE IF NOT EXISTS game_history (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL, score INTEGER DEFAULT 0, multiplier REAL DEFAULT 0, result TEXT DEFAULT '', win_amount INTEGER DEFAULT 0, is_demo INTEGER DEFAULT 1, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
   db.exec(`CREATE TABLE IF NOT EXISTS game_bets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL, bet_amount INTEGER NOT NULL, win_amount INTEGER DEFAULT 0, result TEXT DEFAULT 'loss', multiplier REAL DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
 
-  console.log("✅ JOVIA GAMES TABLES: separate wallet + game_bets ready - ALL MANUAL MODE");
+  // Add missing columns for withdrawals if table existed before
+  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
+  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
+  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
+
+  console.log("✅ JOVIA GAMES TABLES: separate wallet + game_bets + bank fields ready - ALL MANUAL");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -142,7 +147,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // === CHANGED TO ALL MANUAL - NO AUTO CREDIT ===
   app.post("/api/games/deposit", userGuard, (req,res)=>{
     try{
       const amount = Number(req.body?.amount); 
@@ -188,15 +192,18 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   app.post("/api/games/withdraw", userGuard, (req,res)=>{
     try{
       const amount = Number(req.body?.amount); if(!amount || amount < 100) return res.status(400).json({success:false,message:"Min withdraw ₦100"});
+      const bank_name = String(req.body?.bank_name||"").trim();
+      const account_number = String(req.body?.account_number||"").trim();
+      const account_name = String(req.body?.account_name||"").trim();
+      if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Fill all bank details - bank name, account number, account name"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient game balance. You have ₦${acc.game_balance}`});
       const newBal = acc.game_balance - amount;
       db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
-      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, status) VALUES (?, ?, 'confirmed')`).run(req.user.id, amount);
-      try{ db.prepare(`UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?`).run(amount, req.user.id); }catch{}
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'completed')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
+      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
+      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
       const updated = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(req.user.id);
-      return res.json({success:true,message:`✅ ₦${amount} withdrawn to main wallet instantly!`, gameAccount: updated});
+      return res.json({success:true,message:`Withdrawal request ₦${amount} to ${account_number} (${bank_name}) submitted! Admin will pay you from 1850772192 Kredi MFB manually.`, gameAccount: updated, status:"pending"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -226,14 +233,37 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
+  app.post("/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
+    try{
+      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId); if(!dep) return res.status(404).json({success:false,message:"Not found"});
+      if(dep.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
+      db.prepare(`UPDATE game_deposits SET status='declined', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
+      return res.json({success:true,message:"Deposit declined"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   app.post("/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
     try{
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId); if(!w) return res.status(404).json({success:false,message:"Withdrawal not found"}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
       db.prepare(`UPDATE game_withdrawals SET status='confirmed', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
       db.prepare(`UPDATE game_transactions SET status='completed' WHERE user_id=? AND type='withdraw' AND status='pending' ORDER BY created_at DESC LIMIT 1`).run(w.user_id);
-      return res.json({success:true,message:"Withdrawal confirmed"});
+      return res.json({success:true,message:`Withdrawal ₦${w.amount} to ${w.account_number} (${w.bank_name}) marked as Paid`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ JOVIA GAMES API - ALL MANUAL DEPOSITS - ADMIN VERIFY KREDI MFB 1850772192 BEFORE APPROVE - ID 283 READY");
+  app.post("/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
+    try{
+      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId); if(!w) return res.status(404).json({success:false,message:"Not found"});
+      if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
+      db.transaction(()=>{
+        db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
+        const acc = getOrCreateGameAccount(w.user_id);
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ?, updated_at=datetime('now') WHERE user_id=?`).run(w.amount, w.user_id);
+        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw_refund', ?, ?, ?, ?, 'completed')`).run(w.user_id, w.amount, "REFUND-WD-"+w.id, acc.game_balance, acc.game_balance + w.amount);
+      })();
+      return res.json({success:true,message:`Declined and refunded ₦${w.amount} to game wallet`});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  console.log("✅ JOVIA GAMES API - FINAL ALL MANUAL - DEPOSITS check Kredi MFB 1850772192 - WITHDRAWALS show bank details to pay manually - ID 283 READY");
 };
