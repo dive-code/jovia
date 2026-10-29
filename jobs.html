@@ -4,76 +4,92 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#3b0758">
-<title>JOVIA Network | Jobs & Games - FULL FINAL</title>
+<meta name="description" content="Complete Jovia Network jobs, learn with the Jovia Academy, and explore Jovia Games.">
+<title>JOVIA Network | Jobs & Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--p:#3b0758;--d:#260038;--y:#ffc400;--bg:#f7f5f9;--c:#fff;--t:#211827;--m:#756d7c;--b:#ebe6ef;--g:#15803d;--radius:18px}
+:root{--p:#3b0758;--d:#260038;--y:#ffc400;--bg:#f7f5f9;--c:#fff;--t:#211827;--m:#756d7c;--b:#ebe6ef;--g:#15803d;--red:#b91c1c;--radius:18px}
 body{font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
-button,input,select{font:inherit}button:disabled{opacity:.55}
+button,input,select{font:inherit}
+button:disabled{opacity:.55;cursor:not-allowed}
+button,a{-webkit-tap-highlight-color:transparent}
+button{cursor:pointer}
 .app{max-width:720px;min-height:100vh;margin:0 auto;padding-bottom:94px}
-.topbar{position:sticky;top:0;z-index:50;min-height:66px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b)}
-.brand{font-size:24px;font-weight:900;color:var(--p)}.brand span{color:var(--y)}
+.topbar{position:sticky;top:0;z-index:50;min-height:66px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b);backdrop-filter:blur(10px)}
+.brand{font-size:24px;font-weight:900;letter-spacing:-1px;color:var(--p)}.brand span{color:var(--y)}
 .top-pill{font-size:11px;font-weight:800;color:#655b6d;background:#f5f3f7;padding:8px 12px;border-radius:20px}
 .content{padding:22px 15px 28px}
-.message{display:none;margin:15px 0;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700}
+.page-heading h1{font-size:25px;font-weight:900;letter-spacing:-.6px;margin-bottom:7px}.page-heading p{font-size:12px;color:var(--m);line-height:1.7}
+.message{display:none;margin:15px 0;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700;line-height:1.6;overflow-wrap:anywhere}
 .message.success{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .message.error-message{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
 .message.info-message{display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a}
-.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:19px;margin:19px 0}
-.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
-.summary-label{color:#d8cfe0;font-size:9px;font-weight:800;margin-bottom:7px;text-transform:uppercase}
-.summary-value{font-size:19px;font-weight:900}
-.section{background:var(--c);border:1px solid var(--b);border-radius:var(--radius);margin-bottom:17px;overflow:hidden}
-.section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
-.section-title{font-size:14px;font-weight:900}.section-count{color:var(--m);font-size:10px;font-weight:800;background:#f5f3f7;padding:5px 9px;border-radius:10px}
-.filter-row{display:flex;gap:8px;overflow-x:auto;margin:2px 0 14px}
+.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:19px;margin:19px 0;box-shadow:0 10px 30px rgba(59,7,88,.19)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);min-width:0}
+.summary-label{color:#d8cfe0;font-size:9px;font-weight:800;margin-bottom:7px;letter-spacing:.5px;text-transform:uppercase}
+.summary-value{font-size:clamp(14px,3.6vw,19px);font-weight:900;overflow-wrap:anywhere}
+.section{background:var(--c);border:1px solid var(--b);border-radius:var(--radius);margin-bottom:17px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.025)}
+.section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.section-title{font-size:14px;font-weight:900}.section-count{color:var(--m);font-size:10px;font-weight:800;background:#f5f3f7;padding:5px 9px;border-radius:10px;white-space:nowrap}
+.filter-row{display:flex;gap:8px;overflow-x:auto;margin:2px 0 14px;padding-bottom:3px}
 .filter-btn{flex:0 0 auto;border:1px solid var(--b);background:#fff;color:#776e7d;padding:10px 16px;border-radius:999px;font-size:11px;font-weight:800}
 .filter-btn.active{background:var(--y);border-color:var(--y);color:#281d00}
 .job-card{padding:17px 16px;border-bottom:1px solid #f1edf3}
+.job-card:last-child,.video-card:last-child{border-bottom:0}
 .job-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
-.job-title{font-size:14px;font-weight:900}.job-reward{color:var(--g);font-size:14px;font-weight:900}
-.job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.7}
+.job-title{font-size:14px;font-weight:900;line-height:1.5;overflow-wrap:anywhere}.job-reward{color:var(--g);font-size:14px;font-weight:900;white-space:nowrap}
+.job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.7;overflow-wrap:anywhere}
+.job-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
+.meta{display:inline-flex;background:#faf8fb;border:1px solid var(--b);color:#746b7a;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:800}
 .task-box{padding:12px;margin-bottom:11px;border-radius:13px;background:#fffbeb;border:1px solid #fde68a}
 .task-box.success-box{background:#f0fdf4;border-color:#bbf7d0}
+.task-box.upgrade-box{background:linear-gradient(135deg,#fff7ed,#fffbeb);border:1px solid #f59e0b}
 .task-box.wait-box{background:#f5f3ff;border-color:#ddd6fe}
-.task-open-btn,.complete-btn,.primary-btn,.secondary-btn{width:100%;border:none;padding:13px 14px;border-radius:12px;font-size:11px;font-weight:900}
+.task-label{margin-bottom:5px;font-size:9px;font-weight:900;letter-spacing:.5px}.task-info{font-size:10px;line-height:1.7}
+.task-open-btn,.complete-btn,.upgrade-btn,.primary-btn,.secondary-btn{width:100%;border:none;padding:13px 14px;border-radius:12px;font-size:11px;font-weight:900;transition:background .2s,transform .2s}
 .task-open-btn,.primary-btn{background:var(--y);color:#241900}
 .complete-btn{background:var(--p);color:#fff;margin-top:9px}
-.loading,.empty{padding:34px 20px;text-align:center;color:var(--m);font-size:12px}.empty{display:none}
+.complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.upgrade-btn{display:block;background:linear-gradient(135deg,#ff9a00,#ffd83d);color:#3a2600;margin-top:9px;text-align:center;text-decoration:none;border:1px solid #f59e0b}
+.secondary-btn{background:#f5f3f7;color:var(--p);border:1px solid var(--b)}
+.loading,.empty{padding:34px 20px;text-align:center;color:var(--m);font-size:12px}
+.empty{display:none}
 .error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center;border-radius:12px;margin:12px}
 .activation-box,.suspended-box{padding:42px 20px;text-align:center}
 .video-card{padding:16px;border-bottom:1px solid #f1edf3}
 .video-player{width:100%;height:220px;border-radius:13px;background:#000;border:none}
 .video-player-mp4{width:100%;max-height:260px;border-radius:13px;background:#000}
 .watch-progress{height:5px;margin:10px 0 8px;background:#e7e4e8;border-radius:999px;overflow:hidden}
-.watch-bar{height:100%;width:0%;background:linear-gradient(90deg,#ffc400,#ff9a00)}
+.watch-bar{height:100%;width:0%;background:linear-gradient(90deg,#ffc400,#ff9a00);transition:width .25s}
 .play-overlay{position:relative;border-radius:13px;overflow:hidden;background:#000}
-.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:720px;height:72px;display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid var(--b);z-index:100}
-.nav-item{min-width:60px;color:#9b939f;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:800;text-decoration:none}
+.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:720px;height:72px;display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,.98);border-top:1px solid var(--b);backdrop-filter:blur(15px);z-index:100}
+.nav-item{min-width:60px;border:none;background:transparent;color:#9b939f;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:800;text-decoration:none;padding:6px}
 .nav-item.active{color:var(--p)}.nav-icon{font-size:20px}
-.popup-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.75);z-index:200}
+.popup-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.75);backdrop-filter:blur(8px);z-index:200}
 .popup-overlay.show{display:flex}
-.popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center}
+.popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .popup-btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--y);color:#241900;font-weight:900;text-decoration:none;margin-top:14px}
-.games-fab{position:fixed;right:max(14px,calc((100vw - 720px)/2 + 14px));bottom:88px;z-index:90;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#3b0758,#7c2ae8);border:2px solid #ffc400;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.games-fab b{font-size:22px}.games-fab i{font-style:normal;font-size:8px;font-weight:900;background:#ffc400;color:#000;padding:2px 5px;border-radius:10px;margin-top:2px}
+.games-fab{position:fixed;right:max(14px,calc((100vw - 720px)/2 + 14px));bottom:88px;z-index:90;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#3b0758,#7c2ae8);border:2px solid #ffc400;box-shadow:0 8px 22px rgba(59,7,88,.35);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.games-fab b{font-size:22px;line-height:1}.games-fab i{font-style:normal;font-size:8px;font-weight:900;background:#ffc400;color:#000;padding:2px 5px;border-radius:10px;margin-top:2px}
 .games-overlay{position:fixed;inset:0;z-index:160;display:none;background:var(--bg);overflow-y:auto}
 .games-overlay.show{display:block}
-.overlay-top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--b);padding:13px 16px;display:flex;justify-content:space-between;align-items:center}
+.overlay-top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--b);padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .games-lobby{max-width:720px;margin:0 auto;padding:18px 15px 100px}
-.game-hero{background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:20px;padding:20px;margin-bottom:15px}
+.game-hero{background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:20px;padding:20px;margin-bottom:15px;box-shadow:0 8px 25px rgba(59,7,88,.15)}
 .game-balance-row{display:flex;justify-content:space-between;gap:12px}
-.game-label{font-size:9px;opacity:.75;font-weight:800}
-.game-money{font-size:27px;font-weight:900;margin-top:5px}
+.game-label{font-size:9px;opacity:.75;font-weight:800;letter-spacing:.6px}
+.game-money{font-size:clamp(20px,5vw,27px);font-weight:900;margin-top:5px;overflow-wrap:anywhere}
 .game-action-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}
 .game-action-row button{padding:12px;border-radius:12px;font-size:11px;font-weight:900}
 .game-primary{background:var(--y);color:#241900;border:0}
 .game-secondary{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)}
-.game-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.game-card{background:#fff;border:1px solid var(--b);border-radius:18px;padding:15px}
-.game-card h3{font-size:14px;margin-bottom:5px}.game-card p{font-size:10px;color:var(--m);margin-bottom:12px}
+.game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.game-card{background:#fff;border:1px solid var(--b);border-radius:18px;padding:15px;min-width:0}
+.game-card h3{font-size:14px;margin-bottom:5px}.game-card p{font-size:10px;line-height:1.65;color:var(--m);margin-bottom:12px}
 .game-emoji{font-size:29px;margin-bottom:9px}
 .game-open{width:100%;padding:11px;border:0;border-radius:10px;background:var(--p);color:#fff;font-size:10px;font-weight:900}
 .game-panel{margin-top:14px;background:#fff;border:1px solid var(--b);border-radius:18px;padding:17px;display:none}
@@ -83,15 +99,23 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
 .close-panel{border:1px solid var(--b);background:#f8f6fa;border-radius:9px;padding:7px 10px;font-size:10px;font-weight:800}
 .field{margin:12px 0}
 .field label{display:block;font-size:10px;font-weight:800;margin-bottom:7px}
-.field input,.field select{width:100%;padding:13px;border:1px solid #ded6e5;border-radius:11px;background:#fff;outline:none;font-size:13px}
-.game-result{display:none;margin-top:12px;padding:14px;border-radius:12px;font-size:12px;line-height:1.7;font-weight:800}
+.field input,.field select{width:100%;padding:13px;border:1px solid #ded6e5;border-radius:11px;background:#fff;color:var(--t);outline:none;font-size:13px}
+.field input:focus,.field select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(59,7,88,.08)}
+.field-hint{font-size:10px;color:var(--m);line-height:1.6;margin-top:6px}
+.game-notice{font-size:11px;line-height:1.7;padding:11px 12px;background:#f5f3ff;border:1px solid #ddd6fe;color:#4c1d95;border-radius:11px;margin-bottom:12px}
+.game-result{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#f5f3ff;color:var(--p);font-size:12px;line-height:1.7;font-weight:800;overflow-wrap:anywhere}
 .game-result.show{display:block}
-.guess-buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.game-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.game-buttons button{flex:1;min-width:100px;padding:12px;border-radius:11px;font-size:11px;font-weight:900;border:0}
+.guess-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
 .guess-buttons button{border:1px solid var(--b);border-radius:10px;padding:12px 0;background:#faf8fb;color:var(--p);font-weight:900}
 .guess-buttons button.selected{background:var(--y);border-color:var(--y)}
-.history-item{padding:12px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;gap:12px;font-size:11px}
+.history-item{padding:12px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;gap:12px;font-size:11px;line-height:1.7}
+.history-item:last-child{border-bottom:0}
 .history-muted{color:var(--m);font-size:10px}
 .small-tag{display:inline-flex;border-radius:8px;padding:4px 7px;font-size:9px;font-weight:900;background:#f5f3f7;color:var(--m)}
+.coming-card{opacity:.8}
+@media(max-width:420px){.game-grid{grid-template-columns:1fr}.summary-grid{gap:6px}.summary-item{padding:11px 7px}.content{padding-left:12px;padding-right:12px}.game-hero{padding:16px}}
 </style>
 </head>
 <body>
@@ -99,7 +123,7 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
 <header class="topbar"><div class="brand">JOVIA<span>.</span></div><div class="top-pill">💼 Jobs & Academy</div></header>
 <main class="content">
   <div class="page-heading"><h1>Available Jobs</h1><p id="planInfoText">Complete tasks and videos to earn rewards.</p></div>
-  <div id="message" class="message"></div>
+  <div id="message" class="message" role="status" aria-live="polite"></div>
   <section class="summary-card">
     <div class="summary-grid">
       <div class="summary-item"><div class="summary-label">Available</div><div class="summary-value" id="availableCount">0</div></div>
@@ -107,13 +131,13 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
       <div class="summary-item"><div class="summary-label">Main Wallet</div><div class="summary-value" id="walletBalance">₦0</div></div>
     </div>
     <div id="dailyEarnedText" style="margin-top:12px;font-size:11px;color:#d8cfe0">Earned today: ₦0</div>
-    <div id="superActiveBadge" style="display:none" class="small-tag">👑 SUPER ACTIVE</div>
+    <div id="superActiveBadge" style="display:none" class="small-tag">👑 SUPER ACTIVE — UNLIMITED ACCESS</div>
   </section>
   <section class="section" id="videoSection">
-    <div class="section-header"><h2 class="section-title">📚 JOVIA Academy</h2><span class="section-count" id="videoCount">0 resources</span></div>
+    <div class="section-header"><h2 class="section-title">📚 JOVIA Academy - Direct Play</h2><span class="section-count" id="videoCount">0 resources</span></div>
     <div class="loading" id="videoLoading">Loading academy...</div>
     <div id="videosList"></div>
-    <div class="empty" id="videoEmpty">No resources yet</div>
+    <div class="empty" id="videoEmpty"><div style="font-size:24px">📚</div><h3 style="margin-top:8px">No resources yet</h3></div>
   </section>
   <div class="filter-row" id="filterRow">
     <button class="filter-btn active" type="button" data-filter="available">Available</button>
@@ -125,13 +149,13 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
     <div class="activation-box" id="activationState" style="display:none"><div style="font-size:32px">🔒</div><h3 style="margin-top:10px">Account Not Activated</h3><a href="payment.html" class="popup-btn">Activate Now →</a></div>
     <div class="suspended-box" id="suspendedState" style="display:none"><div style="font-size:32px">⚠️</div><h3 style="margin-top:10px">Account Suspended</h3></div>
     <div id="errorState" class="error">Unable to load jobs.<br><br><button type="button" id="retryButton" class="task-open-btn" style="width:auto;padding:10px 20px">Try Again</button></div>
-    <div id="emptyState" class="empty">No jobs</div>
+    <div id="emptyState" class="empty"><div style="font-size:28px">💼</div><h3 id="emptyTitle" style="margin-top:8px">No jobs</h3></div>
     <div id="jobsList"></div>
   </section>
 </main>
 </div>
 <button class="games-fab" type="button" id="openGamesButton"><b>🎮</b><i>GAMES</i></button>
-<div class="games-overlay" id="gamesOverlay">
+<div class="games-overlay" id="gamesOverlay" aria-hidden="true">
   <div class="overlay-top"><div style="font-weight:900">🎮 JOVIA Games <span class="small-tag">SEPARATE WALLET</span></div><button type="button" id="closeGamesButton" class="close-panel">✕ Close</button></div>
   <div class="games-lobby">
     <section class="game-hero">
@@ -139,7 +163,7 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
         <div><div class="game-label">GAME WALLET BALANCE</div><div class="game-money" id="gameBalance">₦0</div></div>
         <div style="text-align:right"><div class="game-label">WINS</div><div class="game-money" id="gamePoints">0</div></div>
       </div>
-      <div style="margin-top:9px;font-size:10px;line-height:1.7;color:#ded1e8">Game Wallet separate from main wallet. Deposit to play, withdraw to your bank.</div>
+      <div style="margin-top:9px;font-size:10px;line-height:1.7;color:#ded1e8">Your Game Wallet is separate from your main Jovia wallet. Deposit to play, withdraw to your bank.</div>
       <div class="game-action-row">
         <button class="game-primary" type="button" id="openDepositButton">＋ Add Money</button>
         <button class="game-secondary" type="button" id="openWithdrawButton">↗ Withdraw</button>
@@ -153,30 +177,45 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
       <article class="game-card"><div class="game-emoji">🔢</div><h3>Number Guess</h3><p>Pick 1-10 to win.</p><button class="game-open" type="button" data-game="guess">Play →</button></article>
     </div>
 
+    <!-- PROFESSIONAL DEPOSIT WITH PROOF UPLOAD -->
     <section class="game-panel" id="depositPanel">
-      <div class="panel-head"><h3>＋ Add Money</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div style="background:#f0fff4;border:1.5px dashed #22c55e;padding:10px;border-radius:10px;margin-bottom:10px;font-size:12px;line-height:1.6">
-        Bank: <b>Kredi Money MFB Ltd</b><br>
-        Acc No: <b style="color:#d00;font-size:14px">1850772192</b> <button type="button" onclick="navigator.clipboard.writeText('1850772192');alert('Copied 1850772192')" style="padding:2px 8px;border-radius:6px;border:1px solid #ddd">Copy</button><br>
-        Name: <b>Raenest/Divine Ogheneovie Abanum</b>
+      <div class="panel-head"><h3>＋ Fund Game Wallet</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #22c55e;padding:14px;border-radius:12px;margin-bottom:16px">
+        <div style="font-size:10px;font-weight:800;color:#15803d;letter-spacing:.5px;margin-bottom:8px">TRANSFER TO THIS ACCOUNT</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Bank</span><b style="font-size:12px">Kredi Money MFB Ltd</b></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;color:#64748b">Account No</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <b style="font-size:16px;color:#dc2626;letter-spacing:1px">1850772192</b>
+            <button type="button" onclick="navigator.clipboard.writeText('1850772192');this.innerText='Copied!';setTimeout(()=>this.innerText='Copy',2000)" style="padding:4px 10px;border-radius:20px;border:none;background:#0f172a;color:#22c55e;font-size:10px;font-weight:800">Copy</button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#64748b">Name</span><b style="font-size:12px">Raenest / Divine Ogheneovie Abanum</b></div>
       </div>
       <form id="depositForm">
-        <div class="field"><label for="depositAmount">Amount Sent (₦) - Min ₦100</label><input id="depositAmount" type="number" min="100" placeholder="e.g 2000" required></div>
-        <div class="field"><label for="depositRef">Reference / Your Name + Last 4 Digits</label><input id="depositRef" type="text" placeholder="e.g Divine 2192" required></div>
-        <button class="primary-btn" id="depositSubmit" type="submit">I Have Paid - Submit</button>
+        <div class="field"><label for="depositAmount">Amount You Sent (₦) - Min ₦100</label><input id="depositAmount" type="number" min="100" step="1" placeholder="e.g 2000" required></div>
+        <div class="field"><label for="depositRef">Sender Name / Reference</label><input id="depositRef" type="text" placeholder="e.g Divine Okoro" required></div>
+        <div class="field">
+          <label for="depositProof">Upload Payment Proof (Screenshot) *</label>
+          <input id="depositProof" type="file" accept="image/*" required style="padding:10px;background:#faf8fb">
+          <div class="field-hint">Screenshot from your bank app after transfer to 1850772192</div>
+          <img id="proofPreview" style="display:none;width:100%;max-height:200px;object-fit:contain;margin-top:10px;border-radius:10px;border:1px solid #e2e8f0">
+        </div>
+        <button class="primary-btn" id="depositSubmit" type="submit" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">Submit Proof for Verification →</button>
       </form>
       <div class="game-result" id="depositResult"></div>
     </section>
 
+    <!-- PROFESSIONAL WITHDRAW WITH BANK FIELDS -->
     <section class="game-panel" id="withdrawPanel">
-      <div class="panel-head"><h3>↗ Withdraw to Bank</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div style="font-size:11px;color:#666;margin-bottom:8px">Game Balance: <b id="withdrawGameBalance">₦0</b> - We will pay you from <b>1850772192 Kredi MFB</b></div>
+      <div class="panel-head"><h3>↗ Withdraw to Your Bank</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div class="game-notice">Game Balance: <b id="withdrawGameBalance">₦0</b> - Admin will pay you from <b>1850772192 Kredi MFB</b> after verification</div>
       <form id="withdrawForm">
-        <div class="field"><label for="withdrawAmount">Amount (₦) - Min ₦100</label><input id="withdrawAmount" type="number" min="100" placeholder="e.g 1000" required></div>
-        <div class="field"><label for="wBankName">Your Bank Name</label><input id="wBankName" type="text" placeholder="e.g Kredi MFB / Opay / Palmpay" required></div>
-        <div class="field"><label for="wAccNumber">Your Account Number</label><input id="wAccNumber" type="text" placeholder="e.g 9041234567" required></div>
+        <div class="field"><label for="withdrawAmount">Amount (₦) - Min ₦100</label><input id="withdrawAmount" type="number" min="100" step="1" placeholder="e.g 1000" required></div>
+        <div class="field"><label for="wBankName">Your Bank Name</label><input id="wBankName" type="text" placeholder="e.g Opay, Palmpay, Kredi MFB" required></div>
+        <div class="field"><label for="wAccNumber">Your Account Number</label><input id="wAccNumber" type="text" inputmode="numeric" placeholder="e.g 9041234567" required></div>
         <div class="field"><label for="wAccName">Your Account Name</label><input id="wAccName" type="text" placeholder="e.g John Doe" required></div>
-        <button class="primary-btn" id="withdrawSubmit" type="submit">Request Withdrawal - We Will Pay You</button>
+        <button class="primary-btn" id="withdrawSubmit" type="submit">Request Withdrawal →</button>
       </form>
       <div class="game-result" id="withdrawResult"></div>
     </section>
@@ -184,16 +223,16 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
     <section class="game-panel" id="playPanel">
       <div class="panel-head"><h3 id="playTitle">Play Game</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
       <form id="playForm">
-        <input type="hidden" id="playGameType">
-        <div class="field"><label for="betAmount">Stake (₦) - Min ₦100</label><input id="betAmount" type="number" min="100" placeholder="500" required></div>
-        <div id="predictionField" class="field" style="display:none"><label for="prediction">Prediction</label><select id="prediction"><option value="up">UP 📈</option><option value="down">DOWN 📉</option></select></div>
-        <div id="guessField" class="field" style="display:none"><label>Choose number 1-10</label><input type="hidden" id="guessNumber" value="5"><div class="guess-buttons" id="guessButtons"><button type="button" data-number="1">1</button><button type="button" data-number="2">2</button><button type="button" data-number="3">3</button><button type="button" data-number="4">4</button><button type="button" data-number="5" class="selected">5</button><button type="button" data-number="6">6</button><button type="button" data-number="7">7</button><button type="button" data-number="8">8</button><button type="button" data-number="9">9</button><button type="button" data-number="10">10</button></div></div>
+        <input type="hidden" id="playGameType" name="game">
+        <div class="field"><label for="betAmount">Stake (₦) - Min ₦100</label><input id="betAmount" name="amount" type="number" min="100" step="1" placeholder="500" required></div>
+        <div id="predictionField" class="field" style="display:none"><label for="prediction">Prediction</label><select id="prediction" name="prediction"><option value="up">UP 📈</option><option value="down">DOWN 📉</option></select></div>
+        <div id="guessField" class="field" style="display:none"><label>Choose number 1-10</label><input type="hidden" id="guessNumber" name="number" value="5"><div class="guess-buttons" id="guessButtons"><button type="button" data-number="1">1</button><button type="button" data-number="2">2</button><button type="button" data-number="3">3</button><button type="button" data-number="4">4</button><button type="button" data-number="5" class="selected">5</button><button type="button" data-number="6">6</button><button type="button" data-number="7">7</button><button type="button" data-number="8">8</button><button type="button" data-number="9">9</button><button type="button" data-number="10">10</button></div></div>
         <button class="primary-btn" id="playSubmit" type="submit">Play Now</button>
       </form>
       <div class="game-result" id="playResult"></div>
     </section>
     <section class="section" style="margin-top:15px">
-      <div class="section-header"><h2 class="section-title">Recent Plays & Withdrawals</h2><button type="button" id="refreshHistoryButton" class="close-panel">Refresh</button></div>
+      <div class="section-header"><h2 class="section-title">Recent Plays</h2><button type="button" id="refreshHistoryButton" class="close-panel">Refresh</button></div>
       <div id="gameHistory"><div class="loading">Loading history...</div></div>
     </section>
   </div>
@@ -210,14 +249,17 @@ button,input,select{font:inherit}button:disabled{opacity:.55}
 const API_BASE="";const TASK_WAIT_SECONDS=30;const MIN_WATCH_SECONDS=60;
 let allJobs=[],availableJobs=[],completedJobs=[],allVideos=[],completedVideos=[];
 let currentFilter="available",accountActivated=false,currentUser=null,messageTimer=null,dailyStatsFromServer=null,loadingAll=false;
-let gameBusy=false;
+let gameBusy=false;let proofBase64="";
 const watchedVideos=new Map(),taskTimers=new Map(),youtubeTimers=new Map();
 const TASK_TIMER_STORAGE_KEY="jovia_task_waits_v1";let taskTimerInterval=null;
 const PLAN_CONFIG={Silver:{maxDaily:2500,taskCount:5},Gold:{maxDaily:7000,taskCount:10},Super:{maxDaily:Infinity,taskCount:Infinity}};
 function formatNaira(v){const n=Number(v);return "₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{maximumFractionDigits:2});}
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 function safeExternalURL(v){if(typeof v!=="string"||!v.trim())return "";let c=v.trim();if(c.startsWith("www."))c="https://"+c;try{const p=new URL(c,location.origin);if(!["http:","https:"].includes(p.protocol))return "";return p.href;}catch{return "";}}
-function getYouTubeId(url){try{const u=new URL(url);if(u.hostname.includes("youtu.be"))return u.pathname.slice(1).split("?")[0];if(u.hostname.includes("youtube.com")){if(u.searchParams.get("v"))return u.searchParams.get("v");const parts=u.pathname.split("/");const ei=parts.indexOf("embed"),si=parts.indexOf("shorts");if(ei!==-1)return parts[ei+1];if(si!==-1)return parts[si+1];}}catch{}const m=String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,20})/);return m?m[1]:"";}
+function getYouTubeId(url){
+  try{const u=new URL(url);if(u.hostname.includes("youtu.be"))return u.pathname.slice(1).split("?")[0];if(u.hostname.includes("youtube.com")){if(u.searchParams.get("v"))return u.searchParams.get("v");const parts=u.pathname.split("/");const ei=parts.indexOf("embed"),si=parts.indexOf("shorts");if(ei!==-1)return parts[ei+1];if(si!==-1)return parts[si+1];}}catch{}
+  const m=String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,20})/);return m?m[1]:"";
+}
 function isYouTubeURL(url){return !!getYouTubeId(url);}
 function getDriveId(url){const m=String(url).match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);return m?m[1]:"";}
 function buildPlayerHTML(video){
@@ -225,7 +267,7 @@ function buildPlayerHTML(video){
   if(!url)return '<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center;font-size:11px">Resource unavailable</div>';
   if(isYouTubeURL(url)){
     const ytId=getYouTubeId(url);
-    return `<div class="play-overlay"><iframe id="yt-${escapeHTML(id)}" class="video-player" src="https://www.youtube.com/embed/${escapeHTML(ytId)}?rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe><button type="button" id="playbtn-${escapeHTML(id)}" style="position:absolute;inset:0;background:rgba(0,0,0,.25);border:0;color:#fff;font-size:13px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><span style="width:56px;height:56px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px">▶</span><span>Tap to watch ${MIN_WATCH_SECONDS}s</span></button></div><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s</div>`;
+    return `<div class="play-overlay"><iframe id="yt-${escapeHTML(id)}" class="video-player" src="https://www.youtube.com/embed/${escapeHTML(ytId)}?rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe><button type="button" id="playbtn-${escapeHTML(id)}" style="position:absolute;inset:0;background:rgba(0,0,0,.25);border:0;color:#fff;font-size:13px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><span style="width:56px;height:56px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px">▶</span><span>Tap to watch ${MIN_WATCH_SECONDS}s</span></button></div><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s - Plays inside Jovia ✓</div>`;
   }
   if(getDriveId(url)){return `<iframe class="video-player" src="https://drive.google.com/file/d/${escapeHTML(getDriveId(url))}/preview" allow="autoplay"></iframe><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s</div><button type="button" id="startwatch-${escapeHTML(id)}" class="secondary-btn" style="margin-top:8px">Start timer</button>`;}
   return `<video class="video-player-mp4" id="vid-${escapeHTML(id)}" controls preload="metadata" playsinline controlsList="nodownload" src="${escapeHTML(url)}"></video><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s</div>`;
@@ -241,10 +283,11 @@ function isSuspended(u){return ["suspended","banned","blocked"].includes(getAcco
 function isActivated(u){return !!u&&!isSuspended(u)&&["active","approved","activated"].includes(getAccountStatus(u));}
 function showMessage(m,t="error"){const box=document.getElementById("message");if(messageTimer)clearTimeout(messageTimer);box.textContent=String(m||"");box.className="message "+(t==="success"?"success":t==="info"?"info-message":"error-message");messageTimer=setTimeout(()=>{box.className="message";box.textContent="";},7000);}
 function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance??0;document.getElementById("walletBalance").textContent=formatNaira(b);}
-function updateGameBalance(u){const bal=u?.game_balance??u?.gameBalance??0;const wins=u?.total_wins??u?.wins??0;document.getElementById("gameBalance").textContent=formatNaira(bal);document.getElementById("withdrawGameBalance").textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=wins+" wins";}
-function getDailyStats(){const plan=getCurrentPlan(),limits=getPlanLimits(plan);let earned=0,claimedCount=completedJobs.length+completedVideos.length;if(dailyStatsFromServer){earned=Number(dailyStatsFromServer.earnedToday??0)||0;claimedCount=Number(dailyStatsFromServer.claimedToday??claimedCount)||0;}if(isSuperPlan())return{plan:"Super",limits:PLAN_CONFIG.Super,earned,claimedCount,isSuper:true};return{plan,limits,earned,claimedCount,isSuper:false};}
+function updateGameBalance(u){const bal=u?.game_balance??u?.gameBalance??0;const wins=u?.total_wins??u?.wins??0;document.getElementById("gameBalance").textContent=formatNaira(bal);const wb=document.getElementById("withdrawGameBalance");if(wb)wb.textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=wins+" wins";}
+function getDailyStats(){const plan=getCurrentPlan(),limits=getPlanLimits(plan);let earned=0,claimedCount=completedJobs.length+completedVideos.length;if(dailyStatsFromServer){earned=Number(dailyStatsFromServer.earnedToday??0)||0;claimedCount=Number(dailyStatsFromServer.claimedToday??claimedCount)||0;}if(isSuperPlan())return{plan:"Super",limits:PLAN_CONFIG.Super,earned,claimedCount,isSuper:true};return{plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned),isSuper:false};}
 function isDailyLimitReached(){if(isSuperPlan())return false;const s=getDailyStats();return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;}
-function wouldExceedLimit(reward){if(isSuperPlan())return false;const s=getDailyStats();return s.earned+Number(reward)>s.limits.maxDaily;}
+function wouldExceedLimit(reward){if(isSuperPlan())return false;const s=getDailyStats();return Number(reward)>s.limits.maxDaily||s.earned+Number(reward)>s.limits.maxDaily;}
+function getUpgradeMessage(plan){return normalizePlan(plan)==="Silver"?"Daily limit reached. Upgrade to SUPER.":"Daily limit reached. Upgrade to SUPER.";}
 function restoreTaskTimers(){try{const saved=JSON.parse(sessionStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");Object.entries(saved).forEach(([id,ts])=>{if(Number(ts)>Date.now()-60000)taskTimers.set(String(id),{claimAvailableAt:Number(ts)});});}catch{}}
 function saveTaskTimers(){try{const o={};taskTimers.forEach((s,id)=>{o[id]=s.claimAvailableAt;});sessionStorage.setItem(TASK_TIMER_STORAGE_KEY,JSON.stringify(o));}catch{}}
 function startTaskTimer(id){taskTimers.set(String(id),{claimAvailableAt:Date.now()+TASK_WAIT_SECONDS*1000});saveTaskTimers();startTaskTimerTicker();}
@@ -252,6 +295,7 @@ function clearTaskTimer(id){taskTimers.delete(String(id));saveTaskTimers();}
 function getTaskSecondsRemaining(id){const s=taskTimers.get(String(id));return s?Math.max(0,Math.ceil((s.claimAvailableAt-Date.now())/1000)):TASK_WAIT_SECONDS;}
 function hasOpenedTask(job){const s=taskTimers.get(String(getJobId(job)));return !!s&&Date.now()>=s.claimAvailableAt;}
 function startTaskTimerTicker(){if(taskTimerInterval)return;taskTimerInterval=setInterval(()=>{if(!taskTimers.size){clearInterval(taskTimerInterval);taskTimerInterval=null;return;}if(accountActivated&&currentFilter==="available")renderJobs(availableJobs);},1000);}
+function renderUpgradeCard(reward,plan){return `<div class="task-box upgrade-box"><div class="task-label">UPGRADE</div><div class="task-info"><strong>${escapeHTML(getUpgradeMessage(plan))}</strong><br>${formatNaira(reward)}</div></div><a href="upgrade-pay.html" class="upgrade-btn">Upgrade →</a>`;}
 function hideJobContent(){document.getElementById("loadingState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("emptyState").style.display="none";document.getElementById("jobsList").innerHTML="";}
 function showJobsState(){accountActivated=true;document.getElementById("loadingState").style.display="none";document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="none";document.getElementById("errorState").style.display="none";document.getElementById("filterRow").style.display="flex";closePopup();}
 function showSuspendedState(){accountActivated=false;hideJobContent();document.getElementById("activationState").style.display="none";document.getElementById("suspendedState").style.display="block";}
@@ -266,7 +310,8 @@ const stats=getDailyStats();
 document.getElementById("completedCount").textContent=String(stats.claimedCount);
 document.getElementById("availableCount").textContent=String(availableJobs.length);
 document.getElementById("jobCount").textContent=`${jobs.length} jobs`;
-document.getElementById("superActiveBadge").style.display=stats.isSuper?"inline-flex":"none";
+const badge=document.getElementById("superActiveBadge");
+badge.style.display=stats.isSuper?"inline-flex":"none";
 document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${stats.isSuper?'∞':formatNaira(stats.limits.maxDaily)}`;
 if(currentFilter==="available"&&isDailyLimitReached()){list.innerHTML=`<div style="padding:30px 20px;text-align:center"><h3>Daily limit reached</h3><a href="upgrade-pay.html" class="upgrade-btn" style="margin-top:16px">Upgrade →</a></div>`;return;}
 if(!jobs.length){empty.style.display="block";return;}empty.style.display="none";
@@ -275,6 +320,7 @@ const id=String(getJobId(job));const title=getJobTitle(job);const reward=Number(
 const item=document.createElement("div");item.className="job-card";
 let html=`<div class="job-top"><div class="job-title">${escapeHTML(title)}</div><div class="job-reward">${formatNaira(reward)}</div></div><div class="job-description">${escapeHTML(getJobDescription(job))}</div>`;
 if(done){html+=`<div class="task-box success-box"><div class="task-label">COMPLETED ✓</div></div><button class="complete-btn completed" disabled>Completed ✓</button>`;}
+else if(!stats.isSuper&&wouldExceedLimit(reward)){html+=renderUpgradeCard(reward,stats.plan);}
 else if(timerExists&&!opened){html+=`<div class="task-box wait-box"><div class="task-label">⏳ ${sec}s</div></div><button class="complete-btn" disabled>Wait ${sec}s</button>`;}
 else if(opened){html+=`<div class="task-box success-box"><div class="task-label">READY</div></div><button class="complete-btn" data-action="complete" data-job-id="${escapeHTML(id)}">Claim ${formatNaira(reward)} →</button>`;}
 else{html+=`<button class="task-open-btn" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗</button>`;}
@@ -334,7 +380,7 @@ const id=String(video.id||"");const player=document.getElementById(`vid-${id}`);
 function startTimer(){
   if(youtubeTimers.has(id))return;let sec=0;
   apiRequest(`/api/videos/${encodeURIComponent(id)}/open`,{method:"POST",body:"{}"}).catch(()=>{});
-  const timer=setInterval(()=>{sec++;watchedVideos.set(id,sec);if(bar)bar.style.width=Math.min(100,sec/MIN_WATCH_SECONDS*100)+"%";if(wt)wt.textContent=`${sec}s / ${MIN_WATCH_SECONDS}s`;if(sec>=MIN_WATCH_SECONDS){if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}clearInterval(timer);youtubeTimers.delete(id);}},1000);
+  const timer=setInterval(()=>{sec++;watchedVideos.set(id,sec);if(bar)bar.style.width=Math.min(100,sec/MIN_WATCH_SECONDS*100)+"%";if(wt)wt.textContent=`${sec}s / ${MIN_WATCH_SECONDS}s - Plays inside Jovia ✓`;if(sec>=MIN_WATCH_SECONDS){if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}clearInterval(timer);youtubeTimers.delete(id);}},1000);
   youtubeTimers.set(id,timer);
 }
 if(player){player.addEventListener("play",startTimer);player.addEventListener("timeupdate",()=>{const s=Math.floor(player.currentTime);watchedVideos.set(id,Math.max(watchedVideos.get(id)||0,s));if(bar)bar.style.width=Math.min(100,(watchedVideos.get(id)||0)/MIN_WATCH_SECONDS*100)+"%";if((watchedVideos.get(id)||0)>=MIN_WATCH_SECONDS&&btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}});}
@@ -343,12 +389,12 @@ const sBtn=document.getElementById(`startwatch-${id}`);if(sBtn){sBtn.addEventLis
 if(btn&&!completedVideos.find(v=>String(v.id)===id)){btn.addEventListener("click",()=>claimVideo(id,btn));}
 });
 }catch(e){loading.style.display="none";empty.style.display="block";}}
-async function claimVideo(videoId,btn){const watched=watchedVideos.get(String(videoId))||0;if(watched<MIN_WATCH_SECONDS){showMessage(`Watch ${MIN_WATCH_SECONDS}s first`);return;}if(btn){btn.disabled=true;btn.textContent="Verifying...";}
+async function claimVideo(videoId,btn){const watched=watchedVideos.get(String(videoId))||0;if(watched<MIN_WATCH_SECONDS){showMessage(`Watch ${MIN_WATCH_SECONDS}s first. Watched ${watched}s`);return;}if(btn){btn.disabled=true;btn.textContent="Verifying...";}
 try{const d=await apiRequest(`/api/videos/${encodeURIComponent(videoId)}/complete`,{method:"POST",body:JSON.stringify({watchedSeconds:watched})});showMessage(`Reward: ${formatNaira(d.reward??0)}`,"success");await loadAll();}catch(e){showMessage(e.message);if(btn){btn.disabled=false;btn.textContent=`Claim ✅`;}}
 }
-function openGamesLobby(){document.getElementById("gamesOverlay").classList.add("show");document.body.style.overflow="hidden";refreshGameData();}
-function closeGamesLobby(){document.getElementById("gamesOverlay").classList.remove("show");document.body.style.overflow="";}
-function showGamePanel(id){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));const panel=document.getElementById(id);if(panel){panel.classList.add("show");panel.scrollIntoView({behavior:"smooth"});}}
+function openGamesLobby(){document.getElementById("gamesOverlay").classList.add("show");document.getElementById("gamesOverlay").setAttribute("aria-hidden","false");document.body.style.overflow="hidden";refreshGameData();}
+function closeGamesLobby(){document.getElementById("gamesOverlay").classList.remove("show");document.getElementById("gamesOverlay").setAttribute("aria-hidden","true");document.body.style.overflow="";}
+function showGamePanel(id){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));const panel=document.getElementById(id);if(panel){panel.classList.add("show");panel.scrollIntoView({behavior:"smooth",block:"nearest"});}}
 function closeGamePanels(){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));}
 function setGameResult(id,msg,type="info"){const el=document.getElementById(id);el.textContent=msg;el.classList.add("show");el.style.background=type==="success"?"#dcfce7":type==="error"?"#fee2e2":"#f5f3ff";el.style.color=type==="success"?"#166534":type==="error"?"#991b1b":"#4c1d95";}
 function clearGameResult(id){const el=document.getElementById(id);el.textContent="";el.classList.remove("show");}
@@ -368,13 +414,13 @@ function getServerBalance(data){
   const bal=me?.game_balance??me?.gameBalance??0;
   const wins=me?.total_wins??me?.wins??0;
   document.getElementById("gameBalance").textContent=formatNaira(bal);
-  document.getElementById("withdrawGameBalance").textContent=formatNaira(bal);
+  const wb=document.getElementById("withdrawGameBalance"); if(wb) wb.textContent=formatNaira(bal);
   document.getElementById("gamePoints").textContent=wins+" wins";
   if(data?.gameAccount?.game_balance!=null){currentUser={...currentUser, gameAccount:data.gameAccount};}
 }
 function renderGameHistory(data){
   const host=document.getElementById("gameHistory");const rows=data?.recentBets||data?.bets||data?.history||[];
-  if(!rows.length){host.innerHTML='<div class="empty" style="display:block">No plays yet</div>';return;}
+  if(!rows.length){host.innerHTML='<div class="empty" style="display:block">No plays yet - deposit and play!</div>';return;}
   host.innerHTML=rows.slice(0,20).map(item=>{
     const game=String(item.game_type||item.game||"Game").replace(/_/g," ");
     const stake=Number(item.bet_amount??item.amount??0);
@@ -393,21 +439,34 @@ async function refreshGameData(){
     renderGameHistory(d);
   }catch(e){host.innerHTML=`<div class="empty" style="display:block">Could not load: ${escapeHTML(e.message)}</div>`;}
 }
+// PROOF UPLOAD HANDLER
+document.getElementById("depositProof").addEventListener("change", e=>{
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 4*1024*1024){ alert("Image too large, max 4MB"); e.target.value=""; return; }
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    proofBase64 = ev.target.result;
+    const img = document.getElementById("proofPreview");
+    img.src = proofBase64; img.style.display="block";
+  };
+  reader.readAsDataURL(file);
+});
 async function submitDeposit(event){
   event.preventDefault();
   if(gameBusy)return;
   const amount=Number(document.getElementById("depositAmount").value);
   const ref=document.getElementById("depositRef").value.trim();
   if(!amount||amount<100){setGameResult("depositResult","Min ₦100","error");return;}
-  if(!ref){setGameResult("depositResult","Enter reference","error");return;}
-  gameBusy=true;const btn=document.getElementById("depositSubmit");btn.disabled=true;btn.textContent="Submitting...";clearGameResult("depositResult");
+  if(!ref){setGameResult("depositResult","Enter sender name","error");return;}
+  if(!proofBase64){setGameResult("depositResult","Upload payment proof screenshot","error");return;}
+  gameBusy=true;const btn=document.getElementById("depositSubmit");btn.disabled=true;btn.textContent="Uploading Proof...";clearGameResult("depositResult");
   try{
-    const d=await apiRequest("/api/games/deposit",{method:"POST",body:JSON.stringify({amount, reference:ref})});
-    setGameResult("depositResult",d.message||`Submitted. Pending admin verification for 1850772192 Ref:${ref}`,"info");
-    document.getElementById("depositAmount").value="";document.getElementById("depositRef").value="";
+    const d=await apiRequest("/api/games/deposit",{method:"POST",body:JSON.stringify({amount, reference:ref, proof_image:proofBase64})});
+    setGameResult("depositResult",d.message||`Proof submitted! Pending admin verification for 1850772192. Ref: ${ref}`,"info");
+    document.getElementById("depositAmount").value="";document.getElementById("depositRef").value="";document.getElementById("depositProof").value="";proofBase64="";document.getElementById("proofPreview").style.display="none";
     await refreshGameData();
   }catch(e){setGameResult("depositResult",e.message,"error");}
-  finally{gameBusy=false;btn.disabled=false;btn.textContent="I Have Paid - Submit";}
+  finally{gameBusy=false;btn.disabled=false;btn.textContent="Submit Proof for Verification →";}
 }
 async function submitWithdrawal(event){
   event.preventDefault();
@@ -425,7 +484,7 @@ async function submitWithdrawal(event){
     document.getElementById("withdrawAmount").value="";
     await refreshGameData();await getCurrentUser();
   }catch(e){setGameResult("withdrawResult",e.message,"error");}
-  finally{gameBusy=false;btn.disabled=false;btn.textContent="Request Withdrawal - We Will Pay You";}
+  finally{gameBusy=false;btn.disabled=false;btn.textContent="Request Withdrawal →";}
 }
 async function submitGamePlay(event){
   event.preventDefault();
