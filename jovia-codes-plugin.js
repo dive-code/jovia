@@ -57,15 +57,13 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
 
-  // ============= MIGRATIONS =============
   try{ db.exec(`ALTER TABLE game_deposits ADD COLUMN proof_image TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  console.log("✅ JOVIA PROFESSIONAL TABLES READY - PROOF UPLOAD + BANK FIELDS");
+  console.log("✅ JOVIA PROFESSIONAL TABLES - 20% WIN 80% LOSE");
 
-  // ============= USER COLUMNS =============
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
   ["package TEXT DEFAULT 'Silver'","plan TEXT DEFAULT 'Silver'","is_super INTEGER DEFAULT 0","account_status TEXT DEFAULT 'active'","status TEXT DEFAULT 'active'","username TEXT","full_name TEXT","activated_at TEXT","wallet_balance INTEGER DEFAULT 0","is_active INTEGER DEFAULT 1"].forEach(c=>{
@@ -79,7 +77,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const [n,...d] = c.split(" "); addCodeColumnIfMissing(n, d.join(" "));
   });
 
-  // ============= HELPERS =============
   const normalizeCode = v => String(v||"").trim().toUpperCase();
   const randomCode = (len,prefix) => {
     const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -157,19 +154,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return null; }
   };
 
-  // ============= ACTIVATION ROUTES =============
   app.get("/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
   app.get("/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
   app.post("/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
   app.get("/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
 
-  // ============= AUTH =============
   const userGuard=(req,res,next)=>{ if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."}); return requireUser(req,res,()=>{ if(!req.user||!req.user.id) return res.status(401).json({success:false,message:"Please log in."}); next(); }); };
   const adminGuard=(req,res,next)=>{ const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim(); const bp=String(req.body?.adminPass||req.body?.password||"").trim(); if((hp&&hp===ADMIN_PASS)||(bp&&bp===ADMIN_PASS)||req.session?.isAdmin===true) return next(); return res.status(401).json({success:false,message:"Admin authentication required."}); };
   const adminLoginHandler=(req,res)=>{ const p=String(req.body?.password||"").trim(); if(p!==ADMIN_PASS) return res.status(401).json({success:false,message:"Wrong password."}); if(req.session){ req.session.isAdmin=true; return req.session.save(()=>res.json({success:true})); } return res.json({success:true}); };
   app.post("/api/admin/codes/login",adminLoginHandler); app.post("/api/admin/login",adminLoginHandler);
 
-  // ============= CODES =============
   app.post("/api/admin/codes/generate",adminGuard,(req,res)=>{
     try{
       const t=String(req.body?.type||"").toLowerCase();
@@ -221,25 +215,23 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
 
-  // ============= GAMES API - PROFESSIONAL =============
   app.get("/api/games/me", userGuard, (req,res)=>{
     try{
       const acc = getOrCreateGameAccount(req.user.id);
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
       const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id);
-      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs});
+      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, odds:{winPercent:20, lossPercent:80}});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // PROFESSIONAL DEPOSIT WITH PROOF UPLOAD
   app.post("/api/games/deposit", userGuard, (req,res)=>{
     try{
       const amount = Number(req.body?.amount);
       if(!amount || amount < 100) return res.status(400).json({success:false,message:"Minimum deposit is ₦100"});
       let reference = String(req.body?.reference||"").trim().toUpperCase();
       if(!reference) reference = "JVG-"+Date.now()+"-"+crypto.randomInt(1000,9999);
-      const proof_image = String(req.body?.proof_image||"").slice(0,800000); // base64 limit 800kb
+      const proof_image = String(req.body?.proof_image||"").slice(0,800000);
       if(!proof_image) return res.status(400).json({success:false,message:"Payment proof is required - upload screenshot"});
       const exists = db.prepare(`SELECT id FROM game_deposits WHERE reference = ?`).get(reference);
       if(exists) return res.status(409).json({success:false,message:"This reference already exists"});
@@ -251,6 +243,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
+  // ============= 20% WIN - 80% LOSE =============
   app.post("/api/games/play", userGuard, (req,res)=>{
     try{
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
@@ -260,14 +253,24 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}. Deposit to 1850772192`});
-      const isWin = crypto.randomInt(0,100) < 30;
-      let mult = 0; if(isWin){ if(gameType==="spin_bottle") mult=1.5+Math.random(); else if(gameType==="spin_wheel") mult=1.2+Math.random()*1.8; else if(gameType==="up_down") mult=1.8; else mult=2.5; mult=Math.round(mult*100)/100; }
+      
+      // 20% WIN, 80% LOSE
+      const isWin = crypto.randomInt(0,100) < 20;
+      
+      let mult = 0;
+      if(isWin){
+        if(gameType==="spin_bottle") mult=1.5+Math.random()*1.0;
+        else if(gameType==="spin_wheel") mult=1.2+Math.random()*1.8;
+        else if(gameType==="up_down") mult=1.8;
+        else mult=2.5;
+        mult=Math.round(mult*100)/100;
+      }
       const winAmount = isWin ? Math.floor(bet*mult) : 0;
       const newBal = isWin ? (acc.game_balance - bet + winAmount) : (acc.game_balance - bet);
       db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, isWin?1:0, req.user.id);
       db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, winAmount, isWin?'win':'loss', mult);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?winAmount:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
-      return res.json({success:true, result:isWin?'win':'loss', isWin, bet, winAmount, multiplier: mult.toFixed(2), newBalance:newBal, message:isWin?`WIN ₦${winAmount} (${mult}x)`:`Lose ₦${bet}`, gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
+      return res.json({success:true, result:isWin?'win':'loss', isWin, bet, winAmount, multiplier: mult.toFixed(2), newBalance:newBal, message:isWin?`WIN ₦${winAmount} (${mult}x)`:`Lose ₦${bet}`, gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), odds:{winPercent:20, lossPercent:80}});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -289,7 +292,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // ============= ADMIN GAMES =============
   app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
   app.get("/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
   app.get("/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
@@ -339,5 +341,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ PROFESSIONAL JOVIA API READY - PROOF UPLOAD + BANK FIELDS + 1850772192 KREDI MFB");
+  console.log("✅ PROFESSIONAL JOVIA API - 20% WIN / 80% LOSE - 1850772192 KREDI MFB");
 };
