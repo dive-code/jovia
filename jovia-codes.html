@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Admin - Codes + Deposits + Withdrawals</title>
+<title>JOVIA Admin - Professional + Proof</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
-.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:650px;margin:0 auto 12px}
-.container{max-width:650px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:680px;margin:0 auto 12px}
+.container{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
 input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:10px;outline:none;font-weight:700}
 .btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:800;cursor:pointer;transition:.2s}
@@ -31,10 +31,13 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 .tab.super-active{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;border-color:#ff9a00}
 .tab.game-active{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:#22c55e}
 .tab.with-active{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#ef4444}
-.search{margin-bottom:10px}
-.dep-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.dep-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
 .dep-item.pending{background:#fffbeb;border-color:#fbbf24}
 .bank-box{background:#f8fafc;border:1px dashed #94a3b8;padding:10px;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:10px}
+.proof-img{width:100%;max-height:300px;object-fit:contain;border-radius:10px;border:1.5px solid #e2e8f0;margin:10px 0;cursor:zoom-in;background:#f8fafc}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal img{max-width:100%;max-height:90vh;border-radius:12px}
 </style>
 </head>
 <body>
@@ -45,8 +48,11 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
 </div></div>
+
+<div id="imgModal" class="modal" onclick="this.classList.remove('show')"><img id="modalImg" src=""></div>
+
 <div class="top">
-<div><h3 style="font-size:14px">JOVIA ADMIN</h3><small style="font-size:10px;color:#94a3b8">Codes + Deposits + Withdrawals</small></div>
+<div><h3 style="font-size:14px">JOVIA ADMIN</h3><small style="font-size:10px;color:#94a3b8">Codes + Deposits + Withdrawals + Proof</small></div>
 <span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SERVER DB</span>
 </div>
 <div class="container">
@@ -88,11 +94,12 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 
 <div class="card" id="cardDeposits" style="display:none">
-<h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Your Receiving Account</h3>
+<h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Proof Verification</h3>
 <div class="bank-box">
 Bank: <b>Kredi Money MFB Ltd</b><br>
 Acc: <b style="color:#d00;font-size:14px">1850772192</b> <button onclick="navigator.clipboard.writeText('1850772192');alert('Copied 1850772192')" style="padding:2px 8px;font-size:10px">Copy</button><br>
-Name: <b>Raenest/Divine Ogheneovie Abanum</b>
+Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
+<small>Check your Kredi app + compare with proof screenshot below before approving</small>
 </div>
 <button class="btn btn-black" onclick="loadDeposits()" style="margin-bottom:10px">🔄 Refresh Deposits</button>
 <div id="depositsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
@@ -116,7 +123,7 @@ Name: <b>Raenest/Divine Ogheneovie Abanum</b>
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
 <h3 style="font-size:14px" id="listTitle">All Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
 </div>
-<input id="searchInput" class="search" placeholder="🔍 Search code or email..." oninput="filterList()">
+<input id="searchInput" class="search" placeholder="🔍 Search code or email..." oninput="filterList()" style="padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;width:100%;margin-bottom:10px">
 <div id="list"></div>
 <button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
 <button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock</button>
@@ -129,6 +136,9 @@ let allServerCodes = [];
 function getPass(){ return localStorage.getItem('jovia_pass') || 'Divine@@1'; }
 function getHeaders(){ return { 'Content-Type':'application/json', 'x-admin-password': getPass() }; }
 if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
+
+function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').classList.add('show'); }
+
 async function unlock(){
   const val = document.getElementById('passInput').value.trim();
   const err = document.getElementById('passError');
@@ -202,7 +212,7 @@ async function loadFromServer(){
     allServerCodes = data.codes || [];
     filterList();
   } catch(e){
-    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+'<br><button onclick="document.getElementById(\'lock\').style.display=\'flex\'" style="padding:8px 16px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800;margin-top:10px">Login Again</button></p>';
+    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+'</p>';
   }
 }
 function filterList(){
@@ -247,20 +257,23 @@ async function loadDeposits(){
     if(!data.deposits.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No deposits yet</p>'; return; }
     listDiv.innerHTML = data.deposits.map(d=>{
       const isPending = d.status==='pending';
+      const proof = d.proof_image ? `<img src="${d.proof_image}" class="proof-img" onclick="openModal('${d.proof_image}')" title="Click to zoom proof"><div style="font-size:10px;color:#22c55e;text-align:center">📸 Payment Proof - Click to enlarge</div>` : '<div style="color:red;font-size:11px;padding:10px;background:#fee2e2;border-radius:8px">❌ No proof uploaded</div>';
       return `<div class="dep-item ${isPending?'pending':''}">
-        <div style="display:flex;justify-content:space-between"><b>₦${d.amount}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div>
+        <div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div>
         <div style="font-size:11px;margin-top:6px;line-height:1.6">
         User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>
-        Ref: <b>${d.reference}</b><br>
-        Date: ${d.created_at}
+        Reference / Sender: <b>${d.reference}</b><br>
+        Date: ${d.created_at}<br>
         </div>
-        ${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:10px;background:#22c55e;color:white;border:none;border-radius:8px;font-weight:800">✅ Approve & Fund ₦${d.amount}</button><button onclick="declineDeposit(${d.id})" style="margin-top:6px;width:100%;padding:8px;background:#fee2e2;color:#991b1b;border:none;border-radius:8px">Decline</button>`:`<div style="margin-top:6px;color:green;font-weight:800;font-size:11px">✅ Funded at ${d.confirmed_at||''}</div>`}
+        ${proof}
+        <div style="margin-top:8px;background:#f0fff4;padding:8px;border-radius:8px;font-size:10px;color:#166534">👉 Check your Kredi MFB app 1850772192 - Amount ₦${d.amount} match proof? If YES approve.</div>
+        ${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve & Fund Game Wallet ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineDeposit(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline Deposit</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Funded at ${d.confirmed_at||''}</div>`}
       </div>`;
     }).join('');
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
 }
 async function confirmDeposit(depositId, amount){
-  if(!confirm(`Check Kredi MFB 1850772192 - Did you receive ₦${amount}? Approve?`)) return;
+  if(!confirm(`Have you checked Kredi MFB 1850772192?\nDid you see ₦${amount}?\nDoes proof screenshot match?\nApprove?`)) return;
   try{
     const res = await fetch('/api/admin/games/deposit/confirm',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({depositId})});
     const data = await res.json(); if(!data.success) throw new Error(data.message);
@@ -286,23 +299,23 @@ async function loadWithdrawals(){
     listDiv.innerHTML = data.withdrawals.map(d=>{
       const isPending = d.status==='pending';
       return `<div class="dep-item ${isPending?'pending':''}">
-        <div style="display:flex;justify-content:space-between"><b>₦${d.amount}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div>
+        <div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div>
         <div style="font-size:11px;margin-top:6px;line-height:1.6">
         User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>
-        <div style="background:#f8fafc;padding:8px;border-radius:8px;margin:6px 0">
+        <div style="background:#f8fafc;padding:10px;border-radius:10px;margin:8px 0;border:1px solid #e2e8f0">
         Bank: <b>${d.bank_name||''}</b><br>
-        Acc No: <b style="color:#d00;font-size:13px">${d.account_number||''}</b> <button onclick="navigator.clipboard.writeText('${d.account_number||''}');alert('Copied ${d.account_number||''}')" style="padding:2px 6px;font-size:10px">Copy</button><br>
+        Acc No: <b style="color:#d00;font-size:14px">${d.account_number||''}</b> <button onclick="navigator.clipboard.writeText('${d.account_number||''}');alert('Copied ${d.account_number||''}')" style="padding:3px 8px;font-size:10px;background:#0f172a;color:#22c55e;border:none;border-radius:6px">Copy</button><br>
         Name: <b>${d.account_name||''}</b>
         </div>
         Date: ${d.requested_at}
         </div>
-        ${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:10px;background:#22c55e;color:white;border:none;border-radius:8px;font-weight:800">✅ I Have Paid ₦${d.amount} to ${d.account_number||''}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:8px;background:#fee2e2;color:#991b1b;border:none;border-radius:8px">❌ Decline & Refund to Game Wallet</button>`:`<div style="margin-top:6px;color:green;font-weight:800;font-size:11px">✅ Paid at ${d.processed_at||''}</div>`}
+        ${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(d.amount).toLocaleString()} to ${d.account_number||''}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund to Game Wallet</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Paid at ${d.processed_at||''} to ${d.account_number}</div>`}
       </div>`;
     }).join('');
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
 }
 async function confirmWithdrawal(withdrawalId, amount, acc){
-  if(!confirm(`You don pay ₦${amount} to account ${acc} from your 1850772192? Confirm as Paid?`)) return;
+  if(!confirm(`You don pay ₦${amount} to account ${acc} from your 1850772192 Kredi MFB?\nConfirm as Paid?`)) return;
   try{
     const res = await fetch('/api/admin/games/withdraw/confirm',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({withdrawalId})});
     const data = await res.json(); if(!data.success) throw new Error(data.message);
