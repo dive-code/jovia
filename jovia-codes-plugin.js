@@ -1,74 +1,24 @@
+"use strict";
 const crypto = require("crypto");
-
 module.exports = (app, db, requireUser, requireAdmin) => {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS jovia_codes (
-      code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
-      used INTEGER DEFAULT 0, used_by TEXT DEFAULT '', used_by_name TEXT DEFAULT '',
-      used_by_email TEXT DEFAULT '', used_by_id INTEGER,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP, used_at TEXT
-    );
-  `);
+  db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0, used INTEGER DEFAULT 0, used_by TEXT DEFAULT '', used_by_name TEXT DEFAULT '', used_by_email TEXT DEFAULT '', used_by_id INTEGER, created_at TEXT DEFAULT CURRENT_TIMESTAMP, used_at TEXT);`);
+  db.exec(`CREATE TABLE IF NOT EXISTS jovia_game_accounts (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE NOT NULL, game_balance INTEGER DEFAULT 0, points INTEGER DEFAULT 0, total_deposits INTEGER DEFAULT 0, total_withdrawals INTEGER DEFAULT 0, total_wins INTEGER DEFAULT 0, candy_high_score INTEGER DEFAULT 0, flight_high_multiplier REAL DEFAULT 0, ludo_wins INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, amount INTEGER DEFAULT 0, points_change INTEGER DEFAULT 0, game_type TEXT DEFAULT '', reference TEXT DEFAULT '', status TEXT DEFAULT 'completed', balance_before INTEGER DEFAULT 0, balance_after INTEGER DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_deposits (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, reference TEXT UNIQUE NOT NULL, payment_method TEXT DEFAULT 'manual', status TEXT DEFAULT 'pending', confirmed_by INTEGER DEFAULT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP, confirmed_at TEXT, FOREIGN KEY(user_id) REFERENCES users(id));`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, status TEXT DEFAULT 'pending', requested_at TEXT DEFAULT CURRENT_TIMESTAMP, processed_at TEXT, processed_by INTEGER DEFAULT NULL, FOREIGN KEY(user_id) REFERENCES users(id));`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_history (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL, score INTEGER DEFAULT 0, multiplier REAL DEFAULT 0, result TEXT DEFAULT '', win_amount INTEGER DEFAULT 0, is_demo INTEGER DEFAULT 1, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
+  db.exec(`CREATE TABLE IF NOT EXISTS game_bets (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL, bet_amount INTEGER NOT NULL, win_amount INTEGER DEFAULT 0, result TEXT DEFAULT 'loss', multiplier REAL DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id));`);
 
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS jovia_game_accounts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER UNIQUE NOT NULL,
-      game_balance INTEGER DEFAULT 0,
-      points INTEGER DEFAULT 0,
-      total_deposits INTEGER DEFAULT 0,
-      total_withdrawals INTEGER DEFAULT 0,
-      total_wins INTEGER DEFAULT 0,
-      candy_high_score INTEGER DEFAULT 0,
-      flight_high_multiplier REAL DEFAULT 0,
-      ludo_wins INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-    CREATE TABLE IF NOT EXISTS game_transactions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL,
-      amount INTEGER DEFAULT 0, points_change INTEGER DEFAULT 0, game_type TEXT DEFAULT '',
-      reference TEXT DEFAULT '', status TEXT DEFAULT 'completed',
-      balance_before INTEGER DEFAULT 0, balance_after INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-    CREATE TABLE IF NOT EXISTS game_deposits (
-      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
-      reference TEXT UNIQUE NOT NULL, payment_method TEXT DEFAULT 'manual',
-      status TEXT DEFAULT 'pending', confirmed_by INTEGER DEFAULT NULL,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP, confirmed_at TEXT,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-    CREATE TABLE IF NOT EXISTS game_withdrawals (
-      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
-      status TEXT DEFAULT 'pending', requested_at TEXT DEFAULT CURRENT_TIMESTAMP,
-      processed_at TEXT, processed_by INTEGER DEFAULT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-    CREATE TABLE IF NOT EXISTS game_history (
-      id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL,
-      score INTEGER DEFAULT 0, multiplier REAL DEFAULT 0, result TEXT DEFAULT '',
-      win_amount INTEGER DEFAULT 0, is_demo INTEGER DEFAULT 1,
-      created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-  `);
-
-  console.log("✅ JOVIA GAMES TABLES: separate wallet ready");
+  console.log("✅ JOVIA GAMES TABLES: separate wallet + game_bets ready");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
-  addUserColumnIfMissing("package", "TEXT DEFAULT 'Silver'");
-  addUserColumnIfMissing("plan", "TEXT DEFAULT 'Silver'");
-  addUserColumnIfMissing("is_super", "INTEGER DEFAULT 0");
-  for (const [n,d] of [["account_status","TEXT DEFAULT 'active'"],["status","TEXT DEFAULT 'active'"],["username","TEXT"],["full_name","TEXT"],["activated_at","TEXT"]]) { try{addUserColumnIfMissing(n,d);}catch(e){}}
+  addUserColumnIfMissing("package", "TEXT DEFAULT 'Silver'"); addUserColumnIfMissing("plan", "TEXT DEFAULT 'Silver'"); addUserColumnIfMissing("is_super", "INTEGER DEFAULT 0");
+  for (const [n,d] of [["account_status","TEXT DEFAULT 'active'"],["status","TEXT DEFAULT 'active'"],["username","TEXT"],["full_name","TEXT"],["activated_at","TEXT"],["wallet_balance","INTEGER DEFAULT 0"],["is_active","INTEGER DEFAULT 1"]]) { try{addUserColumnIfMissing(n,d);}catch(e){} }
   const hasColumn = name => userColumns().includes(name);
   const codeColumns = () => db.prepare("PRAGMA table_info(jovia_codes)").all().map(c => c.name);
   const addCodeColumnIfMissing = (name, def) => { if (!codeColumns().includes(name)) db.exec(`ALTER TABLE jovia_codes ADD COLUMN ${name} ${def}`); };
-  addCodeColumnIfMissing("used_by","TEXT DEFAULT ''"); addCodeColumnIfMissing("used_by_name","TEXT DEFAULT ''");
-  addCodeColumnIfMissing("used_by_email","TEXT DEFAULT ''"); addCodeColumnIfMissing("used_by_id","INTEGER");
-  addCodeColumnIfMissing("created_at","TEXT"); addCodeColumnIfMissing("used_at","TEXT");
-
+  addCodeColumnIfMissing("used_by","TEXT DEFAULT ''"); addCodeColumnIfMissing("used_by_name","TEXT DEFAULT ''"); addCodeColumnIfMissing("used_by_email","TEXT DEFAULT ''"); addCodeColumnIfMissing("used_by_id","INTEGER"); addCodeColumnIfMissing("created_at","TEXT"); addCodeColumnIfMissing("used_at","TEXT");
   try{ db.exec(`UPDATE jovia_codes SET used=0, used_by='', used_by_name='', used_by_email='', used_by_id=NULL, used_at=NULL WHERE used=1 AND TRIM(IFNULL(used_by_name,''))='' AND used_by_id IS NULL`);}catch(e){}
 
   const normalizeCode = v => String(v||"").trim().toUpperCase();
@@ -102,88 +52,35 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return acc;
   };
 
-  // ====== NEW: SELAR PAYMENT AUTO-ACTIVATION FIX FOR ID 283 ======
   const activateUserByEmail = (email, plan, orderId) => {
     const cleanEmail = String(email||"").trim().toLowerCase();
     const cleanPlan = (plan||"Gold").toLowerCase().includes("gold") ? "Gold" : "Silver";
     if(!cleanEmail) return null;
     try{
-      // Update by email OR id 283 (your test user)
-      const cols = userColumns();
-      let setClause = [];
-      let params = [];
-      
+      const cols = userColumns(); let setClause = []; let params = [];
       if(cols.includes("account_status")){ setClause.push("account_status='approved'"); }
       if(cols.includes("status")){ setClause.push("status='active'"); }
       if(cols.includes("package")){ setClause.push("package=?"); params.push(cleanPlan); }
       if(cols.includes("plan")){ setClause.push("plan=?"); params.push(cleanPlan); }
       if(cols.includes("is_active")){ setClause.push("is_active=1"); }
       if(cols.includes("activated_at")){ setClause.push("activated_at=datetime('now')"); }
-      if(cols.includes("is_super") && cleanPlan==="Gold"){ /* keep */ }
-
       if(setClause.length===0) setClause.push("account_status='approved'");
-      
       const sql = `UPDATE users SET ${setClause.join(", ")} WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) OR id=283 OR id=?`;
-      const allParams = [...params, cleanEmail, 283];
-      const result = db.prepare(sql).run(...allParams);
-      
-      // Also try exact email match for Sidiyasunusishariff@gmail.com
-      if(cleanEmail.includes("sidiya")){
-        db.prepare(`UPDATE users SET account_status='approved', status='active', package='Gold', plan='Gold', is_active=1, activated_at=datetime('now') WHERE id=283`).run();
-      }
-      
+      db.prepare(sql).run(...params, cleanEmail, 283);
+      if(cleanEmail.includes("sidiya")){ try{ db.prepare(`UPDATE users SET account_status='approved', status='active', package='Gold', plan='Gold', is_active=1, activated_at=datetime('now') WHERE id=283`).run(); }catch{} }
       const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) OR id=283 ORDER BY id DESC LIMIT 1`).get(cleanEmail);
-      console.log(`✅ ACTIVATED: ${cleanEmail} | Plan: ${cleanPlan} | Order: ${orderId} | ID: ${user?.id} | Status: ${user?.account_status}`);
+      console.log(`✅ ACTIVATED: ${cleanEmail} | Plan: ${cleanPlan} | Order: ${orderId} | ID: ${user?.id}`);
       return user;
-    }catch(e){
-      console.log("Activation error:", e.message);
-      return null;
-    }
+    }catch(e){ console.log("Activation error:", e.message); return null; }
   };
 
-  // Fix for https://jovianetworkcom.vercel.app/api/activate-user?email=...
-  app.get("/api/activate-user", (req,res)=>{
-    const { email, plan, order_id } = req.query;
-    if(!email) return res.status(400).json({success:false, message:"No email"});
-    const user = activateUserByEmail(email, plan, order_id);
-    if(user) return res.json({success:true, message:`✅ ${email} Activated as ${plan}`, plan, order_id, user});
-    return res.json({success:true, message:`Queued activation for ${email} - ID 283`, plan, order_id});
-  });
+  app.get("/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false, message:"No email"}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, message:`✅ ${email} Activated as ${plan}`, plan, order_id, user}); });
+  app.get("/api/activate", (req,res)=>{ const { email, plan, order_id, payment } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, payment, plan, user, message:`Activated ${email}`}); });
+  app.post("/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false, message:"No email"}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, plan: plan||"Gold", email, user, message:`Selar activation for ${email}`}); });
+  app.get("/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) OR id=283 LIMIT 1`).get(email.toLowerCase()); if(!user) return res.json({success:false, message:"Not found"}); return res.json({success:true, plan: user.package||user.plan||"Gold", status: user.account_status||user.status, user}); }catch(e){ return res.json({success:false, error:e.message}); } });
+  app.post("/api/admin/activate-by-email", (req,res)=>{ const { email, plan, order_id } = req.body||{}; const targetEmail = email || "Sidiyasunusishariff@gmail.com"; const user = activateUserByEmail(targetEmail, plan||"Gold", order_id); try{ db.prepare(`UPDATE users SET account_status='approved', status='active', package='Gold', plan='Gold', is_active=1 WHERE id=283 OR LOWER(TRIM(email))=LOWER(TRIM(?))`).run(targetEmail); }catch{} return res.json({success:true, message:`Manually activated ${targetEmail} + ID 283 as ${plan||'Gold'}`, user}); });
 
-  app.get("/api/activate", (req,res)=>{
-    const { email, plan, order_id, payment } = req.query;
-    if(!email) return res.status(400).json({success:false});
-    const user = activateUserByEmail(email, plan, order_id);
-    return res.json({success:true, payment, plan, user, message:`Activated ${email}`});
-  });
-
-  app.post("/api/selar/activate", (req,res)=>{
-    const { email, plan, orderId, name, phone } = req.body||{};
-    if(!email) return res.status(400).json({success:false, message:"No email"});
-    const user = activateUserByEmail(email, plan, orderId);
-    return res.json({success:true, plan: plan||"Gold", email, user, message:`Selar activation for ${email}`});
-  });
-
-  app.get("/api/check-status", (req,res)=>{
-    const email = String(req.query.email||"").trim();
-    if(!email) return res.json({success:false});
-    try{
-      const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) OR id=283 LIMIT 1`).get(email.toLowerCase());
-      if(!user) return res.json({success:false, message:"Not found"});
-      return res.json({success:true, plan: user.package||user.plan||"Gold", status: user.account_status||user.status, user});
-    }catch(e){ return res.json({success:false, error:e.message}); }
-  });
-
-  app.post("/api/admin/activate-by-email", (req,res)=>{
-    const { email, plan, order_id, id } = req.body||{};
-    const targetEmail = email || "Sidiyasunusishariff@gmail.com";
-    const user = activateUserByEmail(targetEmail, plan||"Gold", order_id);
-    // Force activate ID 283 specifically
-    try{ db.prepare(`UPDATE users SET account_status='approved', status='active', package='Gold', plan='Gold', is_active=1 WHERE id=283 OR LOWER(TRIM(email))=LOWER(TRIM(?))`).run(targetEmail); }catch{}
-    return res.json({success:true, message:`Manually activated ${targetEmail} + ID 283 as ${plan||'Gold'}`, user});
-  });
-
-  console.log("✅ ACTIVATION ENDPOINTS ADDED: /api/activate-user, /api/activate, /api/selar/activate, /api/check-status, /api/admin/activate-by-email - ID 283 READY");
+  console.log("✅ ACTIVATION ENDPOINTS ADDED: /api/activate-user, /api/activate, /api/selar/activate, /api/check-status - ID 283 READY");
 
   const userGuard=(req,res,next)=>{ if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."}); return requireUser(req,res,()=>{ if(!req.user||!req.user.id) return res.status(401).json({success:false,message:"Please log in."}); next(); }); };
   const adminGuard=(req,res,next)=>{ const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim(); const bp=String(req.body?.adminPass||req.body?.password||"").trim(); if((hp&&hp===ADMIN_PASS)||(bp&&bp===ADMIN_PASS)||req.session?.isAdmin===true) return next(); return res.status(401).json({success:false,message:"Admin authentication required."}); };
@@ -236,22 +133,26 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // ===== FIXED: GAMES API - ALL WORKING =====
   app.get("/api/games/me", userGuard, (req,res)=>{
-    try{ const acc = getOrCreateGameAccount(req.user.id); const txs = db.prepare(`SELECT * FROM game_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id); const deps = db.prepare(`SELECT * FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id); const withs = db.prepare(`SELECT * FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id); return res.json({success:true, gameAccount: acc, transactions: txs, deposits: deps, withdrawals: withs}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+    try{
+      const acc = getOrCreateGameAccount(req.user.id);
+      const txs = db.prepare(`SELECT * FROM game_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+      const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
+      const deps = db.prepare(`SELECT * FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
+      const withs = db.prepare(`SELECT * FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id);
+      return res.json({success:true, gameAccount: acc, transactions: txs, recentBets: bets, bets: bets, deposits: deps, withdrawals: withs, odds:{winPercent:30, lossPercent:70, disclosed:true}});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
   app.post("/api/games/deposit", userGuard, (req,res)=>{
     try{
       const amount = Number(req.body?.amount); if(!amount || amount < 100) return res.status(400).json({success:false,message:"Min deposit ₦100"});
-      let reference = String(req.body?.reference||"").trim().toUpperCase();
-      if(!reference) reference = "JVG-"+Date.now()+"-"+crypto.randomInt(1000,9999);
+      let reference = String(req.body?.reference||"").trim().toUpperCase(); if(!reference) reference = "JVG-"+Date.now()+"-"+crypto.randomInt(1000,9999);
       const exists = db.prepare(`SELECT id FROM game_deposits WHERE reference = ?`).get(reference);
       if(exists) return res.status(409).json({success:false,message:"Duplicate reference - payment already recorded"});
       db.prepare(`INSERT INTO game_deposits (user_id, amount, reference, status) VALUES (?, ?, ?, 'pending')`).run(req.user.id, amount, reference);
-      if(amount <= 5000){
-        const acc = getOrCreateGameAccount(req.user.id);
-        const newBal = acc.game_balance + amount;
+      if(amount <= 10000){
+        const acc = getOrCreateGameAccount(req.user.id); const newBal = acc.game_balance + amount;
         db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
         db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE reference=?`).run(reference);
         db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(req.user.id, amount, reference, acc.game_balance, newBal);
@@ -262,24 +163,46 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate payment - reference exists"}); return res.status(500).json({success:false,message:e.message}); }
   });
 
+  app.post("/api/games/play", userGuard, (req,res)=>{
+    try{
+      const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
+      const map = {bottle:"spin_bottle", wheel:"spin_wheel", updown:"up_down", up_down:"up_down", guess:"number_predict", number:"number_predict", spin_bottle:"spin_bottle", spin_wheel:"spin_wheel", number_predict:"number_predict"};
+      const gameType = map[rawType] || rawType || "spin_bottle";
+      const bet = Number(req.body?.bet_amount ?? req.body?.amount ?? 100);
+      if(!bet || bet < 100) return res.status(400).json({success:false,message:"Min bet ₦100"});
+      if(!["spin_bottle","spin_wheel","up_down","number_predict"].includes(gameType)) return res.status(400).json({success:false,message:"Invalid game type"});
+      const acc = getOrCreateGameAccount(req.user.id);
+      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient game balance. You have ₦${acc.game_balance}`});
+      const isWin = crypto.randomInt(0,100) < 30;
+      let mult = 0; if(isWin){ if(gameType==="spin_bottle") mult=1.5+Math.random()*1.0; else if(gameType==="spin_wheel") mult=1.2+Math.random()*1.8; else if(gameType==="up_down") mult=1.8; else mult=2.5; mult=Math.round(mult*100)/100; }
+      const winAmount = isWin ? Math.floor(bet*mult) : 0;
+      const newBal = isWin ? (acc.game_balance - bet + winAmount) : (acc.game_balance - bet);
+      db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, isWin?1:0, req.user.id);
+      db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, winAmount, isWin?'win':'loss', mult);
+      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?winAmount:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
+      db.prepare(`INSERT INTO game_history (user_id, game_type, score, multiplier, result, win_amount, is_demo) VALUES (?,?,?,?,?,?,0)`).run(req.user.id, gameType, bet, mult, isWin?'WIN':'LOSS', winAmount);
+      return res.json({success:true, result:isWin?'win':'loss', isWin, bet, winAmount, multiplier: mult.toFixed(2), newBalance:newBal, message:isWin?`🎉 WIN! +₦${winAmount} (${mult}x)`:`You lose ₦${bet}. Try again!`, gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), odds:{winPercent:30, lossPercent:70}});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   app.post("/api/games/withdraw", userGuard, (req,res)=>{
     try{
-      const amount = Number(req.body?.amount); if(!amount || amount < 500) return res.status(400).json({success:false,message:"Min withdraw ₦500"});
+      const amount = Number(req.body?.amount); if(!amount || amount < 100) return res.status(400).json({success:false,message:"Min withdraw ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient game balance. You have ₦${acc.game_balance}`});
       const newBal = acc.game_balance - amount;
       db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
-      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, status) VALUES (?, ?, 'pending')`).run(req.user.id, amount);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
+      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, status) VALUES (?, ?, 'confirmed')`).run(req.user.id, amount);
+      try{ db.prepare(`UPDATE users SET wallet_balance = wallet_balance + ? WHERE id=?`).run(amount, req.user.id); }catch{}
+      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'completed')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
       const updated = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(req.user.id);
-      return res.json({success:true,message:`Withdrawal ₦${amount} requested - pending`, gameAccount: updated});
+      return res.json({success:true,message:`✅ ₦${amount} withdrawn to main wallet instantly!`, gameAccount: updated});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
   app.post("/api/games/score", userGuard, (req,res)=>{
     try{
-      const { game_type, score, multiplier } = req.body;
-      const validGames = ["candy","flight","ludo"]; if(!validGames.includes(String(game_type))) return res.status(400).json({success:false,message:"Invalid game"});
+      const { game_type, score, multiplier } = req.body; const validGames = ["candy","flight","ludo"]; if(!validGames.includes(String(game_type))) return res.status(400).json({success:false,message:"Invalid game"});
       const acc = getOrCreateGameAccount(req.user.id); const pts = Math.floor(Number(score)||0);
       db.prepare(`INSERT INTO game_history (user_id, game_type, score, multiplier, is_demo) VALUES (?, ?, ?, ?, 1)`).run(req.user.id, game_type, pts, Number(multiplier)||0);
       let extraPoints = Math.floor(pts/10);
@@ -312,5 +235,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ JOVIA GAMES API FIXED + SELAR AUTO-ACTIVATION LIVE - ID 283 READY");
+  console.log("✅ JOVIA GAMES API FIXED + SELAR AUTO-ACTIVATION LIVE + 4 GAMES PLAY - ID 283 READY");
 };
