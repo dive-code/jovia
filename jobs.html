@@ -43,7 +43,6 @@ button{cursor:pointer}
 .job-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
 .job-title{font-size:14px;font-weight:900;line-height:1.5;overflow-wrap:anywhere}.job-reward{color:var(--g);font-size:14px;font-weight:900;white-space:nowrap}
 .job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.7;overflow-wrap:anywhere}
-.job-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
 .meta{display:inline-flex;background:#faf8fb;border:1px solid var(--b);color:#746b7a;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:800}
 .task-box{padding:12px;margin-bottom:11px;border-radius:13px;background:#fffbeb;border:1px solid #fde68a}
 .task-box.success-box{background:#f0fdf4;border-color:#bbf7d0}
@@ -105,8 +104,6 @@ button{cursor:pointer}
 .game-notice{font-size:11px;line-height:1.7;padding:11px 12px;background:#f5f3ff;border:1px solid #ddd6fe;color:#4c1d95;border-radius:11px;margin-bottom:12px}
 .game-result{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#f5f3ff;color:var(--p);font-size:12px;line-height:1.7;font-weight:800;overflow-wrap:anywhere}
 .game-result.show{display:block}
-.game-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.game-buttons button{flex:1;min-width:100px;padding:12px;border-radius:11px;font-size:11px;font-weight:900;border:0}
 .guess-buttons{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
 .guess-buttons button{border:1px solid var(--b);border-radius:10px;padding:12px 0;background:#faf8fb;color:var(--p);font-weight:900}
 .guess-buttons button.selected{background:var(--y);border-color:var(--y)}
@@ -114,7 +111,19 @@ button{cursor:pointer}
 .history-item:last-child{border-bottom:0}
 .history-muted{color:var(--m);font-size:10px}
 .small-tag{display:inline-flex;border-radius:8px;padding:4px 7px;font-size:9px;font-weight:900;background:#f5f3f7;color:var(--m)}
-.coming-card{opacity:.8}
+.bottle-stage{position:relative;height:280px;background:radial-gradient(circle at 50% 35%,#2a1a4a,#0e0a1f);border-radius:18px;border:1px solid #2a2250;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bottle{font-size:100px;transition:transform 2.2s cubic-bezier(.2,.8,.15,1);filter:drop-shadow(0 10px 25px rgba(255,196,0,.25))}
+.bottle.up{transform:rotate(0deg)}
+.bottle.down{transform:rotate(180deg)}
+.bottle.spin{transform:rotate(1080deg)}
+.bottle-label{position:absolute;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;font-size:10px;font-weight:900}
+.bottle-label.up{top:12px;background:#052e16;border:1px solid #22c55e;color:#22c55e}
+.bottle-label.down{bottom:12px;background:#450a0a;border:1px solid #ef4444;color:#ef4444}
+.pred-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pred{padding:14px;border-radius:12px;border:2px solid #e2e8f0;background:#faf8fb;text-align:center;font-weight:900;font-size:12px;cursor:pointer}
+.pred small{display:block;font-size:10px;color:#8a8a9e;margin-top:2px}
+.pred.selected.up{border-color:#22c55e;background:#dcfce7;color:#166534}
+.pred.selected.down{border-color:#ef4444;background:#fee2e2;color:#991b1b}
 @media(max-width:420px){.game-grid{grid-template-columns:1fr}.summary-grid{gap:6px}.summary-item{padding:11px 7px}.content{padding-left:12px;padding-right:12px}.game-hero{padding:16px}}
 </style>
 </head>
@@ -154,70 +163,71 @@ button{cursor:pointer}
   </section>
 </main>
 </div>
+
 <button class="games-fab" type="button" id="openGamesButton"><b>🎮</b><i>GAMES</i></button>
+
 <div class="games-overlay" id="gamesOverlay" aria-hidden="true">
-  <div class="overlay-top"><div style="font-weight:900">🎮 JOVIA Games <span class="small-tag">SEPARATE WALLET</span></div><button type="button" id="closeGamesButton" class="close-panel">✕ Close</button></div>
+  <div class="overlay-top"><div style="font-weight:900">🎮 JOVIA Games <span class="small-tag">MIN WITHDRAW ₦2500</span></div><button type="button" id="closeGamesButton" class="close-panel">✕ Close</button></div>
   <div class="games-lobby">
     <section class="game-hero">
       <div class="game-balance-row">
         <div><div class="game-label">GAME WALLET BALANCE</div><div class="game-money" id="gameBalance">₦0</div></div>
         <div style="text-align:right"><div class="game-label">WINS</div><div class="game-money" id="gamePoints">0</div></div>
       </div>
-      <div style="margin-top:9px;font-size:10px;line-height:1.7;color:#ded1e8">Your Game Wallet is separate from your main Jovia wallet. Deposit to play, withdraw to your bank.</div>
+      <div style="margin-top:9px;font-size:10px;line-height:1.7;color:#ded1e8">Game wallet is separate. Min withdraw ₦2500. 20% win / 80% lose.</div>
       <div class="game-action-row">
         <button class="game-primary" type="button" id="openDepositButton">＋ Add Money</button>
-        <button class="game-secondary" type="button" id="openWithdrawButton">↗ Withdraw</button>
+        <button class="game-secondary" type="button" id="openWithdrawButton">↗ Withdraw Min ₦2500</button>
       </div>
       <button type="button" id="refreshGameButton" class="game-secondary" style="width:100%;margin-top:9px;padding:10px;border-radius:11px;font-size:10px">↻ Refresh balance & history</button>
     </section>
+
     <div class="game-grid">
-      <article class="game-card"><div class="game-emoji">🍾</div><h3>Bottle Spin</h3><p>Spin and get instant result.</p><button class="game-open" type="button" data-game="bottle">Play →</button></article>
+      <article class="game-card" style="border:2px solid #ffc400;background:linear-gradient(135deg,#fffbeb,#fef3c7)"><div class="game-emoji">🍾</div><h3>Bottle - UP / DOWN</h3><p><b>PRO:</b> Bottle spins to UP or DOWN only. 20% win / 80% lose.</p><button class="game-open" type="button" data-game="bottle" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">Play PRO →</button></article>
       <article class="game-card"><div class="game-emoji">🎡</div><h3>Wheel Spin</h3><p>Choose stake and spin.</p><button class="game-open" type="button" data-game="wheel">Play →</button></article>
       <article class="game-card"><div class="game-emoji">📈</div><h3>Up / Down</h3><p>Predict market trend.</p><button class="game-open" type="button" data-game="updown">Play →</button></article>
       <article class="game-card"><div class="game-emoji">🔢</div><h3>Number Guess</h3><p>Pick 1-10 to win.</p><button class="game-open" type="button" data-game="guess">Play →</button></article>
     </div>
 
-    <!-- PROFESSIONAL DEPOSIT WITH PROOF UPLOAD -->
     <section class="game-panel" id="depositPanel">
       <div class="panel-head"><h3>＋ Fund Game Wallet</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
       <div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #22c55e;padding:14px;border-radius:12px;margin-bottom:16px">
-        <div style="font-size:10px;font-weight:800;color:#15803d;letter-spacing:.5px;margin-bottom:8px">TRANSFER TO THIS ACCOUNT</div>
+        <div style="font-size:10px;font-weight:800;color:#15803d;margin-bottom:8px">TRANSFER TO THIS ACCOUNT</div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Bank</span><b style="font-size:12px">Kredi Money MFB Ltd</b></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <span style="font-size:11px;color:#64748b">Account No</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <b style="font-size:16px;color:#dc2626;letter-spacing:1px">1850772192</b>
-            <button type="button" onclick="navigator.clipboard.writeText('1850772192');this.innerText='Copied!';setTimeout(()=>this.innerText='Copy',2000)" style="padding:4px 10px;border-radius:20px;border:none;background:#0f172a;color:#22c55e;font-size:10px;font-weight:800">Copy</button>
-          </div>
-        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Account No</span><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px;color:#dc2626">1850772192</b><button type="button" onclick="navigator.clipboard.writeText('1850772192');this.innerText='Copied!';setTimeout(()=>this.innerText='Copy',2000)" style="padding:4px 10px;border-radius:20px;border:none;background:#0f172a;color:#22c55e;font-size:10px;font-weight:800">Copy</button></div></div>
         <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#64748b">Name</span><b style="font-size:12px">Raenest / Divine Ogheneovie Abanum</b></div>
       </div>
       <form id="depositForm">
         <div class="field"><label for="depositAmount">Amount You Sent (₦) - Min ₦100</label><input id="depositAmount" type="number" min="100" step="1" placeholder="e.g 2000" required></div>
         <div class="field"><label for="depositRef">Sender Name / Reference</label><input id="depositRef" type="text" placeholder="e.g Divine Okoro" required></div>
-        <div class="field">
-          <label for="depositProof">Upload Payment Proof (Screenshot) *</label>
-          <input id="depositProof" type="file" accept="image/*" required style="padding:10px;background:#faf8fb">
-          <div class="field-hint">Screenshot from your bank app after transfer to 1850772192</div>
-          <img id="proofPreview" style="display:none;width:100%;max-height:200px;object-fit:contain;margin-top:10px;border-radius:10px;border:1px solid #e2e8f0">
-        </div>
+        <div class="field"><label for="depositProof">Upload Payment Proof (Screenshot) *</label><input id="depositProof" type="file" accept="image/*" required style="padding:10px;background:#faf8fb"><div class="field-hint">Screenshot from your bank app after transfer to 1850772192</div><img id="proofPreview" style="display:none;width:100%;max-height:200px;object-fit:contain;margin-top:10px;border-radius:10px;border:1px solid #e2e8f0"></div>
         <button class="primary-btn" id="depositSubmit" type="submit" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">Submit Proof for Verification →</button>
       </form>
       <div class="game-result" id="depositResult"></div>
     </section>
 
-    <!-- PROFESSIONAL WITHDRAW WITH BANK FIELDS -->
     <section class="game-panel" id="withdrawPanel">
-      <div class="panel-head"><h3>↗ Withdraw to Your Bank</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div class="game-notice">Game Balance: <b id="withdrawGameBalance">₦0</b> - Admin will pay you from <b>1850772192 Kredi MFB</b> after verification</div>
+      <div class="panel-head"><h3>↗ Withdraw to Your Bank - Min ₦2500</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div class="game-notice" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">⚠️ Minimum withdrawal for game is <b>₦2500</b>. Game Balance: <b id="withdrawGameBalance">₦0</b> - Admin will pay from <b>1850772192 Kredi MFB</b></div>
       <form id="withdrawForm">
-        <div class="field"><label for="withdrawAmount">Amount (₦) - Min ₦100</label><input id="withdrawAmount" type="number" min="100" step="1" placeholder="e.g 1000" required></div>
+        <div class="field"><label for="withdrawAmount">Amount (₦) - Min ₦2500</label><input id="withdrawAmount" type="number" min="2500" step="100" placeholder="e.g 2500" required></div>
         <div class="field"><label for="wBankName">Your Bank Name</label><input id="wBankName" type="text" placeholder="e.g Opay, Palmpay, Kredi MFB" required></div>
         <div class="field"><label for="wAccNumber">Your Account Number</label><input id="wAccNumber" type="text" inputmode="numeric" placeholder="e.g 9041234567" required></div>
         <div class="field"><label for="wAccName">Your Account Name</label><input id="wAccName" type="text" placeholder="e.g John Doe" required></div>
-        <button class="primary-btn" id="withdrawSubmit" type="submit">Request Withdrawal →</button>
+        <button class="primary-btn" id="withdrawSubmit" type="submit" style="background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff">Request Withdrawal Min ₦2500 →</button>
       </form>
       <div class="game-result" id="withdrawResult"></div>
+    </section>
+
+    <section class="game-panel" id="bottlePanel">
+      <div class="panel-head"><h3>🍾 Bottle Spin - UP or DOWN</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div class="game-notice">20% WIN / 80% LOSE - Pick UP or DOWN, bottle spins and lands. If it lands on your pick, you WIN.</div>
+      <div class="bottle-stage" style="margin-top:10px"><div class="bottle-label up">⬆ UP</div><div class="bottle" id="bottle">🍾</div><div class="bottle-label down">⬇ DOWN</div></div>
+      <div id="bottleResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick UP or DOWN</div>
+      <div class="pred-row" style="margin-top:10px"><div class="pred up selected" id="bottlePickUp" onclick="pickBottle('up')"><span>⬆ UP</span><small>Bottle points UP</small></div><div class="pred down" id="bottlePickDown" onclick="pickBottle('down')"><span>⬇ DOWN</span><small>Bottle points DOWN</small></div></div>
+      <div class="field"><label>Stake (₦) - Min ₦100</label><input id="bottleStake" type="number" min="100" value="100" placeholder="100"></div>
+      <button class="primary-btn" id="bottlePlayBtn" type="button" onclick="playBottleUpDown()" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">🍾 SPIN BOTTLE - UP</button>
+      <div class="game-result" id="bottleResult"></div>
     </section>
 
     <section class="game-panel" id="playPanel">
@@ -231,35 +241,36 @@ button{cursor:pointer}
       </form>
       <div class="game-result" id="playResult"></div>
     </section>
+
     <section class="section" style="margin-top:15px">
       <div class="section-header"><h2 class="section-title">Recent Plays</h2><button type="button" id="refreshHistoryButton" class="close-panel">Refresh</button></div>
       <div id="gameHistory"><div class="loading">Loading history...</div></div>
     </section>
   </div>
 </div>
+
 <nav class="bottom-nav">
   <a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a>
   <a class="nav-item active" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a>
   <a class="nav-item" href="history.html"><span class="nav-icon">🧾</span><span>History</span></a>
   <a class="nav-item" href="profile.html"><span class="nav-icon">👤</span><span>Profile</span></a>
 </nav>
+
 <div class="popup-overlay" id="inactivePopup"><div class="popup-box"><div style="font-size:32px">🔒</div><h3 style="margin-top:10px">Account Not Activated</h3><a href="payment.html" class="popup-btn">Activate Now →</a><button type="button" id="popupClose" style="margin-top:14px;border:none;background:transparent;color:#9b939f;font-size:11px;font-weight:800">Close</button></div></div>
+
 <script>
 "use strict";
 const API_BASE="";const TASK_WAIT_SECONDS=30;const MIN_WATCH_SECONDS=60;
 let allJobs=[],availableJobs=[],completedJobs=[],allVideos=[],completedVideos=[];
 let currentFilter="available",accountActivated=false,currentUser=null,messageTimer=null,dailyStatsFromServer=null,loadingAll=false;
-let gameBusy=false;let proofBase64="";
+let gameBusy=false;let proofBase64="";let bottlePick='up';
 const watchedVideos=new Map(),taskTimers=new Map(),youtubeTimers=new Map();
 const TASK_TIMER_STORAGE_KEY="jovia_task_waits_v1";let taskTimerInterval=null;
 const PLAN_CONFIG={Silver:{maxDaily:2500,taskCount:5},Gold:{maxDaily:7000,taskCount:10},Super:{maxDaily:Infinity,taskCount:Infinity}};
 function formatNaira(v){const n=Number(v);return "₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{maximumFractionDigits:2});}
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 function safeExternalURL(v){if(typeof v!=="string"||!v.trim())return "";let c=v.trim();if(c.startsWith("www."))c="https://"+c;try{const p=new URL(c,location.origin);if(!["http:","https:"].includes(p.protocol))return "";return p.href;}catch{return "";}}
-function getYouTubeId(url){
-  try{const u=new URL(url);if(u.hostname.includes("youtu.be"))return u.pathname.slice(1).split("?")[0];if(u.hostname.includes("youtube.com")){if(u.searchParams.get("v"))return u.searchParams.get("v");const parts=u.pathname.split("/");const ei=parts.indexOf("embed"),si=parts.indexOf("shorts");if(ei!==-1)return parts[ei+1];if(si!==-1)return parts[si+1];}}catch{}
-  const m=String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,20})/);return m?m[1]:"";
-}
+function getYouTubeId(url){try{const u=new URL(url);if(u.hostname.includes("youtu.be"))return u.pathname.slice(1).split("?")[0];if(u.hostname.includes("youtube.com")){if(u.searchParams.get("v"))return u.searchParams.get("v");const parts=u.pathname.split("/");const ei=parts.indexOf("embed"),si=parts.indexOf("shorts");if(ei!==-1)return parts[ei+1];if(si!==-1)return parts[si+1];}}catch{}const m=String(url).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{6,20})/);return m?m[1]:"";}
 function isYouTubeURL(url){return !!getYouTubeId(url);}
 function getDriveId(url){const m=String(url).match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);return m?m[1]:"";}
 function buildPlayerHTML(video){
@@ -398,8 +409,66 @@ function showGamePanel(id){document.querySelectorAll(".game-panel").forEach(p=>p
 function closeGamePanels(){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));}
 function setGameResult(id,msg,type="info"){const el=document.getElementById(id);el.textContent=msg;el.classList.add("show");el.style.background=type==="success"?"#dcfce7":type==="error"?"#fee2e2":"#f5f3ff";el.style.color=type==="success"?"#166534":type==="error"?"#991b1b":"#4c1d95";}
 function clearGameResult(id){const el=document.getElementById(id);el.textContent="";el.classList.remove("show");}
+function pickBottle(side){
+  bottlePick=side;
+  document.getElementById('bottlePickUp').classList.toggle('selected',side==='up');
+  document.getElementById('bottlePickDown').classList.toggle('selected',side==='down');
+  document.getElementById('bottlePlayBtn').innerText=`🍾 SPIN BOTTLE - ${side.toUpperCase()}`;
+  document.getElementById('bottleResultText').innerText=`You picked ${side.toUpperCase()} - Spin!`;
+  document.getElementById('bottleResultText').style.color='#211827';
+}
+async function playBottleUpDown(){
+  if(gameBusy) return;
+  const stake=Number(document.getElementById('bottleStake').value);
+  if(!stake||stake<100){setGameResult('bottleResult','Min ₦100','error');return;}
+  const bottle=document.getElementById('bottle');
+  const resText=document.getElementById('bottleResultText');
+  const btn=document.getElementById('bottlePlayBtn');
+  gameBusy=true; btn.disabled=true; btn.innerText='🍾 Spinning...';
+  clearGameResult('bottleResult');
+  bottle.classList.remove('up','down'); bottle.classList.add('spin');
+  resText.innerText='Spinning...'; resText.style.color='#211827';
+  try{
+    const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_bottle',bet_amount:stake,amount:stake,prediction:bottlePick})});
+    const isWin=d.isWin;
+    let finalSide=isWin?bottlePick:(bottlePick==='up'?'down':'up');
+    setTimeout(()=>{
+      bottle.classList.remove('spin'); bottle.classList.add(finalSide);
+      if(isWin){
+        resText.innerText=`🎉 BOTTLE ${finalSide.toUpperCase()} - YOU WIN ₦${d.winAmount}!`;
+        resText.style.color='#15803d';
+        setGameResult('bottleResult',`WIN ₦${d.winAmount} (${d.multiplier}x) - New Bal ${formatNaira(d.newBalance)}`,'success');
+      } else {
+        resText.innerText=`💔 BOTTLE ${finalSide.toUpperCase()} - YOU LOSE ₦${stake}`;
+        resText.style.color='#b91c1c';
+        setGameResult('bottleResult',`LOSE ₦${stake} - Bottle went ${finalSide.toUpperCase()} not ${bottlePick.toUpperCase()} - New Bal ${formatNaira(d.newBalance)}`,'error');
+      }
+      if(d.gameAccount) updateGameBalance(d.gameAccount);
+      refreshGameData();
+      btn.disabled=false; btn.innerText=`🍾 SPIN AGAIN - ${bottlePick.toUpperCase()}`;
+      gameBusy=false;
+    },2200);
+  }catch(e){
+    setTimeout(()=>{
+      bottle.classList.remove('spin');
+      resText.innerText='❌ '+e.message;
+      resText.style.color='#b91c1c';
+      setGameResult('bottleResult',e.message,'error');
+      btn.disabled=false; btn.innerText=`🍾 SPIN BOTTLE - ${bottlePick.toUpperCase()}`;
+      gameBusy=false;
+    },800);
+  }
+}
 function openPlayGame(type){
-  const names={bottle:"🍾 Bottle Spin",wheel:"🎡 Wheel Spin",updown:"📈 Up / Down",guess:"🔢 Number Guess"};
+  if(type==='bottle'){
+    clearGameResult('bottleResult');
+    pickBottle('up');
+    document.getElementById('bottleStake').value='100';
+    document.getElementById('bottle').className='bottle up';
+    showGamePanel('bottlePanel');
+    return;
+  }
+  const names={wheel:"🎡 Wheel Spin",updown:"📈 Up / Down",guess:"🔢 Number Guess"};
   document.getElementById("playGameType").value=type;
   document.getElementById("playTitle").textContent=names[type]||"Play Game";
   document.getElementById("predictionField").style.display=type==="updown"?"block":"none";
@@ -439,7 +508,6 @@ async function refreshGameData(){
     renderGameHistory(d);
   }catch(e){host.innerHTML=`<div class="empty" style="display:block">Could not load: ${escapeHTML(e.message)}</div>`;}
 }
-// PROOF UPLOAD HANDLER
 document.getElementById("depositProof").addEventListener("change", e=>{
   const file = e.target.files[0]; if(!file) return;
   if(file.size > 4*1024*1024){ alert("Image too large, max 4MB"); e.target.value=""; return; }
@@ -492,7 +560,7 @@ async function submitGamePlay(event){
   const type=document.getElementById("playGameType").value;
   const amount=Number(document.getElementById("betAmount").value);
   if(!amount||amount<100){setGameResult("playResult","Min bet ₦100","error");return;}
-  const typeMap={bottle:"spin_bottle",wheel:"spin_wheel",updown:"up_down",guess:"number_predict"};
+  const typeMap={wheel:"spin_wheel",updown:"up_down",guess:"number_predict"};
   const backendType=typeMap[type]||type;
   const payload={game_type:backendType, bet_amount:amount, amount:amount};
   if(type==="updown")payload.prediction=document.getElementById("prediction").value;
@@ -534,7 +602,7 @@ document.getElementById("popupClose").addEventListener("click",closePopup);
 document.getElementById("inactivePopup").addEventListener("click",e=>{if(e.target.id==="inactivePopup")closePopup();});
 document.getElementById("retryButton").addEventListener("click",loadAll);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeGamesLobby();closePopup();}});
-document.addEventListener("DOMContentLoaded",()=>{restoreTaskTimers();startTaskTimerTicker();loadAll();});
+document.addEventListener("DOMContentLoaded",()=>{restoreTaskTimers();startTaskTimerTicker();loadAll();pickBottle('up');});
 </script>
 </body>
 </html>
