@@ -4,71 +4,87 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#3b0758">
+<meta name="description" content="Complete Jovia Network jobs, learn with the Jovia Academy, and explore Jovia Games.">
 <title>JOVIA Network | Jobs & Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--p:#3b0758;--d:#260038;--y:#ffc400;--bg:#f7f5f9;--c:#fff;--t:#211827;--m:#756d7c;--b:#ebe6ef;--g:#15803d;--radius:18px}
 body{font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
-button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:pointer}
+button,input,select{font:inherit}button:disabled{opacity:.55;cursor:not-allowed}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}
 .app{max-width:720px;min-height:100vh;margin:0 auto;padding-bottom:94px}
-.topbar{position:sticky;top:0;z-index:50;min-height:66px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b)}
-.brand{font-size:24px;font-weight:900;color:var(--p)}.brand span{color:var(--y)}
+.topbar{position:sticky;top:0;z-index:50;min-height:66px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.97);border-bottom:1px solid var(--b);backdrop-filter:blur(10px)}
+.brand{font-size:24px;font-weight:900;letter-spacing:-1px;color:var(--p)}.brand span{color:var(--y)}
 .top-pill{font-size:11px;font-weight:800;color:#655b6d;background:#f5f3f7;padding:8px 12px;border-radius:20px}
 .content{padding:22px 15px 28px}
-.page-heading h1{font-size:25px;font-weight:900;margin-bottom:7px}.page-heading p{font-size:12px;color:var(--m)}
-.message{display:none;margin:15px 0;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700}
+.page-heading h1{font-size:25px;font-weight:900;letter-spacing:-.6px;margin-bottom:7px}.page-heading p{font-size:12px;color:var(--m);line-height:1.7}
+.message{display:none;margin:15px 0;padding:12px 14px;border-radius:12px;font-size:12px;font-weight:700;line-height:1.6;overflow-wrap:anywhere}
 .message.success{display:block;background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
 .message.error-message{display:block;background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
-.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:19px;margin:19px 0}
-.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
-.summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)}
-.summary-label{color:#d8cfe0;font-size:9px;font-weight:800;margin-bottom:7px;text-transform:uppercase}
-.summary-value{font-size:19px;font-weight:900}
-.section{background:var(--c);border:1px solid var(--b);border-radius:var(--radius);margin-bottom:17px;overflow:hidden}
-.section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center}
-.section-title{font-size:14px;font-weight:900}.section-count{color:var(--m);font-size:10px;font-weight:800;background:#f5f3f7;padding:5px 9px;border-radius:10px}
-.filter-row{display:flex;gap:8px;overflow-x:auto;margin:2px 0 14px}
+.message.info-message{display:block;background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.summary-card{color:#fff;background:linear-gradient(135deg,var(--d),var(--p));border-radius:21px;padding:19px;margin:19px 0;box-shadow:0 10px 30px rgba(59,7,88,.19)}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.summary-item{padding:12px 9px;border-radius:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);min-width:0}
+.summary-label{color:#d8cfe0;font-size:9px;font-weight:800;margin-bottom:7px;letter-spacing:.5px;text-transform:uppercase}
+.summary-value{font-size:clamp(14px,3.6vw,19px);font-weight:900;overflow-wrap:anywhere}
+.section{background:var(--c);border:1px solid var(--b);border-radius:var(--radius);margin-bottom:17px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.025)}
+.section-header{padding:16px;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;gap:10px}
+.section-title{font-size:14px;font-weight:900}.section-count{color:var(--m);font-size:10px;font-weight:800;background:#f5f3f7;padding:5px 9px;border-radius:10px;white-space:nowrap}
+.filter-row{display:flex;gap:8px;overflow-x:auto;margin:2px 0 14px;padding-bottom:3px}
 .filter-btn{flex:0 0 auto;border:1px solid var(--b);background:#fff;color:#776e7d;padding:10px 16px;border-radius:999px;font-size:11px;font-weight:800}
 .filter-btn.active{background:var(--y);border-color:var(--y);color:#281d00}
 .job-card{padding:17px 16px;border-bottom:1px solid #f1edf3}
+.job-card:last-child,.video-card:last-child{border-bottom:0}
 .job-top{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px}
-.job-title{font-size:14px;font-weight:900}.job-reward{color:var(--g);font-size:14px;font-weight:900}
-.task-open-btn,.complete-btn,.primary-btn,.secondary-btn{width:100%;border:none;padding:13px 14px;border-radius:12px;font-size:11px;font-weight:900}
+.job-title{font-size:14px;font-weight:900;line-height:1.5;overflow-wrap:anywhere}.job-reward{color:var(--g);font-size:14px;font-weight:900;white-space:nowrap}
+.job-description{margin-bottom:12px;color:var(--m);font-size:11px;line-height:1.7;overflow-wrap:anywhere}
+.meta{display:inline-flex;background:#faf8fb;border:1px solid var(--b);color:#746b7a;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:800}
+.task-box{padding:12px;margin-bottom:11px;border-radius:13px;background:#fffbeb;border:1px solid #fde68a}
+.task-box.success-box{background:#f0fdf4;border-color:#bbf7d0}
+.task-box.upgrade-box{background:linear-gradient(135deg,#fff7ed,#fffbeb);border:1px solid #f59e0b}
+.task-box.wait-box{background:#f5f3ff;border-color:#ddd6fe}
+.task-label{margin-bottom:5px;font-size:9px;font-weight:900;letter-spacing:.5px}.task-info{font-size:10px;line-height:1.7}
+.task-open-btn,.complete-btn,.upgrade-btn,.primary-btn,.secondary-btn{width:100%;border:none;padding:13px 14px;border-radius:12px;font-size:11px;font-weight:900;transition:background .2s,transform .2s}
 .task-open-btn,.primary-btn{background:var(--y);color:#241900}
 .complete-btn{background:var(--p);color:#fff;margin-top:9px}
 .complete-btn.completed{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
-.loading,.empty{padding:34px 20px;text-align:center;color:var(--m);font-size:12px}.empty{display:none}
+.upgrade-btn{display:block;background:linear-gradient(135deg,#ff9a00,#ffd83d);color:#3a2600;margin-top:9px;text-align:center;text-decoration:none;border:1px solid #f59e0b}
+.secondary-btn{background:#f5f3f7;color:var(--p);border:1px solid var(--b)}
+.loading,.empty{padding:34px 20px;text-align:center;color:var(--m);font-size:12px}
+.empty{display:none}
 .error{display:none;padding:19px;color:#991b1b;background:#fee2e2;font-size:12px;text-align:center;border-radius:12px;margin:12px}
 .activation-box,.suspended-box{padding:42px 20px;text-align:center}
 .video-card{padding:16px;border-bottom:1px solid #f1edf3}
 .video-player{width:100%;height:220px;border-radius:13px;background:#000;border:none}
+.video-player-mp4{width:100%;max-height:260px;border-radius:13px;background:#000}
 .watch-progress{height:5px;margin:10px 0 8px;background:#e7e4e8;border-radius:999px;overflow:hidden}
 .watch-bar{height:100%;width:0%;background:linear-gradient(90deg,#ffc400,#ff9a00);transition:width .25s}
 .play-overlay{position:relative;border-radius:13px;overflow:hidden;background:#000}
-.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:720px;height:72px;display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,.98);border-top:1px solid var(--b);z-index:100}
+.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:720px;height:72px;display:flex;justify-content:space-around;align-items:center;background:rgba(255,255,255,.98);border-top:1px solid var(--b);backdrop-filter:blur(15px);z-index:100}
 .nav-item{min-width:60px;border:none;background:transparent;color:#9b939f;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:10px;font-weight:800;text-decoration:none;padding:6px}
 .nav-item.active{color:var(--p)}.nav-icon{font-size:20px}
-.popup-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.75);z-index:200}
+.popup-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(18,7,24,.75);backdrop-filter:blur(8px);z-index:200}
 .popup-overlay.show{display:flex}
-.popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center}
+.popup-box{width:100%;max-width:385px;padding:27px 21px;background:#fff;border-radius:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)}
 .popup-btn{display:block;width:100%;padding:13px;border-radius:12px;background:var(--y);color:#241900;font-weight:900;text-decoration:none;margin-top:14px}
-.games-fab{position:fixed;right:max(14px,calc((100vw - 720px)/2 + 14px));bottom:88px;z-index:90;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#3b0758,#7c2ae8);border:2px solid #ffc400;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.games-fab b{font-size:22px}.games-fab i{font-style:normal;font-size:8px;font-weight:900;background:#ffc400;color:#000;padding:2px 5px;border-radius:10px;margin-top:2px}
+.games-fab{position:fixed;right:max(14px,calc((100vw - 720px)/2 + 14px));bottom:88px;z-index:90;width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#3b0758,#7c2ae8);border:2px solid #ffc400;box-shadow:0 8px 22px rgba(59,7,88,.35);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.games-fab b{font-size:22px;line-height:1}.games-fab i{font-style:normal;font-size:8px;font-weight:900;background:#ffc400;color:#000;padding:2px 5px;border-radius:10px;margin-top:2px}
 .games-overlay{position:fixed;inset:0;z-index:160;display:none;background:var(--bg);overflow-y:auto}
 .games-overlay.show{display:block}
 .overlay-top{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--b);padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .games-lobby{max-width:720px;margin:0 auto;padding:18px 15px 100px}
-.game-hero{background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:20px;padding:20px;margin-bottom:15px}
+.game-hero{background:linear-gradient(135deg,#260038,#3b0758);color:#fff;border-radius:20px;padding:20px;margin-bottom:15px;box-shadow:0 8px 25px rgba(59,7,88,.15)}
 .game-balance-row{display:flex;justify-content:space-between;gap:12px}
 .game-label{font-size:9px;opacity:.75;font-weight:800;letter-spacing:.6px}
-.game-money{font-size:27px;font-weight:900;margin-top:5px}
+.game-money{font-size:clamp(20px,5vw,27px);font-weight:900;margin-top:5px;overflow-wrap:anywhere}
 .game-action-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}
 .game-action-row button{padding:12px;border-radius:12px;font-size:11px;font-weight:900}
 .game-primary{background:var(--y);color:#241900;border:0}
 .game-secondary{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)}
-.game-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
-.game-card{background:#fff;border:1px solid var(--b);border-radius:18px;padding:15px}
+.game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.game-card{background:#fff;border:1px solid var(--b);border-radius:18px;padding:15px;min-width:0}
 .game-card h3{font-size:14px;margin-bottom:5px}.game-card p{font-size:10px;line-height:1.65;color:var(--m);margin-bottom:12px}
 .game-emoji{font-size:29px;margin-bottom:9px}
 .game-open{width:100%;padding:11px;border:0;border-radius:10px;background:var(--p);color:#fff;font-size:10px;font-weight:900}
@@ -79,19 +95,24 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
 .close-panel{border:1px solid var(--b);background:#f8f6fa;border-radius:9px;padding:7px 10px;font-size:10px;font-weight:800}
 .field{margin:12px 0}
 .field label{display:block;font-size:10px;font-weight:800;margin-bottom:7px}
-.field input{width:100%;padding:13px;border:1px solid #ded6e5;border-radius:11px;background:#fff;color:var(--t);outline:none;font-size:13px}
+.field input,.field select{width:100%;padding:13px;border:1px solid #ded6e5;border-radius:11px;background:#fff;color:var(--t);outline:none;font-size:13px}
+.field input:focus,.field select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(59,7,88,.08)}
+.field-hint{font-size:10px;color:var(--m);line-height:1.6;margin-top:6px}
 .game-notice{font-size:11px;line-height:1.7;padding:11px 12px;background:#f5f3ff;border:1px solid #ddd6fe;color:#4c1d95;border-radius:11px;margin-bottom:12px}
-.game-result{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#f5f3ff;color:var(--p);font-size:12px;line-height:1.7;font-weight:800}
+.game-result{display:none;margin-top:12px;padding:14px;border-radius:12px;background:#f5f3ff;color:var(--p);font-size:12px;line-height:1.7;font-weight:800;overflow-wrap:anywhere}
 .game-result.show{display:block}
 .history-item{padding:12px 0;border-bottom:1px solid var(--b);display:flex;justify-content:space-between;gap:12px;font-size:11px;line-height:1.7}
+.history-item:last-child{border-bottom:0}
 .history-muted{color:var(--m);font-size:10px}
 .small-tag{display:inline-flex;border-radius:8px;padding:4px 7px;font-size:9px;font-weight:900;background:#f5f3f7;color:var(--m)}
-.bottle-stage{position:relative;height:280px;background:radial-gradient(circle at 50% 35%,#2a1a4a,#0e0a1f);border-radius:18px;border:1px solid #2a2250;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.bottle{font-size:110px;transition:transform 2.2s cubic-bezier(.2,.8,.15,1);filter:drop-shadow(0 10px 25px rgba(255,196,0,.25))}
-.bottle.up{transform:rotate(0deg)}.bottle.down{transform:rotate(180deg)}.bottle.spin{transform:rotate(1080deg)}
-.bottle-label{position:absolute;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;font-size:10px;font-weight:900}
-.bottle-label.up{top:12px;background:#052e16;border:1px solid #22c55e;color:#22c55e}
-.bottle-label.down{bottom:12px;background:#450a0a;border:1px solid #ef4444;color:#ef4444}
+.bottle-stage{position:relative;height:260px;background:radial-gradient(circle at 50% 35%,#2a1a4a,#0e0a1f);border-radius:18px;border:1px solid #2a2250;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bottle{font-size:100px;transition:transform 2.2s cubic-bezier(.2,.8,.15,1);filter:drop-shadow(0 10px 25px rgba(255,196,0,.25));will-change:transform}
+.bottle.up{transform:rotate(0deg) !important}
+.bottle.down{transform:rotate(180deg) !important}
+.bottle.spin{transform:rotate(720deg) !important}
+.bottle-label{position:absolute;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;font-size:10px;font-weight:900;pointer-events:none}
+.bottle-label.up{top:14px;background:#052e16;border:1px solid #22c55e;color:#22c55e}
+.bottle-label.down{bottom:14px;background:#450a0a;border:1px solid #ef4444;color:#ef4444}
 .pred-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .pred{padding:14px;border-radius:12px;border:2px solid #e2e8f0;background:#faf8fb;text-align:center;font-weight:900;font-size:12px;cursor:pointer}
 .pred small{display:block;font-size:10px;color:#8a8a9e;margin-top:2px}
@@ -103,11 +124,11 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
 .price-tag.up{color:#22c55e;border-color:#22c55e}.price-tag.down{color:#ef4444;border-color:#ef4444}
 .timer-bar{position:absolute;left:0;bottom:0;height:4px;background:#ffc400;transition:width .1s}
 .wheel-wrap{position:relative;width:300px;height:300px;margin:14px auto}
-#wheelCanvas{width:300px;height:300px;border-radius:50%;border:4px solid #3b0758;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+#wheelCanvas{width:300px;height:300px;border-radius:50%;border:4px solid #3b0758;box-shadow:0 10px 30px rgba(0,0,0,.2)}
 .wheel-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:22px solid #ef4444;z-index:5}
 .wheel-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:#3b0758;border:3px solid #ffc400;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffc400;font-weight:900;z-index:5}
 .coming-soon{padding:50px 20px;text-align:center;background:#f5f3f7;border:2px dashed #d1c7d9;border-radius:16px}
-@media(max-width:420px){.game-grid{grid-template-columns:1fr}}
+@media(max-width:420px){.game-grid{grid-template-columns:1fr}.summary-grid{gap:6px}.summary-item{padding:11px 7px}.content{padding-left:12px;padding-right:12px}.game-hero{padding:16px}}
 </style>
 </head>
 <body>
@@ -123,10 +144,10 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
       <div class="summary-item"><div class="summary-label">Main Wallet</div><div class="summary-value" id="walletBalance">₦0</div></div>
     </div>
     <div id="dailyEarnedText" style="margin-top:12px;font-size:11px;color:#d8cfe0">Earned today: ₦0</div>
-    <div id="superActiveBadge" style="display:none" class="small-tag">👑 SUPER ACTIVE</div>
+    <div id="superActiveBadge" style="display:none" class="small-tag">👑 SUPER ACTIVE — UNLIMITED ACCESS</div>
   </section>
   <section class="section" id="videoSection">
-    <div class="section-header"><h2 class="section-title">📚 JOVIA Academy</h2><span class="section-count" id="videoCount">0 resources</span></div>
+    <div class="section-header"><h2 class="section-title">📚 JOVIA Academy - Direct Play</h2><span class="section-count" id="videoCount">0 resources</span></div>
     <div class="loading" id="videoLoading">Loading academy...</div>
     <div id="videosList"></div>
     <div class="empty" id="videoEmpty"><div style="font-size:24px">📚</div><h3 style="margin-top:8px">No resources yet</h3></div>
@@ -136,12 +157,12 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
     <button class="filter-btn" type="button" data-filter="completed">Completed</button>
   </div>
   <section class="section">
-    <div class="section-header"><h2 class="section-title">Available Jobs</h2><span class="section-count" id="jobCount">0 jobs</span></div>
+    <div class="section-header"><h2 class="section-title" id="sectionTitle">Available Jobs</h2><span class="section-count" id="jobCount">0 jobs</span></div>
     <div class="loading" id="loadingState">Checking account status...</div>
     <div class="activation-box" id="activationState" style="display:none"><div style="font-size:32px">🔒</div><h3 style="margin-top:10px">Account Not Activated</h3><a href="payment.html" class="popup-btn">Activate Now →</a></div>
     <div class="suspended-box" id="suspendedState" style="display:none"><div style="font-size:32px">⚠️</div><h3 style="margin-top:10px">Account Suspended</h3></div>
     <div id="errorState" class="error">Unable to load jobs.<br><br><button type="button" id="retryButton" class="task-open-btn" style="width:auto;padding:10px 20px">Try Again</button></div>
-    <div id="emptyState" class="empty"><div style="font-size:28px">💼</div><h3 style="margin-top:8px">No jobs</h3></div>
+    <div id="emptyState" class="empty"><div style="font-size:28px">💼</div><h3 id="emptyTitle" style="margin-top:8px">No jobs</h3></div>
     <div id="jobsList"></div>
   </section>
 </main>
@@ -150,26 +171,26 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
 <button class="games-fab" type="button" id="openGamesButton"><b>🎮</b><i>GAMES</i></button>
 
 <div class="games-overlay" id="gamesOverlay">
-  <div class="overlay-top"><div style="font-weight:900">🎮 JOVIA Games <span class="small-tag">MIN WITHDRAW ₦2500 - PROFIT 80%</span></div><button type="button" id="closeGamesButton" class="close-panel">✕ Close</button></div>
+  <div class="overlay-top"><div style="font-weight:900">🎮 JOVIA Games <span class="small-tag">SEPARATE WALLET</span></div><button type="button" id="closeGamesButton" class="close-panel">✕ Close</button></div>
   <div class="games-lobby">
     <section class="game-hero">
       <div class="game-balance-row">
         <div><div class="game-label">GAME WALLET BALANCE</div><div class="game-money" id="gameBalance">₦0</div></div>
         <div style="text-align:right"><div class="game-label">WINS</div><div class="game-money" id="gamePoints">0</div></div>
       </div>
-      <div style="margin-top:9px;font-size:10px;line-height:1.7;color:#ded1e8">Min withdraw ₦2500. Bottle vice versa. Spin profitable - 100x & 20x never win.</div>
+      <div style="margin-top:9px;font-size:10px;line-height:1.7;color:#ded1e8">Game wallet separate from main wallet. Deposit to play, withdraw to bank. Min withdraw ₦2500.</div>
       <div class="game-action-row">
         <button class="game-primary" type="button" id="openDepositButton">＋ Add Money</button>
         <button class="game-secondary" type="button" id="openWithdrawButton">↗ Withdraw Min ₦2500</button>
       </div>
-      <button type="button" id="refreshGameButton" class="game-secondary" style="width:100%;margin-top:9px;padding:10px;border-radius:11px;font-size:10px">↻ Refresh</button>
+      <button type="button" id="refreshGameButton" class="game-secondary" style="width:100%;margin-top:9px;padding:10px;border-radius:11px;font-size:10px">↻ Refresh balance & history</button>
     </section>
 
     <div class="game-grid">
-      <article class="game-card" style="border:2px solid #ffc400;background:linear-gradient(135deg,#fffbeb,#fef3c7)"><div class="game-emoji">🍾</div><h3>Bottle - UP / DOWN</h3><p>Pick matches bottle = WIN. Vice versa.</p><button class="game-open" type="button" data-game="bottle" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">Play PRO →</button></article>
-      <article class="game-card" style="border:2px solid #22c55e;background:linear-gradient(135deg,#f0fdf4,#dcfce7)"><div class="game-emoji">📈</div><h3>Up / Down - Trading</h3><p>GREEN UP, RED DOWN - match = WIN.</p><button class="game-open" type="button" data-game="updown" style="background:linear-gradient(135deg,#052e16,#16a34a);color:#fff">Play PRO →</button></article>
-      <article class="game-card" style="border:2px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fde68a)"><div class="game-emoji">🎡</div><h3>Spin & Win - Real Wheel</h3><p>0 - 100x. 100x & 20x never win. 5x rare. Profitable.</p><button class="game-open" type="button" data-game="wheel" style="background:linear-gradient(135deg,#92400e,#f59e0b);color:#fff">Play PRO →</button></article>
-      <article class="game-card" style="border:2px dashed #9ca3af;background:#f9fafb"><div class="game-emoji">🔢</div><h3>Number Guess</h3><p>Coming soon.</p><button class="game-open" type="button" data-game="guess" style="background:#9ca3af">COMING SOON</button></article>
+      <article class="game-card" style="border:2px solid #ffc400;background:linear-gradient(135deg,#fffbeb,#fef3c7)"><div class="game-emoji">🍾</div><h3>Bottle - UP / DOWN</h3><p>Bottle spins to UP or DOWN only.</p><button class="game-open" type="button" data-game="bottle" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">Play →</button></article>
+      <article class="game-card" style="border:2px solid #22c55e;background:linear-gradient(135deg,#f0fdf4,#dcfce7)"><div class="game-emoji">📈</div><h3>Up / Down - Trading</h3><p>GREEN = UP, RED = DOWN.</p><button class="game-open" type="button" data-game="updown" style="background:linear-gradient(135deg,#052e16,#16a34a);color:#fff">Play →</button></article>
+      <article class="game-card"><div class="game-emoji">🎡</div><h3>Wheel Spin</h3><p>Spin the wheel and win.</p><button class="game-open" type="button" data-game="wheel">Play →</button></article>
+      <article class="game-card" style="border:2px dashed #9ca3af;background:#f9fafb"><div class="game-emoji">🔢</div><h3>Number Guess</h3><p>Coming soon.</p><button class="game-open" type="button" data-game="guess" style="background:#9ca3af">Coming Soon</button></article>
     </div>
 
     <section class="game-panel" id="depositPanel">
@@ -191,7 +212,7 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
 
     <section class="game-panel" id="withdrawPanel">
       <div class="panel-head"><h3>↗ Withdraw Min ₦2500</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div class="game-notice" style="background:#fef3c7;border-color:#fbbf24;color:#92400e">⚠️ Minimum withdrawal for game is <b>₦2500</b>. Game Balance: <b id="withdrawGameBalance">₦0</b></div>
+      <div class="game-notice">Game Balance: <b id="withdrawGameBalance">₦0</b> - Min ₦2500. Admin will pay from <b>1850772192 Kredi MFB</b></div>
       <form id="withdrawForm">
         <div class="field"><label>Amount (₦) - Min ₦2500</label><input id="withdrawAmount" type="number" min="2500" step="100" placeholder="e.g 2500" required></div>
         <div class="field"><label>Your Bank Name</label><input id="wBankName" type="text" placeholder="e.g Opay" required></div>
@@ -203,13 +224,17 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
     </section>
 
     <section class="game-panel" id="bottlePanel">
-      <div class="panel-head"><h3>🍾 Bottle Spin - UP or DOWN</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div class="game-notice" style="background:#fffbeb;border-color:#fbbf24;color:#92400e">✅ VICE VERSA: Pick UP + Bottle UP = WIN, Pick UP + Bottle DOWN = LOSE, Pick DOWN + Bottle DOWN = WIN, Pick DOWN + Bottle UP = LOSE</div>
-      <div class="bottle-stage" style="margin-top:10px"><div class="bottle-label up">⬆ UP = WIN</div><div class="bottle" id="bottle">🍾</div><div class="bottle-label down">⬇ DOWN = WIN</div></div>
-      <div id="bottleResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick UP or DOWN - Match = WIN</div>
+      <div class="panel-head"><h3>🍾 Bottle Spin - UP or DOWN Only</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div class="game-notice">Pick UP or DOWN. Bottle will land exactly UP or DOWN only - not sideways. Match = WIN.</div>
+      <div class="bottle-stage">
+        <div class="bottle-label up">⬆ UP</div>
+        <div class="bottle up" id="bottle">🍾</div>
+        <div class="bottle-label down">⬇ DOWN</div>
+      </div>
+      <div id="bottleResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick UP or DOWN</div>
       <div class="pred-row" style="margin-top:10px">
-        <div class="pred up selected" id="bottlePickUp" onclick="pickBottle('up')"><span>⬆ UP</span><small>If bottle UP you WIN</small></div>
-        <div class="pred down" id="bottlePickDown" onclick="pickBottle('down')"><span>⬇ DOWN</span><small>If bottle DOWN you WIN</small></div>
+        <div class="pred up selected" id="bottlePickUp" onclick="pickBottle('up')"><span>⬆ UP</span><small>Bottle UP = WIN</small></div>
+        <div class="pred down" id="bottlePickDown" onclick="pickBottle('down')"><span>⬇ DOWN</span><small>Bottle DOWN = WIN</small></div>
       </div>
       <div class="field"><label>Stake (₦) - Min ₦100</label><input id="bottleStake" type="number" min="100" value="100"></div>
       <button class="primary-btn" id="bottlePlayBtn" type="button" onclick="playBottleUpDown()" style="background:linear-gradient(135deg,#0f172a,#3b0758);color:#ffc400">🍾 SPIN BOTTLE - UP</button>
@@ -217,10 +242,10 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
     </section>
 
     <section class="game-panel" id="updownPanel">
-      <div class="panel-head"><h3>📈 Up / Down - Trading PRO</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div class="game-notice" style="background:#f0fdf4;border-color:#bbf7d0;color:#166534">📈 GREEN = UP, RED = DOWN. Match = WIN.</div>
+      <div class="panel-head"><h3>📈 Up / Down - Trading</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div class="game-notice">GREEN candle = UP, RED = DOWN.</div>
       <div class="trading-stage" style="margin-top:10px"><canvas id="tradingCanvas"></canvas><div class="price-tag up" id="priceTag">$ 64,245</div><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
-      <div id="updownResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick UP GREEN or DOWN RED</div>
+      <div id="updownResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick GREEN or RED</div>
       <div class="pred-row" style="margin-top:10px">
         <div class="pred up selected" id="upPickUp" onclick="pickUpDown('up')"><span>📈 UP - GREEN</span><small>GREEN = WIN</small></div>
         <div class="pred down" id="upPickDown" onclick="pickUpDown('down')"><span>📉 DOWN - RED</span><small>RED = WIN</small></div>
@@ -231,24 +256,12 @@ button,input,select{font:inherit}button:disabled{opacity:.55}button{cursor:point
     </section>
 
     <section class="game-panel" id="wheelPanel">
-      <div class="panel-head"><h3>🎡 Spin & Win - Real Wheel</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
-      <div class="game-notice" style="background:#fffbeb;border-color:#fbbf24;color:#92400e">⚠️ <b>100x & 20x NEVER WIN</b> - only for attraction. <b>5x RARE 1%</b>. Mostly 0 - 0.8x (house profit). Example: Put ₦500, hit 0.5x = get ₦250 back, we keep ₦250.</div>
+      <div class="panel-head"><h3>🎡 Spin & Win</h3><button class="close-panel" type="button" data-close-panel>Close</button></div>
+      <div class="game-notice">Spin the wheel and win. 20% win chance.</div>
       <div class="wheel-wrap"><div class="wheel-pointer"></div><canvas id="wheelCanvas" width="600" height="600"></canvas><div class="wheel-center">SPIN</div></div>
-      <div id="wheelResultText" style="text-align:center;font-weight:900;font-size:18px;margin:10px 0;min-height:26px">Put stake and spin!</div>
-      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin:10px 0;font-size:9px;font-weight:800;text-align:center">
-        <div style="background:#fee2e2;padding:6px;border-radius:8px">0<br>LOSE ALL</div>
-        <div style="background:#fef3c7;padding:6px;border-radius:8px">0.1x</div>
-        <div style="background:#fef3c7;padding:6px;border-radius:8px">0.2x</div>
-        <div style="background:#fef3c7;padding:6px;border-radius:8px">0.3x</div>
-        <div style="background:#fef3c7;padding:6px;border-radius:8px">0.5x</div>
-        <div style="background:#dcfce7;padding:6px;border-radius:8px">0.8x</div>
-        <div style="background:#dcfce7;padding:6px;border-radius:8px">1.2x</div>
-        <div style="background:#dcfce7;padding:6px;border-radius:8px">2x</div>
-        <div style="background:#fde68a;padding:6px;border-radius:8px;border:2px solid #f59e0b">5x<br>RARE 1%</div>
-        <div style="background:#fecaca;padding:6px;border-radius:8px;border:2px dashed #ef4444">100x<br>NEVER</div>
-      </div>
+      <div id="wheelResultText" style="text-align:center;font-weight:900;font-size:18px;margin:10px 0;min-height:26px">Put stake and spin</div>
       <div class="field"><label>Stake (₦) - Min ₦100</label><input id="wheelStake" type="number" min="100" value="500"></div>
-      <button class="primary-btn" id="wheelPlayBtn" type="button" onclick="playWheel()" style="background:linear-gradient(135deg,#92400e,#f59e0b);color:#fff">🎡 SPIN WHEEL NOW</button>
+      <button class="primary-btn" id="wheelPlayBtn" type="button" onclick="playWheel()" style="background:linear-gradient(135deg,#3b0758,#7c2ae8);color:#ffc400">🎡 SPIN WHEEL NOW</button>
       <div class="game-result" id="wheelResult"></div>
     </section>
 
@@ -292,7 +305,7 @@ function buildPlayerHTML(video){
   if(!url)return '<div style="padding:22px 15px;border-radius:13px;background:#211827;color:#fff;text-align:center;font-size:11px">Resource unavailable</div>';
   if(isYouTubeURL(url)){
     const ytId=getYouTubeId(url);
-    return `<div class="play-overlay"><iframe id="yt-${escapeHTML(id)}" class="video-player" src="https://www.youtube.com/embed/${escapeHTML(ytId)}?rel=0&modestbranding=1" allowfullscreen loading="lazy"></iframe><button type="button" id="playbtn-${escapeHTML(id)}" style="position:absolute;inset:0;background:rgba(0,0,0,.25);border:0;color:#fff;font-size:13px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><span style="width:56px;height:56px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px">▶</span><span>Tap to watch ${MIN_WATCH_SECONDS}s</span></button></div><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s</div>`;
+    return `<div class="play-overlay"><iframe id="yt-${escapeHTML(id)}" class="video-player" src="https://www.youtube.com/embed/${escapeHTML(ytId)}?rel=0&modestbranding=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe><button type="button" id="playbtn-${escapeHTML(id)}" style="position:absolute;inset:0;background:rgba(0,0,0,.25);border:0;color:#fff;font-size:13px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><span style="width:56px;height:56px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px">▶</span><span>Tap to watch ${MIN_WATCH_SECONDS}s</span></button></div><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s - Plays inside Jovia ✓</div>`;
   }
   if(getDriveId(url)){return `<iframe class="video-player" src="https://drive.google.com/file/d/${escapeHTML(getDriveId(url))}/preview" allow="autoplay"></iframe><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s</div><button type="button" id="startwatch-${escapeHTML(id)}" class="secondary-btn" style="margin-top:8px">Start timer</button>`;}
   return `<video class="video-player-mp4" id="vid-${escapeHTML(id)}" controls preload="metadata" playsinline controlsList="nodownload" src="${escapeHTML(url)}"></video><div class="watch-progress"><div class="watch-bar" id="bar-${escapeHTML(id)}"></div></div><div id="watchText-${escapeHTML(id)}" style="font-size:10px;color:#756d7c">0s / ${MIN_WATCH_SECONDS}s</div>`;
@@ -306,12 +319,12 @@ function getPlanLimits(plan){return PLAN_CONFIG[normalizePlan(plan)]||PLAN_CONFI
 function getAccountStatus(u){return String(u?.account_status||u?.status||"").toLowerCase().trim();}
 function isSuspended(u){return ["suspended","banned","blocked"].includes(getAccountStatus(u));}
 function isActivated(u){return !!u&&!isSuspended(u)&&["active","approved","activated"].includes(getAccountStatus(u));}
-function showMessage(m,t="error"){const box=document.getElementById("message");if(messageTimer)clearTimeout(messageTimer);box.textContent=String(m||"");box.className="message "+(t==="success"?"success":"error-message");messageTimer=setTimeout(()=>{box.className="message";box.textContent="";},7000);}
+function showMessage(m,t="error"){const box=document.getElementById("message");if(messageTimer)clearTimeout(messageTimer);box.textContent=String(m||"");box.className="message "+(t==="success"?"success":t==="info"?"info-message":"error-message");messageTimer=setTimeout(()=>{box.className="message";box.textContent="";},7000);}
 function updateWallet(u){if(!u)return;const b=u.wallet_balance??u.walletBalance??0;document.getElementById("walletBalance").textContent=formatNaira(b);}
 function updateGameBalance(u){const bal=u?.game_balance??u?.gameBalance??0;const wins=u?.total_wins??u?.wins??0;document.getElementById("gameBalance").textContent=formatNaira(bal);const wb=document.getElementById("withdrawGameBalance");if(wb)wb.textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=wins+" wins";}
-function getDailyStats(){const plan=getCurrentPlan(),limits=getPlanLimits(plan);let earned=0,claimedCount=completedJobs.length+completedVideos.length;if(dailyStatsFromServer){earned=Number(dailyStatsFromServer.earnedToday??0)||0;claimedCount=Number(dailyStatsFromServer.claimedToday??claimedCount)||0;}if(isSuperPlan())return{plan:"Super",limits:PLAN_CONFIG.Super,earned,claimedCount,isSuper:true};return{plan,limits,earned,claimedCount,isSuper:false};}
+function getDailyStats(){const plan=getCurrentPlan(),limits=getPlanLimits(plan);let earned=0,claimedCount=completedJobs.length+completedVideos.length;if(dailyStatsFromServer){earned=Number(dailyStatsFromServer.earnedToday??0)||0;claimedCount=Number(dailyStatsFromServer.claimedToday??claimedCount)||0;}if(isSuperPlan())return{plan:"Super",limits:PLAN_CONFIG.Super,earned,claimedCount,isSuper:true};return{plan,limits,earned,claimedCount,remainingAmount:Math.max(0,limits.maxDaily-earned),isSuper:false};}
 function isDailyLimitReached(){if(isSuperPlan())return false;const s=getDailyStats();return s.earned>=s.limits.maxDaily||s.claimedCount>=s.limits.taskCount;}
-function wouldExceedLimit(reward){if(isSuperPlan())return false;const s=getDailyStats();return s.earned+Number(reward)>s.limits.maxDaily;}
+function wouldExceedLimit(reward){if(isSuperPlan())return false;const s=getDailyStats();return Number(reward)>s.limits.maxDaily||s.earned+Number(reward)>s.limits.maxDaily;}
 function getUpgradeMessage(plan){return "Daily limit reached. Upgrade to SUPER.";}
 function restoreTaskTimers(){try{const saved=JSON.parse(sessionStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");Object.entries(saved).forEach(([id,ts])=>{if(Number(ts)>Date.now()-60000)taskTimers.set(String(id),{claimAvailableAt:Number(ts)});});}catch{}}
 function saveTaskTimers(){try{const o={};taskTimers.forEach((s,id)=>{o[id]=s.claimAvailableAt;});sessionStorage.setItem(TASK_TIMER_STORAGE_KEY,JSON.stringify(o));}catch{}}
@@ -335,7 +348,8 @@ const stats=getDailyStats();
 document.getElementById("completedCount").textContent=String(stats.claimedCount);
 document.getElementById("availableCount").textContent=String(availableJobs.length);
 document.getElementById("jobCount").textContent=`${jobs.length} jobs`;
-document.getElementById("superActiveBadge").style.display=stats.isSuper?"inline-flex":"none";
+const badge=document.getElementById("superActiveBadge");
+badge.style.display=stats.isSuper?"inline-flex":"none";
 document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${stats.isSuper?'∞':formatNaira(stats.limits.maxDaily)}`;
 if(currentFilter==="available"&&isDailyLimitReached()){list.innerHTML=`<div style="padding:30px 20px;text-align:center"><h3>Daily limit reached</h3><a href="upgrade-pay.html" class="upgrade-btn" style="margin-top:16px">Upgrade →</a></div>`;return;}
 if(!jobs.length){empty.style.display="block";return;}empty.style.display="none";
@@ -397,14 +411,14 @@ list.innerHTML=allVideos.map(video=>{
 const id=String(video.id||"");const completed=String(video.user_status||"").toLowerCase()==="completed";const reward=Number(video.reward||0);
 let player=buildPlayerHTML(video);
 let btn=completed?`<button class="complete-btn completed" disabled>Completed ✓</button>`:`<button id="vbtn-${escapeHTML(id)}" class="complete-btn" disabled>Watch ${MIN_WATCH_SECONDS}s to claim</button>`;
-return `<div class="video-card">${player}<div style="margin:10px 0 5px;font-size:13px;font-weight:900">${escapeHTML(video.title||"Resource")}</div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="meta" style="display:inline-flex;background:#faf8fb;border:1px solid #ebe6ef;padding:6px 8px;border-radius:8px;font-size:9px;font-weight:800">Academy</span><span style="color:#15803d;font-size:11px;font-weight:900">${formatNaira(reward)}</span></div>${btn}</div>`;
+return `<div class="video-card">${player}<div style="margin:10px 0 5px;font-size:13px;font-weight:900">${escapeHTML(video.title||"Resource")}</div><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="meta">Academy</span><span style="color:#15803d;font-size:11px;font-weight:900">${formatNaira(reward)}</span></div>${btn}</div>`;
 }).join("");
 allVideos.forEach(video=>{
 const id=String(video.id||"");const player=document.getElementById(`vid-${id}`);const ytBtn=document.getElementById(`playbtn-${id}`);const btn=document.getElementById(`vbtn-${id}`);const bar=document.getElementById(`bar-${id}`);const wt=document.getElementById(`watchText-${id}`);
 function startTimer(){
   if(youtubeTimers.has(id))return;let sec=0;
   apiRequest(`/api/videos/${encodeURIComponent(id)}/open`,{method:"POST",body:"{}"}).catch(()=>{});
-  const timer=setInterval(()=>{sec++;watchedVideos.set(id,sec);if(bar)bar.style.width=Math.min(100,sec/MIN_WATCH_SECONDS*100)+"%";if(wt)wt.textContent=`${sec}s / ${MIN_WATCH_SECONDS}s`;if(sec>=MIN_WATCH_SECONDS){if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}clearInterval(timer);youtubeTimers.delete(id);}},1000);
+  const timer=setInterval(()=>{sec++;watchedVideos.set(id,sec);if(bar)bar.style.width=Math.min(100,sec/MIN_WATCH_SECONDS*100)+"%";if(wt)wt.textContent=`${sec}s / ${MIN_WATCH_SECONDS}s - Plays inside Jovia ✓`;if(sec>=MIN_WATCH_SECONDS){if(btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}clearInterval(timer);youtubeTimers.delete(id);}},1000);
   youtubeTimers.set(id,timer);
 }
 if(player){player.addEventListener("play",startTimer);player.addEventListener("timeupdate",()=>{const s=Math.floor(player.currentTime);watchedVideos.set(id,Math.max(watchedVideos.get(id)||0,s));if(bar)bar.style.width=Math.min(100,(watchedVideos.get(id)||0)/MIN_WATCH_SECONDS*100)+"%";if((watchedVideos.get(id)||0)>=MIN_WATCH_SECONDS&&btn){btn.disabled=false;btn.textContent=`Claim ${formatNaira(Number(video.reward||0))} ✅`;}});}
@@ -413,21 +427,24 @@ const sBtn=document.getElementById(`startwatch-${id}`);if(sBtn){sBtn.addEventLis
 if(btn&&!completedVideos.find(v=>String(v.id)===id)){btn.addEventListener("click",()=>claimVideo(id,btn));}
 });
 }catch(e){loading.style.display="none";empty.style.display="block";}}
-async function claimVideo(videoId,btn){const watched=watchedVideos.get(String(videoId))||0;if(watched<MIN_WATCH_SECONDS){showMessage(`Watch ${MIN_WATCH_SECONDS}s first`);return;}if(btn){btn.disabled=true;btn.textContent="Verifying...";}
+async function claimVideo(videoId,btn){const watched=watchedVideos.get(String(videoId))||0;if(watched<MIN_WATCH_SECONDS){showMessage(`Watch ${MIN_WATCH_SECONDS}s first. Watched ${watched}s`);return;}if(btn){btn.disabled=true;btn.textContent="Verifying...";}
 try{const d=await apiRequest(`/api/videos/${encodeURIComponent(videoId)}/complete`,{method:"POST",body:JSON.stringify({watchedSeconds:watched})});showMessage(`Reward: ${formatNaira(d.reward??0)}`,"success");await loadAll();}catch(e){showMessage(e.message);if(btn){btn.disabled=false;btn.textContent=`Claim ✅`;}}
 }
 function openGamesLobby(){document.getElementById("gamesOverlay").classList.add("show");document.body.style.overflow="hidden";refreshGameData();}
 function closeGamesLobby(){document.getElementById("gamesOverlay").classList.remove("show");document.body.style.overflow="";}
-function showGamePanel(id){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));const panel=document.getElementById(id);if(panel){panel.classList.add("show");panel.scrollIntoView({behavior:"smooth"});}}
+function showGamePanel(id){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));const panel=document.getElementById(id);if(panel){panel.classList.add("show");panel.scrollIntoView({behavior:"smooth",block:"nearest"});}}
 function closeGamePanels(){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));}
 function setGameResult(id,msg,type="info"){const el=document.getElementById(id);el.textContent=msg;el.classList.add("show");el.style.background=type==="success"?"#dcfce7":type==="error"?"#fee2e2":"#f5f3ff";el.style.color=type==="success"?"#166534":type==="error"?"#991b1b":"#4c1d95";}
 function clearGameResult(id){const el=document.getElementById(id);el.textContent="";el.classList.remove("show");}
+
+// BOTTLE FIXED - UP (0deg) OR DOWN (180deg) ONLY - NO SIDEWAYS
 function pickBottle(side){
   bottlePick=side;
   document.getElementById('bottlePickUp').className='pred up'+(side==='up'?' selected':'');
   document.getElementById('bottlePickDown').className='pred down'+(side==='down'?' selected':'');
   document.getElementById('bottlePlayBtn').innerText=`🍾 SPIN BOTTLE - ${side.toUpperCase()}`;
-  document.getElementById('bottleResultText').innerHTML=`You picked <b>${side.toUpperCase()}</b> - If bottle lands <b>${side.toUpperCase()}</b> you WIN`;
+  document.getElementById('bottleResultText').innerText=`You picked ${side.toUpperCase()} - Spin!`;
+  document.getElementById('bottleResultText').style.color='#211827';
 }
 async function playBottleUpDown(){
   if(gameBusy) return;
@@ -438,22 +455,22 @@ async function playBottleUpDown(){
   const btn=document.getElementById('bottlePlayBtn');
   gameBusy=true; btn.disabled=true; btn.innerText='🍾 Spinning...';
   clearGameResult('bottleResult');
-  bottle.classList.remove('up','down'); void bottle.offsetWidth; bottle.classList.add('spin');
-  resText.innerText='Bottle spinning...';
+  bottle.className='bottle spin';
+  resText.innerText='Spinning...'; resText.style.color='#211827';
   try{
     const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_bottle',bet_amount:stake,amount:stake,prediction:bottlePick})});
     const isWin = d.isWin === true || String(d.result).toLowerCase()==='win';
     const finalSide = isWin ? bottlePick : (bottlePick==='up'?'down':'up');
     setTimeout(()=>{
-      bottle.classList.remove('spin'); bottle.classList.add(finalSide);
+      bottle.className='bottle '+finalSide;
       if(finalSide === bottlePick){
-        resText.innerHTML=`🎉 BOTTLE <b>${finalSide.toUpperCase()}</b> - PICK <b>${bottlePick.toUpperCase()}</b> = WIN ₦${d.winAmount}!`;
+        resText.innerHTML=`🎉 BOTTLE <b>${finalSide.toUpperCase()}</b> - YOU WIN ₦${d.winAmount}!`;
         resText.style.color='#15803d';
-        setGameResult('bottleResult',`✅ WIN! Pick=${bottlePick.toUpperCase()}, Bottle=${finalSide.toUpperCase()} - WIN ₦${d.winAmount} (${d.multiplier}x) - Bal ${formatNaira(d.newBalance)}`,'success');
+        setGameResult('bottleResult',`WIN! Bottle ${finalSide.toUpperCase()} matches your pick ${bottlePick.toUpperCase()} - WIN ₦${d.winAmount} (${d.multiplier}x) - Bal ${formatNaira(d.newBalance)}`,'success');
       } else {
-        resText.innerHTML=`💔 BOTTLE <b>${finalSide.toUpperCase()}</b> - PICK <b>${bottlePick.toUpperCase()}</b> = LOSE`;
+        resText.innerHTML=`💔 BOTTLE <b>${finalSide.toUpperCase()}</b> - YOU LOSE ₦${stake}`;
         resText.style.color='#b91c1c';
-        setGameResult('bottleResult',`❌ LOSE! Pick=${bottlePick.toUpperCase()}, Bottle=${finalSide.toUpperCase()} - LOSE ₦${stake} - Bal ${formatNaira(d.newBalance)}`,'error');
+        setGameResult('bottleResult',`LOSE! Bottle ${finalSide.toUpperCase()} but you picked ${bottlePick.toUpperCase()} - LOSE ₦${stake} - Bal ${formatNaira(d.newBalance)}`,'error');
       }
       if(d.gameAccount) updateGameBalance(d.gameAccount);
       refreshGameData();
@@ -461,15 +478,21 @@ async function playBottleUpDown(){
       gameBusy=false;
     },2200);
   }catch(e){
-    setTimeout(()=>{ bottle.classList.remove('spin'); bottle.classList.add('up'); resText.innerText='❌ '+e.message; resText.style.color='#b91c1c'; setGameResult('bottleResult',e.message,'error'); btn.disabled=false; btn.innerText=`🍾 SPIN BOTTLE - ${bottlePick.toUpperCase()}`; gameBusy=false; },600);
+    setTimeout(()=>{
+      bottle.className='bottle up';
+      resText.innerText='❌ '+e.message;
+      resText.style.color='#b91c1c';
+      setGameResult('bottleResult',e.message,'error');
+      btn.disabled=false; btn.innerText=`🍾 SPIN BOTTLE - ${bottlePick.toUpperCase()}`;
+      gameBusy=false;
+    },800);
   }
 }
 function pickUpDown(side){
   updownPick=side;
   document.getElementById('upPickUp').className='pred up'+(side==='up'?' selected':'');
   document.getElementById('upPickDown').className='pred down'+(side==='down'?' selected':'');
-  document.getElementById('updownPlayBtn').innerText=`📈 PLACE ORDER - ${side.toUpperCase()} ${side==='up'?'GREEN':'RED'}`;
-  document.getElementById('updownResultText').innerHTML=`You picked <b>${side.toUpperCase()}</b> - If candle <b>${side==='up'?'GREEN':'RED'}</b> you WIN`;
+  document.getElementById('updownPlayBtn').innerText=`📈 PLACE ORDER - ${side.toUpperCase()}`;
 }
 async function playUpDownTrading(){
   if(gameBusy) return;
@@ -482,20 +505,22 @@ async function playUpDownTrading(){
   resText.innerText='Trading...';
   try{
     const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'up_down',bet_amount:stake,amount:stake,prediction:updownPick})});
-    const isWin=d.isWin; const last=candles[candles.length-1];
-    let forcedGreen = isWin ? (updownPick==='up') : (updownPick==='up' ? false : true);
+    const isWin=d.isWin;
+    const last=candles[candles.length-1];
+    let forcedGreen = isWin ? (updownPick==='up') : (updownPick==='up'?false:true);
     const forcedClose = forcedGreen ? last.close+60 : last.close-60;
     candles.push({open:last.close,close:forcedClose,high:Math.max(last.close,forcedClose)+10,low:Math.min(last.close,forcedClose)-10,green:forcedGreen});
-    if(candles.length>50) candles.shift(); drawCandles();
+    if(candles.length>50) candles.shift();
+    drawCandles();
     setTimeout(()=>{
       if(isWin){
-        resText.innerHTML=`🎉 ${forcedGreen?'GREEN':'RED'} - PICK ${updownPick.toUpperCase()} = WIN ₦${d.winAmount}!`;
+        resText.innerHTML=`🎉 ${forcedGreen?'GREEN UP':'RED DOWN'} - YOU WIN ₦${d.winAmount}!`;
         resText.style.color='#15803d';
-        setGameResult('updownResult',`WIN! Candle ${forcedGreen?'GREEN':'RED'} = WIN ₦${d.winAmount} - Bal ${formatNaira(d.newBalance)}`,'success');
+        setGameResult('updownResult',`WIN ₦${d.winAmount} (${d.multiplier}x) - New Bal ${formatNaira(d.newBalance)}`,'success');
       } else {
-        resText.innerHTML=`💔 ${forcedGreen?'GREEN':'RED'} - PICK ${updownPick.toUpperCase()} = LOSE`;
+        resText.innerHTML=`💔 ${forcedGreen?'GREEN':'RED'} - YOU LOSE ₦${stake}`;
         resText.style.color='#b91c1c';
-        setGameResult('updownResult',`LOSE! Candle ${forcedGreen?'GREEN':'RED'} but pick ${updownPick.toUpperCase()} - LOSE ₦${stake} - Bal ${formatNaira(d.newBalance)}`,'error');
+        setGameResult('updownResult',`LOSE ₦${stake} - New Bal ${formatNaira(d.newBalance)}`,'error');
       }
       if(d.gameAccount) updateGameBalance(d.gameAccount);
       refreshGameData();
@@ -504,8 +529,6 @@ async function playUpDownTrading(){
     },1200);
   }catch(e){ resText.innerText='❌ '+e.message; setGameResult('updownResult',e.message,'error'); btn.disabled=false; btn.innerText=`📈 PLACE ORDER - ${updownPick.toUpperCase()}`; gameBusy=false; }
 }
-
-// --- SPIN WHEEL PROFITABLE REAL SPIN ---
 let wheelAngle = 0;
 const wheelSegments = [
   {label:"0x", color:"#ef4444"},
@@ -530,11 +553,12 @@ function drawWheel(){
     ctx.arc(cx,cy,r, wheelAngle + i*segAngle, wheelAngle + (i+1)*segAngle);
     ctx.fillStyle=seg.color; ctx.fill(); ctx.strokeStyle="#fff"; ctx.lineWidth=3; ctx.stroke();
     ctx.save(); ctx.translate(cx,cy); ctx.rotate(wheelAngle + i*segAngle + segAngle/2);
-    ctx.textAlign="right"; ctx.fillStyle=seg.label==="100x"?"#fff":"#000"; ctx.font="bold 22px Inter"; ctx.fillText(seg.label, r-20, 8);
+    ctx.textAlign="right"; ctx.fillStyle="#000"; ctx.font="bold 22px Inter"; 
+    if(seg.label==="100x"||seg.label==="20x") ctx.fillStyle="#fff";
+    ctx.fillText(seg.label, r-20, 8);
     ctx.restore();
   });
 }
-function initWheel(){ drawWheel(); }
 async function playWheel(){
   if(gameBusy) return;
   const stake=Number(document.getElementById('wheelStake').value);
@@ -544,8 +568,6 @@ async function playWheel(){
   try{
     const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_wheel',bet_amount:stake,amount:stake})});
     let targetLabel = d.segment || `${d.multiplier}x`;
-    // NEVER ALLOW 100x and 20x to win - force to 0 if backend returns it
-    if(targetLabel==="100x" || targetLabel==="20x"){ targetLabel="0x"; }
     let targetIndex = wheelSegments.findIndex(s=>s.label===targetLabel);
     if(targetIndex===-1){
       if(d.multiplier==0) targetIndex=0;
@@ -563,7 +585,7 @@ async function playWheel(){
     const targetAngleDeg = 360 - (targetIndex*segAngle + segAngle/2) - 90;
     const spins = 5*360 + targetAngleDeg;
     const startAngle = wheelAngle*180/Math.PI;
-    const endAngle = startAngle + spins + (Math.random()*segAngle*0.6 - segAngle*0.3);
+    const endAngle = startAngle + spins;
     let current = startAngle; const duration=3800; const startTime=Date.now();
     const animate=()=>{
       const elapsed=Date.now()-startTime; const progress=Math.min(elapsed/duration,1);
@@ -573,15 +595,13 @@ async function playWheel(){
       if(progress<1) requestAnimationFrame(animate);
       else {
         if(d.winAmount===0){
-          resText.innerHTML=`💔 Wheel <b>${targetLabel}</b> - LOSE ALL ₦${stake}`; resText.style.color='#b91c1c';
-          setGameResult('wheelResult',`LOSE - Wheel ${targetLabel} - Lost ₦${stake}. New Bal ${formatNaira(d.newBalance)}`,'error');
+          resText.innerHTML=`💔 Wheel <b>${targetLabel}</b> - LOSE ₦${stake}`;
         } else if(d.winAmount < stake){
-          resText.innerHTML=`Wheel <b>${targetLabel}</b> - Bet ₦${stake}, Get ₦${d.winAmount} back (Loss ₦${stake-d.winAmount})`; resText.style.color='#92400e';
-          setGameResult('wheelResult',`Small return - Wheel ${targetLabel} - Bet ₦${stake}, Return ₦${d.winAmount}, Loss ₦${stake-d.winAmount}. New Bal ${formatNaira(d.newBalance)}`,'info');
+          resText.innerHTML=`Wheel <b>${targetLabel}</b> - Return ₦${d.winAmount}`;
         } else {
-          resText.innerHTML=`🎉 WIN <b>${targetLabel}</b> - WIN ₦${d.winAmount}!`; resText.style.color='#15803d';
-          setGameResult('wheelResult',`WIN! Wheel ${targetLabel} - Bet ₦${stake}, WIN ₦${d.winAmount} (${d.multiplier}x)! New Bal ${formatNaira(d.newBalance)}`,'success');
+          resText.innerHTML=`🎉 WIN <b>${targetLabel}</b> - WIN ₦${d.winAmount}!`;
         }
+        setGameResult('wheelResult',d.message||`${targetLabel} - Bal ${formatNaira(d.newBalance)}`, d.isWin && d.winAmount>=stake?'success':'info');
         if(d.gameAccount) updateGameBalance(d.gameAccount);
         refreshGameData();
         btn.disabled=false; btn.innerText='🎡 SPIN AGAIN';
@@ -594,7 +614,6 @@ async function playWheel(){
     btn.disabled=false; btn.innerText='🎡 SPIN WHEEL NOW'; gameBusy=false;
   }
 }
-
 function openPlayGame(type){
   if(type==='bottle'){
     clearGameResult('bottleResult'); pickBottle('up');
@@ -609,7 +628,7 @@ function openPlayGame(type){
   }
   if(type==='wheel'){
     clearGameResult('wheelResult');
-    showGamePanel('wheelPanel'); initWheel(); return;
+    showGamePanel('wheelPanel'); drawWheel(); return;
   }
   if(type==='guess'){
     showGamePanel('guessPanel'); return;
@@ -666,7 +685,7 @@ async function submitDeposit(event){
   gameBusy=true;const btn=document.getElementById("depositSubmit");btn.disabled=true;btn.textContent="Uploading Proof...";clearGameResult("depositResult");
   try{
     const d=await apiRequest("/api/games/deposit",{method:"POST",body:JSON.stringify({amount, reference:ref, proof_image:proofBase64})});
-    setGameResult("depositResult",d.message||`Proof submitted! Pending 1850772192`,"info");
+    setGameResult("depositResult",d.message||`Proof submitted! Pending admin verification for 1850772192. Ref: ${ref}`,"info");
     document.getElementById("depositAmount").value="";document.getElementById("depositRef").value="";document.getElementById("depositProof").value="";proofBase64="";document.getElementById("proofPreview").style.display="none";
     await refreshGameData();
   }catch(e){setGameResult("depositResult",e.message,"error");}
@@ -684,7 +703,7 @@ async function submitWithdrawal(event){
   gameBusy=true;const btn=document.getElementById("withdrawSubmit");btn.disabled=true;btn.textContent="Requesting...";clearGameResult("withdrawResult");
   try{
     const d=await apiRequest("/api/games/withdraw",{method:"POST",body:JSON.stringify({amount,bank_name,account_number,account_name})});
-    setGameResult("withdrawResult",d.message||`Withdrawal request ₦${amount} pending`,"info");
+    setGameResult("withdrawResult",d.message||`Withdrawal request ₦${amount} to ${account_number} pending - admin will pay from 1850772192`,"info");
     document.getElementById("withdrawAmount").value="";
     await refreshGameData();await getCurrentUser();
   }catch(e){setGameResult("withdrawResult",e.message,"error");}
