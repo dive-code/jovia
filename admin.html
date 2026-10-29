@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -272,6 +273,21 @@ tbody tr:hover{background:#fafcff}
       <div class="form-grid">
         <div class="form-group"><label for="videoTitle">Video Title *</label><input id="videoTitle" required maxlength="200"></div>
         <div class="form-group"><label for="videoCategory">Video Type / Category *</label><select id="videoCategory" required><option value="General">General</option><option value="Celebrity">Celebrity</option><option value="Entertainment">Entertainment</option><option value="Education">Education</option><option value="Lifestyle">Lifestyle</option><option value="Other">Other</option></select></div>
+
+        <!-- NEW: Video reward field -->
+        <div class="form-group">
+          <label for="videoReward">Video Reward (₦) *</label>
+          <input
+            id="videoReward"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0"
+            required
+            placeholder="Enter video reward"
+          >
+        </div>
+
         <div class="form-group full" style="background:white;border:2px dashed #7c3aed;padding:15px;border-radius:10px">
           <label for="videoFile">📤 Upload Video File</label>
           <input type="file" id="videoFile" accept="video/*" style="margin-top:8px">
@@ -391,20 +407,402 @@ function filterJobs(){const q=$("searchJobs").value.toLowerCase().trim(),visible
 async function changeJobStatus(id,status){if(!confirm("Change job status?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminJobs()}catch(e){alert(e.message)}}
 async function deleteJob(id){if(!confirm("Delete this job?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Delete failed");addDeletedJobId(id);rawJobs=rawJobs.filter(j=>Number(j.id)!==Number(id));filterJobs();showToast("Job deleted")}catch(e){alert(e.message)}}
 
-async function saveVideo(event){event.preventDefault();const title=$("videoTitle").value.trim(),category=$("videoCategory").value,file=$("videoFile").files[0];if(!title)return alert("Enter a video title.");if(!file&&!editingVideoId)return alert("Choose a video file to upload.");const b=$("saveVideoButton");b.disabled=true;b.textContent="Saving...";try{let url="";if(file){$("uploadProgress").style.display="block";$("progressBar").style.width="0%";$("progressText").textContent="0%";const fd=new FormData();fd.append("video",file);const up=await new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);$("progressBar").style.width=p+"%";$("progressText").textContent=p+"%"}};xhr.onload=()=>{let data={};try{data=JSON.parse(xhr.responseText)}catch{}if(xhr.status>=200&&xhr.status<300)resolve(data);else reject(new Error(data.message||"Video upload failed"))};xhr.onerror=()=>reject(new Error("Video upload failed"));xhr.open("POST","/api/admin/videos/upload");xhr.withCredentials=true;xhr.send(fd)});url=up.url||up.video_url||"";if(!url)throw new Error("Upload succeeded but no video URL was returned");$("uploadedVideoPreview").style.display="block";$("previewPlayer").src=safeUrl(url)}else{const old=rawVideos.find(v=>Number(v.id)===Number(editingVideoId));url=old?.video_url||old?.url||""}const payload={title,category,url,video_url:url,status:"active"};const endpoint=editingVideoId?`/api/admin/videos/${Number(editingVideoId)}`:"/api/admin/videos";const r=await fetch(endpoint,{method:editingVideoId?"PUT":"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not save video");showToast("Video saved");cancelVideoEdit();await loadAdminVideos()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent=editingVideoId?"Save Changes":"＋ Upload & Save";$("uploadProgress").style.display="none"}}
-async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load videos");const d=await r.json();rawVideos=d.videos||[];videosCache=new Map(rawVideos.map(v=>[Number(v.id),v]));filterVideos()}catch(e){$("videosTable").innerHTML=`<tr><td colspan="8" class="empty">${escapeHTML(e.message)}</td></tr>`}}
-function filterVideos(){const q=$("searchVideos").value.toLowerCase().trim(),items=rawVideos.filter(v=>`${v.title||""} ${v.category||""}`.toLowerCase().includes(q));$("totalVideos").textContent=items.length;const t=$("videosTable");if(!items.length){t.innerHTML='<tr><td colspan="8" class="empty">No videos found</td></tr>';return}t.innerHTML=items.map(v=>{const s=String(v.status||"active").toLowerCase(),active=s==="active",actions=(active?`<button class="action pause" onclick="changeVideoStatus(${Number(v.id)},'inactive')">Disable</button>`:`<button class="action activate" onclick="changeVideoStatus(${Number(v.id)},'active')">Activate</button>`)+`<button class="action edit" onclick="editVideo(${Number(v.id)})">Edit</button><button class="action delete" onclick="deleteVideo(${Number(v.id)})">Delete</button>`;const thumb=v.thumbnail_url||v.thumbnail||"";return `<tr><td>#${Number(v.id)}</td><td>${thumb?`<img src="${escapeHTML(safeUrl(thumb))}" alt="" loading="lazy" style="width:70px;height:45px;object-fit:cover;border-radius:6px">`:"🎬"}</td><td>${escapeHTML(v.title||"-")}</td><td>${escapeHTML(v.category||"General")}</td><td>${formatNaira(v.reward)}</td><td><span class="status ${active?"approved":"rejected"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(v.created_at))}</td><td>${actions}</td></tr>`}).join("")}
-function editVideo(id){const v=rawVideos.find(x=>Number(x.id)===Number(id));if(!v)return;editingVideoId=Number(id);$("videoTitle").value=v.title||"";const category=$("videoCategory");if(![...category.options].some(o=>o.value===v.category))category.value="Other";else category.value=v.category||"General";$("videoFormTitle").textContent="Edit Video";$("saveVideoButton").textContent="Save Changes";$("cancelVideoEditButton").style.display="inline-block";$("videoFormBox").scrollIntoView({behavior:"smooth"})}
-function cancelVideoEdit(){editingVideoId=null;$("videoForm").reset();$("videoCategory").value="General";$("videoFormTitle").textContent="＋ Upload New Video";$("saveVideoButton").textContent="＋ Upload & Save";$("cancelVideoEditButton").style.display="none";$("uploadedVideoPreview").style.display="none";$("previewPlayer").removeAttribute("src")}
-async function changeVideoStatus(id,status){if(!confirm("Change video status to "+status+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminVideos()}catch(e){alert(e.message)}}
-async function deleteVideo(id){if(!confirm("Delete this video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminVideos();showToast("Video deleted")}catch(e){alert(e.message)}}
+/* VIDEO MANAGEMENT — UPDATED TO INCLUDE REWARD */
+async function saveVideo(event){
+  event.preventDefault();
 
-async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load withdrawals");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length,paid=rawWithdrawals.filter(isPaidWithdrawal).length;$("totalWithdrawals").textContent=rawWithdrawals.length;$("pendingWithdrawalsCount").textContent=pending;$("paidWithdrawalsCount").textContent=paid;$("pendingWithdrawalsCard").textContent=pending;$("navPendingCount").textContent=pending;$("pendingTabCount").textContent=pending;$("paidTabCount").textContent=paid;$("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");filterWithdrawals()}catch(e){$("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
-function isPaidWithdrawal(w){return ["approved","paid","completed","success","successful"].includes(String(w.status||"").toLowerCase())}
-function setWithdrawalTab(tab){withdrawalTab=tab;["pending","paid","other"].forEach(k=>$(k+"Tab").classList.toggle("active-tab",k===tab));$("withdrawalListLabel").textContent=tab==="pending"?"Pending withdrawals":tab==="paid"?"Paid withdrawals":"Other withdrawal statuses";filterWithdrawals()}
-function filterWithdrawals(){const q=$("searchWithdrawals").value.toLowerCase().trim(),type=$("withdrawalTypeFilter").value;const items=rawWithdrawals.filter(w=>{const status=String(w.status||"pending").toLowerCase(),isPending=status==="pending",isPaid=isPaidWithdrawal(w),t=String(w.withdrawal_type||w.type||"regular").toLowerCase(),affiliate=t.includes("affili");const tabOk=withdrawalTab==="pending"?isPending:withdrawalTab==="paid"?isPaid:!isPending&&!isPaid;const typeOk=type==="all"||(type==="affiliate"&&affiliate)||(type==="regular"&&!affiliate);const text=`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.account_number||""} ${t} ${status}`.toLowerCase();return tabOk&&typeOk&&text.includes(q)});renderWithdrawalsTable(items)}
-function renderWithdrawalsTable(items){const t=$("withdrawalsTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No withdrawals in this list.</td></tr>';return}t.innerHTML=items.map(w=>{const type=String(w.withdrawal_type||w.type||"Regular"),affiliate=type.toLowerCase().includes("affili"),status=String(w.status||"pending").toLowerCase();let actions;if(status==="pending")actions=`<button class="action approve" onclick="approveWithdrawal(${Number(w.id)})">✅ Mark Paid</button><button class="action reject" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`;else actions=`<span style="color:#64748b;font-size:10px">No pending action</span>`;return `<tr><td><strong>${escapeHTML(w.username||"-")}</strong></td><td>${escapeHTML(w.bank_name||"-")}</td><td>${escapeHTML(w.account_name||"-")}</td><td>${escapeHTML(w.account_number||"-")}</td><td><strong>${formatNaira(w.amount)}</strong></td><td><span class="status ${affiliate?"approved":"pending"}">${escapeHTML(type)}</span></td><td><span class="status ${isPaidWithdrawal(w)?"paid":status==="pending"?"pending":"rejected"}">${escapeHTML(status)}</span></td><td>${escapeHTML(formatDate(w.created_at))}</td><td>${actions}</td></tr>`}).join("")}
-async function setWithdrawalStatus(id,status){if(!confirm(`${status==="approved"?"Mark this withdrawal as paid":"Reject"} withdrawal #${id}?`))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/${status==="approved"?"approve":"reject"}`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});d=await r.json().catch(()=>({}))}if(!r.ok||!d.success)throw new Error(d.message||"Withdrawal status update failed");showToast(status==="approved"?"Withdrawal marked paid":"Withdrawal rejected");await loadAdminWithdrawals()}catch(e){alert(e.message)}}
+  const title=$("videoTitle").value.trim();
+  const category=$("videoCategory").value;
+  const reward=Number($("videoReward").value);
+  const file=$("videoFile").files[0];
+
+  if(!title)return alert("Enter a video title.");
+  if($("videoReward").value.trim()===""||!Number.isFinite(reward)||reward<0){
+    return alert("Enter a valid video reward of ₦0 or more.");
+  }
+  if(!file&&!editingVideoId)return alert("Choose a video file to upload.");
+
+  const b=$("saveVideoButton");
+  const currentEditingId=editingVideoId;
+
+  b.disabled=true;
+  b.textContent="Saving...";
+
+  try{
+    let url="";
+
+    if(file){
+      $("uploadProgress").style.display="block";
+      $("progressBar").style.width="0%";
+      $("progressText").textContent="0%";
+
+      const fd=new FormData();
+      fd.append("video",file);
+
+      const up=await new Promise((resolve,reject)=>{
+        const xhr=new XMLHttpRequest();
+
+        xhr.upload.onprogress=e=>{
+          if(e.lengthComputable){
+            const p=Math.round(e.loaded/e.total*100);
+            $("progressBar").style.width=p+"%";
+            $("progressText").textContent=p+"%";
+          }
+        };
+
+        xhr.onload=()=>{
+          let data={};
+          try{data=JSON.parse(xhr.responseText)}catch{}
+          if(xhr.status>=200&&xhr.status<300){
+            resolve(data);
+          }else{
+            reject(new Error(data.message||"Video upload failed"));
+          }
+        };
+
+        xhr.onerror=()=>reject(new Error("Video upload failed"));
+        xhr.open("POST","/api/admin/videos/upload");
+        xhr.withCredentials=true;
+        xhr.send(fd);
+      });
+
+      url=up.url||up.video_url||"";
+      if(!url)throw new Error("Upload succeeded but no video URL was returned");
+
+      $("uploadedVideoPreview").style.display="block";
+      $("previewPlayer").src=safeUrl(url);
+    }else{
+      const old=rawVideos.find(v=>Number(v.id)===Number(currentEditingId));
+      url=old?.video_url||old?.url||"";
+      if(!url)throw new Error("The existing video URL could not be found. Please upload the video file again.");
+    }
+
+    /* Reward is now included in the request sent to the backend. */
+    const payload={
+      title,
+      category,
+      reward,
+      url,
+      video_url:url,
+      status:currentEditingId
+        ? (rawVideos.find(v=>Number(v.id)===Number(currentEditingId))?.status||"active")
+        : "active"
+    };
+
+    const endpoint=currentEditingId
+      ? `/api/admin/videos/${Number(currentEditingId)}`
+      : "/api/admin/videos";
+
+    const r=await fetch(endpoint,{
+      method:currentEditingId?"PUT":"POST",
+      headers:{"Content-Type":"application/json"},
+      credentials:"include",
+      body:JSON.stringify(payload)
+    });
+
+    const d=await r.json().catch(()=>({}));
+
+    if(!r.ok||!d.success){
+      throw new Error(d.message||"Could not save video");
+    }
+
+    showToast("Video saved successfully with reward "+formatNaira(reward));
+    cancelVideoEdit();
+    await loadAdminVideos();
+
+  }catch(e){
+    alert(e.message||"Could not save video");
+  }finally{
+    b.disabled=false;
+    b.textContent=editingVideoId?"Save Changes":"＋ Upload & Save";
+    $("uploadProgress").style.display="none";
+  }
+}
+
+async function loadAdminVideos(){
+  if(!adminAuthenticated)return;
+
+  try{
+    const r=await fetch("/api/admin/videos?t="+Date.now(),{
+      cache:"no-store",
+      credentials:"include"
+    });
+
+    if(r.status===401)return handleUnauthorized();
+    if(!r.ok)throw new Error("Unable to load videos");
+
+    const d=await r.json();
+    rawVideos=d.videos||[];
+    videosCache=new Map(rawVideos.map(v=>[Number(v.id),v]));
+    filterVideos();
+
+  }catch(e){
+    $("videosTable").innerHTML=`<tr><td colspan="8" class="empty">${escapeHTML(e.message)}</td></tr>`;
+  }
+}
+
+function filterVideos(){
+  const q=$("searchVideos").value.toLowerCase().trim();
+  const items=rawVideos.filter(v=>
+    `${v.title||""} ${v.category||""}`.toLowerCase().includes(q)
+  );
+
+  $("totalVideos").textContent=items.length;
+  const t=$("videosTable");
+
+  if(!items.length){
+    t.innerHTML='<tr><td colspan="8" class="empty">No videos found</td></tr>';
+    return;
+  }
+
+  t.innerHTML=items.map(v=>{
+    const s=String(v.status||"active").toLowerCase();
+    const active=s==="active";
+
+    const actions=
+      (active
+        ? `<button class="action pause" onclick="changeVideoStatus(${Number(v.id)},'inactive')">Disable</button>`
+        : `<button class="action activate" onclick="changeVideoStatus(${Number(v.id)},'active')">Activate</button>`)
+      +`<button class="action edit" onclick="editVideo(${Number(v.id)})">Edit</button>`
+      +`<button class="action delete" onclick="deleteVideo(${Number(v.id)})">Delete</button>`;
+
+    const thumb=v.thumbnail_url||v.thumbnail||"";
+
+    return `<tr>
+      <td>#${Number(v.id)}</td>
+      <td>${thumb
+        ? `<img src="${escapeHTML(safeUrl(thumb))}" alt="" loading="lazy" style="width:70px;height:45px;object-fit:cover;border-radius:6px">`
+        : "🎬"}</td>
+      <td>${escapeHTML(v.title||"-")}</td>
+      <td>${escapeHTML(v.category||"General")}</td>
+      <td>${formatNaira(v.reward)}</td>
+      <td><span class="status ${active?"approved":"rejected"}">${escapeHTML(s)}</span></td>
+      <td>${escapeHTML(formatDate(v.created_at))}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join("");
+}
+
+function editVideo(id){
+  const v=rawVideos.find(x=>Number(x.id)===Number(id));
+  if(!v)return;
+
+  editingVideoId=Number(id);
+
+  $("videoTitle").value=v.title||"";
+
+  const category=$("videoCategory");
+  if(![...category.options].some(o=>o.value===v.category)){
+    category.value="Other";
+  }else{
+    category.value=v.category||"General";
+  }
+
+  /* Restore the saved reward in the editing form. */
+  $("videoReward").value=Number(v.reward??0);
+
+  $("videoFile").value="";
+  $("uploadedVideoPreview").style.display="none";
+  $("previewPlayer").removeAttribute("src");
+
+  $("videoFormTitle").textContent="Edit Video";
+  $("saveVideoButton").textContent="Save Changes";
+  $("cancelVideoEditButton").style.display="inline-block";
+  $("videoFormBox").scrollIntoView({behavior:"smooth"});
+}
+
+function cancelVideoEdit(){
+  editingVideoId=null;
+  $("videoForm").reset();
+  $("videoCategory").value="General";
+
+  /* Reset reward for the next new video. */
+  $("videoReward").value="0";
+
+  $("videoFormTitle").textContent="＋ Upload New Video";
+  $("saveVideoButton").textContent="＋ Upload & Save";
+  $("cancelVideoEditButton").style.display="none";
+  $("uploadedVideoPreview").style.display="none";
+  $("previewPlayer").pause();
+  $("previewPlayer").removeAttribute("src");
+  $("previewPlayer").load();
+  $("uploadProgress").style.display="none";
+  $("progressBar").style.width="0%";
+  $("progressText").textContent="0%";
+}
+
+async function changeVideoStatus(id,status){
+  if(!confirm("Change video status to "+status+"?"))return;
+
+  try{
+    const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      credentials:"include",
+      body:JSON.stringify({status})
+    });
+
+    const d=await r.json();
+    if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");
+
+    await loadAdminVideos();
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+async function deleteVideo(id){
+  if(!confirm("Delete this video?"))return;
+
+  try{
+    const r=await fetch(`/api/admin/videos/${Number(id)}`,{
+      method:"DELETE",
+      credentials:"include"
+    });
+
+    const d=await r.json();
+    if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");
+
+    await loadAdminVideos();
+    showToast("Video deleted");
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+/* WITHDRAWAL MANAGEMENT */
+async function loadAdminWithdrawals(){
+  if(!adminAuthenticated)return;
+
+  try{
+    const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{
+      cache:"no-store",
+      credentials:"include"
+    });
+
+    if(r.status===401)return handleUnauthorized();
+    if(!r.ok)throw new Error("Unable to load withdrawals");
+
+    const d=await r.json();
+    rawWithdrawals=d.withdrawals||d.data||[];
+    withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));
+
+    const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length;
+    const paid=rawWithdrawals.filter(isPaidWithdrawal).length;
+
+    $("totalWithdrawals").textContent=rawWithdrawals.length;
+    $("pendingWithdrawalsCount").textContent=pending;
+    $("paidWithdrawalsCount").textContent=paid;
+    $("pendingWithdrawalsCard").textContent=pending;
+    $("navPendingCount").textContent=pending;
+    $("pendingTabCount").textContent=pending;
+    $("paidTabCount").textContent=paid;
+    $("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");
+
+    filterWithdrawals();
+  }catch(e){
+    $("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;
+  }
+}
+
+function isPaidWithdrawal(w){
+  return ["approved","paid","completed","success","successful"].includes(String(w.status||"").toLowerCase());
+}
+
+function setWithdrawalTab(tab){
+  withdrawalTab=tab;
+  ["pending","paid","other"].forEach(k=>$(k+"Tab").classList.toggle("active-tab",k===tab));
+  $("withdrawalListLabel").textContent=tab==="pending"?"Pending withdrawals":tab==="paid"?"Paid withdrawals":"Other withdrawal statuses";
+  filterWithdrawals();
+}
+
+function filterWithdrawals(){
+  const q=$("searchWithdrawals").value.toLowerCase().trim();
+  const type=$("withdrawalTypeFilter").value;
+
+  const items=rawWithdrawals.filter(w=>{
+    const status=String(w.status||"pending").toLowerCase();
+    const isPending=status==="pending";
+    const isPaid=isPaidWithdrawal(w);
+    const t=String(w.withdrawal_type||w.type||"regular").toLowerCase();
+    const affiliate=t.includes("affili");
+    const tabOk=withdrawalTab==="pending"?isPending:withdrawalTab==="paid"?isPaid:!isPending&&!isPaid;
+    const typeOk=type==="all"||(type==="affiliate"&&affiliate)||(type==="regular"&&!affiliate);
+    const text=`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.account_number||""} ${t} ${status}`.toLowerCase();
+
+    return tabOk&&typeOk&&text.includes(q);
+  });
+
+  renderWithdrawalsTable(items);
+}
+
+function renderWithdrawalsTable(items){
+  const t=$("withdrawalsTable");
+
+  if(!items.length){
+    t.innerHTML='<tr><td colspan="9" class="empty">No withdrawals in this list.</td></tr>';
+    return;
+  }
+
+  t.innerHTML=items.map(w=>{
+    const type=String(w.withdrawal_type||w.type||"Regular");
+    const affiliate=type.toLowerCase().includes("affili");
+    const status=String(w.status||"pending").toLowerCase();
+
+    let actions;
+
+    if(status==="pending"){
+      actions=`<button class="action approve" onclick="approveWithdrawal(${Number(w.id)})">✅ Mark Paid</button><button class="action reject" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`;
+    }else{
+      actions=`<span style="color:#64748b;font-size:10px">No pending action</span>`;
+    }
+
+    return `<tr>
+      <td><strong>${escapeHTML(w.username||"-")}</strong></td>
+      <td>${escapeHTML(w.bank_name||"-")}</td>
+      <td>${escapeHTML(w.account_name||"-")}</td>
+      <td>${escapeHTML(w.account_number||"-")}</td>
+      <td><strong>${formatNaira(w.amount)}</strong></td>
+      <td><span class="status ${affiliate?"approved":"pending"}">${escapeHTML(type)}</span></td>
+      <td><span class="status ${isPaidWithdrawal(w)?"paid":status==="pending"?"pending":"rejected"}">${escapeHTML(status)}</span></td>
+      <td>${escapeHTML(formatDate(w.created_at))}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join("");
+}
+
+async function setWithdrawalStatus(id,status){
+  if(!confirm(`${status==="approved"?"Mark this withdrawal as paid":"Reject"} withdrawal #${id}?`))return;
+
+  try{
+    let r=await fetch(`/api/admin/withdrawals/${Number(id)}/${status==="approved"?"approve":"reject"}`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      credentials:"include",
+      body:JSON.stringify({})
+    });
+
+    let d=await r.json().catch(()=>({}));
+
+    if(!r.ok||!d.success){
+      r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        credentials:"include",
+        body:JSON.stringify({status})
+      });
+      d=await r.json().catch(()=>({}));
+    }
+
+    if(!r.ok||!d.success)throw new Error(d.message||"Withdrawal status update failed");
+
+    showToast(status==="approved"?"Withdrawal marked paid":"Withdrawal rejected");
+    await loadAdminWithdrawals();
+  }catch(e){
+    alert(e.message);
+  }
+}
+
 function approveWithdrawal(id){return setWithdrawalStatus(id,"approved")}
 function rejectWithdrawal(id){return setWithdrawalStatus(id,"rejected")}
 
