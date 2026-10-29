@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Codes - FINAL WORKING</title>
+<title>JOVIA Codes - FINAL WORKING + GAME DEPOSITS</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
-.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:500px;margin:0 auto 12px}
-.container{max-width:500px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:600px;margin:0 auto 12px}
+.container{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
 input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:10px;outline:none;font-weight:700}
 .btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:800;cursor:pointer;transition:.2s}
@@ -26,11 +26,14 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 .badge{font-size:10px;padding:4px 8px;border-radius:20px;font-weight:800;white-space:nowrap}
 .lock{position:fixed;inset:0;background:#0f172a;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
 .lock-box{background:#fff;width:100%;max-width:340px;border-radius:20px;padding:24px;text-align:center}
-.tabs{display:flex;gap:8px;margin-bottom:12px}
-.tab{flex:1;padding:12px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:900;cursor:pointer;text-align:center}
+.tabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.tab{flex:1;padding:12px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:900;cursor:pointer;text-align:center;min-width:90px}
 .tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
 .tab.super-active{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;border-color:#ff9a00}
+.tab.game-active{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:#22c55e}
 .search{margin-bottom:10px}
+.dep-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.dep-item.pending{background:#fffbeb;border-color:#fbbf24}
 </style>
 </head>
 <body>
@@ -42,14 +45,16 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
 </div></div>
 <div class="top">
-<div><h3 style="font-size:14px">JOVIA CODES</h3><small style="font-size:10px;color:#94a3b8">FINAL FIXED - Works Now</small></div>
+<div><h3 style="font-size:14px">JOVIA CODES</h3><small style="font-size:10px;color:#94a3b8">FINAL + GAME DEPOSITS</small></div>
 <span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SERVER DB</span>
 </div>
 <div class="container">
 <div class="tabs">
 <button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Withdraw</button>
 <button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
+<button class="tab" id="tabG" onclick="setTab('games')">🎮 Deposits</button>
 </div>
+
 <div class="card" id="cardWithdraw">
 <h3 style="font-size:14px;margin-bottom:8px">💸 Generate Withdrawal Code</h3>
 <button class="btn btn-black" id="btnWithdraw" onclick="generate('withdraw')">Generate JOVIA Code</button>
@@ -62,6 +67,7 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 </div>
 </div>
+
 <div class="card" id="cardSuper" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">👑 Generate SUPER Upgrade Code</h3>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -78,19 +84,39 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 </div>
 </div>
 </div>
+
+<!-- NEW: GAME DEPOSITS ADMIN -->
+<div class="card" id="cardGames" style="display:none">
+<h3 style="font-size:14px;margin-bottom:8px">🎮 Game Wallet Deposits - Manual Verification</h3>
+<div style="background:#f0fff4;border:1.5px dashed #22c55e;padding:10px;border-radius:10px;margin-bottom:12px;font-size:12px">
+Bank: <b>Kredi Money MFB Ltd</b><br>
+Acc: <b style="color:#d00">1850772192</b> <button onclick="navigator.clipboard.writeText('1850772192');alert('Copied')" style="padding:2px 6px;font-size:10px">Copy</button><br>
+Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
+<small>Check this account in Raenest/Kredi app before approving</small>
+</div>
+<button class="btn btn-black" onclick="loadDeposits()" style="margin-bottom:10px">🔄 Refresh Deposits</button>
+<div id="depositsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh to load</p></div>
+<div style="margin-top:12px">
+<h4 style="font-size:12px;margin-bottom:8px">Game Accounts</h4>
+<button class="btn btn-light" onclick="loadGameAccounts()">Load Game Balances</button>
+<div id="accountsList" style="margin-top:10px"></div>
+</div>
+</div>
+
 <div class="card">
 <h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code</h3>
 <input id="checkCode" placeholder="Paste code">
 <button class="btn btn-black" onclick="validate()">Check From Server</button>
 <div id="checkResult" style="text-align:center;font-weight:800;margin-top:12px;font-size:13px;min-height:20px;line-height:1.6"></div>
 </div>
+
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
 <h3 style="font-size:14px" id="listTitle">All Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
 </div>
 <input id="searchInput" class="search" placeholder="🔍 Search..." oninput="filterList()">
 <div id="list"></div>
-<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh</button>
+<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
 <button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock</button>
 </div>
 </div>
@@ -101,6 +127,7 @@ let allServerCodes = [];
 function getPass(){ return localStorage.getItem('jovia_pass') || 'Divine@@1'; }
 function getHeaders(){ return { 'Content-Type':'application/json', 'x-admin-password': getPass() }; }
 if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
+
 async function unlock(){
   const val = document.getElementById('passInput').value.trim();
   const err = document.getElementById('passError');
@@ -124,19 +151,21 @@ async function unlock(){
     err.style.display='block';
   }
 }
-async function logoutAdmin(){
-  localStorage.removeItem('jovia_ok');
-  location.reload();
-}
+async function logoutAdmin(){ localStorage.removeItem('jovia_ok'); location.reload(); }
+
 function setTab(t){
   currentTab=t;
   document.getElementById('tabW').className=t==='withdraw'?'tab active':'tab';
   document.getElementById('tabS').className=t==='super'?'tab super-active':'tab';
+  document.getElementById('tabG').className=t==='games'?'tab game-active':'tab';
   document.getElementById('cardWithdraw').style.display=t==='withdraw'?'block':'none';
   document.getElementById('cardSuper').style.display=t==='super'?'block':'none';
-  document.getElementById('listTitle').innerText=t==='withdraw'?'All Withdraw Codes':'All SUPER Codes';
+  document.getElementById('cardGames').style.display=t==='games'?'block':'none';
+  document.getElementById('listTitle').innerText=t==='withdraw'?'All Withdraw Codes': t==='super'?'All SUPER Codes':'All Codes (Games Tab Open)';
+  if(t==='games'){ loadDeposits(); }
   filterList();
 }
+
 async function generate(type){
   const btnId = type==='withdraw' ? 'btnWithdraw' : type==='super-gold' ? 'btnGold' : 'btnSilver';
   const btn = document.getElementById(btnId);
@@ -164,11 +193,10 @@ async function generate(type){
       document.getElementById('superPriceLabel').innerHTML='Price: <b>N'+lastSuperPrice.toLocaleString()+'</b>';
     }
     await loadFromServer();
-  } catch(e){
-    alert('❌ '+e.message);
-  }
+  } catch(e){ alert('❌ '+e.message); }
   btn.innerHTML = oldText; btn.disabled = false;
 }
+
 async function loadFromServer(){
   try {
     const res = await fetch('/api/admin/codes/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
@@ -180,12 +208,14 @@ async function loadFromServer(){
     document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+'<br><button onclick="document.getElementById(\'lock\').style.display=\'flex\'" style="padding:8px 16px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-weight:800;margin-top:10px">Login Again</button></p>';
   }
 }
+
 function filterList(){
   const q = (document.getElementById('searchInput').value||'').toUpperCase().trim();
-  let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : allServerCodes.filter(c=>c.type&&c.type.startsWith('super'));
-  if(q) filtered = filtered.filter(c=> c.code.toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q));
+  let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : currentTab==='super' ? allServerCodes.filter(c=>c.type&&c.type.startsWith('super')) : allServerCodes;
+  if(q) filtered = filtered.filter(c=> c.code.toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q) || (c.used_by_email||'').toUpperCase().includes(q));
   renderServer(filtered, allServerCodes.length);
 }
+
 function renderServer(filtered, totalAll){
   document.getElementById('count').innerText = `${filtered.length} / ${totalAll} total`;
   if(!filtered.length){
@@ -194,11 +224,13 @@ function renderServer(filtered, totalAll){
   }
   document.getElementById('list').innerHTML = filtered.map((c)=>{
     const used = !!c.used;
-    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ${used?'USED by '+c.used_by:'ACTIVE'}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
+    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ${used?'USED by '+(c.used_by_name||c.used_by_email||c.used_by):'ACTIVE'}<br>${c.used_at||''}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
   }).join('');
 }
+
 function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
 function shareCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); window.open('https://wa.me/?text='+encodeURIComponent('Your code: '+code),'_blank'); }
+
 async function validate(){
   const code=document.getElementById('checkCode').value.trim().toUpperCase();
   const r=document.getElementById('checkResult');
@@ -208,10 +240,65 @@ async function validate(){
     const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
     const data = await res.json();
     if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid</span>'; return; }
-    if(data.used){ r.innerHTML=`<span style="color:#ef4444">❌ Already USED by ${data.used_by||'user'}</span>`; return; }
+    if(data.used){ r.innerHTML=`<span style="color:#ef4444">❌ Already USED by ${data.used_by||data.used_by_name||'user'}</span>`; return; }
     r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active - ${data.type}</span>`;
   } catch(e){ r.innerHTML='<span style="color:red">❌ '+e.message+'</span>'; }
 }
+
+// === NEW: GAME DEPOSITS ADMIN ===
+async function loadDeposits(){
+  const listDiv = document.getElementById('depositsList');
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading deposits...</p>';
+  try{
+    const res = await fetch('/api/admin/games/deposits?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    if(!data.deposits.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No deposits yet. User never paid to 1850772192</p>'; return; }
+    listDiv.innerHTML = data.deposits.map(d=>{
+      const isPending = d.status==='pending';
+      return `<div class="dep-item ${isPending?'pending':''}">
+        <div style="display:flex;justify-content:space-between"><b>₦${d.amount}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div>
+        <div style="font-size:11px;margin-top:6px;line-height:1.6">
+        User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>
+        Reference user entered: <b>${d.reference}</b><br>
+        Date: ${d.created_at}<br>
+        <span style="color:#d00">👉 Check Kredi MFB 1850772192 app: Did you receive ₦${d.amount}? Does sender name match reference?</span>
+        </div>
+        ${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:10px;background:#22c55e;color:white;border:none;border-radius:8px;font-weight:800;cursor:pointer">✅ Verify & Approve - Fund Game Wallet ₦${d.amount}</button>`:`<div style="margin-top:6px;color:green;font-weight:800;font-size:11px">✅ Funded at ${d.confirmed_at||''}</div>`}
+      </div>`;
+    }).join('');
+  }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
+}
+
+async function confirmDeposit(depositId, amount){
+  if(!confirm(`You don check Raenest/Kredi MFB app?\nYou don see ₦${amount} for account 1850772192?\nIf YES, click OK to fund user game wallet.`)) return;
+  try{
+    const res = await fetch('/api/admin/games/deposit/confirm',{
+      method:'POST',
+      headers: getHeaders(),
+      credentials:'include',
+      body: JSON.stringify({depositId})
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    alert('✅ '+data.message);
+    loadDeposits();
+    loadGameAccounts();
+  }catch(e){ alert('❌ '+e.message); }
+}
+
+async function loadGameAccounts(){
+  const div = document.getElementById('accountsList');
+  div.innerHTML='⏳ Loading...';
+  try{
+    const res = await fetch('/api/admin/games/accounts?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    if(!data.accounts.length){ div.innerHTML='<p style="color:#94a3b8;font-size:11px">No game accounts yet</p>'; return; }
+    div.innerHTML = data.accounts.slice(0,20).map(a=>`<div style="font-size:11px;border-bottom:1px solid #f1f5f9;padding:6px 0;display:flex;justify-content:space-between"><span>${a.email||a.username||'ID '+a.user_id}</span><b>₦${a.game_balance}</b></div>`).join('');
+  }catch(e){ div.innerHTML='<p style="color:red;font-size:11px">'+e.message+'</p>'; }
+}
+
 document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') unlock(); });
 loadFromServer();
 setTab('withdraw');
