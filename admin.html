@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="description" content="Jovia Network administrator dashboard">
 <meta name="theme-color" content="#171124">
-<title>Jovia Network | Admin Dashboard</title>
+<title>Jovia Network | Admin Dashboard - Fixed</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -116,12 +115,11 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
   <div class="login-box">
     <div class="login-badge">◆</div>
     <div class="login-logo">Jovia<span>Network</span></div>
-    <p class="login-subtitle">Secure Administrator Portal - Session Fixed</p>
+    <p class="login-subtitle">Secure Administrator Portal - Fixed No Expired</p>
     <div id="loginError" class="login-error"></div>
     <form id="adminLoginForm" onsubmit="adminLogin(event)">
       <div class="login-group"><label for="adminUsername">Administrator Username</label><input id="adminUsername" type="text" placeholder="Enter admin username" autocomplete="username" required value="admin"></div>
-      <div class="login-group"><label for="adminPassword">Password</label><input id="adminPassword" type="password" placeholder="Enter password - Divine@@1" autocomplete="current-password" required></div>
-      <div style="background:#fffbe6;border:1px solid #f5c542;padding:10px;border-radius:8px;font-size:10px;line-height:1.6;margin-bottom:14px">If session expired always, make sure your API file has <b>/api/admin/me</b> endpoint - Add the fix I gave you before + session middleware in server.js</div>
+      <div class="login-group"><label for="adminPassword">Password</label><input id="adminPassword" type="password" placeholder="Divine@@1" autocomplete="current-password" required></div>
       <button type="submit" class="login-button" id="loginButton">Sign in to Dashboard</button>
       <div id="loginLoading" class="login-loading">Authenticating...</div>
     </form>
@@ -147,14 +145,14 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
     <div class="nav-divider"></div>
     <a href="#" onclick="adminLogout(event)"><span class="icon">🚪</span> <span>Logout</span></a>
   </nav>
-  <div class="sidebar-footer">Session Fixed - No more expired<br>Music price = Reward user earns<br>Popup shows every login</div>
+  <div class="sidebar-footer">Fixed - Auth header added<br>Music price = Reward user earns<br>Popup every login</div>
 </aside>
 
 <main class="main">
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:12px">
     <button class="hamburger" onclick="openSidebar()" aria-label="Open menu">☰</button>
-    <div><h1>Admin Dashboard - Session Fixed</h1><p>Manage users, music price, content and withdrawals - No auto logout</p></div>
+    <div><h1>Admin Dashboard - Fixed</h1><p>Manage users, music price (YOU set reward), content and withdrawals</p></div>
   </div>
   <div class="admin"><div class="admin-avatar">👤</div><span id="adminName">Administrator</span></div>
 </div>
@@ -171,16 +169,16 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 </section>
 
 <section class="section-box" id="announcement">
-  <div class="section-header"><h2>📢 Announcement Popup - Shows on EVERY Login (Fixed)</h2><button class="refresh" onclick="loadAdminPopup()">↻ Refresh</button></div>
+  <div class="section-header"><h2>📢 Announcement Popup - Every Login</h2><button class="refresh" onclick="loadAdminPopup()">↻ Refresh</button></div>
   <div class="form-box">
     <div class="form-grid">
-      <div class="form-group"><label for="adm_enabled">Enable Popup? (Always show on login regardless)</label><select id="adm_enabled"><option value="true">Yes - Show to all users every login</option><option value="false">No - Hide</option></select></div>
+      <div class="form-group"><label for="adm_enabled">Enable Popup?</label><select id="adm_enabled"><option value="true">Yes - Every login</option><option value="false">No - Hide</option></select></div>
       <div class="form-group"><label for="adm_url">Channel URL</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
       <div class="form-group full"><label for="adm_title">Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
-      <div class="form-group full"><label for="adm_message">Message (shows to users)</label><textarea id="adm_message" rows="5">ATTENTION ALL MEMBERS! All withdrawal codes posted ONLY in official channel.</textarea></div>
+      <div class="form-group full"><label for="adm_message">Message</label><textarea id="adm_message" rows="5">ATTENTION ALL MEMBERS! All withdrawal codes posted ONLY in official channel.</textarea></div>
       <div class="form-group"><label for="adm_btnText">Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
     </div>
-    <button class="create" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6;width:100%;padding:16px;font-size:13px">💾 Save & Show Popup to Users Every Login</button>
+    <button class="create" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6;width:100%;padding:16px;font-size:13px">💾 Save & Show Popup Every Login</button>
     <div id="adm_status" style="display:none;margin-top:12px;padding:12px;border-radius:10px;font-size:11px;font-weight:700"></div>
   </div>
 </section>
@@ -194,7 +192,7 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
       <div class="form-group"><label for="privateStatusFilter">Account Status</label><select id="privateStatusFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended</option></select></div>
       <div class="form-group"><label for="privatePackageFilter">Package</label><select id="privatePackageFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super">Super</option><option value="other">Other</option></select></div>
       <div class="form-group full">
-        <label>Select recipients (tap to select)</label>
+        <label>Select recipients</label>
         <div class="recipient-buttons">
           <button type="button" class="refresh" onclick="selectPrivateGroup('active')" style="background:#5b21b6;color:white">✅ Active</button>
           <button type="button" class="refresh" onclick="selectPrivateGroup('inactive')">⏳ Non-Active</button>
@@ -220,13 +218,13 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 </section>
 
 <section class="users-box" id="users">
-  <div class="section-header"><h2>👥 Registered Users - Suspended = Red ⛔ Shows in Dashboard Latest Activity</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
+  <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
   <div class="filter-row">
     <select id="userStatusFilter" onchange="filterUsers()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended ⛔</option></select>
     <select id="userPackageFilter" onchange="filterUsers()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super">Super 👑</option><option value="other">Other</option></select>
   </div>
   <div class="search-bar"><span>⌕</span><input type="text" id="searchUsers" placeholder="Search name, username, email..." oninput="filterUsers()"></div>
-  <div class="info-row"><div class="live-status"><span class="live-dot"></span><span>Live data - Yellow Processing / Green Active / Red Suspended ⛔</span></div><div>Last updated: <span id="lastUpdated">Waiting...</span></div></div>
+  <div class="info-row"><div class="live-status"><span class="live-dot"></span><span>Live data - Yellow Pending / Green Active / Red Suspended</span></div><div>Last updated: <span id="lastUpdated">Waiting...</span></div></div>
   <div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
@@ -278,8 +276,8 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 </section>
 
 <section class="music-box" id="music">
-  <div class="section-header"><h2>♫ Music Management - Super Only 👑 - YOU Upload + Set Price User Will Earn</h2><button class="refresh" onclick="loadAdminMusic()">↻ Refresh</button></div>
-  <div class="info-row"><div>Total Tracks: <strong id="totalMusic">0</strong> | YOU set reward price - User earns that per 60s - Super only</div></div>
+  <div class="section-header"><h2>♫ Music Management - Super Only 👑 - YOU Upload + Set Price (Fixed Auth)</h2><button class="refresh" onclick="loadAdminMusic()">↻ Refresh</button></div>
+  <div class="info-row"><div>Total Tracks: <strong id="totalMusic">0</strong> | Fixed - Now sends admin password header - No more Authentication required</div></div>
   <div class="form-box" id="musicFormBox">
     <h3 id="musicFormTitle" style="font-size:14px;margin-bottom:14px">＋ Upload New Music Track - Set Price User Will Earn</h3>
     <form id="musicForm" onsubmit="saveMusic(event)">
@@ -288,20 +286,20 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
         <div class="form-group"><label for="musicArtist">Artist *</label><input id="musicArtist" required value="Jovia Sounds"></div>
         <div class="form-group full"><label for="musicUrl">MP3 URL * (direct mp3 link)</label><input id="musicUrl" type="url" required placeholder="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></div>
         <div class="form-group"><label for="musicCover">Cover (emoji or image URL)</label><input id="musicCover" placeholder="♫ or https://..."></div>
-        <div class="form-group"><label for="musicReward">Reward Price ₦ * (What user will earn per 60s - YOU set it)</label><input id="musicReward" type="number" min="10" required value="100" placeholder="100"></div>
+        <div class="form-group"><label for="musicReward">Reward Price ₦ * (YOU set - User earns this per 60s)</label><input id="musicReward" type="number" min="10" required value="100" placeholder="100"></div>
         <div class="form-group"><label for="musicCategory">Category</label><select id="musicCategory"><option>Super Hits</option><option>Afrobeat</option><option>Super Mix</option><option>Super Anthem</option><option>General</option></select></div>
-        <div class="form-group full" style="background:#fffbe6;border:1px dashed #f5c542;padding:12px;border-radius:10px;font-size:11px"><strong>💡 YOU SET PRICE:</strong> If you set ₦100, super user earns ₦100 when dem listen 60s. Premium track fit be ₦200, normal ₦100. User no fit upload - Only you (Admin).</div>
+        <div class="form-group full" style="background:#fffbe6;border:1px dashed #f5c542;padding:12px;border-radius:10px;font-size:11px"><strong>💡 FIXED:</strong> Now automatically sends admin password header - No more "Authentication required". YOU set price, e.g ₦100 - Super user earns ₦100 per 60s. MP3 link must be direct .mp3 link.</div>
       </div>
-      <button type="submit" class="create" id="saveMusicButton" style="width:100%;padding:14px;background:#5b21b6">＋ Upload Music & Set Price</button>
+      <button type="submit" class="create" id="saveMusicButton" style="width:100%;padding:14px;background:#5b21b6">＋ Upload Music & Set Price (Fixed)</button>
       <button type="button" class="cancel" id="cancelMusicEditButton" onclick="cancelMusicEdit()">Cancel Edit</button>
     </form>
   </div>
   <div class="search-bar"><span>⌕</span><input id="searchMusic" type="search" placeholder="Search music..." oninput="filterMusic()"></div>
-  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Cover</th><th>Title</th><th>Artist</th><th>Reward (Price User Earns - YOU Set)</th><th>Plays</th><th>Category</th><th>Created</th><th>Actions</th></tr></thead><tbody id="musicTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Cover</th><th>Title</th><th>Artist</th><th>Reward (YOU Set - User Earns)</th><th>Plays</th><th>Category</th><th>Created</th><th>Actions</th></tr></thead><tbody id="musicTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
 <section class="section-box" id="games">
-  <div class="section-header"><h2>🎮 Games Management - Bottle 360° x4, Spin 0.5x, Min 2500</h2><button class="refresh" onclick="loadAdminGames()">↻ Refresh</button></div>
+  <div class="section-header"><h2>🎮 Games Management</h2><button class="refresh" onclick="loadAdminGames()">↻ Refresh</button></div>
   <div class="search-bar"><span>⌕</span><input id="searchGames" type="search" placeholder="Search game accounts..." oninput="filterGames()"></div>
   <div class="table-wrap"><table><thead><tr><th>User</th><th>Balance</th><th>Deposits</th><th>Withdrawals</th><th>Wins</th><th>Status</th></tr></thead><tbody id="gamesTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
@@ -315,11 +313,11 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
     </div>
   </div>
   <div class="withdrawal-control">
-    <div class="control-top"><div><strong>💼 Regular Withdrawals — Code Required</strong><small>Controls regular withdrawals only.</small></div><label class="switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
+    <div class="control-top"><div><strong>💼 Regular Withdrawals</strong><small>Controls regular only.</small></div><label class="switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
     <div id="regularWithdrawalStatusText" style="font-size:10px;margin-top:10px">Checking...</div>
   </div>
   <div class="withdrawal-control" style="background:#f0fdf4">
-    <div class="control-top"><div><strong>👥 Affiliate Withdrawals — Free</strong><small>Controls affiliate withdrawals only.</small></div><label class="switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
+    <div class="control-top"><div><strong>👥 Affiliate Withdrawals</strong><small>Controls affiliate only.</small></div><label class="switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
     <div id="affiliateWithdrawalStatusText" style="font-size:10px;margin-top:10px">Checking...</div>
   </div>
   <div class="info-row"><div class="live-status"><span class="live-dot"></span>Live</div><div>Total: <strong id="totalWithdrawals">0</strong> · Pending: <strong id="pendingWithdrawalsCount">0</strong> · Paid: <strong id="paidWithdrawalsCount">0</strong></div></div>
@@ -365,17 +363,22 @@ function isActiveUser(u){const s=String(u.account_status||u.status||"").toLowerC
 function isSuspendedUser(u){return ["suspended","banned","blocked","disabled"].includes(String(u.account_status||u.status||"").toLowerCase())}
 function getUserPackage(u){return String(u.package||u.plan||"").toLowerCase().replace(/[_ ]/g,"-")}
 function packageMatches(u,filter){const p=getUserPackage(u);if(filter==="all")return true;if(filter==="gold")return p.includes("gold");if(filter==="silver")return p.includes("silver");if(filter==="super"||filter==="super-gold"||filter==="super-silver")return p.includes("super");if(filter==="other")return !p.includes("gold")&&!p.includes("silver")&&!p.includes("super");return true}
+function getAdminHeaders(){
+  const pass = localStorage.getItem("jovia_admin_pass")||localStorage.getItem("adminPass")||"Divine@@1";
+  return {"Content-Type":"application/json","x-admin-password":pass,"x-admin-pass":pass};
+}
+function getAdminHeadersNoContent(){
+  const pass = localStorage.getItem("jovia_admin_pass")||localStorage.getItem("adminPass")||"Divine@@1";
+  return {"x-admin-password":pass,"x-admin-pass":pass};
+}
 function openSidebar(){$("sidebar").classList.add("open");$("sidebarOverlay").classList.add("show")}
 function closeSidebar(){$("sidebar").classList.remove("open");$("sidebarOverlay").classList.remove("show")}
 function setActiveNav(link){if(!link)return;document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));link.classList.add("active");closeSidebar()}
 function scrollToSection(id, btn){
-  const el = document.getElementById(id);
-  if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-  if(btn){
-    document.querySelectorAll(".mbn-item").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-  }
-  document.querySelectorAll(".nav a").forEach(a=>{a.classList.remove("active"); if(a.getAttribute("href")==="#"+id) a.classList.add("active")});
+  const el=document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+  if(btn){document.querySelectorAll(".mbn-item").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
+  document.querySelectorAll(".nav a").forEach(a=>{a.classList.remove("active");if(a.getAttribute("href")==="#"+id) a.classList.add("active")});
   closeSidebar();
 }
 function stopTimers(){[userRefreshTimer,jobRefreshTimer,videoRefreshTimer,withdrawalRefreshTimer,musicRefreshTimer].forEach(t=>{if(t)clearInterval(t)});userRefreshTimer=jobRefreshTimer=videoRefreshTimer=withdrawalRefreshTimer=musicRefreshTimer=null}
@@ -383,25 +386,24 @@ function showToast(message,type="success"){let t=$("adminToast");if(!t){t=docume
 function showLogin(message=""){adminAuthenticated=false;stopTimers();$("dashboardScreen").style.display="none";$("loginScreen").style.display="flex";$("mobileBottomNav").style.display="none";if(message){$("loginError").textContent=message;$("loginError").style.display="block";}else{$("loginError").style.display="none";}}
 function showDashboard(admin){adminAuthenticated=true;$("loginScreen").style.display="none";$("dashboardScreen").style.display="block";$("adminName").textContent=admin?.username||"Administrator";$("mobileBottomNav").style.display="grid";stopTimers();loadDashboardSummary();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminPopup();loadUsers();loadPrivateMessages();loadAdminJobs();loadAdminVideos();loadAdminMusic();loadAdminGames();setTimeout(loadAdminWithdrawals,400);userRefreshTimer=setInterval(loadUsers,15000);jobRefreshTimer=setInterval(loadAdminJobs,20000);videoRefreshTimer=setInterval(loadAdminVideos,30000);musicRefreshTimer=setInterval(loadAdminMusic,30000);withdrawalRefreshTimer=setInterval(()=>{if($("withdrawalAutoRefresh").checked)loadAdminWithdrawals()},10000)}
 async function checkAdminSession(){
-  // FIXED - Don't show expired immediately - Try session first
   try{
-    const r=await fetch("/api/admin/me",{cache:"no-store",credentials:"include"});
+    const headers = getAdminHeadersNoContent();
+    const r=await fetch("/api/admin/me",{cache:"no-store",credentials:"include",headers});
     if(!r.ok){
-      // If endpoint missing, try to stay logged in via localStorage
-      const saved = localStorage.getItem("jovia_admin_logged");
-      if(saved==="true"){ showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"}); return; }
+      const saved=localStorage.getItem("jovia_admin_logged");
+      if(saved==="true"){showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"});return;}
       return showLogin();
     }
     const d=await r.json();
     if(!d.success||!d.admin){
-      const saved = localStorage.getItem("jovia_admin_logged");
-      if(saved==="true"){ showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"}); return; }
+      const saved=localStorage.getItem("jovia_admin_logged");
+      if(saved==="true"){showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"});return;}
       return showLogin();
     }
     showDashboard(d.admin);
   }catch{
-    const saved = localStorage.getItem("jovia_admin_logged");
-    if(saved==="true"){ showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"}); return; }
+    const saved=localStorage.getItem("jovia_admin_logged");
+    if(saved==="true"){showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"});return;}
     showLogin();
   }
 }
@@ -410,65 +412,44 @@ async function adminLogin(e){
   const username=$("adminUsername").value.trim(),password=$("adminPassword").value,button=$("loginButton");
   $("loginError").style.display="none";button.disabled=true;button.textContent="Signing in...";$("loginLoading").style.display="block";
   try{
-    const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({username,password})});
+    const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json","x-admin-password":password,"x-admin-pass":password},credentials:"include",body:JSON.stringify({username,password})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok||!d.success)throw new Error(d.message||"Login failed - Check password Divine@@1");
-    // Save session locally to prevent auto logout if /api/admin/me missing
     localStorage.setItem("jovia_admin_logged","true");
     localStorage.setItem("jovia_admin_user",d.admin?.username||username);
+    localStorage.setItem("jovia_admin_pass",password);
+    localStorage.setItem("adminPass",password);
     $("adminLoginForm").reset();showDashboard(d.admin||{username});
-  }catch(err){$("loginError").textContent=err.message||"Unable to sign in - Add /api/admin/me fix to your API file";$("loginError").style.display="block"}
+    showToast("Login success - Session fixed - Music upload auth fixed");
+  }catch(err){$("loginError").textContent=err.message||"Unable to sign in";$("loginError").style.display="block"}
   finally{button.disabled=false;button.textContent="Sign in to Dashboard";$("loginLoading").style.display="none"}
 }
 async function adminLogout(e){
   if(e)e.preventDefault();
   if(!confirm("Sign out?"))return;
-  localStorage.removeItem("jovia_admin_logged");
-  localStorage.removeItem("jovia_admin_user");
-  try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"})}catch{}
+  localStorage.removeItem("jovia_admin_logged");localStorage.removeItem("jovia_admin_user");localStorage.removeItem("jovia_admin_pass");localStorage.removeItem("adminPass");
+  try{await fetch("/api/admin/logout",{method:"POST",credentials:"include",headers:getAdminHeadersNoContent()})}catch{}
   showLogin("Signed out successfully.");
 }
-function handleUnauthorized(){
-  // Don't auto logout aggressively - Show toast first
-  showToast("Session expired - Please login again","warning");
-  setTimeout(()=>{if(adminAuthenticated) showLogin("Your session has expired. Please sign in again.");},1200);
-}
+function handleUnauthorized(){showToast("Session expired - Please login again","warning");setTimeout(()=>{if(adminAuthenticated) showLogin("Your session has expired. Please sign in again.");},1200);}
 
-async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)return;const d=await r.json();if(!d.success)return;$("totalUsers").textContent=Number(d.users||rawUsers.length||0);$("pendingUsers").textContent=Number(d.pendingUsers||0);$("approvedUsers").textContent=Number(d.activeUsers||0);$("totalVideos").textContent=Number(d.videos||0);$("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
-async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();if(d&&d.title){$("adm_enabled").value=String(d.enabled);$("adm_title").value=d.title||"";$("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");$("adm_url").value=d.channelUrl||d.channel_url||"https://t.me/jovianetwerk";$("adm_btnText").value=d.channelText||d.channel_text||"📲 Join Official Channel →"}}catch{}}
-async function saveAdminPopup(){const b=$("adm_saveBtn"),s=$("adm_status");b.disabled=true;b.textContent="Saving...";s.style.display="block";s.style.background="#fff3cd";s.style.color="#92400e";s.textContent="Saving announcement - Will show on every login...";const payload={enabled:$("adm_enabled").value==="true",title:$("adm_title").value.trim(),message:$("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:$("adm_url").value.trim(),channelText:$("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save announcement");s.style.background="#dcfce7";s.style.color="#15803d";s.textContent="✅ Saved - Popup will show to ALL users on EVERY login (Fixed - No session block)";showToast("Popup saved - Shows every login now")}catch(e){s.style.background="#fee2e2";s.style.color="#b91c1c";s.textContent=e.message}finally{b.disabled=false;b.textContent="💾 Save & Show Popup to Users Every Login"}}
+async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)return;const d=await r.json();if(!d.success)return;$("totalUsers").textContent=Number(d.users||rawUsers.length||0);$("pendingUsers").textContent=Number(d.pendingUsers||0);$("approvedUsers").textContent=Number(d.activeUsers||0);$("totalVideos").textContent=Number(d.videos||0);$("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
+async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(!r.ok)return;const d=await r.json();if(d&&d.title){$("adm_enabled").value=String(d.enabled);$("adm_title").value=d.title||"";$("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");$("adm_url").value=d.channelUrl||d.channel_url||"https://t.me/jovianetwerk";$("adm_btnText").value=d.channelText||d.channel_text||"📲 Join Official Channel →"}}catch{}}
+async function saveAdminPopup(){const b=$("adm_saveBtn"),s=$("adm_status");b.disabled=true;b.textContent="Saving...";s.style.display="block";s.style.background="#fff3cd";s.style.color="#92400e";s.textContent="Saving announcement...";const payload={enabled:$("adm_enabled").value==="true",title:$("adm_title").value.trim(),message:$("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:$("adm_url").value.trim(),channelText:$("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save announcement");s.style.background="#dcfce7";s.style.color="#15803d";s.textContent="✅ Saved - Popup shows EVERY login";showToast("Popup saved - Shows every login")}catch(e){s.style.background="#fee2e2";s.style.color="#b91c1c";s.textContent=e.message}finally{b.disabled=false;b.textContent="💾 Save & Show Popup Every Login"}}
 
-function updateRegularWithdrawalUI(enabled){$("regularWithdrawalSwitch").checked=Boolean(enabled);$("regularWithdrawalStatusText").textContent=enabled?"✅ Regular withdrawals are ON — code required.":"❌ Regular withdrawals are OFF — affiliate remains independent."}
-function updateAffiliateWithdrawalUI(enabled){$("affiliateWithdrawalSwitch").checked=Boolean(enabled);$("affiliateWithdrawalStatusText").textContent=enabled?"✅ Affiliate withdrawals are ON — free, no code.":"❌ Affiliate withdrawals are OFF — regular remains independent."}
-async function loadRegularWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();updateRegularWithdrawalUI(d.regularEnabled!==false);return}}catch{}updateRegularWithdrawalUI(localStorage.getItem("jovia_regular_withdrawal")!=="false")}
-async function loadAffiliateWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();updateAffiliateWithdrawalUI(d.affiliateEnabled!==false);return}}catch{}updateAffiliateWithdrawalUI(localStorage.getItem("jovia_affiliate_withdrawal")!=="false")}
-async function toggleRegularWithdrawals(enabled){const cb=$("regularWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON regular withdrawals?":"Turn OFF regular withdrawals? Affiliate will still work.")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/regular-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_regular_withdrawal",String(enabled));updateRegularWithdrawalUI(enabled);showToast("Regular withdrawals updated")}catch(e){updateRegularWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
-async function toggleAffiliateWithdrawals(enabled){const cb=$("affiliateWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON affiliate withdrawals?":"Turn OFF affiliate withdrawals? Regular will still work.")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_affiliate_withdrawal",String(enabled));updateAffiliateWithdrawalUI(enabled);showToast("Affiliate withdrawals updated")}catch(e){updateAffiliateWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
+function updateRegularWithdrawalUI(enabled){$("regularWithdrawalSwitch").checked=Boolean(enabled);$("regularWithdrawalStatusText").textContent=enabled?"✅ Regular withdrawals ON":"❌ Regular withdrawals OFF";}
+function updateAffiliateWithdrawalUI(enabled){$("affiliateWithdrawalSwitch").checked=Boolean(enabled);$("affiliateWithdrawalStatusText").textContent=enabled?"✅ Affiliate withdrawals ON":"❌ Affiliate withdrawals OFF";}
+async function loadRegularWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.ok){const d=await r.json();updateRegularWithdrawalUI(d.regularEnabled!==false);return}}catch{}updateRegularWithdrawalUI(localStorage.getItem("jovia_regular_withdrawal")!=="false")}
+async function loadAffiliateWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.ok){const d=await r.json();updateAffiliateWithdrawalUI(d.affiliateEnabled!==false);return}}catch{}updateAffiliateWithdrawalUI(localStorage.getItem("jovia_affiliate_withdrawal")!=="false")}
+async function toggleRegularWithdrawals(enabled){const cb=$("regularWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON regular?":"Turn OFF regular?")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/regular-withdrawals",{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_regular_withdrawal",String(enabled));updateRegularWithdrawalUI(enabled);showToast("Regular withdrawals updated")}catch(e){updateRegularWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
+async function toggleAffiliateWithdrawals(enabled){const cb=$("affiliateWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON affiliate?":"Turn OFF affiliate?")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_affiliate_withdrawal",String(enabled));updateAffiliateWithdrawalUI(enabled);showToast("Affiliate withdrawals updated")}catch(e){updateAffiliateWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
 
-async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];usersCache=new Map(rawUsers.map(u=>[Number(u.id),u]));$("totalUsers").textContent=rawUsers.length;$("pendingUsers").textContent=rawUsers.filter(u=>!isActiveUser(u)&&!isSuspendedUser(u)).length;$("approvedUsers").textContent=rawUsers.filter(isActiveUser).length;$("goldUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("gold")).length;$("silverUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("silver")).length;$("superUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("super")).length;filterUsers();renderPrivateRecipients();$("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch(e){$("usersTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];usersCache=new Map(rawUsers.map(u=>[Number(u.id),u]));$("totalUsers").textContent=rawUsers.length;$("pendingUsers").textContent=rawUsers.filter(u=>!isActiveUser(u)&&!isSuspendedUser(u)).length;$("approvedUsers").textContent=rawUsers.filter(isActiveUser).length;$("goldUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("gold")).length;$("silverUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("silver")).length;$("superUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("super")).length;filterUsers();renderPrivateRecipients();$("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch(e){$("usersTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
 function filterUsers(){const q=$("searchUsers").value.toLowerCase().trim(),sf=$("userStatusFilter").value,pf=$("userPackageFilter").value;const users=rawUsers.filter(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),suspended=isSuspendedUser(u);let statusOk=true;if(sf==="active") statusOk=active;else if(sf==="inactive") statusOk=!active&&!suspended;else if(sf==="suspended") statusOk=suspended;const text=`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""}`.toLowerCase();return statusOk&&packageMatches(u,pf)&&text.includes(q)});renderUsersTable(users)}
 function renderUsersTable(users){const table=$("usersTable");if(!users.length){table.innerHTML='<tr><td colspan="9" class="empty">No users found</td></tr>';return}table.innerHTML=users.map(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase();const suspended=isSuspendedUser(u);let buttons="";if(suspended){buttons+=`<button class="action restore" onclick="updateStatus(${Number(u.id)},'approved')">✅ Unsuspend</button>`;}else if(!isActiveUser(u)){buttons+=`<button class="action approve" onclick="updateStatus(${Number(u.id)},'approved')">Approve</button>`;}else{buttons+=`<button class="action suspend" onclick="confirmSuspend(${Number(u.id)})">⛔ Suspend</button>`;}buttons+=`<button class="action reset" onclick="resetPassword(${Number(u.id)})">Reset</button><button class="action" style="background:#5b21b6;color:#fff" onclick="sendPrivateToOneUser(${Number(u.id)})">Message</button>`;return `<tr><td><strong>${escapeHTML(u.full_name||"-")}</strong></td><td>${escapeHTML(u.username||"-")}</td><td>${escapeHTML(u.email||"-")}</td><td>${escapeHTML(u.phone||"-")}</td><td>${escapeHTML(u.package||u.plan||"-")}</td><td>${formatNaira(u.wallet_balance||u.package_amount||0)}</td><td><span class="status ${escapeHTML(s)}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(u.created_at))}</td><td>${buttons}</td></tr>`}).join("")}
-async function resetPassword(id){const user=usersCache.get(Number(id));if(!user)return;const password=prompt(`New password for ${user.username||user.email}: minimum 8 characters`);if(!password||password.length<8)return alert("Password must be at least 8 characters.");if(password!==prompt("Re-enter the new password to confirm:"))return alert("Passwords do not match.");try{const r=await fetch(`/api/admin/users/${Number(id)}/reset-password`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({newPassword:password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Password reset failed");showToast("Password reset successfully")}catch(e){alert(e.message)}}
-function confirmSuspend(id){if(confirm("⛔ Suspend this user? Dashboard go show red Suspended + Latest activity red + Games/Music locked - User go see ⛔ Suspended in account status"))updateStatus(id,"suspended")}
-async function updateStatus(id,status){
-  if(status==="approved"&&!confirm("Approve/Unsuspend this user? Dashboard go show Active green"))return;
-  try{
-    let r;
-    if(status==="suspended"){
-      r=await fetch(`/api/admin/user/suspend`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({userId:Number(id),reason:"Suspended by admin"})});
-    }else{
-      // Try both endpoints for unsuspend
-      try{
-        r=await fetch(`/api/admin/user/unsuspend`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({userId:Number(id)})});
-        if(!r.ok) throw new Error("try status");
-      }catch{
-        r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});
-      }
-    }
-    const d=await r.json().catch(()=>({})); if(!r.ok||d.success===false)throw new Error(d.message||"Status update failed");
-    await loadUsers(); showToast(status==="suspended"?"User suspended ⛔ - Shows red in dashboard Latest Activity":"User restored ✅ - Shows green");
-  }catch(e){alert(e.message)}
-}
+async function resetPassword(id){const user=usersCache.get(Number(id));if(!user)return;const password=prompt(`New password for ${user.username||user.email}: minimum 8 characters`);if(!password||password.length<8)return alert("Password must be at least 8 characters.");if(password!==prompt("Re-enter the new password to confirm:"))return alert("Passwords do not match.");try{const r=await fetch(`/api/admin/users/${Number(id)}/reset-password`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({newPassword:password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Password reset failed");showToast("Password reset successfully")}catch(e){alert(e.message)}}
+function confirmSuspend(id){if(confirm("⛔ Suspend this user? Dashboard Latest Activity go show red ⛔ Suspended + Games/Music locked."))updateStatus(id,"suspended")}
+async function updateStatus(id,status){if(status==="approved"&&!confirm("Approve/Unsuspend?"))return;try{let r;if(status==="suspended"){r=await fetch(`/api/admin/user/suspend`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({userId:Number(id),reason:"Suspended by admin"})});}else{try{r=await fetch(`/api/admin/user/unsuspend`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({userId:Number(id)})});if(!r.ok) throw new Error("try status");}catch{r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({status})});}}const d=await r.json().catch(()=>({})); if(!r.ok||d.success===false)throw new Error(d.message||"Status update failed");await loadUsers(); showToast(status==="suspended"?"User suspended ⛔ - Shows red":"User restored ✅");}catch(e){alert(e.message)}}
 
 function privateMessageStatus(message,success=false){const b=$("privateMessageStatus");b.style.display="block";b.style.background=success?"#dcfce7":"#fee2e2";b.style.color=success?"#166534":"#991b1b";b.textContent=message}
 function privateUserMatches(u){const query=$("privateRecipientSearch").value.trim().toLowerCase(),sf=$("privateStatusFilter").value,pf=$("privatePackageFilter").value,s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),suspended=isSuspendedUser(u),name=`${u.full_name||u.name||""} ${u.username||""} ${u.email||""}`.toLowerCase();let statusOk=true;if(sf==="active") statusOk=active;else if(sf==="inactive") statusOk=!active&&!suspended;else if(sf==="suspended") statusOk=suspended;return name.includes(query)&&statusOk&&packageMatches(u,pf)}
@@ -479,8 +460,8 @@ function selectPrivateGroup(type){privateRecipientIds.clear();rawUsers.filter(u=
 function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
 function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
 function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
-async function sendPrivateMessage(){const title=$("privateMessageTitle").value.trim(),message=$("privateMessageBody").value.trim();if(!privateRecipientIds.size)return alert("Select at least one recipient.");if(!title||!message)return alert("Enter the title and message.");if(!confirm(`Send this private message to ${privateRecipientIds.size} user(s)?`))return;const b=$("sendPrivateMessageButton");b.disabled=true;b.textContent="Sending...";try{const r=await fetch("/api/admin/private-messages",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({recipientIds:Array.from(privateRecipientIds),title,message})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not send private message");privateMessageStatus(`Message sent to ${privateRecipientIds.size} recipient(s).`,true);privateRecipientIds.clear();$("privateMessageTitle").value="";$("privateMessageBody").value="";renderPrivateRecipients();await loadPrivateMessages();showToast("Private message sent")}catch(e){privateMessageStatus(e.message,false)}finally{b.disabled=false;b.textContent="✉️ Send Private Message"}}
-async function loadPrivateMessages(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/private-messages?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();privateHistoryData=d.messages||[];renderPrivateHistory()}catch{}}
+async function sendPrivateMessage(){const title=$("privateMessageTitle").value.trim(),message=$("privateMessageBody").value.trim();if(!privateRecipientIds.size)return alert("Select at least one recipient.");if(!title||!message)return alert("Enter the title and message.");if(!confirm(`Send this private message to ${privateRecipientIds.size} user(s)?`))return;const b=$("sendPrivateMessageButton");b.disabled=true;b.textContent="Sending...";try{const r=await fetch("/api/admin/private-messages",{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({recipientIds:Array.from(privateRecipientIds),title,message})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not send private message");privateMessageStatus(`Message sent to ${privateRecipientIds.size} recipient(s).`,true);privateRecipientIds.clear();$("privateMessageTitle").value="";$("privateMessageBody").value="";renderPrivateRecipients();await loadPrivateMessages();showToast("Private message sent")}catch(e){privateMessageStatus(e.message,false)}finally{b.disabled=false;b.textContent="✉️ Send Private Message"}}
+async function loadPrivateMessages(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/private-messages?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(!r.ok)return;const d=await r.json();privateHistoryData=d.messages||[];renderPrivateHistory()}catch{}}
 function renderPrivateHistory(){const table=$("privateMessageHistory");if(!table)return;const q=$("privateHistorySearch").value.toLowerCase().trim(),items=privateHistoryData.filter(m=>`${m.title||""} ${m.status||""} ${m.recipient_summary||""} ${(m.recipients||[]).join(" ")}`.toLowerCase().includes(q));if(!items.length){table.innerHTML='<tr><td colspan="4" class="empty">No messages found.</td></tr>';return}table.innerHTML=items.map(m=>{const recipients=Array.isArray(m.recipients)?m.recipients.join(", "):m.recipient_summary||"Recipients";return `<tr><td>${escapeHTML(formatDate(m.created_at||m.date))}</td><td><strong>${escapeHTML(m.title||"-")}</strong></td><td>${escapeHTML(String(recipients).slice(0,150))}</td><td><span class="status approved">${escapeHTML(m.status||"sent")}</span></td></tr>`}).join("")}
 
 function getDeletedJobIds(){try{return JSON.parse(localStorage.getItem(DELETED_JOBS_KEY)||"[]")}catch{return []}}
@@ -488,11 +469,11 @@ function saveDeletedJobIds(ids){localStorage.setItem(DELETED_JOBS_KEY,JSON.strin
 function isJobDeleted(id){return getDeletedJobIds().includes(Number(id))}
 function addDeletedJobId(id){const ids=getDeletedJobIds(),n=Number(id);if(!ids.includes(n)){ids.push(n);saveDeletedJobIds(ids)}}
 function clearDeletedJobs(e){if(e)e.preventDefault();if(!confirm("Restore all hidden jobs?"))return;localStorage.removeItem(DELETED_JOBS_KEY);showToast("Restored");loadAdminJobs()}
-async function createJob(e){e.preventDefault();const payload={slot:Number($("jobSlot").value),title:$("jobTitle").value.trim(),category:$("jobCategory").value.trim(),url:$("jobUrl").value.trim(),description:$("jobDescription").value.trim(),reward:Number($("jobReward").value),duration:$("jobDuration").value.trim()||"Flexible",status:$("jobStatus").value},b=$("createJobButton");b.disabled=true;b.textContent="Creating...";try{const r=await fetch("/api/admin/jobs",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Job creation failed");showToast("Job created");$("createJobForm").reset();$("jobCategory").value="General";$("jobDuration").value="Flexible";await loadAdminJobs()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent="＋ Create Job"}}
-async function loadAdminJobs(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load jobs");const d=await r.json();rawJobs=d.jobs||[];jobsCache=new Map(rawJobs.map(j=>[Number(j.id),j]));filterJobs()}catch(e){$("jobsTable").innerHTML=`<tr><td colspan="10" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+async function createJob(e){e.preventDefault();const payload={slot:Number($("jobSlot").value),title:$("jobTitle").value.trim(),category:$("jobCategory").value.trim(),url:$("jobUrl").value.trim(),description:$("jobDescription").value.trim(),reward:Number($("jobReward").value),duration:$("jobDuration").value.trim()||"Flexible",status:$("jobStatus").value},b=$("createJobButton");b.disabled=true;b.textContent="Creating...";try{const r=await fetch("/api/admin/jobs",{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Job creation failed");showToast("Job created");$("createJobForm").reset();$("jobCategory").value="General";$("jobDuration").value="Flexible";await loadAdminJobs()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent="＋ Create Job"}}
+async function loadAdminJobs(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load jobs");const d=await r.json();rawJobs=d.jobs||[];jobsCache=new Map(rawJobs.map(j=>[Number(j.id),j]));filterJobs()}catch(e){$("jobsTable").innerHTML=`<tr><td colspan="10" class="empty">${escapeHTML(e.message)}</td></tr>`}}
 function filterJobs(){const q=$("searchJobs").value.toLowerCase().trim(),visible=rawJobs.filter(j=>!isJobDeleted(j.id)&&`${j.title||""} ${j.category||""} ${j.url||""}`.toLowerCase().includes(q));$("totalJobs").textContent=visible.length;const t=$("jobsTable");if(!visible.length){t.innerHTML='<tr><td colspan="10" class="empty">No jobs found</td></tr>';return}t.innerHTML=visible.map(j=>{const s=String(j.status||"active").toLowerCase(),active=["active","available"].includes(s),url=j.url||j.job_url||"-",actions=(active?`<button class="action pause" onclick="changeJobStatus(${Number(j.id)},'inactive')">Pause</button>`:`<button class="action activate" onclick="changeJobStatus(${Number(j.id)},'active')">Activate</button>`)+`<button class="action delete" onclick="deleteJob(${Number(j.id)})">Delete</button>`;return `<tr><td>Job ${Number(j.slot||0)}</td><td>#${Number(j.id)}</td><td>${escapeHTML(j.title||"-")}</td><td>${escapeHTML(j.category||"General")}</td><td><a href="${escapeHTML(safeUrl(url))}" target="_blank" rel="noopener noreferrer">Open URL</a></td><td>${formatNaira(j.reward)}</td><td>${escapeHTML(j.duration||"-")}</td><td><span class="status ${active?"active":"paused"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(j.created_at))}</td><td>${actions}</td></tr>`}).join("")}
-async function changeJobStatus(id,status){if(!confirm("Change job status?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminJobs()}catch(e){alert(e.message)}}
-async function deleteJob(id){if(!confirm("Delete this job?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Delete failed");addDeletedJobId(id);rawJobs=rawJobs.filter(j=>Number(j.id)!==Number(id));filterJobs();showToast("Job deleted")}catch(e){alert(e.message)}}
+async function changeJobStatus(id,status){if(!confirm("Change job status?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminJobs()}catch(e){alert(e.message)}}
+async function deleteJob(id){if(!confirm("Delete this job?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include",headers:getAdminHeadersNoContent()});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Delete failed");addDeletedJobId(id);rawJobs=rawJobs.filter(j=>Number(j.id)!==Number(id));filterJobs();showToast("Job deleted")}catch(e){alert(e.message)}}
 
 async function saveVideo(event){
   event.preventDefault();
@@ -501,11 +482,9 @@ async function saveVideo(event){
   const reward=Number($("videoReward").value);
   const file=$("videoFile").files[0];
   if(!title)return alert("Enter a video title.");
-  if($("videoReward").value.trim()===""||!Number.isFinite(reward)||reward<0){return alert("Enter a valid video reward of ₦0 or more.");}
-  if(!file&&!editingVideoId)return alert("Choose a video file to upload.");
-  const b=$("saveVideoButton");
-  const currentEditingId=editingVideoId;
-  b.disabled=true; b.textContent="Saving...";
+  if($("videoReward").value.trim()===""||!Number.isFinite(reward)||reward<0){return alert("Enter a valid video reward");}
+  if(!file&&!editingVideoId)return alert("Choose a video file");
+  const b=$("saveVideoButton"); const currentEditingId=editingVideoId; b.disabled=true; b.textContent="Saving...";
   try{
     let url="";
     if(file){
@@ -515,55 +494,83 @@ async function saveVideo(event){
         const xhr=new XMLHttpRequest();
         xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100); $("progressBar").style.width=p+"%"; $("progressText").textContent=p+"%";}};
         xhr.onload=()=>{let data={}; try{data=JSON.parse(xhr.responseText)}catch{} if(xhr.status>=200&&xhr.status<300){resolve(data);}else{reject(new Error(data.message||"Video upload failed"));}};
-        xhr.onerror=()=>reject(new Error("Video upload failed")); xhr.open("POST","/api/admin/videos/upload"); xhr.withCredentials=true; xhr.send(fd);
+        xhr.onerror=()=>reject(new Error("Video upload failed"));
+        const pass=localStorage.getItem("jovia_admin_pass")||"Divine@@1";
+        xhr.open("POST","/api/admin/videos/upload"); xhr.withCredentials=true;
+        xhr.setRequestHeader("x-admin-password",pass); xhr.setRequestHeader("x-admin-pass",pass);
+        xhr.send(fd);
       });
-      url=up.url||up.video_url||""; if(!url)throw new Error("Upload succeeded but no video URL was returned");
+      url=up.url||up.video_url||""; if(!url)throw new Error("Upload no URL");
       $("uploadedVideoPreview").style.display="block"; $("previewPlayer").src=safeUrl(url);
-    }else{const old=rawVideos.find(v=>Number(v.id)===Number(currentEditingId)); url=old?.video_url||old?.url||""; if(!url)throw new Error("The existing video URL could not be found. Please upload the video file again.");}
+    }else{const old=rawVideos.find(v=>Number(v.id)===Number(currentEditingId)); url=old?.video_url||old?.url||""; if(!url)throw new Error("Existing URL not found");}
     const payload={title,category,reward,url,video_url:url,status:currentEditingId?(rawVideos.find(v=>Number(v.id)===Number(currentEditingId))?.status||"active"):"active"};
     const endpoint=currentEditingId?`/api/admin/videos/${Number(currentEditingId)}`:"/api/admin/videos";
-    const r=await fetch(endpoint,{method:currentEditingId?"PUT":"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
-    const d=await r.json().catch(()=>({})); if(!r.ok||!d.success){throw new Error(d.message||"Could not save video");}
-    showToast("Video saved with reward "+formatNaira(reward)); cancelVideoEdit(); await loadAdminVideos();
+    const r=await fetch(endpoint,{method:currentEditingId?"PUT":"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify(payload)});
+    const d=await r.json().catch(()=>({})); if(!r.ok||!d.success)throw new Error(d.message||"Could not save video");
+    showToast("Video saved "+formatNaira(reward)); cancelVideoEdit(); await loadAdminVideos();
   }catch(e){alert(e.message||"Could not save video");}finally{b.disabled=false; b.textContent=editingVideoId?"Save Changes":"＋ Upload & Save"; $("uploadProgress").style.display="none";}}
-async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load videos");const d=await r.json();rawVideos=d.videos||[];videosCache=new Map(rawVideos.map(v=>[Number(v.id),v]));filterVideos();}catch(e){$("videosTable").innerHTML=`<tr><td colspan="8" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
+async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load videos");const d=await r.json();rawVideos=d.videos||[];videosCache=new Map(rawVideos.map(v=>[Number(v.id),v]));filterVideos();}catch(e){$("videosTable").innerHTML=`<tr><td colspan="8" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
 function filterVideos(){const q=$("searchVideos").value.toLowerCase().trim();const items=rawVideos.filter(v=>`${v.title||""} ${v.category||""}`.toLowerCase().includes(q));$("totalVideos").textContent=items.length;const t=$("videosTable");if(!items.length){t.innerHTML='<tr><td colspan="8" class="empty">No videos found</td></tr>';return}t.innerHTML=items.map(v=>{const s=String(v.status||"active").toLowerCase();const active=s==="active";const actions=(active?`<button class="action pause" onclick="changeVideoStatus(${Number(v.id)},'inactive')">Disable</button>`:`<button class="action activate" onclick="changeVideoStatus(${Number(v.id)},'active')">Activate</button>`)+`<button class="action edit" onclick="editVideo(${Number(v.id)})">Edit</button>`+`<button class="action delete" onclick="deleteVideo(${Number(v.id)})">Delete</button>`;const thumb=v.thumbnail_url||v.thumbnail||"";return `<tr><td>#${Number(v.id)}</td><td>${thumb?`<img src="${escapeHTML(safeUrl(thumb))}" alt="" loading="lazy" style="width:70px;height:45px;object-fit:cover;border-radius:6px">`:"🎬"}</td><td>${escapeHTML(v.title||"-")}</td><td>${escapeHTML(v.category||"General")}</td><td>${formatNaira(v.reward)}</td><td><span class="status ${active?"approved":"rejected"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(v.created_at))}</td><td>${actions}</td></tr>`}).join("");}
 function editVideo(id){const v=rawVideos.find(x=>Number(x.id)===Number(id));if(!v)return;editingVideoId=Number(id);$("videoTitle").value=v.title||"";const category=$("videoCategory");if(![...category.options].some(o=>o.value===v.category)){category.value="Other";}else{category.value=v.category||"General";}$("videoReward").value=Number(v.reward??0);$("videoFile").value="";$("uploadedVideoPreview").style.display="none";$("previewPlayer").removeAttribute("src");$("videoFormTitle").textContent="Edit Video";$("saveVideoButton").textContent="Save Changes";$("cancelVideoEditButton").style.display="inline-block";$("videoFormBox").scrollIntoView({behavior:"smooth"});}
 function cancelVideoEdit(){editingVideoId=null;$("videoForm").reset();$("videoCategory").value="General";$("videoReward").value="0";$("videoFormTitle").textContent="＋ Upload New Video";$("saveVideoButton").textContent="＋ Upload & Save";$("cancelVideoEditButton").style.display="none";$("uploadedVideoPreview").style.display="none";$("previewPlayer").pause();$("previewPlayer").removeAttribute("src");$("previewPlayer").load();$("uploadProgress").style.display="none";$("progressBar").style.width="0%";$("progressText").textContent="0%";}
-async function changeVideoStatus(id,status){if(!confirm("Change video status to "+status+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminVideos();}catch(e){alert(e.message);}}
-async function deleteVideo(id){if(!confirm("Delete this video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminVideos();showToast("Video deleted");}catch(e){alert(e.message);}}
+async function changeVideoStatus(id,status){if(!confirm("Change video status to "+status+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminVideos();}catch(e){alert(e.message);}}
+async function deleteVideo(id){if(!confirm("Delete this video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include",headers:getAdminHeadersNoContent()});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminVideos();showToast("Video deleted");}catch(e){alert(e.message);}}
 
-// MUSIC ADMIN - YOU UPLOAD + SET PRICE USER WILL EARN
-async function loadAdminMusic(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/music/list?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load music");const d=await r.json();rawMusic=d.tracks||d.music||[];musicCache=new Map(rawMusic.map(m=>[Number(m.id),m]));$("totalMusicCard").textContent=rawMusic.length;$("totalMusic").textContent=rawMusic.length;filterMusic();}catch(e){$("musicTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
-function filterMusic(){const q=$("searchMusic").value.toLowerCase().trim();const items=rawMusic.filter(m=>`${m.title||""} ${m.artist||""} ${m.category||""}`.toLowerCase().includes(q));const t=$("musicTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No music - YOU upload music and set reward price user will earn (Super only)</td></tr>';return}t.innerHTML=items.map(m=>{return `<tr><td>#${Number(m.id)}</td><td>${escapeHTML(m.cover||"♫")}</td><td><strong>${escapeHTML(m.title)}</strong></td><td>${escapeHTML(m.artist||"Jovia")}</td><td><strong style="color:#5b21b6">${formatNaira(m.reward||100)} 👑</strong><br><small style="color:#7b8494;font-size:9px">YOU set - User earns this per 60s</small></td><td>${Number(m.plays||0)}</td><td>${escapeHTML(m.category||"Super Hits")}</td><td>${escapeHTML(formatDate(m.created_at))}</td><td><button class="action edit" onclick="editMusic(${Number(m.id)})">Edit Price</button><button class="action delete" onclick="deleteMusic(${Number(m.id)})">Delete</button></td></tr>`}).join("");}
+// MUSIC ADMIN - FIXED AUTH REQUIRED
+async function loadAdminMusic(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/music/list?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load music");const d=await r.json();rawMusic=d.tracks||d.music||[];musicCache=new Map(rawMusic.map(m=>[Number(m.id),m]));$("totalMusicCard").textContent=rawMusic.length;$("totalMusic").textContent=rawMusic.length;filterMusic();}catch(e){$("musicTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
+function filterMusic(){const q=$("searchMusic").value.toLowerCase().trim();const items=rawMusic.filter(m=>`${m.title||""} ${m.artist||""} ${m.category||""}`.toLowerCase().includes(q));const t=$("musicTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No music - Upload with MP3 link + Set reward price YOU control</td></tr>';return}t.innerHTML=items.map(m=>{return `<tr><td>#${Number(m.id)}</td><td>${escapeHTML(m.cover||"♫")}</td><td><strong>${escapeHTML(m.title)}</strong></td><td>${escapeHTML(m.artist||"Jovia")}</td><td><strong style="color:#5b21b6">${formatNaira(m.reward||100)} 👑</strong><br><small style="color:#7b8494;font-size:9px">YOU set - User earns per 60s</small></td><td>${Number(m.plays||0)}</td><td>${escapeHTML(m.category||"Super Hits")}</td><td>${escapeHTML(formatDate(m.created_at))}</td><td><button class="action edit" onclick="editMusic(${Number(m.id)})">Edit Price</button><button class="action delete" onclick="deleteMusic(${Number(m.id)})">Delete</button></td></tr>`}).join("");}
 async function saveMusic(e){
   e.preventDefault();
   const title=$("musicTitle").value.trim(), artist=$("musicArtist").value.trim(), url=$("musicUrl").value.trim(), cover=$("musicCover").value.trim()||"♫", reward=Number($("musicReward").value), category=$("musicCategory").value;
   if(!title||!url) return alert("Title and MP3 URL required");
-  if(!Number.isFinite(reward)||reward<10) return alert("Reward must be at least ₦10 - This is price user will earn per 60s - YOU set it");
-  const b=$("saveMusicButton"); b.disabled=true; b.textContent="Saving...";
+  if(!Number.isFinite(reward)||reward<10) return alert("Reward must be at least ₦10 - YOU set it - This is what user earns per 60s");
+  // FIXED - Get admin pass from localStorage - Prevent Authentication required
+  let adminPass = localStorage.getItem("jovia_admin_pass")||localStorage.getItem("adminPass")||"";
+  if(!adminPass){
+    adminPass = prompt("Enter Admin Password to upload music (default Divine@@1):");
+    if(!adminPass) return;
+    localStorage.setItem("jovia_admin_pass",adminPass);
+    localStorage.setItem("adminPass",adminPass);
+  }
+  const b=$("saveMusicButton"); b.disabled=true; b.textContent="Uploading with auth header...";
   try{
     const payload={title,artist,url,cover,reward,category};
     const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:"/api/admin/music/add";
     const method=editingMusicId?"PUT":"POST";
-    const r=await fetch(endpoint,{method,headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
-    const d=await r.json().catch(()=>({})); if(!r.ok||!d.success) throw new Error(d.message||"Could not save music");
-    showToast(`Music saved - Reward ${formatNaira(reward)} per 60s - Super users earn this - YOU set price`); cancelMusicEdit(); await loadAdminMusic();
-  }catch(err){alert(err.message)}finally{b.disabled=false; b.textContent=editingMusicId?"Save Changes - Update Price":"＋ Upload Music & Set Price";}
+    const r=await fetch(endpoint,{
+      method,
+      headers:{
+        "Content-Type":"application/json",
+        "x-admin-password": adminPass,
+        "x-admin-pass": adminPass
+      },
+      credentials:"include",
+      body:JSON.stringify(payload)
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success){
+      if(r.status===401||String(d.message||"").toLowerCase().includes("auth")){
+        localStorage.removeItem("jovia_admin_pass");
+        throw new Error("Authentication required - Wrong admin password - Use Divine@@1 - Try login again then upload");
+      }
+      throw new Error(d.message||"Could not save music - Check MP3 link is direct .mp3 link");
+    }
+    showToast(`✅ Music uploaded - Reward ${formatNaira(reward)} per 60s - Super users earn this`); cancelMusicEdit(); await loadAdminMusic();
+  }catch(err){alert(err.message)}finally{b.disabled=false; b.textContent=editingMusicId?"Save Changes - Update Price":"＋ Upload Music & Set Price (Fixed)";}
 }
-function editMusic(id){const m=rawMusic.find(x=>Number(x.id)===Number(id));if(!m)return;editingMusicId=Number(id);$("musicTitle").value=m.title||"";$("musicArtist").value=m.artist||"";$("musicUrl").value=m.url||"";$("musicCover").value=m.cover||"♫";$("musicReward").value=Number(m.reward||100);$("musicCategory").value=m.category||"Super Hits";$("musicFormTitle").textContent="✏️ Edit Music - Update Reward Price YOU Set (User Earns This)";$("saveMusicButton").textContent="Save Changes - Update Price";$("cancelMusicEditButton").style.display="inline-block";$("musicFormBox").scrollIntoView({behavior:"smooth"});}
-function cancelMusicEdit(){editingMusicId=null;$("musicForm").reset();$("musicArtist").value="Jovia Sounds";$("musicReward").value="100";$("musicCategory").value="Super Hits";$("musicFormTitle").textContent="＋ Upload New Music Track - Set Price User Will Earn";$("saveMusicButton").textContent="＋ Upload Music & Set Price";$("cancelMusicEditButton").style.display="none";}
-async function deleteMusic(id){if(!confirm(`Delete music #${id}? User no go fit earn from am again.`))return;try{const r=await fetch(`/api/admin/music/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminMusic();showToast("Music deleted")}catch(e){alert(e.message)}}
+function editMusic(id){const m=rawMusic.find(x=>Number(x.id)===Number(id));if(!m)return;editingMusicId=Number(id);$("musicTitle").value=m.title||"";$("musicArtist").value=m.artist||"";$("musicUrl").value=m.url||"";$("musicCover").value=m.cover||"♫";$("musicReward").value=Number(m.reward||100);$("musicCategory").value=m.category||"Super Hits";$("musicFormTitle").textContent="✏️ Edit Music - Update Reward Price YOU Set";$("saveMusicButton").textContent="Save Changes - Update Price";$("cancelMusicEditButton").style.display="inline-block";$("musicFormBox").scrollIntoView({behavior:"smooth"});}
+function cancelMusicEdit(){editingMusicId=null;$("musicForm").reset();$("musicArtist").value="Jovia Sounds";$("musicReward").value="100";$("musicCategory").value="Super Hits";$("musicFormTitle").textContent="＋ Upload New Music Track - Set Price User Will Earn";$("saveMusicButton").textContent="＋ Upload Music & Set Price (Fixed)";$("cancelMusicEditButton").style.display="none";}
+async function deleteMusic(id){if(!confirm(`Delete music #${id}?`))return;try{const pass=localStorage.getItem("jovia_admin_pass")||"Divine@@1";const r=await fetch(`/api/admin/music/${Number(id)}`,{method:"DELETE",credentials:"include",headers:{"x-admin-password":pass,"x-admin-pass":pass}});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminMusic();showToast("Music deleted")}catch(e){alert(e.message)}}
 
-async function loadAdminGames(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/games/accounts?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load games");const d=await r.json();rawGames=d.accounts||[];filterGames();}catch(e){$("gamesTable").innerHTML=`<tr><td colspan="6" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
+async function loadAdminGames(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/games/accounts?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load games");const d=await r.json();rawGames=d.accounts||[];filterGames();}catch(e){$("gamesTable").innerHTML=`<tr><td colspan="6" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
 function filterGames(){const q=$("searchGames").value.toLowerCase().trim();const items=rawGames.filter(g=>`${g.email||""} ${g.username||""}`.toLowerCase().includes(q));const t=$("gamesTable");if(!items.length){t.innerHTML='<tr><td colspan="6" class="empty">No game accounts</td></tr>';return}t.innerHTML=items.map(g=>`<tr><td>${escapeHTML(g.email||g.username||"User #"+g.user_id)}</td><td><strong>${formatNaira(g.game_balance||0)}</strong></td><td>${formatNaira(g.total_deposits||0)}</td><td>${formatNaira(g.total_withdrawals||0)}</td><td>${Number(g.total_wins||0)}</td><td><span class="status ${Number(g.game_balance)>0?"active":"pending"}">${Number(g.game_balance)>0?"Active":"Empty"}</span></td></tr>`).join("");}
 
-async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load withdrawals");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length;const paid=rawWithdrawals.filter(isPaidWithdrawal).length;$("totalWithdrawals").textContent=rawWithdrawals.length;$("pendingWithdrawalsCount").textContent=pending;$("paidWithdrawalsCount").textContent=paid;$("pendingWithdrawalsCard").textContent=pending;$("navPendingCount").textContent=pending;$("pendingTabCount").textContent=pending;$("paidTabCount").textContent=paid;if($("mbnPending")) $("mbnPending").textContent=pending;$("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");filterWithdrawals();}catch(e){$("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
+async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include",headers:getAdminHeadersNoContent()});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load withdrawals");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length;const paid=rawWithdrawals.filter(isPaidWithdrawal).length;$("totalWithdrawals").textContent=rawWithdrawals.length;$("pendingWithdrawalsCount").textContent=pending;$("paidWithdrawalsCount").textContent=paid;$("pendingWithdrawalsCard").textContent=pending;$("navPendingCount").textContent=pending;$("pendingTabCount").textContent=pending;$("paidTabCount").textContent=paid;if($("mbnPending")) $("mbnPending").textContent=pending;$("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");filterWithdrawals();}catch(e){$("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
 function isPaidWithdrawal(w){return ["approved","paid","completed","success","successful"].includes(String(w.status||"").toLowerCase());}
 function setWithdrawalTab(tab){withdrawalTab=tab;["pending","paid","other"].forEach(k=>$(k+"Tab").classList.toggle("active-tab",k===tab));$("withdrawalListLabel").textContent=tab==="pending"?"Pending withdrawals":tab==="paid"?"Paid withdrawals":"Other withdrawal statuses";filterWithdrawals();}
 function filterWithdrawals(){const q=$("searchWithdrawals").value.toLowerCase().trim();const type=$("withdrawalTypeFilter").value;const items=rawWithdrawals.filter(w=>{const status=String(w.status||"pending").toLowerCase();const isPending=status==="pending";const isPaid=isPaidWithdrawal(w);const t=String(w.withdrawal_type||w.type||"regular").toLowerCase();const affiliate=t.includes("affili");const tabOk=withdrawalTab==="pending"?isPending:withdrawalTab==="paid"?isPaid:!isPending&&!isPaid;const typeOk=type==="all"||(type==="affiliate"&&affiliate)||(type==="regular"&&!affiliate);const text=`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.account_number||""} ${t} ${status}`.toLowerCase();return tabOk&&typeOk&&text.includes(q);});renderWithdrawalsTable(items);}
 function renderWithdrawalsTable(items){const t=$("withdrawalsTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No withdrawals in this list.</td></tr>';return}t.innerHTML=items.map(w=>{const type=String(w.withdrawal_type||w.type||"Regular");const affiliate=type.toLowerCase().includes("affili");const status=String(w.status||"pending").toLowerCase();let actions;if(status==="pending"){actions=`<button class="action approve" onclick="approveWithdrawal(${Number(w.id)})">✅ Paid</button><button class="action reject" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`;}else{actions=`<span style="color:#64748b;font-size:10px">No action</span>`;}return `<tr><td><strong>${escapeHTML(w.username||"-")}</strong></td><td>${escapeHTML(w.bank_name||"-")}</td><td>${escapeHTML(w.account_name||"-")}</td><td>${escapeHTML(w.account_number||"-")}</td><td><strong>${formatNaira(w.amount)}</strong></td><td><span class="status ${affiliate?"approved":"pending"}">${escapeHTML(type)}</span></td><td><span class="status ${isPaidWithdrawal(w)?"paid":status==="pending"?"pending":"rejected"}">${escapeHTML(status)}</span></td><td>${escapeHTML(formatDate(w.created_at))}</td><td>${actions}</td></tr>`}).join("");}
-async function setWithdrawalStatus(id,status){if(!confirm(`${status==="approved"?"Mark this withdrawal as paid":"Reject"} withdrawal #${id}?`))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/${status==="approved"?"approve":"reject"}`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});d=await r.json().catch(()=>({}));}if(!r.ok||!d.success)throw new Error(d.message||"Withdrawal status update failed");showToast(status==="approved"?"Withdrawal marked paid":"Withdrawal rejected");await loadAdminWithdrawals();}catch(e){alert(e.message);}}
+async function setWithdrawalStatus(id,status){if(!confirm(`${status==="approved"?"Mark this withdrawal as paid":"Reject"} withdrawal #${id}?`))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/${status==="approved"?"approve":"reject"}`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:getAdminHeaders(),credentials:"include",body:JSON.stringify({status})});d=await r.json().catch(()=>({}));}if(!r.ok||!d.success)throw new Error(d.message||"Withdrawal status update failed");showToast(status==="approved"?"Withdrawal marked paid":"Withdrawal rejected");await loadAdminWithdrawals();}catch(e){alert(e.message);}}
 function approveWithdrawal(id){return setWithdrawalStatus(id,"approved")}
 function rejectWithdrawal(id){return setWithdrawalStatus(id,"rejected")}
 checkAdminSession();
