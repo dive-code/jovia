@@ -17,7 +17,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white}
 .logo-name{font-size:16px;font-weight:800;color:var(--purple)} .logo-sub{display:block;font-size:9px;letter-spacing:2.5px;color:var(--muted);font-weight:700;margin-top:1px}
 .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:grid;place-items:center}
-/* === LEFT DRAWER - FIXED TO LEFT SIDE === */
+/* LEFT DRAWER */
 #drawerOverlay{position:fixed;inset:0;background:rgba(18,6,32,.55);backdrop-filter:blur(4px);z-index:9997;display:none;opacity:0;transition:.3s}
 #drawerOverlay.show{display:block;opacity:1}
 #topDrawer{position:fixed;top:0;left:-100%;width:300px;max-width:85vw;height:100vh;background:#fff;border-right:1px solid var(--border);z-index:9998;transition:left .35s cubic-bezier(.4,0,.2,1);box-shadow:20px 0 60px rgba(42,15,61,.18);display:flex;flex-direction:column}
@@ -104,7 +104,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .nav.active{color:var(--purple);background:var(--purple-light)} .nav.locked{opacity:.5}
 .nav.super-lock{position:relative} .nav.super-lock::after{content:"👑";position:absolute;top:-4px;right:4px;font-size:8px}
 #joviaPopupOverlay,#privatePopOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
-#joviaPopupOverlay{z-index:99998;background:rgba(18,6,32,.85);backdrop-filter:blur(10px)} #joviaPopupOverlay.show{display:flex!important}
+#joviaPopupOverlay{z-index:99999;background:rgba(18,6,32,.85);backdrop-filter:blur(10px)} #joviaPopupOverlay.show{display:flex!important}
 #joviaPopupBox{width:100%;max-width:440px;background:white;border-radius:24px;padding:28px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.35);position:relative;text-align:center;border:1px solid #ece5f3;margin:auto}
 #joviaPopupClose{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:#f3eef8;color:#57158a;border:none;font-size:16px;font-weight:800;cursor:pointer}
 .joviaPopupBadge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f3eef8;border:1px solid #e9e2ef;border-radius:50px;color:#57158a;font-size:9px;font-weight:800;letter-spacing:1px;margin-bottom:14px}
@@ -112,7 +112,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .joviaPopupText{font-size:12.5px;line-height:1.7;color:#5f5170;margin-bottom:18px;text-align:left;background:#fcf9ff;border:1px solid #f0e8f8;border-radius:14px;padding:14px;white-space:pre-line;overflow-wrap:anywhere}
 .joviaBtn{width:100%;min-height:50px;border-radius:12px;border:none;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:12px}
 .joviaBtnChannel{background:linear-gradient(135deg,#229ed9,#1c8ac0);color:white} .joviaBtnClose{background:white;border:1px solid #e9e2ef;color:#57158a}
-#privatePopOverlay{z-index:99999;background:rgba(18,6,32,.86);backdrop-filter:blur(10px)} #privatePopOverlay.show{display:flex!important}
+#privatePopOverlay{z-index:99998;background:rgba(18,6,32,.86);backdrop-filter:blur(10px)} #privatePopOverlay.show{display:flex!important}
 #privatePopBox{width:100%;max-width:440px;background:white;border-radius:24px;padding:26px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.4);position:relative;border:1px solid #ece5f3;margin:auto}
 #toast{position:fixed;left:50%;bottom:95px;transform:translateX(-50%) translateY(20px);background:#1e1430;color:white;padding:12px 18px;border-radius:12px;font-size:12px;font-weight:700;opacity:0;pointer-events:none;transition:.3s;z-index:100000;max-width:90%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -157,7 +157,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon" id="activityIconBox" style="background:#f3eef8">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate" style="font-size:11px;color:#8a8196">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></section>
 </div>
 
-<!-- LEFT DRAWER - SHOWS ON LEFT SIDE -->
+<!-- LEFT DRAWER -->
 <div id="drawerOverlay" onclick="closeDrawer()"></div>
 <div id="topDrawer">
 <div class="drawer-head"><h3>☰ Menu</h3><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
@@ -188,6 +188,8 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 </nav>
 
 <div id="toast"></div>
+
+<!-- POPUP - SHOWS ON LOGIN REGARDLESS - RETURNED BACK SEPARATE FROM NAV -->
 <div id="joviaPopupOverlay"><div id="joviaPopupBox"><button id="joviaPopupClose" type="button">✕</button><div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div><div class="joviaPopupTitle" id="joviaPopupTitle"></div><div class="joviaPopupText" id="joviaPopupText"></div><div class="joviaPopupBtns"><a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a><button class="joviaBtn joviaBtnClose" id="joviaPopupOk" type="button">Continue to Dashboard →</button></div></div></div>
 <div id="privatePopOverlay"><div id="privatePopBox"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">✉️</div><div><div style="font-size:9px;font-weight:900;letter-spacing:1px;color:#7c3aed;text-transform:uppercase">Private Message</div><div id="privatePopTime" style="font-size:10px;color:#94a3b8;margin-top:2px">Just now</div></div><button id="privatePopCloseIcon" type="button" style="margin-left:auto;width:32px;height:32px;border-radius:50%;border:none;background:#f3f0ff;color:#7c3aed;font-weight:800;cursor:pointer">✕</button></div><h3 id="privatePopTitle" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:10px">Message from Admin</h3><div id="privatePopMessage" style="font-size:13px;line-height:1.7;color:#334155;background:#fcf9ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;white-space:pre-line;max-height:260px;overflow-y:auto"></div><button id="privatePopOk" type="button" style="width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer">OK, I Understand ✓</button></div></div>
 
@@ -198,7 +200,7 @@ const wrapper=document.getElementById("swipeWrapper"),card=document.getElementBy
 const drawer=document.getElementById("topDrawer"),drawerOverlay=document.getElementById("drawerOverlay");
 function toggleDrawer(){const isOpen=drawer.classList.contains("show"); if(isOpen) closeDrawer(); else openDrawer();}
 function openDrawer(){drawer.classList.add("show");drawerOverlay.classList.add("show");document.body.style.overflow="hidden";}
-function closeDrawer(){drawer.classList.remove("show");drawerOverlay.classList.remove("show");document.body.style.overflow="";}
+function closeDrawer(){drawer.classList.remove("show");drawerOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show") && !privateOverlay.classList.contains("show")) document.body.style.overflow="";}
 function money(a){const n=Number(a); if(!Number.isFinite(n)) return "₦0"; return "₦"+n.toLocaleString("en-NG",{maximumFractionDigits:2});}
 function setSlide(i){currentSlide=i===1?1:0; wrapper.style.transform=`translateX(-${currentSlide*100}%)`; document.getElementById("dot0").classList.toggle("active",currentSlide===0); document.getElementById("dot1").classList.toggle("active",currentSlide===1);}
 function showToast(msg){const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(window._toastTimer); window._toastTimer=setTimeout(()=>t.classList.remove("show"),3200);}
@@ -224,12 +226,14 @@ async function loadUser(){
     const {data}=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
     const user=getUserFromResponse(data);if(!user||!(user.id||user.email)) throw new Error("Invalid user");currentUser=user;
     if(isLocalSuper && !String(user.package||user.plan||"").toLowerCase().includes("super")){user.package="SUPER"; user.plan="SUPER";}
-    displayUser(user,data);await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
+    displayUser(user,data);
+    await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
   }catch(e){console.error(e); document.getElementById("userName").textContent="Member";}
 }
 async function loadWallet(){try{const {data}=await fetchJSON("/api/wallet?t="+Date.now()); if(data?.success){ if(data.walletBalance!==undefined) document.getElementById("balance").textContent=money(data.walletBalance); if(data.affiliateBalance!==undefined) document.getElementById("affiliateBalance").textContent=money(data.affiliateBalance); if(data.totalEarned!==undefined) document.getElementById("totalEarned").textContent=money(data.totalEarned);} }catch(e){}}
 async function loadReferrals(){try{const {data}=await fetchJSON("/api/referrals?t="+Date.now()); if(data?.success){ const c=Number(data.totalReferrals??0); document.getElementById("memberCount").textContent=String(c); document.getElementById("affiliateCountBig").textContent=c+" Joined"; }}catch(e){}}
 async function loadPopups(){ await Promise.allSettled([loadGlobalPopup(), loadPrivatePopup()]); }
+// === POPUP ALWAYS SHOW ON LOGIN REGARDLESS - FIXED ===
 async function loadGlobalPopup(){
   const endpoints=["/api/announcement","/api/global-popup","/api/popup","/api/announcements/active"];
   for(const url of endpoints){
@@ -240,17 +244,14 @@ async function loadGlobalPopup(){
       const title=popup.title||d.title||""; const text=popup.message||popup.text||d.message||""; 
       const enabled=popup.enabled??popup.show??popup.active??d.enabled??true;
       if(!enabled||(!title&&!text)) continue;
-      const id=popup.id||popup.updatedAt||title; 
-      const seenKey="jovia_global_seen_"+btoa(String(id)).slice(0,20);
-      const storedId=localStorage.getItem("jovia_last_announcement_id");
-      const forceNewAnnouncement=String(id)!==String(storedId);
-      if(!forceNewAnnouncement && sessionStorage.getItem(seenKey)) continue;
+      // ALWAYS SHOW - NO SESSION BLOCK
       document.getElementById("joviaPopupTitle").textContent=title||"Official Announcement";
       document.getElementById("joviaPopupText").textContent=String(text).replace(/<br\s*\/?>/gi,"\n");
       const channelBtn=document.getElementById("joviaChannelBtn");
       const link=popup.channelUrl||popup.channel_url||d.channelUrl||"https://t.me/jovianetwerk";if(link) channelBtn.href=link;
+      if(popup.channelText||d.channelText) channelBtn.textContent=popup.channelText||d.channelText;
       globalOverlay.classList.add("show"); document.body.style.overflow="hidden";
-      globalOverlay.dataset.seenKey=seenKey; globalOverlay.dataset.announcementId=String(id);return;
+      return;
     }catch(_){}
   }
 }
@@ -321,18 +322,16 @@ function displayUser(user,apiData={}){
  if(referralCode){const url=new URL("register.html",window.location.href); url.searchParams.set("ref",referralCode); document.getElementById("referralLink").textContent=url.href;}
 }
 function closeGlobalPopup(){
-  const key=globalOverlay.dataset.seenKey; const annId=globalOverlay.dataset.announcementId;
-  if(key) try{sessionStorage.setItem(key,"1");}catch(_){}
-  if(annId) try{localStorage.setItem("jovia_last_announcement_id", annId);}catch(_){}
-  globalOverlay.classList.remove("show"); document.body.style.overflow="";
+  globalOverlay.classList.remove("show"); 
+  if(!privateOverlay.classList.contains("show") && !drawer.classList.contains("show")) document.body.style.overflow="";
 }
 document.getElementById("joviaPopupClose").addEventListener("click",closeGlobalPopup);
 document.getElementById("joviaPopupOk").addEventListener("click",closeGlobalPopup);
 globalOverlay.addEventListener("click",e=>{if(e.target===globalOverlay) closeGlobalPopup();});
 async function closePrivatePop(){
-  if(currentPrivatePopId===null){privateOverlay.classList.remove("show"); document.body.style.overflow=""; return;}
+  if(currentPrivatePopId===null){privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow=""; return;}
   const id=currentPrivatePopId; const btn=document.getElementById("privatePopOk"); btn.disabled=true; btn.textContent="Please wait...";
-  try{for(const u of ["/api/user/private-messages/read","/api/private-messages/read"]){try{ const r=await fetch(u,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})}); if(r.ok) break; }catch(_){}}currentPrivatePopId=null; privateOverlay.classList.remove("show"); document.body.style.overflow="";}finally{ btn.disabled=false; btn.textContent="OK, I Understand ✓"; }
+  try{for(const u of ["/api/user/private-messages/read","/api/private-messages/read"]){try{ const r=await fetch(u,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})}); if(r.ok) break; }catch(_){}}currentPrivatePopId=null; privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow="";}finally{ btn.disabled=false; btn.textContent="OK, I Understand ✓"; }
 }
 document.getElementById("privatePopOk").addEventListener("click",closePrivatePop);
 document.getElementById("privatePopCloseIcon").addEventListener("click",closePrivatePop);
