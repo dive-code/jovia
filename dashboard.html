@@ -9,14 +9,33 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--purple:#2a0f3d;--purple2:#4b1d6b;--purple-light:#f6f0fa;--gold:#f5b700;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1}
-body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
+body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;overflow-x:hidden}
 button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .app{width:100%;max-width:680px;min-height:100vh;margin:auto;padding:20px 18px 130px}
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:18px;padding:14px 16px;position:sticky;top:12px;z-index:90}
 .logo-area{display:flex;align-items:center;gap:12px}
 .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white}
 .logo-name{font-size:16px;font-weight:800;color:var(--purple)} .logo-sub{display:block;font-size:9px;letter-spacing:2.5px;color:var(--muted);font-weight:700;margin-top:1px}
-.menu-btn{width:42px;height:42px;border-radius:50%;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:18px;cursor:pointer}
+.menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:grid;place-items:center}
+/* === LEFT DRAWER - FIXED TO LEFT SIDE === */
+#drawerOverlay{position:fixed;inset:0;background:rgba(18,6,32,.55);backdrop-filter:blur(4px);z-index:9997;display:none;opacity:0;transition:.3s}
+#drawerOverlay.show{display:block;opacity:1}
+#topDrawer{position:fixed;top:0;left:-100%;width:300px;max-width:85vw;height:100vh;background:#fff;border-right:1px solid var(--border);z-index:9998;transition:left .35s cubic-bezier(.4,0,.2,1);box-shadow:20px 0 60px rgba(42,15,61,.18);display:flex;flex-direction:column}
+#topDrawer.show{left:0}
+.drawer-head{padding:20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.drawer-head h3{font-size:15px;font-weight:800;color:var(--purple)}
+.drawer-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--purple-light);color:var(--purple);font-size:16px;font-weight:800;cursor:pointer}
+.drawer-user{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.drawer-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:grid;place-items:center;color:#fff;font-weight:900}
+.drawer-user-name{font-size:13px;font-weight:700;color:var(--purple)} .drawer-user-plan{font-size:10px;color:var(--muted);margin-top:2px}
+.drawer-list{flex:1;overflow-y:auto;padding:12px}
+.drawer-item{width:100%;display:flex;align-items:center;gap:14px;padding:14px 14px;border-radius:14px;border:0;background:none;text-align:left;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);transition:.2s}
+.drawer-item:hover{background:var(--purple-light);color:var(--purple)}
+.drawer-item.active{background:var(--purple-light);color:var(--purple);font-weight:800}
+.drawer-item .d-icon{width:40px;height:40px;border-radius:11px;background:#f6f0ff;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.drawer-item.super-item .d-icon{background:linear-gradient(135deg,#fff8d6,#ffe88a)}
+.drawer-divider{height:1px;background:var(--border);margin:10px 0}
+.drawer-logout{width:100%;margin-top:auto;padding:14px;border-radius:12px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-weight:800;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
 .welcome{margin-bottom:20px;padding:0 4px}
 .welcome-label{font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
 .welcome-label:before{content:"";width:22px;height:2px;background:var(--gold);border-radius:2px}
@@ -76,11 +95,9 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .activity-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
 .activity-name{font-size:13px;font-weight:700;color:var(--purple)}
 .activity-date{font-size:11px;color:var(--muted);margin-top:2px}
-/* === ONLY LATEST ACTIVITY FIX - YELLOW & GREEN PROFESSIONAL === */
-.activity-amount{font-size:11px;font-weight:800;padding:8px 14px;border-radius:20px;border:1.5px solid;white-space:nowrap;transition:.2s}
-.activity-amount.pending{background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#f59e0b;color:#92400e;box-shadow:0 2px 8px rgba(245,158,11,.15)}
-.activity-amount.success{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#22c55e;color:#166534;box-shadow:0 2px 8px rgba(22,163,74,.15)}
-/* NAV - 6 ICONS WITH MUSIC */
+.activity-amount{font-size:11px;font-weight:800;padding:8px 14px;border-radius:20px;border:1.5px solid;white-space:nowrap}
+.activity-amount.pending{background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#f59e0b;color:#92400e}
+.activity-amount.success{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#22c55e;color:#166534}
 .bottom-nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:580px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;padding:10px 8px;display:grid;grid-template-columns:repeat(6,1fr);gap:2px;z-index:100;box-shadow:0 15px 40px rgba(42,15,61,.12)}
 .nav{border:0;background:none;color:#9a92a6;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9px;font-weight:700;cursor:pointer;padding:6px 0;border-radius:14px}
 .nav-icon{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:20px}
@@ -103,7 +120,14 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 </head>
 <body>
 <div class="app">
-<header class="topbar"><div class="logo-area"><div class="logo">J</div><div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div></div><button class="menu-btn" type="button" onclick="logout()">↪</button></header>
+<header class="topbar">
+<div style="display:flex;align-items:center;gap:12px">
+<button class="menu-btn" type="button" id="hamburgerBtn" onclick="toggleDrawer()">☰</button>
+<div class="logo-area"><div class="logo">J</div><div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div></div>
+</div>
+<div style="width:42px"></div>
+</header>
+
 <section class="welcome"><div class="welcome-label">MEMBER AREA</div><h1>Hello, <span id="userName">Loading...</span></h1></section>
 <section class="account-card" id="accountCard"><div class="swipe-wrapper" id="swipeWrapper"><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AVAILABLE BALANCE</div><div class="account-balance" id="balance">₦0</div></div><div class="plan-badge" id="planBadge">LOADING</div></div><div class="account-info"><div class="info-box"><small>ACCOUNT STATUS</small><strong id="accountStatus">Loading...</strong></div><div class="info-box"><small>WELCOME BONUS</small><strong id="welcomeBonus">₦0</strong></div></div><button class="account-button" id="paymentButton" type="button" onclick="activate()">Continue to Payment</button></div><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AFFILIATE EARNINGS</div><div class="account-balance" id="affiliateBalance">₦0</div></div><div class="plan-badge" id="planBadge2">LOADING</div></div><div class="account-info"><div class="info-box"><small>REFERRALS</small><strong id="affiliateCountBig">0 Joined</strong></div><div class="info-box"><small>TOTAL EARNED</small><strong id="totalEarned">₦0</strong></div></div><button class="account-button" id="affiliateButton" type="button" disabled style="opacity:.7;cursor:default">Affiliate Balance</button></div></div><div class="swipe-dots"><div class="dot active" id="dot0"></div><div class="dot" id="dot1"></div></div></section>
 
@@ -127,10 +151,31 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <div id="upgradeMsg" class="upgrade-msg"></div>
 <div class="upgrade-features"><div class="upgrade-feat">✅ No Daily Limit</div><div class="upgrade-feat">✅ All Jobs Unlocked</div><div class="upgrade-feat">✅ SUPER Music 👑</div><div class="upgrade-feat">✅ Priority Support</div></div>
 </div>
-<div id="upgradeSuccessBox" class="upgrade-success-box"><div style="font-size:32px">👑</div><div style="font-size:18px;font-weight:900;color:#15803d;margin-top:8px">SUPER UNLOCKED ✓</div><div style="font-size:12px;color:#166534;margin-top:8px;line-height:1.7">Full access unlocked.<br>No daily limit + Music unlocked!</div><div style="margin-top:14px;display:inline-flex;padding:8px 16px;border-radius:20px;background:#fff;border:1px solid #bbf7d0;color:#15803d;font-size:11px;font-weight:800">👑 SUPER ACTIVE - UNLIMITED + MUSIC</div><button onclick="openPage('music.html')" style="margin-top:16px;width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#5b21b6,#8b5cf6);color:#fff;font-weight:800;cursor:pointer;font-size:12px">🎵 Go to SUPER Music →</button><button onclick="openPage('jobs.html')" style="margin-top:10px;width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#15803d,#16a34a);color:#fff;font-weight:800;cursor:pointer;font-size:12px">Go to SUPER Jobs →</button></div>
+<div id="upgradeSuccessBox" class="upgrade-success-box"><div style="font-size:32px">👑</div><div style="font-size:18px;font-weight:900;color:#15803d;margin-top:8px">SUPER UNLOCKED ✓</div><div style="font-size:12px;color:#166534;margin-top:8px;line-height:1.7">Full access unlocked.<br>No daily limit + Music unlocked!</div><div style="margin-top:14px;display:inline-flex;padding:8px 16px;border-radius:20px;background:#fff;border:1px solid #bbf7d0;color:#15803d;font-size:11px;font-weight:800">👑 SUPER ACTIVE - UNLIMITED + MUSIC</div><button onclick="openPage('music.html')" style="margin-top:16px;width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#5b21b6,#8b5cf6);color:#fff;font-weight:800;cursor:pointer;font-size:12px">🎵 Go to SUPER Music →</button></div>
 </section>
 
 <section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon" id="activityIconBox" style="background:#f3eef8">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate" style="font-size:11px;color:#8a8196">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></section>
+</div>
+
+<!-- LEFT DRAWER - SHOWS ON LEFT SIDE -->
+<div id="drawerOverlay" onclick="closeDrawer()"></div>
+<div id="topDrawer">
+<div class="drawer-head"><h3>☰ Menu</h3><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
+<div class="drawer-user"><div class="drawer-avatar" id="drawerAvatar">J</div><div><div class="drawer-user-name" id="drawerName">Loading...</div><div class="drawer-user-plan" id="drawerPlan">Member Area</div></div></div>
+<div class="drawer-list">
+<button class="drawer-item active" onclick="openPage('dashboard.html')"><div class="d-icon">⌂</div><div><strong>Home</strong><br><small style="color:var(--muted);font-size:10px">Dashboard</small></div></button>
+<button class="drawer-item" onclick="openPage('jobs.html')"><div class="d-icon">◈</div><div><strong>Jobs</strong><br><small style="color:var(--muted);font-size:10px">Available opportunities</small></div></button>
+<button class="drawer-item" id="drawerGamesBtn" onclick="openPage('games.html')"><div class="d-icon">🎮</div><div><strong>Games</strong><br><small style="color:var(--muted);font-size:10px" id="drawerGamesSmall">Play & Win</small></div></button>
+<button class="drawer-item super-item" id="drawerMusicBtn" onclick="openPage('music.html')"><div class="d-icon">♫</div><div><strong>Music</strong><br><small style="color:var(--muted);font-size:10px" id="drawerMusicSmall">Super Only 👑</small></div></button>
+<button class="drawer-item" onclick="openPage('withdraw.html')"><div class="d-icon">₦</div><div><strong>Withdraw</strong><br><small style="color:var(--muted);font-size:10px">Request payout</small></div></button>
+<button class="drawer-item" onclick="openPage('history.html')"><div class="d-icon">◷</div><div><strong>History</strong><br><small style="color:var(--muted);font-size:10px">Transactions</small></div></button>
+<button class="drawer-item" onclick="openPage('profile.html')"><div class="d-icon">◍</div><div><strong>Profile</strong><br><small style="color:var(--muted);font-size:10px">Account settings</small></div></button>
+<div class="drawer-divider"></div>
+<button class="drawer-item" onclick="copyReferral()"><div class="d-icon">🔗</div><div><strong>Invite & Earn</strong><br><small style="color:var(--muted);font-size:10px">Copy referral link</small></div></button>
+<button class="drawer-item" onclick="window.open('https://t.me/jovianetwerk','_blank')"><div class="d-icon">📢</div><div><strong>Official Channel</strong><br><small style="color:var(--muted);font-size:10px">Join on Telegram</small></div></button>
+<div class="drawer-divider"></div>
+<button class="drawer-logout" onclick="logout()">↪ Logout</button>
+</div>
 </div>
 
 <nav class="bottom-nav">
@@ -143,14 +188,17 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 </nav>
 
 <div id="toast"></div>
-
-<div id="joviaPopupOverlay"><div id="joviaPopupBox"><button id="joviaPopupClose" type="button">✕</button><div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div><div class="joviaPopupTitle" id="joviaPopupTitle"></div><div class="joviaPopupText" id="joviaPopupText"></div><div class="joviaPopupBtns"><a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" rel="noopener noreferrer" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a><button class="joviaBtn joviaBtnClose" id="joviaPopupOk" type="button">Continue to Dashboard →</button></div></div></div>
-<div id="privatePopOverlay"><div id="privatePopBox"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">✉️</div><div><div style="font-size:9px;font-weight:900;letter-spacing:1px;color:#7c3aed;text-transform:uppercase">Private Message from Admin</div><div id="privatePopTime" style="font-size:10px;color:#94a3b8;margin-top:2px">Just now</div></div><button id="privatePopCloseIcon" type="button" style="margin-left:auto;width:32px;height:32px;border-radius:50%;border:none;background:#f3f0ff;color:#7c3aed;font-weight:800;cursor:pointer">✕</button></div><h3 id="privatePopTitle" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:10px">Message from Admin</h3><div id="privatePopMessage" style="font-size:13px;line-height:1.7;color:#334155;background:#fcf9ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;white-space:pre-line;max-height:260px;overflow-y:auto"></div><button id="privatePopOk" type="button" style="width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer">OK, I Understand ✓</button></div></div>
+<div id="joviaPopupOverlay"><div id="joviaPopupBox"><button id="joviaPopupClose" type="button">✕</button><div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div><div class="joviaPopupTitle" id="joviaPopupTitle"></div><div class="joviaPopupText" id="joviaPopupText"></div><div class="joviaPopupBtns"><a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a><button class="joviaBtn joviaBtnClose" id="joviaPopupOk" type="button">Continue to Dashboard →</button></div></div></div>
+<div id="privatePopOverlay"><div id="privatePopBox"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">✉️</div><div><div style="font-size:9px;font-weight:900;letter-spacing:1px;color:#7c3aed;text-transform:uppercase">Private Message</div><div id="privatePopTime" style="font-size:10px;color:#94a3b8;margin-top:2px">Just now</div></div><button id="privatePopCloseIcon" type="button" style="margin-left:auto;width:32px;height:32px;border-radius:50%;border:none;background:#f3f0ff;color:#7c3aed;font-weight:800;cursor:pointer">✕</button></div><h3 id="privatePopTitle" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:10px">Message from Admin</h3><div id="privatePopMessage" style="font-size:13px;line-height:1.7;color:#334155;background:#fcf9ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;white-space:pre-line;max-height:260px;overflow-y:auto"></div><button id="privatePopOk" type="button" style="width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer">OK, I Understand ✓</button></div></div>
 
 <script>
 "use strict";
 let currentUser=null,currentSlide=0,currentPrivatePopId=null,logoutInProgress=false,upgradeBusy=false;
 const wrapper=document.getElementById("swipeWrapper"),card=document.getElementById("accountCard"),privateOverlay=document.getElementById("privatePopOverlay"),globalOverlay=document.getElementById("joviaPopupOverlay");
+const drawer=document.getElementById("topDrawer"),drawerOverlay=document.getElementById("drawerOverlay");
+function toggleDrawer(){const isOpen=drawer.classList.contains("show"); if(isOpen) closeDrawer(); else openDrawer();}
+function openDrawer(){drawer.classList.add("show");drawerOverlay.classList.add("show");document.body.style.overflow="hidden";}
+function closeDrawer(){drawer.classList.remove("show");drawerOverlay.classList.remove("show");document.body.style.overflow="";}
 function money(a){const n=Number(a); if(!Number.isFinite(n)) return "₦0"; return "₦"+n.toLocaleString("en-NG",{maximumFractionDigits:2});}
 function setSlide(i){currentSlide=i===1?1:0; wrapper.style.transform=`translateX(-${currentSlide*100}%)`; document.getElementById("dot0").classList.toggle("active",currentSlide===0); document.getElementById("dot1").classList.toggle("active",currentSlide===1);}
 function showToast(msg){const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(window._toastTimer); window._toastTimer=setTimeout(()=>t.classList.remove("show"),3200);}
@@ -168,13 +216,7 @@ async function fetchJSON(url,options={}){
 }
 function getUserFromResponse(data){return data?.user||data?.data?.user||data?.member||data;}
 function isSuperUser(u){if(!u)return false;const pkg=String(u.package||u.plan||"").toLowerCase();const flag=Number(u.is_super)===1||String(u.is_super).toLowerCase()==="true";return pkg.includes("super")||flag;}
-function isActiveAccount(user){
-  if(!user) return false;
-  const rawStatus=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();
-  const pkg=String(user.package||user.plan||"").toLowerCase();
-  if(pkg.includes("super")) return true;
-  return ["active","approved","activated"].includes(rawStatus);
-}
+function isActiveAccount(user){if(!user) return false;const rawStatus=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();const pkg=String(user.package||user.plan||"").toLowerCase();if(pkg.includes("super")) return true;return ["active","approved","activated"].includes(rawStatus);}
 async function loadUser(){
   try{
     const localPlan = String(localStorage.getItem("jovia_plan")||"").toLowerCase();
@@ -231,12 +273,13 @@ async function loadPrivatePopup(){
 function displayUser(user,apiData={}){
  if(!user) return;
  let fullName=user.fullName||user.displayName||user.name||user.username||""; if(!fullName&&user.email) fullName=String(user.email).split("@")[0]; document.getElementById("userName").textContent=fullName||"Member";
+ document.getElementById("drawerName").textContent=fullName||"Member"; document.getElementById("drawerAvatar").textContent=(fullName||"J")[0].toUpperCase();
  const planValues=[user.package,user.plan,apiData?.plan,localStorage.getItem("jovia_plan")];
  let packageName="Silver"; for(const v of planValues){ const p=String(v||"").toLowerCase(); if(p.includes("super")){packageName="Super";break;} if(p.includes("gold")){packageName="Gold";break;} if(p.includes("silver")){packageName="Silver";break;} }
+ document.getElementById("drawerPlan").textContent=packageName.toUpperCase()+" • "+(isActiveAccount(user)?"Active":"Pending");
  const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2"); b1.textContent=packageName.toUpperCase(); b2.textContent=packageName.toUpperCase(); b1.classList.toggle("super",packageName==="Super"); b2.classList.toggle("super",packageName==="Super");
  const active=isActiveAccount(user);
  const superUser=isSuperUser(user);
- // ACCOUNT STATUS - LEAVE AS IT IS - NO CHANGE SIR
  const statusEl=document.getElementById("accountStatus"),paymentButton=document.getElementById("paymentButton");
  const welcomeBonus=packageName==="Gold"?15000:packageName==="Super"?25000:9000;
  document.getElementById("welcomeBonus").textContent=money(welcomeBonus);
@@ -247,7 +290,6 @@ function displayUser(user,apiData={}){
    statusEl.textContent="Pending";
    paymentButton.textContent="Continue to Payment"; paymentButton.disabled=false; paymentButton.style.opacity="1";
  }
- // === ONLY LATEST ACTIVITY - YELLOW / GREEN - FIXED ===
  const activityName=document.getElementById("activityName"),activityDate=document.getElementById("activityDate"),activityAmount=document.getElementById("activityAmount"),activityIconBox=document.getElementById("activityIconBox");
  if(active){
    activityName.textContent=packageName+" welcome bonus";
@@ -262,14 +304,14 @@ function displayUser(user,apiData={}){
    activityAmount.className="activity-amount pending";
    activityIconBox.textContent="⏳"; activityIconBox.style.background="#fef3c7"; activityIconBox.style.color="#92400e";
  }
- // Games + Music locks
  const gamesQuickBtn=document.getElementById("gamesQuickBtn"), gamesNavBtn=document.getElementById("gamesNavBtn"), gamesSmall=document.getElementById("gamesQuickSmall");
  const musicQuickBtn=document.getElementById("musicQuickBtn"), musicNavBtn=document.getElementById("musicNavBtn"), musicSmall=document.getElementById("musicQuickSmall");
- if(active){ gamesQuickBtn.classList.remove("locked"); gamesNavBtn.classList.remove("locked"); gamesSmall.textContent="Play & Win"; }
- else{ gamesQuickBtn.classList.add("locked"); gamesNavBtn.classList.add("locked"); gamesSmall.textContent="Active only 🔒"; }
- if(superUser){ musicQuickBtn.classList.remove("locked","super-lock"); musicNavBtn.classList.remove("locked","super-lock"); musicSmall.textContent="Super Unlocked 👑"; }
- else if(active){ musicQuickBtn.classList.add("super-lock"); musicQuickBtn.classList.remove("locked"); musicNavBtn.classList.add("super-lock"); musicNavBtn.classList.remove("locked"); musicSmall.textContent="Super Only 👑"; }
- else{ musicQuickBtn.classList.add("locked"); musicQuickBtn.classList.remove("super-lock"); musicNavBtn.classList.add("locked"); musicNavBtn.classList.remove("super-lock"); musicSmall.textContent="Super Only 🔒"; }
+ const drawerGamesSmall=document.getElementById("drawerGamesSmall"), drawerMusicSmall=document.getElementById("drawerMusicSmall");
+ if(active){ gamesQuickBtn.classList.remove("locked"); gamesNavBtn.classList.remove("locked"); gamesSmall.textContent="Play & Win"; if(drawerGamesSmall) drawerGamesSmall.textContent="Play & Win"; }
+ else{ gamesQuickBtn.classList.add("locked"); gamesNavBtn.classList.add("locked"); gamesSmall.textContent="Active only 🔒"; if(drawerGamesSmall) drawerGamesSmall.textContent="Active only 🔒"; }
+ if(superUser){ musicQuickBtn.classList.remove("locked","super-lock"); musicNavBtn.classList.remove("locked","super-lock"); musicSmall.textContent="Super Unlocked 👑"; if(drawerMusicSmall) drawerMusicSmall.textContent="Super Unlocked 👑"; }
+ else if(active){ musicQuickBtn.classList.add("super-lock"); musicQuickBtn.classList.remove("locked"); musicNavBtn.classList.add("super-lock"); musicNavBtn.classList.remove("locked"); musicSmall.textContent="Super Only 👑"; if(drawerMusicSmall) drawerMusicSmall.textContent="Super Only 👑"; }
+ else{ musicQuickBtn.classList.add("locked"); musicQuickBtn.classList.remove("super-lock"); musicNavBtn.classList.add("locked"); musicNavBtn.classList.remove("super-lock"); musicSmall.textContent="Super Only 🔒"; if(drawerMusicSmall) drawerMusicSmall.textContent="Super Only 🔒"; }
  const upgradeCard=document.getElementById("upgradeCard"), upgradeDefault=document.getElementById("upgradeDefault"), upgradeSuccess=document.getElementById("upgradeSuccessBox"), upgradeTitle=document.getElementById("upgradeTitle"), upgradeBadge=document.getElementById("upgradeBadge"), upgradeDesc=document.getElementById("upgradeDesc");
  if(!active){ upgradeCard.classList.remove("show"); }
  else if(packageName==="Super"){ upgradeCard.classList.add("show"); upgradeDefault.style.display="none"; upgradeSuccess.classList.add("show"); }
@@ -300,6 +342,7 @@ async function copyReferral(){
   const o=b.textContent; try{if(navigator.clipboard) await navigator.clipboard.writeText(link); b.textContent="Copied ✓";}catch(_){prompt("Copy:",link);} setTimeout(()=>b.textContent=o,1800);
 }
 function openPage(p){
+  closeDrawer();
   const allowed=["dashboard.html","jobs.html","games.html","music.html","history.html","profile.html","withdraw.html","payment.html","login.html","upgrade-pay.html"];
   if(!allowed.includes(p)) return;
   if(p==="games.html"){
@@ -347,7 +390,7 @@ document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.targe
 async function logout(){if(logoutInProgress) return; logoutInProgress=true; try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");}
 document.addEventListener("DOMContentLoaded",()=>{loadUser();});
 setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups();}},45000);
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
 </script>
 </body>
 </html>
