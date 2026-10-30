@@ -4,18 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#171124">
-<title>JOVIA Music | Super Only</title>
+<title>JOVIA Music | Super Only 👑</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#110b1b;--surface:#1b1428;--surface2:#251a35;--surface3:#302240;--purple:#5b21b6;--purple-light:#8b5cf6;--gold:#f5c542;--white:#fff;--muted:#aa9bb9;--border:rgba(255,255,255,.075);--green:#36d399}
-body{background:var(--bg);color:var(--white);font-family:Inter,Arial,sans-serif;min-height:100vh;padding-bottom:100px}
-button{font:inherit;cursor:pointer} a{text-decoration:none;color:inherit}
+:root{--bg:#110b1b;--surface:#1b1428;--surface2:#251a35;--surface3:#302240;--purple:#5b21b6;--purple-light:#8b5cf6;--gold:#f5c542;--white:#fff;--muted:#aa9bb9;--border:rgba(255,255,255,.075);--green:#36d399;--red:#ff4d6a}
+body{background:var(--bg);color:var(--white);font-family:Inter,sans-serif;min-height:100vh;padding-bottom:100px;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer} a{text-decoration:none;color:inherit}
+
+/* TOPBAR - MATCH DASHBOARD */
 .topbar{height:76px;border-bottom:1px solid var(--border);background:rgba(17,11,27,.94);position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)}
 .topbar-inner{max-width:1180px;width:92%;height:100%;margin:auto;display:flex;justify-content:space-between;align-items:center}
 .brand{font-family:Poppins,sans-serif;font-size:25px;font-weight:800;letter-spacing:-1px} .brand span{color:var(--gold)}
 .brand-sub{color:var(--muted);font-size:9px;letter-spacing:3px;font-weight:700;margin-top:-5px}
 .wallet{background:var(--surface2);border:1px solid rgba(245,197,66,.2);padding:10px 16px;border-radius:30px;font-size:12px;color:var(--gold);font-weight:700}
+
 .container{max-width:1180px;width:92%;margin:30px auto}
 .hero{min-height:235px;padding:35px;border-radius:23px;border:1px solid rgba(245,197,66,.16);background:radial-gradient(circle at 85% 30%,rgba(139,92,246,.24),transparent 30%),linear-gradient(120deg,#35144d,#241431 60%,#191123);display:flex;align-items:center;position:relative;overflow:hidden;margin-bottom:25px}
 .hero-content{position:relative;z-index:2;max-width:600px} .hero-label{color:var(--gold);font-size:10px;font-weight:800;letter-spacing:3px;margin-bottom:13px}
@@ -23,78 +26,92 @@ button{font:inherit;cursor:pointer} a{text-decoration:none;color:inherit}
 .hero p{color:#d1c5dc;font-size:13px;line-height:1.8;max-width:480px}
 .hero-art{position:absolute;right:55px;top:50%;transform:translateY(-50%);width:190px;height:190px;border-radius:50%;border:1px solid rgba(245,197,66,.2);display:grid;place-items:center;background:rgba(255,255,255,.025)}
 .music-symbol{font-size:78px;color:var(--gold);font-family:Georgia,serif}
+
 .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:25px}
-.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:21px}
+.summary-card{background:var(--surface);border:1px solid var(--border);border-radius:17px;padding:21px;position:relative;overflow:hidden}
+.summary-card::after{content:"";position:absolute;top:0;right:0;width:60px;height:60px;background:radial-gradient(circle,rgba(245,197,66,.08),transparent);border-radius:0 17px 0 100%}
 .summary-icon{width:38px;height:38px;display:grid;place-items:center;background:rgba(245,197,66,.1);border-radius:11px;color:var(--gold);font-size:18px;margin-bottom:15px}
-.summary-card p{color:var(--muted);font-size:11px;margin-bottom:7px} .summary-card h2{font-family:Poppins,sans-serif;font-size:24px} .gold{color:var(--gold)}
+.summary-card p{color:var(--muted);font-size:11px;margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px;font-weight:700} .summary-card h2{font-family:Poppins,sans-serif;font-size:24px;font-weight:800} .gold{color:var(--gold)}
+
 .target{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:23px;margin-bottom:35px}
-.target-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px} .target-heading h3{font-size:14px;font-weight:700} .target-value{font-size:12px;color:var(--gold);font-weight:800}
-.progress{width:100%;height:8px;border-radius:20px;background:var(--surface3);overflow:hidden} .progress-fill{width:0%;height:100%;background:linear-gradient(90deg,var(--purple-light),var(--gold));border-radius:20px;transition:width .3s}
+.target-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px} .target-heading h3{font-size:14px;font-weight:700;font-family:Poppins,sans-serif} .target-value{font-size:12px;color:var(--gold);font-weight:800}
+.progress{width:100%;height:8px;border-radius:20px;background:var(--surface3);overflow:hidden} .progress-fill{width:0%;height:100%;background:linear-gradient(90deg,var(--purple-light),var(--gold));border-radius:20px;transition:width .5s}
 .target-description{color:var(--muted);font-size:11px;margin-top:12px;line-height:1.7}
-.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px} .section-title h2{font-family:Poppins,sans-serif;font-size:19px} .section-title span{color:var(--muted);font-size:11px}
-.featured{background:linear-gradient(110deg,#251833,#1b1428);border:1px solid var(--border);border-radius:19px;padding:19px;display:flex;align-items:center;gap:19px;margin-bottom:35px}
-.featured-cover{width:112px;height:112px;flex-shrink:0;border-radius:15px;object-fit:cover;background:linear-gradient(135deg,#5b21b6,#20112f);display:grid;place-items:center;font-size:40px;color:var(--gold)}
-.featured-info{flex:1;min-width:0} .featured-info small{color:var(--gold);font-size:9px;letter-spacing:2px;font-weight:800} .featured-info h3{font-family:Poppins,sans-serif;font-size:18px;margin:7px 0 5px} .featured-info p{color:var(--muted);font-size:11px;margin-bottom:12px}
+
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px} .section-title h2{font-family:Poppins,sans-serif;font-size:19px;font-weight:800} .section-title span{color:var(--muted);font-size:11px;font-weight:600}
+
+.featured{background:linear-gradient(110deg,#251833,#1b1428);border:1px solid var(--border);border-radius:19px;padding:19px;display:flex;align-items:center;gap:19px;margin-bottom:35px;position:relative;overflow:hidden}
+.featured::before{content:"";position:absolute;left:-30px;top:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(139,92,246,.15),transparent 70%);border-radius:50%}
+.featured-cover{width:112px;height:112px;flex-shrink:0;border-radius:15px;object-fit:cover;background:linear-gradient(135deg,#5b21b6,#20112f);display:grid;place-items:center;font-size:40px;color:var(--gold);border:1px solid rgba(255,255,255,.06)}
+.featured-info{flex:1;min-width:0;position:relative;z-index:1} .featured-info small{color:var(--gold);font-size:9px;letter-spacing:2px;font-weight:800} .featured-info h3{font-family:Poppins,sans-serif;font-size:18px;margin:7px 0 5px;font-weight:800} .featured-info p{color:var(--muted);font-size:11px;margin-bottom:12px;line-height:1.6}
 .reward-tag{display:inline-block;padding:7px 11px;background:rgba(245,197,66,.09);border:1px solid rgba(245,197,66,.18);color:var(--gold);border-radius:7px;font-size:10px;font-weight:700}
-.featured-play{width:46px;height:46px;border-radius:50%;background:var(--gold);color:#241633;border:0;font-size:18px;flex-shrink:0}
+.featured-play{width:46px;height:46px;border-radius:50%;background:var(--gold);color:#241633;border:0;font-size:18px;flex-shrink:0;box-shadow:0 8px 20px rgba(245,197,66,.3);transition:.2s} .featured-play:hover{transform:scale(1.05)}
+
 .library{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin-bottom:35px}
-.song-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:13px;transition:.2s} .song-card:hover{border-color:rgba(245,197,66,.3);transform:translateY(-3px)}
-.song-cover{width:100%;aspect-ratio:1.65;object-fit:cover;border-radius:11px;background:linear-gradient(135deg,#4a236c,#1e132b);display:block;margin-bottom:13px;display:grid;place-items:center;color:var(--gold);font-size:28px}
-.song-info h3{font-size:13px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .song-info p{font-size:10px;color:var(--muted)}
+.song-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:13px;transition:.25s;position:relative;overflow:hidden} .song-card:hover{border-color:rgba(245,197,66,.28);transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.2)}
+.song-cover{width:100%;aspect-ratio:1.65;object-fit:cover;border-radius:11px;background:linear-gradient(135deg,#4a236c,#1e132b);display:block;margin-bottom:13px;display:grid;place-items:center;color:var(--gold);font-size:28px;border:1px solid rgba(255,255,255,.05)}
+.song-info h3{font-size:13px;margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Poppins,sans-serif;font-weight:700} .song-info p{font-size:10px;color:var(--muted)}
 .song-footer{display:flex;justify-content:space-between;align-items:center;margin-top:14px;gap:8px} .song-reward{color:var(--gold);font-size:11px;font-weight:800}
-.listen-btn{border:0;background:var(--purple);color:white;padding:9px 13px;border-radius:8px;font-size:10px;font-weight:700} .listen-btn:hover{background:var(--purple-light)} .listen-btn:disabled{opacity:.5;cursor:not-allowed}
-.player{background:radial-gradient(circle at 100% 0%,rgba(139,92,246,.13),transparent 35%),var(--surface);border:1px solid rgba(245,197,66,.17);border-radius:20px;padding:23px;margin-bottom:35px;position:sticky;bottom:90px;z-index:10}
-.player-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px} .player-top h2{font-family:Poppins,sans-serif;font-size:17px} .player-status{color:var(--green);font-size:9px;font-weight:800;letter-spacing:1px}
-.player-details{display:flex;align-items:center;gap:15px;margin-bottom:20px} .player-cover{width:72px;height:72px;border-radius:13px;object-fit:cover;background:#3a2551;display:grid;place-items:center;color:var(--gold);font-size:26px}
-.player-details h3{font-family:Poppins,sans-serif;font-size:15px;margin-bottom:5px} .player-details p{color:var(--muted);font-size:11px}
-.audio-progress{width:100%;height:5px;background:var(--surface3);border-radius:20px;overflow:hidden} .audio-progress div{width:0%;height:100%;background:var(--gold)}
-.time-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:9px;margin-top:8px}
-.controls{display:flex;justify-content:center;align-items:center;gap:24px;margin:19px 0} .control{background:none;border:0;color:white;font-size:19px}
-.play-main{width:52px;height:52px;border:0;border-radius:50%;background:var(--gold);color:#21152e;font-size:19px}
-.player-message{text-align:center;color:var(--muted);font-size:10px;line-height:1.7}
+.listen-btn{border:0;background:var(--purple);color:white;padding:9px 13px;border-radius:8px;font-size:10px;font-weight:700;transition:.2s} .listen-btn:hover{background:var(--purple-light);transform:scale(1.02)} .listen-btn:disabled{opacity:.5;cursor:not-allowed}
+
+.player{background:radial-gradient(circle at 100% 0%,rgba(139,92,246,.13),transparent 35%),var(--surface);border:1px solid rgba(245,197,66,.17);border-radius:20px;padding:23px;margin-bottom:35px;position:sticky;bottom:90px;z-index:10;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.player-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px} .player-top h2{font-family:Poppins,sans-serif;font-size:17px;font-weight:800} .player-status{color:var(--green);font-size:9px;font-weight:800;letter-spacing:1px;background:rgba(54,211,153,.1);padding:5px 10px;border-radius:20px;border:1px solid rgba(54,211,153,.15)}
+.player-details{display:flex;align-items:center;gap:15px;margin-bottom:20px} .player-cover{width:72px;height:72px;border-radius:13px;object-fit:cover;background:#3a2551;display:grid;place-items:center;color:var(--gold);font-size:26px;border:1px solid rgba(255,255,255,.06)}
+.player-details h3{font-family:Poppins,sans-serif;font-size:15px;margin-bottom:5px;font-weight:700} .player-details p{color:var(--muted);font-size:11px}
+.audio-progress{width:100%;height:5px;background:var(--surface3);border-radius:20px;overflow:hidden} .audio-progress div{width:0%;height:100%;background:linear-gradient(90deg,var(--gold),#fff2a8);border-radius:20px;transition:width .2s}
+.time-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:9px;margin-top:8px;font-weight:700}
+.controls{display:flex;justify-content:center;align-items:center;gap:24px;margin:19px 0} .control{background:none;border:0;color:white;font-size:19px;transition:.2s} .control:hover{color:var(--gold)}
+.play-main{width:52px;height:52px;border:0;border-radius:50%;background:var(--gold);color:#21152e;font-size:19px;box-shadow:0 10px 25px rgba(245,197,66,.35);transition:.2s} .play-main:hover{transform:scale(1.06)}
+.player-message{text-align:center;color:var(--muted);font-size:10px;line-height:1.7;background:rgba(255,255,255,.02);border:1px dashed var(--border);padding:10px;border-radius:10px}
+
 .history{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:25px}
 .history-row{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid var(--border)} .history-row:last-child{border:0}
-.history-row h4{font-size:12px;margin-bottom:5px} .history-row p{color:var(--muted);font-size:10px} .history-amount{color:var(--gold);font-size:12px;font-weight:800;white-space:nowrap}
+.history-row h4{font-size:12px;margin-bottom:5px;font-family:Poppins,sans-serif;font-weight:700} .history-row p{color:var(--muted);font-size:10px} .history-amount{color:var(--gold);font-size:12px;font-weight:800;white-space:nowrap}
+
 .empty{text-align:center;padding:30px 15px;color:var(--muted);font-size:12px;line-height:1.8}
-.notice{border:1px solid rgba(245,197,66,.16);background:rgba(245,197,66,.045);border-radius:13px;padding:15px 17px;color:#c9bacf;font-size:10px;line-height:1.8;margin-bottom:20px} .notice strong{color:var(--gold)}
+.notice{border:1px solid rgba(245,197,66,.16);background:rgba(245,197,66,.045);border-radius:13px;padding:15px 17px;color:#c9bacf;font-size:10px;line-height:1.8;margin-bottom:20px} .notice strong{color:var(--gold);font-family:Poppins,sans-serif}
+
 .bottom-nav{position:fixed;bottom:0;left:0;width:100%;z-index:30;background:rgba(23,17,36,.97);border-top:1px solid var(--border);backdrop-filter:blur(15px);padding:12px 5%;padding-bottom:max(12px,env(safe-area-inset-bottom))}
 .nav-inner{max-width:650px;margin:auto;display:flex;justify-content:space-around}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--muted);font-size:9px;min-width:45px;text-decoration:none} .nav-item span{font-size:19px} .nav-item.active{color:var(--gold);font-weight:800}
-.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#302240;border:1px solid var(--border);padding:12px 18px;border-radius:10px;color:white;font-size:11px;z-index:100;display:none;max-width:90%;text-align:center}
-.lock{padding:40px 20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:18px;margin-bottom:25px;display:none} .lock.show{display:block} .lock h2{font-size:20px;margin:12px 0 8px} .lock p{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px} .lock a{display:inline-block;padding:12px 20px;border-radius:10px;background:var(--gold);color:#000;font-weight:800;font-size:12px;text-decoration:none}
-.super-badge{display:inline-block;padding:5px 10px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:10px;font-weight:900;margin-bottom:10px}
-@media(max-width:850px){.library{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.topbar{height:68px} .container{margin:19px auto;width:92%} .hero{padding:26px 21px;min-height:220px} .hero h1{font-size:31px} .hero p{font-size:11px;max-width:290px} .summary{gap:9px} .summary-card{padding:14px 10px} .summary-card h2{font-size:16px} .library{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px} .player{padding:17px}}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--muted);font-size:9px;min-width:45px;text-decoration:none;font-weight:600} .nav-item span{font-size:19px} .nav-item.active{color:var(--gold);font-weight:800}
+
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#302240;border:1px solid var(--border);padding:12px 18px;border-radius:10px;color:white;font-size:11px;z-index:100;display:none;max-width:90%;text-align:center;box-shadow:0 12px 30px rgba(0,0,0,.3)}
+
+.lock{padding:40px 20px;text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:18px;margin-bottom:25px;display:none} .lock.show{display:block} .lock h2{font-size:20px;margin:12px 0 8px;font-family:Poppins,sans-serif;font-weight:800} .lock p{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:16px} .lock a{display:inline-block;padding:12px 20px;border-radius:10px;background:var(--gold);color:#000;font-weight:800;font-size:12px;text-decoration:none;margin:4px}
+.super-badge{display:inline-block;padding:6px 12px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;font-size:10px;font-weight:900;margin-bottom:14px;letter-spacing:.5px;box-shadow:0 6px 18px rgba(255,154,0,.25)}
+
+@media(max-width:850px){.library{grid-template-columns:repeat(2,minmax(0,1fr))} .hero-art{display:none}}
+@media(max-width:600px){.topbar{height:68px} .container{margin:19px auto;width:92%} .hero{padding:26px 21px;min-height:200px} .hero h1{font-size:29px} .hero p{font-size:11px;max-width:290px} .summary{gap:9px} .summary-card{padding:14px 10px} .summary-card h2{font-size:16px} .library{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px} .player{padding:17px} .featured{flex-direction:column;align-items:flex-start}}
 </style>
 </head>
 <body>
 <header class="topbar"><div class="topbar-inner"><div><div class="brand">JOVIA<span>.</span></div><div class="brand-sub">MUSIC • SUPER ONLY 👑</div></div><div class="wallet">Wallet: <span id="walletBalance">₦0.00</span></div></div></header>
 <main class="container">
-<section class="hero"><div class="hero-content"><div class="hero-label">👑 SUPER EXCLUSIVE - MUSIC</div><h1>Listen. Enjoy.<br><span>Earn Rewards.</span></h1><p>Super users only - Discover great music, enjoy your favourite tracks and earn higher rewards.</p></div><div class="hero-art"><div class="music-symbol">♫</div></div></section>
+<section class="hero"><div class="hero-content"><div class="hero-label">👑 SUPER EXCLUSIVE - MUSIC - FIXED</div><h1>Listen. Enjoy.<br><span>Earn Rewards.</span></h1><p>Super users only - Discover music uploaded by admin, enjoy and earn higher rewards. Admin price = Your reward.</p></div><div class="hero-art"><div class="music-symbol">♫</div></div></section>
 
-<div class="lock" id="lockCard"><div style="font-size:50px">👑</div><h2>Music Locked - SUPER Users Only</h2><p>This Jovia Music body na for <b>SUPER USERS ONLY</b>.<br>Only Super fit listen and earn - Upgrade your account to SUPER to unlock.<br><br>Normal active no fit access music - Super only!</p><a href="upgrade-pay.html">👑 Upgrade to SUPER →</a><br><br><a href="dashboard.html" style="background:#251a35;color:#aa9bb9;border:1px solid rgba(255,255,255,.1)">← Back to Home</a></div>
+<div class="lock" id="lockCard"><div style="font-size:50px">👑</div><h2>Music Locked - SUPER Users Only</h2><p>This music na for <b>SUPER USERS ONLY</b>. Only Super fit listen and earn - Upgrade to SUPER.<br><br>Normal active no fit access music - Super only!</p><a href="upgrade-pay.html">👑 Upgrade to SUPER →</a><br><br><a href="dashboard.html" style="background:#251a35;color:#aa9bb9;border:1px solid rgba(255,255,255,.1)">← Back to Home</a></div>
 
 <div id="musicContent" style="display:none">
-<div class="super-badge">👑 SUPER ACTIVE - UNLIMITED ACCESS</div>
+<div class="super-badge">👑 SUPER ACTIVE - UNLIMITED ACCESS - ADMIN SYNCED</div>
 <section class="summary"><div class="summary-card"><div class="summary-icon">₦</div><p>Today's Earnings</p><h2 class="gold" id="todayEarnings">₦0.00</h2></div><div class="summary-card"><div class="summary-icon">♫</div><p>Songs Completed</p><h2 id="songsCompleted">0</h2></div><div class="summary-card"><div class="summary-icon">★</div><p>Total Music Earnings</p><h2 class="gold" id="totalEarnings">₦0.00</h2></div></section>
 
-<section class="target"><div class="target-heading"><h3>🎯 Daily Listening Target - Super</h3><span class="target-value" id="targetCount">0 / 0 songs</span></div><div class="progress"><div class="progress-fill" id="targetProgress"></div></div><p class="target-description" id="targetNote">Complete your daily listening target - Super get unlimited bonus!</p></section>
+<section class="target"><div class="target-heading"><h3>🎯 Daily Listening Target - Super</h3><span class="target-value" id="targetCount">0 / 10 songs</span></div><div class="progress"><div class="progress-fill" id="targetProgress"></div></div><p class="target-description" id="targetNote">Complete your daily target - Admin uploaded tracks count - Super unlimited!</p></section>
 
-<div class="section-title"><h2>Featured Music - Super Pick</h2><span>Selected for you</span></div>
-<section class="featured" id="featuredTrack"><div class="featured-cover">♫</div><div class="featured-info"><small>👑 JOVIA SUPER FEATURED</small><h3 id="featTitle">Discover New Music</h3><p id="featArtist">Enjoy music selected by Jovia.</p><span class="reward-tag" id="featReward">Super Reward</span></div><button class="featured-play" id="featPlayBtn">▶</button></section>
+<div class="section-title"><h2>Featured Music - Admin Pick 👑</h2><span>Selected for you</span></div>
+<section class="featured" id="featuredTrack"><div class="featured-cover">♫</div><div class="featured-info"><small>👑 JOVIA SUPER FEATURED - ADMIN UPLOAD</small><h3 id="featTitle">Loading Admin Music...</h3><p id="featArtist">Please wait...</p><span class="reward-tag" id="featReward">Loading reward...</span></div><button class="featured-play" id="featPlayBtn">▶</button></section>
 
-<div class="section-title"><h2>Music Library - Super Only</h2><span id="trackCount">0 tracks</span></div>
-<section class="library" id="musicLibrary"><div class="empty" style="grid-column:1/-1">Loading music library...</div></section>
+<div class="section-title"><h2>Music Library - Super Only (Admin Synced)</h2><span id="trackCount">0 tracks - Syncing with admin...</span></div>
+<section class="library" id="musicLibrary"><div class="empty" style="grid-column:1/-1">🔄 Syncing with admin server... Loading tracks uploaded by admin...</div></section>
 
-<section class="player" id="playerBox"><div class="player-top"><h2>Music Player - Super</h2><span class="player-status" id="playerStatus">READY TO PLAY</span></div><div class="player-details"><div class="player-cover" id="playerCover">♫</div><div><h3 id="playerTitle">No track selected</h3><p id="playerArtist">Select a song to start earning</p></div></div>
-<audio id="audioPlayer" preload="metadata"></audio>
+<section class="player" id="playerBox"><div class="player-top"><h2>Music Player - Super</h2><span class="player-status" id="playerStatus">SYNCED WITH ADMIN</span></div><div class="player-details"><div class="player-cover" id="playerCover">♫</div><div><h3 id="playerTitle">No track selected - Admin tracks loading...</h3><p id="playerArtist">Select a song uploaded by admin to start earning</p></div></div>
+<audio id="audioPlayer" preload="metadata" crossorigin="anonymous"></audio>
 <div class="audio-progress"><div id="audioBar"></div></div><div class="time-labels"><span id="currentTime">0:00</span><span id="totalTime">0:00</span></div>
 <div class="controls"><button class="control" id="prevBtn">⏮</button><button class="play-main" id="playPauseBtn">▶</button><button class="control" id="nextBtn">⏭</button></div>
-<div class="player-message" id="playerMessage">👑 Super - Listen 60s to earn higher reward - Super only!</div></section>
+<div class="player-message" id="playerMessage">👑 Super - Admin sets price, you earn that price per 60s - Listening synced!</div></section>
 
-<section class="history" id="historyBox"><div class="section-title" style="padding:16px 18px 0"><h2>Recent Earnings</h2><span id="historyCount">0</span></div><div id="historyList"><div class="empty">No earnings yet - Start listening!</div></div></section>
+<section class="history" id="historyBox"><div class="section-title" style="padding:16px 18px 0"><h2>Recent Earnings</h2><span id="historyCount">0</span></div><div id="historyList"><div class="empty">No earnings yet - Start listening to admin tracks! 👑</div></div></section>
 
-<div class="notice"><strong>👑 How SUPER Music Earn Works:</strong><br>• Super users only - Normal users blocked<br>• Listen min 60s per track - Higher reward for Super<br>• Unlimited daily - No limit for Super<br>• Super bonus from admin - Extra rewards</div>
+<div class="notice"><strong>👑 How SUPER Music Earn Works (Fixed - Admin Synced):</strong><br>• Super users only - Admin uploads music + sets reward price (e.g ₦100)<br>• You listen 60s → You earn that price admin set - Synced with admin server<br>• Unlimited daily - No limit for Super<br>• Audiomack link no be direct .mp3 - Admin must use direct .mp3 link like catbox.moe link<br>• If no tracks show, tell admin to upload with direct mp3 link</div>
 </div>
 </main>
 
@@ -107,75 +124,197 @@ const API_BASE="";
 let currentUser=null, allTracks=[], currentIndex=-1, listenTimer=null, listenedSec=0, isPlaying=false, minListen=60;
 const audio=document.getElementById("audioPlayer");
 const playPauseBtn=document.getElementById("playPauseBtn");
-function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.display="none",3500);}
+
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(window._tt);window._tt=setTimeout(()=>t.style.display="none",4000);}
 function formatTime(s){s=Math.floor(s||0);const m=Math.floor(s/60);const sec=s%60;return m+":"+(sec<10?"0":"")+sec;}
 function formatNaira(v){const n=Number(v);return "₦"+(Number.isFinite(n)?n:0).toLocaleString("en-NG",{minimumFractionDigits:2});}
-async function apiRequest(p,o={}){const r=await fetch(`${API_BASE}${p}`,{credentials:"include",cache:"no-store",...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});const d=await r.json().catch(()=>({}));if(r.status===401){location.href="login.html";throw new Error("Session expired");}if(!r.ok||d.success===false)throw new Error(d.message||`Failed ${r.status}`);return d;}
+
+async function apiRequest(p,o={}){
+  const r=await fetch(`${API_BASE}${p}`,{credentials:"include",cache:"no-store",...o,headers:{"Content-Type":"application/json",...(o.headers||{})}});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===401){location.href="login.html";throw new Error("Session expired");}
+  if(!r.ok||d.success===false)throw new Error(d.message||`Failed ${r.status}`);
+  return d;
+}
 function isSuperUser(u){if(!u)return false;const pkg=String(u.package||u.plan||"").toLowerCase();const isSuperFlag=Number(u.is_super)===1||String(u.is_super).toLowerCase()==="true"||String(u.super_user)==="1";return pkg.includes("super")||isSuperFlag;}
 function isActivated(u){const s=String(u?.account_status||u?.status||"").toLowerCase().trim();return ["active","approved","activated"].includes(s)||isSuperUser(u);}
+
 async function init(){
  try{
   const me=await apiRequest("/api/me?t="+Date.now());const u=me?.user||me;currentUser=u;
   document.getElementById("walletBalance").textContent=formatNaira(u?.wallet_balance||u?.walletBalance||0);
-  if(!isActivated(u)){document.getElementById("lockCard").classList.add("show");document.getElementById("lockCard").innerHTML=`<div style="font-size:50px">🔒</div><h2>Account Not Active</h2><p>Activate your account first.</p><a href="payment.html">Activate Now →</a>`;document.getElementById("musicContent").style.display="none";return;}
+  if(!isActivated(u)){
+    document.getElementById("lockCard").classList.add("show");
+    document.getElementById("lockCard").innerHTML=`<div style="font-size:50px">🔒</div><h2>Account Not Active</h2><p>Activate your account first.</p><a href="payment.html">Activate Now →</a>`;
+    document.getElementById("musicContent").style.display="none";return;
+  }
   if(!isSuperUser(u)){
     document.getElementById("lockCard").classList.add("show");
     document.getElementById("musicContent").style.display="none";
     return;
   }
-  document.getElementById("lockCard").classList.remove("show");document.getElementById("musicContent").style.display="block";
+  document.getElementById("lockCard").classList.remove("show");
+  document.getElementById("musicContent").style.display="block";
   await Promise.all([loadTracks(), loadStats(), loadHistory()]);
- }catch(e){document.getElementById("lockCard").classList.add("show");document.getElementById("musicContent").style.display="none";}
-}
-async function loadTracks(){
- try{
-  const d=await apiRequest("/api/music/tracks?t="+Date.now());
-  const tracks=d.tracks||d.music||d.data||[];
-  allTracks=tracks.length?tracks:[
-    {id:1,title:"Afro Vibes - Summer",artist:"Jovia Sounds",reward:100,cover:"♫",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
-    {id:2,title:"Naija Hits 2024 - Super",artist:"Top Artist",reward:120,cover:"🎵",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
-    {id:3,title:"Chill & Earn - Super",artist:"Jovia Mix",reward:90,cover:"🎧",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"}
-  ];
-  renderTracks();
  }catch(e){
-  allTracks=[
-    {id:1,title:"Afro Vibes - Summer",artist:"Jovia Sounds",reward:100,cover:"♫",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"},
-    {id:2,title:"Naija Hits 2024 - Super",artist:"Top Artist",reward:120,cover:"🎵",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"},
-    {id:3,title:"Chill & Earn - Super",artist:"Jovia Mix",reward:90,cover:"🎧",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"}
-  ];
-  renderTracks();
+  console.error(e);
+  document.getElementById("musicContent").style.display="block";
+  await loadTracks();
  }
 }
+
+// FIXED - NOW RESPONDS TO ADMIN / SERVER - TRIES MULTIPLE ENDPOINTS
+async function loadTracks(){
+  const endpoints = [
+    "/api/music/tracks",
+    "/api/music/list",
+    "/api/music",
+    "/api/admin/music/list",
+    "/api/admin/music"
+  ];
+  let tracks = null;
+  let lastError = "";
+  for(let ep of endpoints){
+    try{
+      const d = await apiRequest(ep+"?t="+Date.now());
+      const found = d.tracks||d.music||d.data||d.list||[];
+      if(Array.isArray(found) && found.length>0){tracks = found; console.log("Music loaded from",ep,found.length); break;}
+      if(Array.isArray(found) && found.length===0){tracks = []; break;}
+    }catch(err){ lastError = err.message; continue; }
+  }
+  if(tracks===null){
+    // Fallback default tracks if admin no upload yet
+    allTracks=[
+      {id:1,title:"Afro Vibes - Summer (Default)",artist:"Jovia Sounds",reward:100,cover:"♫",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",category:"Super Hits"},
+      {id:2,title:"Naija Hits 2024 - Super (Default)",artist:"Top Artist",reward:120,cover:"🎵",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",category:"Super Hits"},
+      {id:3,title:"Chill & Earn - Super (Default)",artist:"Jovia Mix",reward:90,cover:"🎧",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",category:"Super Mix"}
+    ];
+    toast("No admin tracks yet - Showing default - Tell admin to upload with direct .mp3 link (catbox.moe)");
+  }else{
+    allTracks = tracks.map((t,i)=>({
+      id: t.id||i+1,
+      title: t.title||"Untitled Track",
+      artist: t.artist||"Jovia Sounds",
+      reward: Number(t.reward||t.price||100),
+      cover: t.cover||"♫",
+      url: t.url||t.audio_url||t.link||t.mp3||"",
+      category: t.category||"Super Hits"
+    })).filter(t=>t.url);
+    if(allTracks.length===0){
+      allTracks=[
+        {id:1,title:"Afro Vibes - Summer (Default)",artist:"Jovia Sounds",reward:100,cover:"♫",url:"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"}
+      ];
+      toast("Admin tracks have no valid MP3 URL - Use direct .mp3 link like catbox.moe link");
+    }
+  }
+  renderTracks();
+}
+
 function renderTracks(){
  const lib=document.getElementById("musicLibrary");
- document.getElementById("trackCount").textContent=allTracks.length+" tracks";
- if(!allTracks.length){lib.innerHTML='<div class="empty" style="grid-column:1/-1">No tracks yet - Admin will add music</div>';return;}
+ document.getElementById("trackCount").textContent = allTracks.length+" tracks - Admin synced ✅";
+ if(!allTracks.length){
+   lib.innerHTML='<div class="empty" style="grid-column:1/-1">No tracks yet - Admin needs to upload music with direct .mp3 link (e.g catbox.moe link). Audiomack webpage link no work - Must be .mp3 link.<br><br>Admin: Go to catbox.moe, upload MP3, copy link wey end with .mp3, paste for admin music upload.</div>';
+   return;
+ }
  lib.innerHTML=allTracks.map((t,i)=>`
-  <div class="song-card"><div class="song-cover">${t.cover||"♫"}</div>
-  <div class="song-info"><h3>${t.title}</h3><p>${t.artist||"Jovia Super"}</p></div>
-  <div class="song-footer"><span class="song-reward">${formatNaira(t.reward||100)} 👑</span><button class="listen-btn" onclick="playTrack(${i})">Listen →</button></div></div>
+  <div class="song-card">
+    <div class="song-cover">${(t.cover && t.cover.length<5)?t.cover:"♫"}</div>
+    <div class="song-info"><h3>${t.title}</h3><p>${t.artist} • ${t.category||"Super Hits"}</p></div>
+    <div class="song-footer"><span class="song-reward">${formatNaira(t.reward)} 👑 (Admin set)</span><button class="listen-btn" onclick="playTrack(${i})">Listen → Earn</button></div>
+  </div>
  `).join("");
- if(allTracks[0]){document.getElementById("featTitle").textContent=allTracks[0].title;document.getElementById("featArtist").textContent=allTracks[0].artist;document.getElementById("featReward").textContent="Super Reward "+formatNaira(allTracks[0].reward||100);document.getElementById("featPlayBtn").onclick=()=>playTrack(0);}
+ if(allTracks[0]){
+   document.getElementById("featTitle").textContent=allTracks[0].title;
+   document.getElementById("featArtist").textContent=allTracks[0].artist+" • "+(allTracks[0].category||"Super Hits");
+   document.getElementById("featReward").textContent="Super Reward "+formatNaira(allTracks[0].reward)+" - Admin Set Price";
+   document.getElementById("featPlayBtn").onclick=()=>playTrack(0);
+ }
 }
+
 async function loadStats(){
- try{const d=await apiRequest("/api/music/stats?t="+Date.now());document.getElementById("todayEarnings").textContent=formatNaira(d.today||d.todayEarnings||0);document.getElementById("songsCompleted").textContent=d.completed||d.songsCompleted||0;document.getElementById("totalEarnings").textContent=formatNaira(d.total||d.totalEarnings||0);document.getElementById("targetCount").textContent=`${d.completed||0} / ${d.target||10} songs`;document.getElementById("targetProgress").style.width=Math.min(100,((d.completed||0)/(d.target||10))*100)+"%";}catch(e){}
+ try{
+  const d=await apiRequest("/api/music/stats?t="+Date.now());
+  document.getElementById("todayEarnings").textContent=formatNaira(d.today||d.todayEarnings||0);
+  document.getElementById("songsCompleted").textContent=d.completed||d.songsCompleted||0;
+  document.getElementById("totalEarnings").textContent=formatNaira(d.total||d.totalEarnings||0);
+  document.getElementById("targetCount").textContent=`${d.completed||0} / ${d.target||10} songs`;
+  document.getElementById("targetProgress").style.width=Math.min(100,((d.completed||0)/(d.target||10))*100)+"%";
+ }catch(e){
+  document.getElementById("targetCount").textContent=`0 / 10 songs`;
+ }
 }
 async function loadHistory(){
- try{const d=await apiRequest("/api/music/history?t="+Date.now());const rows=d.history||d.earnings||[];const list=document.getElementById("historyList");document.getElementById("historyCount").textContent=rows.length;if(!rows.length){list.innerHTML='<div class="empty">No earnings yet - Start listening! 👑</div>';return;}list.innerHTML=rows.slice(0,10).map(r=>`<div class="history-row"><div><h4>${r.title||"Music Track"}</h4><p>${r.created_at?new Date(r.created_at).toLocaleString():"Today"}</p></div><div class="history-amount">+${formatNaira(r.amount||r.reward||0)}</div></div>`).join("");}catch(e){}
+ try{
+  const d=await apiRequest("/api/music/history?t="+Date.now());
+  const rows=d.history||d.earnings||[];const list=document.getElementById("historyList");
+  document.getElementById("historyCount").textContent=rows.length;
+  if(!rows.length){list.innerHTML='<div class="empty">No earnings yet - Start listening to admin uploaded tracks! 👑</div>';return;}
+  list.innerHTML=rows.slice(0,10).map(r=>`<div class="history-row"><div><h4>${r.title||"Music Track"}</h4><p>${r.created_at?new Date(r.created_at).toLocaleString():"Today"} • Admin reward</p></div><div class="history-amount">+${formatNaira(r.amount||r.reward||0)}</div></div>`).join("");
+ }catch(e){}
 }
+
 function playTrack(index){
- if(index<0||index>=allTracks.length)return;currentIndex=index;const t=allTracks[index];
- document.getElementById("playerTitle").textContent=t.title;document.getElementById("playerArtist").textContent=t.artist;document.getElementById("playerCover").textContent=t.cover||"♫";document.getElementById("playerStatus").textContent="PLAYING • SUPER EARNING";
- audio.src=t.url||t.audio_url||t.link||"";audio.play().then(()=>{isPlaying=true;playPauseBtn.textContent="⏸";startListenTimer();}).catch(()=>{toast("Could not play - Check track URL");});
+ if(index<0||index>=allTracks.length)return;
+ currentIndex=index;const t=allTracks[index];
+ document.getElementById("playerTitle").textContent=t.title;
+ document.getElementById("playerArtist").textContent=t.artist+" - Reward "+formatNaira(t.reward)+" (Admin set price)";
+ document.getElementById("playerCover").textContent=t.cover||"♫";
+ document.getElementById("playerStatus").textContent="PLAYING • EARNING "+formatNaira(t.reward);
+ audio.src=t.url||"";
+ audio.load();
+ const p = audio.play();
+ if(p!==undefined){
+   p.then(()=>{isPlaying=true;playPauseBtn.textContent="⏸";startListenTimer(); toast("Playing "+t.title+" - Listen 60s to earn "+formatNaira(t.reward));})
+    .catch(err=>{console.error(err); toast("Could not play - URL may not be direct .mp3 - Tell admin to use catbox.moe direct link: "+t.url.substring(0,40));});
+ }
  document.getElementById("playerBox").scrollIntoView({behavior:"smooth",block:"center"});
 }
-function startListenTimer(){clearInterval(listenTimer);listenedSec=0;listenTimer=setInterval(()=>{if(!isPlaying)return;listenedSec++;document.getElementById("playerMessage").textContent=`👑 Super listening ${listenedSec}s / ${minListen}s to earn ${formatNaira(allTracks[currentIndex]?.reward||100)} - Keep playing!`;if(listenedSec>=minListen){clearInterval(listenTimer);claimReward();}},1000);}
-async function claimReward(){
- if(currentIndex<0)return;const t=allTracks[currentIndex];try{const d=await apiRequest(`/api/music/complete`,{method:"POST",body:JSON.stringify({trackId:t.id,watchedSeconds:listenedSec})});toast(`🎉 Super Earned ${formatNaira(d.reward||t.reward||100)} for ${t.title}!`);document.getElementById("playerMessage").textContent=`✅ Super Earned ${formatNaira(d.reward||t.reward)} - Next track!`;document.getElementById("walletBalance").textContent=formatNaira(d.walletBalance||d.balance||0);loadStats();loadHistory();}catch(e){toast(e.message);document.getElementById("playerMessage").textContent=`❌ ${e.message}`;}
+function startListenTimer(){
+  clearInterval(listenTimer);listenedSec=0;
+  listenTimer=setInterval(()=>{
+    if(!isPlaying)return;
+    listenedSec++;
+    const t = allTracks[currentIndex];
+    document.getElementById("playerMessage").textContent=`👑 Super listening ${listenedSec}s / ${minListen}s to earn ${formatNaira(t?.reward||100)} - Admin price - Keep playing!`;
+    if(listenedSec>=minListen){clearInterval(listenTimer);claimReward();}
+  },1000);
 }
-playPauseBtn.addEventListener("click",()=>{if(!audio.src){if(allTracks.length)playTrack(0);return;}if(isPlaying){audio.pause();isPlaying=false;playPauseBtn.textContent="▶";document.getElementById("playerStatus").textContent="PAUSED";}else{audio.play();isPlaying=true;playPauseBtn.textContent="⏸";document.getElementById("playerStatus").textContent="PLAYING • SUPER EARNING";}});
-audio.addEventListener("timeupdate",()=>{if(!audio.duration)return;const pct=(audio.currentTime/audio.duration)*100;document.getElementById("audioBar").style.width=pct+"%";document.getElementById("currentTime").textContent=formatTime(audio.currentTime);document.getElementById("totalTime").textContent=formatTime(audio.duration);});
-audio.addEventListener("ended",()=>{isPlaying=false;playPauseBtn.textContent="▶";document.getElementById("playerStatus").textContent="COMPLETED";if(listenedSec<minListen){listenedSec=minListen;claimReward();}else{playTrack((currentIndex+1)%allTracks.length);}});
+async function claimReward(){
+ if(currentIndex<0)return;const t=allTracks[currentIndex];
+ try{
+  const d=await apiRequest(`/api/music/complete`,{method:"POST",body:JSON.stringify({trackId:t.id,watchedSeconds:listenedSec})});
+  toast(`🎉 Super Earned ${formatNaira(d.reward||t.reward)} for ${t.title}! - Admin reward`);
+  document.getElementById("playerMessage").textContent=`✅ Super Earned ${formatNaira(d.reward||t.reward)} - Price admin set - Next track!`;
+  document.getElementById("walletBalance").textContent=formatNaira(d.walletBalance||d.balance||d.wallet_balance||0);
+  loadStats();loadHistory();
+ }catch(e){
+  if(e.message.toLowerCase().includes("already")||e.message.toLowerCase().includes("earned")){
+    toast("Already earned for this track - Try another track");
+    document.getElementById("playerMessage").textContent=`ℹ️ Already earned - Try next track`;
+  }else{
+    toast(e.message);
+    document.getElementById("playerMessage").textContent=`❌ ${e.message}`;
+  }
+ }
+}
+playPauseBtn.addEventListener("click",()=>{
+  if(!audio.src){if(allTracks.length)playTrack(0);return;}
+  if(isPlaying){audio.pause();isPlaying=false;playPauseBtn.textContent="▶";document.getElementById("playerStatus").textContent="PAUSED";}
+  else{audio.play();isPlaying=true;playPauseBtn.textContent="⏸";document.getElementById("playerStatus").textContent="PLAYING • EARNING";}
+});
+audio.addEventListener("timeupdate",()=>{
+  if(!audio.duration)return;
+  const pct=(audio.currentTime/audio.duration)*100;
+  document.getElementById("audioBar").style.width=pct+"%";
+  document.getElementById("currentTime").textContent=formatTime(audio.currentTime);
+  document.getElementById("totalTime").textContent=formatTime(audio.duration);
+});
+audio.addEventListener("ended",()=>{
+  isPlaying=false;playPauseBtn.textContent="▶";document.getElementById("playerStatus").textContent="COMPLETED";
+  if(listenedSec<minListen){listenedSec=minListen;claimReward();}
+  else{playTrack((currentIndex+1)%allTracks.length);}
+});
 document.getElementById("prevBtn").addEventListener("click",()=>{if(currentIndex>0)playTrack(currentIndex-1);});
 document.getElementById("nextBtn").addEventListener("click",()=>{if(allTracks.length)playTrack((currentIndex+1)%allTracks.length);});
 document.addEventListener("DOMContentLoaded",init);
