@@ -10,15 +10,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--primary:#5b21b6;--primary-light:#ede9fe;--green:#16a34a;--green-light:#dcfce7;--red:#dc2626;--red-light:#fee2e2;--blue:#2563eb;--orange:#f59e0b;--orange-light:#fef3c7;--bg:#f5f7fb;--border:#e7eaf0;--text:#172033;--muted:#7b8494;--sidebar:#171124;--sidebar-hover:#251a3c;--shadow:0 8px 30px rgba(15,23,42,.06);--radius:16px}
+:root{--primary:#5b21b6;--primary-light:#ede9fe;--green:#16a34a;--green-light:#dcfce7;--red:#dc2626;--red-light:#fee2e2;--blue:#2563eb;--orange:#f59e0b;--orange-light:#fef3c7;--bg:#f5f7fb;--border:#e7eaf0;--text:#172033;--muted:#7b8494;--sidebar:#171124;--sidebar-hover:#251a3c;--shadow:0 8px 30px rgba(15,23,42,.06);--radius:16px;--gold:#f5c542}
 html{scroll-behavior:smooth;scroll-padding-top:80px;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 button,input,textarea,select{font-family:inherit;-webkit-appearance:none}
 button{border:0} button:disabled{opacity:.55;cursor:not-allowed}
 a{overflow-wrap:anywhere} button{padding:10px 14px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;transition:.18s}
 button:not(:disabled):active{transform:scale(.97)}
-
-/* LOGIN */
 #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top left,rgba(91,33,182,.10),transparent 35%),#f6f7fb}
 .login-box{width:100%;max-width:430px;background:#fff;padding:38px 34px;border:1px solid var(--border);border-radius:22px;box-shadow:0 25px 70px rgba(15,23,42,.10)}
 .login-badge{width:58px;height:58px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;border-radius:17px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:white;font-size:25px}
@@ -29,8 +27,6 @@ button:not(:disabled):active{transform:scale(.97)}
 .login-button{width:100%;padding:14px;margin-top:4px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-size:14px;font-weight:800}
 .login-error{display:none;margin-bottom:17px;padding:11px 12px;border-radius:9px;background:var(--red-light);color:#b91c1c;font-size:12px}
 .login-loading{display:none;margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
-
-/* DASHBOARD */
 #dashboardScreen{display:none}
 .sidebar{position:fixed;z-index:1000;top:0;left:0;width:260px;height:100dvh;padding:24px 16px;overflow-y:auto;background:linear-gradient(180deg,#171124,#120d1d);color:white;border-right:1px solid rgba(255,255,255,.04);transition:transform .32s cubic-bezier(.4,0,.2,1)}
 .logo{padding:4px 12px 28px;font-family:Poppins,sans-serif;font-size:24px;font-weight:800} .logo span{color:#a78bfa}
@@ -40,7 +36,6 @@ button:not(:disabled):active{transform:scale(.97)}
 .nav a:hover{background:var(--sidebar-hover);color:#fff} .nav a.active{background:linear-gradient(90deg,rgba(124,58,237,.28),rgba(124,58,237,.12));color:#fff;border:1px solid rgba(167,139,250,.18)}
 .nav-divider{height:1px;margin:15px 8px;background:rgba(255,255,255,.07)}
 .sidebar-footer{margin-top:30px;padding:14px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;color:#8e879b;font-size:10px;line-height:1.6}
-
 .main{margin-left:260px;padding:30px;min-height:100vh;padding-bottom:90px}
 .topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-30px -30px 25px -30px;padding:16px 30px;background:rgba(245,247,251,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
 .topbar h1{font-family:Poppins,sans-serif;font-size:26px;font-weight:800} .topbar p{margin-top:3px;color:var(--muted);font-size:12px}
@@ -48,14 +43,12 @@ button:not(:disabled):active{transform:scale(.97)}
 .admin-avatar{width:29px;height:29px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--primary-light);color:var(--primary)}
 .hamburger{display:none;width:46px;height:46px;border-radius:12px;background:#fff;border:1px solid var(--border);font-size:20px;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)}
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;backdrop-filter:blur(3px)} .overlay.show{display:block}
-
 .cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:24px}
 .card{position:relative;min-height:110px;padding:18px;overflow:hidden;border:1px solid var(--border);border-radius:15px;background:#fff;box-shadow:var(--shadow)}
 .card p{margin-bottom:10px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase}
 .card h2{font-family:Poppins,sans-serif;font-size:26px;font-weight:800;overflow-wrap:anywhere}
 .card-icon{position:absolute;right:14px;top:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--primary-light);font-size:14px}
-
-.section-box,.users-box,.videos-box,.withdrawals-box{margin-bottom:22px;padding:22px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);min-width:0}
+.section-box,.users-box,.videos-box,.withdrawals-box,.music-box{margin-bottom:22px;padding:22px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);min-width:0}
 .section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
 .section-header h2{font-family:Poppins,sans-serif;font-size:17px;font-weight:800}
 .info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;color:var(--muted);font-size:10px}
@@ -88,13 +81,9 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 .withdrawal-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px} .withdrawal-tab{padding:10px 15px;background:#f1f5f9;color:#475569;border:1px solid var(--border)} .withdrawal-tab.active-tab{background:var(--primary);color:#fff;border-color:var(--primary)}
 .tab-count{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.22)}
 #adminToast{position:fixed;right:16px;left:16px;bottom:84px;z-index:99999;max-width:400px;margin:auto;padding:14px 16px;border-radius:14px;color:white;font-size:12px;font-weight:700;box-shadow:0 12px 35px rgba(15,23,42,.18);text-align:center}
-
-/* MOBILE BOTTOM NAV - NEW - EASY PHONE NAVIGATION */
-.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:998;background:rgba(23,17,36,.97);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.08);padding:6px 4px calc(6px + env(safe-area-inset-bottom));grid-template-columns:repeat(5,1fr);gap:2px}
+.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:998;background:rgba(23,17,36,.97);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.08);padding:6px 4px calc(6px + env(safe-area-inset-bottom));grid-template-columns:repeat(6,1fr);gap:2px}
 .mbn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;border-radius:12px;color:#8e86a3;text-decoration:none;font-size:8px;font-weight:700;background:transparent;border:0}
 .mbn-item span.icon{font-size:18px;line-height:1} .mbn-item.active{color:#fff;background:rgba(124,58,237,.22)} .mbn-item.active span.icon{filter:brightness(1.4)}
-
-/* PHONE OPTIMIZATION */
 @media(max-width:900px){
   .sidebar{transform:translateX(-105%);width:280px;box-shadow:20px 0 50px rgba(0,0,0,.3)}
   .sidebar.open{transform:translateX(0)}
@@ -105,7 +94,7 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
   .admin{padding:8px 10px;font-size:11px}
   .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
   .card{min-height:100px;padding:14px} .card h2{font-size:22px}
-  .section-box,.users-box,.videos-box,.withdrawals-box{padding:16px;border-radius:14px}
+  .section-box,.users-box,.videos-box,.withdrawals-box,.music-box{padding:16px;border-radius:14px}
   .form-grid{grid-template-columns:1fr}
   .mobile-bottom-nav{display:grid}
   #adminToast{bottom:92px}
@@ -151,18 +140,20 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
     <a href="#users" onclick="setActiveNav(this); scrollToSection('users')"><span class="icon">👥</span> <span>Users</span></a>
     <a href="#jobs" onclick="setActiveNav(this); scrollToSection('jobs')"><span class="icon">💼</span> <span>Jobs</span></a>
     <a href="#videos" onclick="setActiveNav(this); scrollToSection('videos')"><span class="icon">🎬</span> <span>Videos</span></a>
+    <a href="#music" onclick="setActiveNav(this); scrollToSection('music')"><span class="icon">♫</span> <span>Music - Super 👑</span></a>
+    <a href="#games" onclick="setActiveNav(this); scrollToSection('games')"><span class="icon">🎮</span> <span>Games</span></a>
     <a href="#withdrawals" onclick="setActiveNav(this); scrollToSection('withdrawals')"><span class="icon">💸</span> <span>Withdrawals</span><span id="navPendingCount" style="background:#f59e0b;color:white;padding:2px 7px;border-radius:10px;font-size:9px;margin-left:auto">0</span></a>
     <div class="nav-divider"></div>
     <a href="#" onclick="adminLogout(event)"><span class="icon">🚪</span> <span>Logout</span></a>
   </nav>
-  <div class="sidebar-footer">Jovia Network Admin Console<br>Tap outside to close • Mobile optimized</div>
+  <div class="sidebar-footer">Jovia Network Admin Console<br>Tap outside to close • Mobile optimized<br>Music price = Reward user go earn</div>
 </aside>
 
 <main class="main">
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:12px">
     <button class="hamburger" onclick="openSidebar()" aria-label="Open menu">☰</button>
-    <div><h1>Admin Dashboard</h1><p>Manage users, content and withdrawals</p></div>
+    <div><h1>Admin Dashboard</h1><p>Manage users, content, music price & withdrawals</p></div>
   </div>
   <div class="admin"><div class="admin-avatar">👤</div><span id="adminName">Administrator</span></div>
 </div>
@@ -173,20 +164,22 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
   <div class="card"><div class="card-icon">✓</div><p>Active</p><h2 id="approvedUsers">0</h2></div>
   <div class="card"><div class="card-icon">◆</div><p>Gold</p><h2 id="goldUsers">0</h2></div>
   <div class="card"><div class="card-icon">◇</div><p>Silver</p><h2 id="silverUsers">0</h2></div>
+  <div class="card"><div class="card-icon">♫</div><p>Music Tracks</p><h2 id="totalMusicCard">0</h2></div>
   <div class="card"><div class="card-icon">₦</div><p>Pending WD</p><h2 id="pendingWithdrawalsCard">0</h2></div>
+  <div class="card"><div class="card-icon">👑</div><p>Super Users</p><h2 id="superUsers">0</h2></div>
 </section>
 
 <section class="section-box" id="announcement">
-  <div class="section-header"><h2>📢 Announcement Popup</h2><button class="refresh" onclick="loadAdminPopup()">↻ Refresh</button></div>
+  <div class="section-header"><h2>📢 Announcement Popup - Shows on EVERY Login</h2><button class="refresh" onclick="loadAdminPopup()">↻ Refresh</button></div>
   <div class="form-box">
     <div class="form-grid">
-      <div class="form-group"><label for="adm_enabled">Enable Popup?</label><select id="adm_enabled"><option value="true">Yes - Show to all users</option><option value="false">No - Hide</option></select></div>
+      <div class="form-group"><label for="adm_enabled">Enable Popup? (Always show on login regardless)</label><select id="adm_enabled"><option value="true">Yes - Show to all users every login</option><option value="false">No - Hide</option></select></div>
       <div class="form-group"><label for="adm_url">Channel URL</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
       <div class="form-group full"><label for="adm_title">Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
       <div class="form-group full"><label for="adm_message">Message (shows to users)</label><textarea id="adm_message" rows="5">ATTENTION ALL MEMBERS! All withdrawal codes posted ONLY in official channel.</textarea></div>
       <div class="form-group"><label for="adm_btnText">Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
     </div>
-    <button class="create" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6;width:100%;padding:16px;font-size:13px">💾 Save & Show Popup to Users</button>
+    <button class="create" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6;width:100%;padding:16px;font-size:13px">💾 Save & Show Popup to Users Every Login</button>
     <div id="adm_status" style="display:none;margin-top:12px;padding:12px;border-radius:10px;font-size:11px;font-weight:700"></div>
   </div>
 </section>
@@ -197,13 +190,14 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
     <h3 style="font-size:14px;margin-bottom:14px">Compose Private Message</h3>
     <div class="form-grid">
       <div class="form-group full"><label for="privateRecipientSearch">Search members</label><input id="privateRecipientSearch" type="search" placeholder="Search name, username or email..." oninput="renderPrivateRecipients()"></div>
-      <div class="form-group"><label for="privateStatusFilter">Account Status</label><select id="privateStatusFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option></select></div>
-      <div class="form-group"><label for="privatePackageFilter">Package</label><select id="privatePackageFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super-gold">Super Gold</option><option value="super-silver">Super Silver</option><option value="other">Other</option></select></div>
+      <div class="form-group"><label for="privateStatusFilter">Account Status</label><select id="privateStatusFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended</option></select></div>
+      <div class="form-group"><label for="privatePackageFilter">Package</label><select id="privatePackageFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super">Super</option><option value="other">Other</option></select></div>
       <div class="form-group full">
         <label>Select recipients (tap to select)</label>
         <div class="recipient-buttons">
           <button type="button" class="refresh" onclick="selectPrivateGroup('active')" style="background:#5b21b6;color:white">✅ Active</button>
           <button type="button" class="refresh" onclick="selectPrivateGroup('inactive')">⏳ Non-Active</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('suspended')">⛔ Suspended</button>
           <button type="button" class="refresh" onclick="selectPrivateGroup('all')">👥 All</button>
           <button type="button" class="refresh" onclick="selectVisiblePrivateRecipients(true)">Select Visible</button>
           <button type="button" class="refresh" onclick="clearPrivateSelection()" style="background:#fee2e2;color:#b91c1c">Clear</button>
@@ -225,13 +219,13 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 </section>
 
 <section class="users-box" id="users">
-  <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
+  <div class="section-header"><h2>👥 Registered Users - Suspended = Red ⛔</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
   <div class="filter-row">
-    <select id="userStatusFilter" onchange="filterUsers()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended</option></select>
-    <select id="userPackageFilter" onchange="filterUsers()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super-gold">Super Gold</option><option value="super-silver">Super Silver</option><option value="other">Other</option></select>
+    <select id="userStatusFilter" onchange="filterUsers()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended ⛔</option></select>
+    <select id="userPackageFilter" onchange="filterUsers()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super">Super 👑</option><option value="other">Other</option></select>
   </div>
   <div class="search-bar"><span>⌕</span><input type="text" id="searchUsers" placeholder="Search name, username, email..." oninput="filterUsers()"></div>
-  <div class="info-row"><div class="live-status"><span class="live-dot"></span><span>Live data</span></div><div>Last updated: <span id="lastUpdated">Waiting...</span></div></div>
+  <div class="info-row"><div class="live-status"><span class="live-dot"></span><span>Live data - Latest Activity Yellow Pending / Green Active / Red Suspended</span></div><div>Last updated: <span id="lastUpdated">Waiting...</span></div></div>
   <div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
@@ -282,6 +276,36 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
   <div class="table-wrap"><table><thead><tr><th>ID</th><th>Preview</th><th>Title</th><th>Type</th><th>Reward</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="videosTable"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
 </section>
 
+<!-- NEW MUSIC MANAGEMENT - ADMIN UPLOAD MUSIC + SET PRICE USER WILL EARN -->
+<section class="music-box" id="music">
+  <div class="section-header"><h2>♫ Music Management - Super Only 👑 - Set Price User Will Earn</h2><button class="refresh" onclick="loadAdminMusic()">↻ Refresh</button></div>
+  <div class="info-row"><div>Total Tracks: <strong id="totalMusic">0</strong> | Price = Reward user earns per 60s | Super only access</div></div>
+  <div class="form-box" id="musicFormBox">
+    <h3 id="musicFormTitle" style="font-size:14px;margin-bottom:14px">＋ Upload New Music Track - Set Price</h3>
+    <form id="musicForm" onsubmit="saveMusic(event)">
+      <div class="form-grid">
+        <div class="form-group"><label for="musicTitle">Music Title *</label><input id="musicTitle" required placeholder="Afro Vibes - Summer"></div>
+        <div class="form-group"><label for="musicArtist">Artist *</label><input id="musicArtist" required value="Jovia Sounds"></div>
+        <div class="form-group full"><label for="musicUrl">MP3 URL * (direct mp3 link)</label><input id="musicUrl" type="url" required placeholder="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"></div>
+        <div class="form-group"><label for="musicCover">Cover (emoji or image URL)</label><input id="musicCover" placeholder="♫ or https://..."></div>
+        <div class="form-group"><label for="musicReward">Reward Price ₦ * (What user will earn per 60s)</label><input id="musicReward" type="number" min="10" required value="100" placeholder="100"></div>
+        <div class="form-group"><label for="musicCategory">Category</label><select id="musicCategory"><option>Super Hits</option><option>Afrobeat</option><option>Super Mix</option><option>Super Anthem</option><option>General</option></select></div>
+        <div class="form-group full" style="background:#fffbe6;border:1px dashed #f5c542;padding:12px;border-radius:10px;font-size:11px"><strong>💡 Price = Reward:</strong> If you set ₦100, super user go earn ₦100 when dem listen 60 seconds. You fit set different price for different tracks - Premium track fit be ₦200, normal ₦100.</div>
+      </div>
+      <button type="submit" class="create" id="saveMusicButton" style="width:100%;padding:14px;background:#5b21b6">＋ Upload Music & Set Price</button>
+      <button type="button" class="cancel" id="cancelMusicEditButton" onclick="cancelMusicEdit()">Cancel Edit</button>
+    </form>
+  </div>
+  <div class="search-bar"><span>⌕</span><input id="searchMusic" type="search" placeholder="Search music..." oninput="filterMusic()"></div>
+  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Cover</th><th>Title</th><th>Artist</th><th>Reward (Price User Earns)</th><th>Plays</th><th>Category</th><th>Created</th><th>Actions</th></tr></thead><tbody id="musicTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
+</section>
+
+<section class="section-box" id="games">
+  <div class="section-header"><h2>🎮 Games Management - Bottle 360x4, Spin 0.5x</h2><button class="refresh" onclick="loadAdminGames()">↻ Refresh</button></div>
+  <div class="search-bar"><span>⌕</span><input id="searchGames" type="search" placeholder="Search game accounts..." oninput="filterGames()"></div>
+  <div class="table-wrap"><table><thead><tr><th>User</th><th>Balance</th><th>Deposits</th><th>Withdrawals</th><th>Wins</th><th>Status</th></tr></thead><tbody id="gamesTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody></table></div>
+</section>
+
 <section class="withdrawals-box" id="withdrawals">
   <div class="section-header">
     <h2>💸 Withdrawal Management</h2>
@@ -313,13 +337,13 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 </section>
 </main>
 
-<!-- MOBILE BOTTOM NAV - EASY PHONE NAVIGATION -->
 <nav class="mobile-bottom-nav" id="mobileBottomNav">
   <button class="mbn-item active" onclick="scrollToSection('dashboard', this)"><span class="icon">📊</span>Home</button>
   <button class="mbn-item" onclick="scrollToSection('users', this)"><span class="icon">👥</span>Users</button>
-  <button class="mbn-item" onclick="scrollToSection('jobs', this)"><span class="icon">💼</span>Jobs</button>
+  <button class="mbn-item" onclick="scrollToSection('music', this)"><span class="icon">♫</span>Music</button>
   <button class="mbn-item" onclick="scrollToSection('withdrawals', this)"><span class="icon">💸</span>WD <span id="mbnPending" style="background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;font-size:8px">0</span></button>
   <button class="mbn-item" onclick="scrollToSection('announcement', this)"><span class="icon">📢</span>Popup</button>
+  <button class="mbn-item" onclick="scrollToSection('games', this)"><span class="icon">🎮</span>Games</button>
 </nav>
 </div>
 
@@ -327,46 +351,45 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
 "use strict";
 const DELETED_JOBS_KEY="jovia_deleted_jobs";
 let adminAuthenticated=false;
-let userRefreshTimer=null,jobRefreshTimer=null,videoRefreshTimer=null,withdrawalRefreshTimer=null;
-let usersCache=new Map(),jobsCache=new Map(),videosCache=new Map(),withdrawalsCache=new Map();
-let rawUsers=[],rawJobs=[],rawVideos=[],rawWithdrawals=[],privateHistoryData=[];
-let privateRecipientIds=new Set(),withdrawalTab="pending",editingVideoId=null;
+let userRefreshTimer=null,jobRefreshTimer=null,videoRefreshTimer=null,withdrawalRefreshTimer=null,musicRefreshTimer=null;
+let usersCache=new Map(),jobsCache=new Map(),videosCache=new Map(),withdrawalsCache=new Map(),musicCache=new Map(),gamesCache=[];
+let rawUsers=[],rawJobs=[],rawVideos=[],rawWithdrawals=[],rawMusic=[],rawGames=[],privateHistoryData=[];
+let privateRecipientIds=new Set(),withdrawalTab="pending",editingVideoId=null,editingMusicId=null;
 
 function $(id){return document.getElementById(id)}
 function escapeHTML(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML}
 function safeUrl(v){try{const u=new URL(String(v||"").trim());return ["http:","https:"].includes(u.protocol)?u.href:"#"}catch{return "#"}}
 function formatNaira(v){return "₦"+Number(v||0).toLocaleString("en-NG")}
 function formatDate(v){if(!v)return "-";let d;const s=String(v);if(s.includes(" ")&&!s.includes("T"))d=new Date(s.replace(" ","T")+"Z");else d=new Date(s);return Number.isNaN(d.getTime())?s:d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
-function isActiveUser(u){return ["active","approved"].includes(String(u.account_status||u.status||"").toLowerCase())}
+function isActiveUser(u){const s=String(u.account_status||u.status||"").toLowerCase();return ["active","approved"].includes(s)||String(u.package||u.plan||"").toLowerCase().includes("super")}
+function isSuspendedUser(u){return ["suspended","banned","blocked","disabled"].includes(String(u.account_status||u.status||"").toLowerCase())}
 function getUserPackage(u){return String(u.package||u.plan||"").toLowerCase().replace(/[_ ]/g,"-")}
-function packageMatches(u,filter){const p=getUserPackage(u);if(filter==="all")return true;if(filter==="gold")return p==="gold";if(filter==="silver")return p==="silver";if(filter==="super-gold")return p.includes("super")&&p.includes("gold");if(filter==="super-silver")return p.includes("super")&&p.includes("silver");if(filter==="other")return !["gold","silver"].includes(p)&&!p.includes("super-gold")&&!p.includes("super-silver");return true}
+function packageMatches(u,filter){const p=getUserPackage(u);if(filter==="all")return true;if(filter==="gold")return p.includes("gold");if(filter==="silver")return p.includes("silver");if(filter==="super"||filter==="super-gold"||filter==="super-silver")return p.includes("super");if(filter==="other")return !p.includes("gold")&&!p.includes("silver")&&!p.includes("super");return true}
 function openSidebar(){$("sidebar").classList.add("open");$("sidebarOverlay").classList.add("show")}
 function closeSidebar(){$("sidebar").classList.remove("open");$("sidebarOverlay").classList.remove("show")}
 function setActiveNav(link){if(!link)return;document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));link.classList.add("active");closeSidebar()}
 function scrollToSection(id, btn){
   const el = document.getElementById(id);
   if(el) el.scrollIntoView({behavior:"smooth", block:"start"});
-  // Update bottom nav active
   if(btn){
     document.querySelectorAll(".mbn-item").forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
   }
-  // Update sidebar active
   document.querySelectorAll(".nav a").forEach(a=>{a.classList.remove("active"); if(a.getAttribute("href")==="#"+id) a.classList.add("active")});
   closeSidebar();
 }
-function stopTimers(){[userRefreshTimer,jobRefreshTimer,videoRefreshTimer,withdrawalRefreshTimer].forEach(t=>{if(t)clearInterval(t)});userRefreshTimer=jobRefreshTimer=videoRefreshTimer=withdrawalRefreshTimer=null}
+function stopTimers(){[userRefreshTimer,jobRefreshTimer,videoRefreshTimer,withdrawalRefreshTimer,musicRefreshTimer].forEach(t=>{if(t)clearInterval(t)});userRefreshTimer=jobRefreshTimer=videoRefreshTimer=withdrawalRefreshTimer=musicRefreshTimer=null}
 function showToast(message,type="success"){let t=$("adminToast");if(!t){t=document.createElement("div");t.id="adminToast";document.body.appendChild(t)}t.style.background=type==="error"?"#dc2626":type==="warning"?"#d97706":"#16a34a";t.textContent=message;t.style.opacity="1";clearTimeout(window.__joviaToastTimer);window.__joviaToastTimer=setTimeout(()=>t.style.opacity="0",3500)}
 function showLogin(message=""){adminAuthenticated=false;stopTimers();$("dashboardScreen").style.display="none";$("loginScreen").style.display="flex";$("mobileBottomNav").style.display="none";$("loginError").textContent=message;$("loginError").style.display=message?"block":"none"}
-function showDashboard(admin){adminAuthenticated=true;$("loginScreen").style.display="none";$("dashboardScreen").style.display="block";$("adminName").textContent=admin?.username||"Administrator";$("mobileBottomNav").style.display="grid";stopTimers();loadDashboardSummary();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminPopup();loadUsers();loadPrivateMessages();loadAdminJobs();loadAdminVideos();setTimeout(loadAdminWithdrawals,400);userRefreshTimer=setInterval(loadUsers,15000);jobRefreshTimer=setInterval(loadAdminJobs,20000);videoRefreshTimer=setInterval(loadAdminVideos,30000);withdrawalRefreshTimer=setInterval(()=>{if($("withdrawalAutoRefresh").checked)loadAdminWithdrawals()},10000)}
+function showDashboard(admin){adminAuthenticated=true;$("loginScreen").style.display="none";$("dashboardScreen").style.display="block";$("adminName").textContent=admin?.username||"Administrator";$("mobileBottomNav").style.display="grid";stopTimers();loadDashboardSummary();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminPopup();loadUsers();loadPrivateMessages();loadAdminJobs();loadAdminVideos();loadAdminMusic();loadAdminGames();setTimeout(loadAdminWithdrawals,400);userRefreshTimer=setInterval(loadUsers,15000);jobRefreshTimer=setInterval(loadAdminJobs,20000);videoRefreshTimer=setInterval(loadAdminVideos,30000);musicRefreshTimer=setInterval(loadAdminMusic,30000);withdrawalRefreshTimer=setInterval(()=>{if($("withdrawalAutoRefresh").checked)loadAdminWithdrawals()},10000)}
 async function checkAdminSession(){try{const r=await fetch("/api/admin/me",{cache:"no-store",credentials:"include"});if(!r.ok)return showLogin();const d=await r.json();if(!d.success||!d.admin)return showLogin();showDashboard(d.admin)}catch{showLogin("Unable to connect to the server.")}}
 async function adminLogin(e){e.preventDefault();const username=$("adminUsername").value.trim(),password=$("adminPassword").value,button=$("loginButton");$("loginError").style.display="none";button.disabled=true;button.textContent="Signing in...";$("loginLoading").style.display="block";try{const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({username,password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Login failed");$("adminLoginForm").reset();showDashboard(d.admin||{username})}catch(err){$("loginError").textContent=err.message||"Unable to sign in";$("loginError").style.display="block"}finally{button.disabled=false;button.textContent="Sign in to Dashboard";$("loginLoading").style.display="none"}}
 async function adminLogout(e){if(e)e.preventDefault();if(!confirm("Sign out?"))return;try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"})}catch{}showLogin("Signed out successfully.")}
 function handleUnauthorized(){if(adminAuthenticated)showLogin("Your session has expired. Please sign in again.")}
 
-async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)return;const d=await r.json();if(!d.success)return;$("totalUsers").textContent=Number(d.users||0);$("pendingUsers").textContent=Number(d.pendingUsers||0);$("approvedUsers").textContent=Number(d.activeUsers||0);$("totalVideos").textContent=Number(d.videos||0);$("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
+async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)return;const d=await r.json();if(!d.success)return;$("totalUsers").textContent=Number(d.users||rawUsers.length||0);$("pendingUsers").textContent=Number(d.pendingUsers||0);$("approvedUsers").textContent=Number(d.activeUsers||0);$("totalVideos").textContent=Number(d.videos||0);$("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
 async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();if(d&&d.title){$("adm_enabled").value=String(d.enabled);$("adm_title").value=d.title||"";$("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");$("adm_url").value=d.channelUrl||d.channel_url||"https://t.me/jovianetwerk";$("adm_btnText").value=d.channelText||d.channel_text||"📲 Join Official Channel →"}}catch{}}
-async function saveAdminPopup(){const b=$("adm_saveBtn"),s=$("adm_status");b.disabled=true;b.textContent="Saving...";s.style.display="block";s.style.background="#fff3cd";s.style.color="#92400e";s.textContent="Saving announcement...";const payload={enabled:$("adm_enabled").value==="true",title:$("adm_title").value.trim(),message:$("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:$("adm_url").value.trim(),channelText:$("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save announcement");s.style.background="#dcfce7";s.style.color="#15803d";s.textContent="✅ Announcement saved - Popup will show to all users now!";showToast("Popup saved - now showing to users")}catch(e){s.style.background="#fee2e2";s.style.color="#b91c1c";s.textContent=e.message}finally{b.disabled=false;b.textContent="💾 Save & Show Popup to Users"}}
+async function saveAdminPopup(){const b=$("adm_saveBtn"),s=$("adm_status");b.disabled=true;b.textContent="Saving...";s.style.display="block";s.style.background="#fff3cd";s.style.color="#92400e";s.textContent="Saving announcement...";const payload={enabled:$("adm_enabled").value==="true",title:$("adm_title").value.trim(),message:$("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:$("adm_url").value.trim(),channelText:$("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save announcement");s.style.background="#dcfce7";s.style.color="#15803d";s.textContent="✅ Announcement saved - Popup will show to ALL users on EVERY login now!";showToast("Popup saved - now showing on every login")}catch(e){s.style.background="#fee2e2";s.style.color="#b91c1c";s.textContent=e.message}finally{b.disabled=false;b.textContent="💾 Save & Show Popup to Users Every Login"}}
 
 function updateRegularWithdrawalUI(enabled){$("regularWithdrawalSwitch").checked=Boolean(enabled);$("regularWithdrawalStatusText").textContent=enabled?"✅ Regular withdrawals are ON — code required.":"❌ Regular withdrawals are OFF — affiliate remains independent."}
 function updateAffiliateWithdrawalUI(enabled){$("affiliateWithdrawalSwitch").checked=Boolean(enabled);$("affiliateWithdrawalStatusText").textContent=enabled?"✅ Affiliate withdrawals are ON — free, no code.":"❌ Affiliate withdrawals are OFF — regular remains independent."}
@@ -375,19 +398,19 @@ async function loadAffiliateWithdrawalSetting(){try{const r=await fetch("/api/se
 async function toggleRegularWithdrawals(enabled){const cb=$("regularWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON regular withdrawals?":"Turn OFF regular withdrawals? Affiliate will still work.")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/regular-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_regular_withdrawal",String(enabled));updateRegularWithdrawalUI(enabled);showToast("Regular withdrawals updated")}catch(e){updateRegularWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
 async function toggleAffiliateWithdrawals(enabled){const cb=$("affiliateWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON affiliate withdrawals?":"Turn OFF affiliate withdrawals? Regular will still work.")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_affiliate_withdrawal",String(enabled));updateAffiliateWithdrawalUI(enabled);showToast("Affiliate withdrawals updated")}catch(e){updateAffiliateWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
 
-async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];usersCache=new Map(rawUsers.map(u=>[Number(u.id),u]));$("totalUsers").textContent=rawUsers.length;$("pendingUsers").textContent=rawUsers.filter(u=>!isActiveUser(u)).length;$("approvedUsers").textContent=rawUsers.filter(isActiveUser).length;$("goldUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("gold")).length;$("silverUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("silver")).length;filterUsers();renderPrivateRecipients();$("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch(e){$("usersTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
-function filterUsers(){const q=$("searchUsers").value.toLowerCase().trim(),sf=$("userStatusFilter").value,pf=$("userPackageFilter").value;const users=rawUsers.filter(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u);const statusOk=sf==="all"||(sf==="active"&&active)||(sf==="inactive"&&!active&&s!=="suspended")||(sf==="suspended"&&s==="suspended");const text=`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""}`.toLowerCase();return statusOk&&packageMatches(u,pf)&&text.includes(q)});renderUsersTable(users)}
-function renderUsersTable(users){const table=$("usersTable");if(!users.length){table.innerHTML='<tr><td colspan="9" class="empty">No users found</td></tr>';return}table.innerHTML=users.map(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase();let buttons="";if(!isActiveUser(u)&&s!=="suspended")buttons+=`<button class="action approve" onclick="updateStatus(${Number(u.id)},'approved')">Approve</button>`;else if(isActiveUser(u))buttons+=`<button class="action suspend" onclick="confirmSuspend(${Number(u.id)})">Suspend</button>`;if(s==="suspended")buttons+=`<button class="action restore" onclick="updateStatus(${Number(u.id)},'approved')">Restore</button>`;buttons+=`<button class="action reset" onclick="resetPassword(${Number(u.id)})">Reset</button><button class="action" style="background:#5b21b6;color:#fff" onclick="sendPrivateToOneUser(${Number(u.id)})">Message</button>`;return `<tr><td><strong>${escapeHTML(u.full_name||"-")}</strong></td><td>${escapeHTML(u.username||"-")}</td><td>${escapeHTML(u.email||"-")}</td><td>${escapeHTML(u.phone||"-")}</td><td>${escapeHTML(u.package||u.plan||"-")}</td><td>${formatNaira(u.package_amount||0)}</td><td><span class="status ${escapeHTML(s)}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(u.created_at))}</td><td>${buttons}</td></tr>`}).join("")}
+async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];usersCache=new Map(rawUsers.map(u=>[Number(u.id),u]));$("totalUsers").textContent=rawUsers.length;$("pendingUsers").textContent=rawUsers.filter(u=>!isActiveUser(u)&&!isSuspendedUser(u)).length;$("approvedUsers").textContent=rawUsers.filter(isActiveUser).length;$("goldUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("gold")).length;$("silverUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("silver")).length;$("superUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("super")).length;filterUsers();renderPrivateRecipients();$("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch(e){$("usersTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
+function filterUsers(){const q=$("searchUsers").value.toLowerCase().trim(),sf=$("userStatusFilter").value,pf=$("userPackageFilter").value;const users=rawUsers.filter(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),suspended=isSuspendedUser(u);let statusOk=true;if(sf==="active") statusOk=active;else if(sf==="inactive") statusOk=!active&&!suspended;else if(sf==="suspended") statusOk=suspended;const text=`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""}`.toLowerCase();return statusOk&&packageMatches(u,pf)&&text.includes(q)});renderUsersTable(users)}
+function renderUsersTable(users){const table=$("usersTable");if(!users.length){table.innerHTML='<tr><td colspan="9" class="empty">No users found</td></tr>';return}table.innerHTML=users.map(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase();const suspended=isSuspendedUser(u);let buttons="";if(suspended){buttons+=`<button class="action restore" onclick="updateStatus(${Number(u.id)},'approved')">✅ Unsuspend</button>`;}else if(!isActiveUser(u)){buttons+=`<button class="action approve" onclick="updateStatus(${Number(u.id)},'approved')">Approve</button>`;}else{buttons+=`<button class="action suspend" onclick="confirmSuspend(${Number(u.id)})">⛔ Suspend</button>`;}buttons+=`<button class="action reset" onclick="resetPassword(${Number(u.id)})">Reset</button><button class="action" style="background:#5b21b6;color:#fff" onclick="sendPrivateToOneUser(${Number(u.id)})">Message</button>`;return `<tr><td><strong>${escapeHTML(u.full_name||"-")}</strong></td><td>${escapeHTML(u.username||"-")}</td><td>${escapeHTML(u.email||"-")}</td><td>${escapeHTML(u.phone||"-")}</td><td>${escapeHTML(u.package||u.plan||"-")}</td><td>${formatNaira(u.wallet_balance||u.package_amount||0)}</td><td><span class="status ${escapeHTML(s)}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(u.created_at))}</td><td>${buttons}</td></tr>`}).join("")}
 async function resetPassword(id){const user=usersCache.get(Number(id));if(!user)return;const password=prompt(`New password for ${user.username||user.email}: minimum 8 characters`);if(!password||password.length<8)return alert("Password must be at least 8 characters.");if(password!==prompt("Re-enter the new password to confirm:"))return alert("Passwords do not match.");try{const r=await fetch(`/api/admin/users/${Number(id)}/reset-password`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({newPassword:password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Password reset failed");showToast("Password reset successfully")}catch(e){alert(e.message)}}
-function confirmSuspend(id){if(confirm("Suspend this user?"))updateStatus(id,"suspended")}
-async function updateStatus(id,status){if(status==="approved"&&!confirm("Approve this user?"))return;try{const r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadUsers();showToast("User status updated")}catch(e){alert(e.message)}}
+function confirmSuspend(id){if(confirm("⛔ Suspend this user? Dashboard go show red Suspended + Latest activity red + Games/Music locked."))updateStatus(id,"suspended")}
+async function updateStatus(id,status){if(status==="approved"&&!confirm("Approve/Unsuspend this user?"))return;try{const endpoint=status==="suspended"?`/api/admin/user/suspend`:`/api/admin/user/unsuspend`;let r;if(status==="suspended"){r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({userId:Number(id),reason:"Suspended by admin"})});}else{r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});}const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadUsers();showToast(status==="suspended"?"User suspended ⛔ - Shows red in dashboard":"User restored ✅");}catch(e){alert(e.message)}}
 
 function privateMessageStatus(message,success=false){const b=$("privateMessageStatus");b.style.display="block";b.style.background=success?"#dcfce7":"#fee2e2";b.style.color=success?"#166534":"#991b1b";b.textContent=message}
-function privateUserMatches(u){const query=$("privateRecipientSearch").value.trim().toLowerCase(),sf=$("privateStatusFilter").value,pf=$("privatePackageFilter").value,s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),name=`${u.full_name||u.name||""} ${u.username||""} ${u.email||""}`.toLowerCase();const statusOk=sf==="all"||(sf==="active"&&active)||(sf==="inactive"&&!active&&s!=="suspended");return name.includes(query)&&statusOk&&packageMatches(u,pf)}
+function privateUserMatches(u){const query=$("privateRecipientSearch").value.trim().toLowerCase(),sf=$("privateStatusFilter").value,pf=$("privatePackageFilter").value,s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),suspended=isSuspendedUser(u),name=`${u.full_name||u.name||""} ${u.username||""} ${u.email||""}`.toLowerCase();let statusOk=true;if(sf==="active") statusOk=active;else if(sf==="inactive") statusOk=!active&&!suspended;else if(sf==="suspended") statusOk=suspended;return name.includes(query)&&statusOk&&packageMatches(u,pf)}
 function applyPrivateRecipientFilter(){renderPrivateRecipients()}
-function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
+function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isSuspendedUser(u)?"⛔ Suspended":isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function selectPrivateGroup(type){privateRecipientIds.clear();rawUsers.filter(u=>{if(type==="active")return isActiveUser(u);if(type==="inactive")return !isActiveUser(u);if(type==="gold")return getUserPackage(u).includes("gold");if(type==="silver")return getUserPackage(u).includes("silver");return true}).forEach(u=>privateRecipientIds.add(Number(u.id)));renderPrivateRecipients()}
+function selectPrivateGroup(type){privateRecipientIds.clear();rawUsers.filter(u=>{if(type==="active")return isActiveUser(u);if(type==="inactive")return !isActiveUser(u)&&!isSuspendedUser(u);if(type==="suspended")return isSuspendedUser(u);return true}).forEach(u=>privateRecipientIds.add(Number(u.id)));renderPrivateRecipients()}
 function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
 function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
 function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
@@ -444,6 +467,32 @@ function editVideo(id){const v=rawVideos.find(x=>Number(x.id)===Number(id));if(!
 function cancelVideoEdit(){editingVideoId=null;$("videoForm").reset();$("videoCategory").value="General";$("videoReward").value="0";$("videoFormTitle").textContent="＋ Upload New Video";$("saveVideoButton").textContent="＋ Upload & Save";$("cancelVideoEditButton").style.display="none";$("uploadedVideoPreview").style.display="none";$("previewPlayer").pause();$("previewPlayer").removeAttribute("src");$("previewPlayer").load();$("uploadProgress").style.display="none";$("progressBar").style.width="0%";$("progressText").textContent="0%";}
 async function changeVideoStatus(id,status){if(!confirm("Change video status to "+status+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminVideos();}catch(e){alert(e.message);}}
 async function deleteVideo(id){if(!confirm("Delete this video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminVideos();showToast("Video deleted");}catch(e){alert(e.message);}}
+
+// ===== MUSIC ADMIN - NEW - UPLOAD MUSIC + SET PRICE USER WILL EARN =====
+async function loadAdminMusic(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/music/list?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load music");const d=await r.json();rawMusic=d.tracks||d.music||[];musicCache=new Map(rawMusic.map(m=>[Number(m.id),m]));$("totalMusicCard").textContent=rawMusic.length;$("totalMusic").textContent=rawMusic.length;filterMusic();}catch(e){$("musicTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
+function filterMusic(){const q=$("searchMusic").value.toLowerCase().trim();const items=rawMusic.filter(m=>`${m.title||""} ${m.artist||""} ${m.category||""}`.toLowerCase().includes(q));const t=$("musicTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No music tracks - Upload music and set reward price user will earn</td></tr>';return}t.innerHTML=items.map(m=>{return `<tr><td>#${Number(m.id)}</td><td>${escapeHTML(m.cover||"♫")}</td><td><strong>${escapeHTML(m.title)}</strong></td><td>${escapeHTML(m.artist||"Jovia")}</td><td><strong style="color:#5b21b6">${formatNaira(m.reward||100)} 👑</strong><br><small style="color:#7b8494;font-size:9px">User earns this per 60s</small></td><td>${Number(m.plays||0)}</td><td>${escapeHTML(m.category||"Super Hits")}</td><td>${escapeHTML(formatDate(m.created_at))}</td><td><button class="action edit" onclick="editMusic(${Number(m.id)})">Edit Price</button><button class="action delete" onclick="deleteMusic(${Number(m.id)})">Delete</button></td></tr>`}).join("");}
+async function saveMusic(e){
+  e.preventDefault();
+  const title=$("musicTitle").value.trim(), artist=$("musicArtist").value.trim(), url=$("musicUrl").value.trim(), cover=$("musicCover").value.trim()||"♫", reward=Number($("musicReward").value), category=$("musicCategory").value;
+  if(!title||!url) return alert("Title and MP3 URL required");
+  if(!Number.isFinite(reward)||reward<10) return alert("Reward must be at least ₦10 - This is price user will earn per 60s");
+  const b=$("saveMusicButton"); b.disabled=true; b.textContent="Saving...";
+  try{
+    const payload={title,artist,url,cover,reward,category};
+    const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:"/api/admin/music/add";
+    const method=editingMusicId?"PUT":"POST";
+    const r=await fetch(endpoint,{method,headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
+    const d=await r.json().catch(()=>({})); if(!r.ok||!d.success) throw new Error(d.message||"Could not save music");
+    showToast(`Music saved - Reward ${formatNaira(reward)} per 60s - Super users will earn this`); cancelMusicEdit(); await loadAdminMusic();
+  }catch(err){alert(err.message)}finally{b.disabled=false; b.textContent=editingMusicId?"Save Changes - Update Price":"＋ Upload Music & Set Price";}
+}
+function editMusic(id){const m=rawMusic.find(x=>Number(x.id)===Number(id));if(!m)return;editingMusicId=Number(id);$("musicTitle").value=m.title||"";$("musicArtist").value=m.artist||"";$("musicUrl").value=m.url||"";$("musicCover").value=m.cover||"♫";$("musicReward").value=Number(m.reward||100);$("musicCategory").value=m.category||"Super Hits";$("musicFormTitle").textContent="✏️ Edit Music - Update Reward Price User Will Earn";$("saveMusicButton").textContent="Save Changes - Update Price";$("cancelMusicEditButton").style.display="inline-block";$("musicFormBox").scrollIntoView({behavior:"smooth"});}
+function cancelMusicEdit(){editingMusicId=null;$("musicForm").reset();$("musicArtist").value="Jovia Sounds";$("musicReward").value="100";$("musicCategory").value="Super Hits";$("musicFormTitle").textContent="＋ Upload New Music Track - Set Price";$("saveMusicButton").textContent="＋ Upload Music & Set Price";$("cancelMusicEditButton").style.display="none";}
+async function deleteMusic(id){if(!confirm(`Delete music #${id}? User no go fit earn from am again.`))return;try{const r=await fetch(`/api/admin/music/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminMusic();showToast("Music deleted")}catch(e){alert(e.message)}}
+
+// ===== GAMES ADMIN =====
+async function loadAdminGames(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/games/accounts?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load games");const d=await r.json();rawGames=d.accounts||[];filterGames();}catch(e){$("gamesTable").innerHTML=`<tr><td colspan="6" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
+function filterGames(){const q=$("searchGames").value.toLowerCase().trim();const items=rawGames.filter(g=>`${g.email||""} ${g.username||""}`.toLowerCase().includes(q));const t=$("gamesTable");if(!items.length){t.innerHTML='<tr><td colspan="6" class="empty">No game accounts</td></tr>';return}t.innerHTML=items.map(g=>`<tr><td>${escapeHTML(g.email||g.username||"User #"+g.user_id)}</td><td><strong>${formatNaira(g.game_balance||0)}</strong></td><td>${formatNaira(g.total_deposits||0)}</td><td>${formatNaira(g.total_withdrawals||0)}</td><td>${Number(g.total_wins||0)}</td><td><span class="status ${Number(g.game_balance)>0?"active":"pending"}">${Number(g.game_balance)>0?"Active":"Empty"}</span></td></tr>`).join("");}
 
 async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return handleUnauthorized();if(!r.ok)throw new Error("Unable to load withdrawals");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length;const paid=rawWithdrawals.filter(isPaidWithdrawal).length;$("totalWithdrawals").textContent=rawWithdrawals.length;$("pendingWithdrawalsCount").textContent=pending;$("paidWithdrawalsCount").textContent=paid;$("pendingWithdrawalsCard").textContent=pending;$("navPendingCount").textContent=pending;$("pendingTabCount").textContent=pending;$("paidTabCount").textContent=paid;if($("mbnPending")) $("mbnPending").textContent=pending;$("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");filterWithdrawals();}catch(e){$("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
 function isPaidWithdrawal(w){return ["approved","paid","completed","success","successful"].includes(String(w.status||"").toLowerCase());}
