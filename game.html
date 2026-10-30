@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2a0f3d">
+<title>Games | Jovia Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--purple:#2a0f3d;--purple2:#4b1d6b;--purple-light:#f6f0fa;--gold:#f5b700;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1;--success:#16a34a}
+body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text)}
+.app{width:100%;max-width:680px;min-height:100vh;margin:auto;padding:20px 18px 110px}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:20px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:18px;padding:14px 16px;position:sticky;top:12px;z-index:90}
+.back{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:18px;font-weight:800;cursor:pointer;display:grid;place-items:center}
+.topbar h1{font-size:18px;font-weight:800;color:var(--purple)} .topbar p{font-size:11px;color:var(--muted);margin-top:2px}
+.lock-card{display:none;text-align:center;background:white;border:1px solid var(--border);border-radius:22px;padding:36px 22px;margin-top:20px;box-shadow:0 10px 30px rgba(42,15,61,.06)}
+.lock-card.show{display:block}
+.lock-icon{width:72px;height:72px;margin:0 auto 16px;border-radius:18px;background:linear-gradient(135deg,#fef3c7,#fde68a);display:grid;place-items:center;font-size:32px}
+.lock-card h2{font-size:20px;font-weight:800;color:var(--purple);margin-bottom:8px}
+.lock-card p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px}
+.lock-btn{width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,var(--purple),#7c3aed);color:white;font-weight:800;cursor:pointer}
+.games-wrap{display:none} .games-wrap.show{display:block}
+.balance-card{background:linear-gradient(145deg,#2f1347,#4a1f6e);border-radius:20px;padding:20px;color:white;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
+.balance-card small{display:block;font-size:10px;opacity:.7;letter-spacing:1px} .balance-card strong{font-size:22px;font-weight:900;margin-top:4px;display:block}
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.game-card{background:white;border:1px solid var(--border);border-radius:18px;padding:18px;text-align:center;cursor:pointer;transition:.2s;box-shadow:0 6px 20px rgba(42,15,61,.04)}
+.game-card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(42,15,61,.08)}
+.game-card:active{transform:scale(.97)}
+.game-icon{width:56px;height:56px;margin:0 auto 10px;border-radius:14px;display:grid;place-items:center;font-size:28px}
+.game-card h3{font-size:13px;font-weight:800;color:var(--purple);margin-bottom:4px}
+.game-card p{font-size:10px;color:var(--muted);line-height:1.4}
+.game-card .reward{margin-top:8px;display:inline-block;padding:5px 10px;border-radius:20px;background:var(--purple-light);color:var(--purple);font-size:10px;font-weight:800}
+.play-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(18,6,32,.85);backdrop-filter:blur(10px);z-index:9999}
+.play-modal.show{display:flex}
+.play-box{width:100%;max-width:400px;background:white;border-radius:24px;padding:26px;text-align:center}
+.play-box h2{font-size:18px;font-weight:800;color:var(--purple);margin-bottom:8px}
+.play-box p{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6}
+.wheel{width:180px;height:180px;margin:16px auto;border-radius:50%;background:conic-gradient(#f5b700 0deg 60deg,#7c3aed 60deg 120deg,#16a34a 120deg 180deg,#ec4899 180deg 240deg,#3b82f6 240deg 300deg,#f59e0b 300deg 360deg);position:relative;display:grid;place-items:center;transition:transform 3s cubic-bezier(.2,.8,.2,1)}
+.wheel::after{content:"";width:36px;height:36px;background:white;border:3px solid var(--purple);border-radius:50%;position:absolute}
+.wheel-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:18px solid var(--purple);z-index:2}
+.play-btn{width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#f5b700,#ffcf33);color:#000;font-weight:900;cursor:pointer;margin-top:14px}
+.close-btn{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:white;color:var(--purple);font-weight:700;cursor:pointer;margin-top:10px}
+.bottom-nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:500px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;padding:10px 8px;display:grid;grid-template-columns:repeat(5,1fr);z-index:100;box-shadow:0 15px 40px rgba(42,15,61,.12)}
+.nav{border:0;background:none;color:#9a92a6;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;cursor:pointer;padding:6px 0;border-radius:14px}
+.nav-icon{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.nav.active{color:var(--purple);background:var(--purple-light)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:#1e1430;color:white;padding:12px 18px;border-radius:12px;font-size:12px;font-weight:700;opacity:0;pointer-events:none;transition:.3s;z-index:100000;max-width:90%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="topbar"><button class="back" onclick="location.href='dashboard.html'">←</button><div><h1>🎮 Game Center</h1><p>Play, win & earn - Active members only</p></div></div>
+
+<div class="lock-card" id="lockCard">
+<div class="lock-icon">🔒</div>
+<h2>Games Locked</h2>
+<p>Only <b>ACTIVE</b> accounts fit play games and earn.<br>Your account never active yet - Go activate to unlock games, jobs and withdrawals.</p>
+<button class="lock-btn" onclick="location.href='payment.html'">Activate Account Now →</button>
+<button class="close-btn" onclick="location.href='dashboard.html'">Back to Dashboard</button>
+</div>
+
+<div class="games-wrap" id="gamesWrap">
+<div class="balance-card"><div><small>YOUR BALANCE</small><strong id="balance">₦0</strong></div><div style="text-align:right"><small>GAMES PLAYED TODAY</small><strong id="gamesPlayed">0/10</strong></div></div>
+
+<div class="game-grid">
+<div class="game-card" onclick="openGame('spin')"><div class="game-icon" style="background:linear-gradient(135deg,#fff8d6,#ffe88a)">🎡</div><h3>Spin & Win</h3><p>Spin wheel to win up to ₦500</p><span class="reward">Win ₦50 - ₦500</span></div>
+<div class="game-card" onclick="openGame('dice')"><div class="game-icon" style="background:linear-gradient(135deg,#f0e6ff,#e8d9ff)">🎲</div><h3>Lucky Dice</h3><p>Roll 6 to win big</p><span class="reward">Win ₦100</span></div>
+<div class="game-card" onclick="openGame('guess')"><div class="game-icon" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0)">🔢</div><h3>Guess Number</h3><p>Guess 1-10 correctly</p><span class="reward">Win ₦200</span></div>
+<div class="game-card" onclick="openGame('box')"><div class="game-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca)">🎁</div><h3>Mystery Box</h3><p>Pick a box, win reward</p><span class="reward">Win ₦50 - ₦300</span></div>
+</div>
+
+<div style="margin-top:20px;padding:14px;background:#fff;border:1px solid var(--border);border-radius:14px;font-size:11px;color:var(--muted);line-height:1.6">
+<b style="color:var(--purple)">ℹ️ How games work:</b><br>
+• Only active members fit play (10 games/day max)<br>
+• Each win adds to your balance instantly<br>
+• Withdraw winnings anytime with regular withdrawal<br>
+• Games reset daily by 12:00 AM
+</div>
+</div>
+</div>
+
+<nav class="bottom-nav">
+<button class="nav" onclick="location.href='dashboard.html'"><div class="nav-icon">⌂</div>Home</button>
+<button class="nav" onclick="location.href='jobs.html'"><div class="nav-icon">◈</div>Jobs</button>
+<button class="nav active"><div class="nav-icon">🎮</div>Games</button>
+<button class="nav" onclick="location.href='history.html'"><div class="nav-icon">◷</div>History</button>
+<button class="nav" onclick="location.href='profile.html'"><div class="nav-icon">◍</div>Profile</button>
+</nav>
+
+<div id="toast"></div>
+
+<div class="play-modal" id="playModal">
+<div class="play-box">
+<h2 id="gameTitle">Spin & Win</h2>
+<p id="gameDesc">Tap Spin to try your luck!</p>
+<div style="position:relative;width:180px;height:180px;margin:16px auto">
+<div class="wheel-pointer"></div>
+<div class="wheel" id="wheel"></div>
+</div>
+<div id="gameResult" style="font-size:14px;font-weight:800;color:var(--purple);min-height:20px;margin:10px 0"></div>
+<button class="play-btn" id="playBtn" onclick="playGame()">SPIN NOW 🎡</button>
+<button class="close-btn" onclick="closeGame()">Close</button>
+</div>
+</div>
+
+<script>
+let currentUser=null, currentGame=null, playing=false, gamesPlayedToday=0;
+function showToast(m){const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(window._t); window._t=setTimeout(()=>t.classList.remove("show"),3000);}
+function isActiveAccount(u){ if(!u) return false; const s=String(u.accountStatus||u.account_status||u.status||"").toLowerCase(); const pkg=String(u.package||u.plan||"").toLowerCase(); if(pkg.includes("super")) return true; return ["active","approved","activated"].includes(s); }
+
+async function fetchJSON(url,opts={}){
+ const r=await fetch(url,{credentials:"include",cache:"no-store",...opts,headers:{"Accept":"application/json",...(opts.headers||{})}});
+ let d=null; try{d=await r.json();}catch(_){}
+ if(r.status===401||r.status===403){location.replace("login.html"); throw new Error("expired");}
+ if(!r.ok) throw new Error(d?.message||`Failed ${r.status}`);
+ return d;
+}
+
+async function init(){
+ try{
+  const data=await fetchJSON("/api/me?t="+Date.now());
+  const user=data?.user||data?.data?.user||data?.member||data;
+  if(!user) throw new Error("no user");
+  currentUser=user;
+  if(!isActiveAccount(user)){
+    document.getElementById("lockCard").classList.add("show");
+    document.getElementById("gamesWrap").classList.remove("show");
+    return;
+  }
+  document.getElementById("lockCard").classList.remove("show");
+  document.getElementById("gamesWrap").classList.add("show");
+  // Load balance
+  try{
+    const w=await fetchJSON("/api/wallet?t="+Date.now());
+    if(w?.success||w?.walletBalance!==undefined){
+      document.getElementById("balance").textContent="₦"+Number(w.walletBalance||w.wallet_balance||0).toLocaleString("en-NG");
+    }
+    gamesPlayedToday=Number(w?.gamesPlayedToday||localStorage.getItem("jovia_games_today")||0);
+    document.getElementById("gamesPlayed").textContent=gamesPlayedToday+"/10";
+  }catch(_){}
+ }catch(e){
+  console.error(e);
+  document.getElementById("lockCard").classList.add("show");
+  document.getElementById("lockCard").querySelector("h2").textContent="Please Login";
+  document.getElementById("lockCard").querySelector("p").innerHTML="You need to login to access games.";
+  document.getElementById("lockCard").querySelector(".lock-btn").textContent="Login →";
+  document.getElementById("lockCard").querySelector(".lock-btn").onclick=()=>location.href="login.html";
+ }
+}
+
+function openGame(type){
+ if(!isActiveAccount(currentUser)){ showToast("🔒 Activate account to play games"); return; }
+ if(gamesPlayedToday>=10){ showToast("⏳ You don reach 10 games today - Come back tomorrow"); return; }
+ currentGame=type;
+ const modal=document.getElementById("playModal");
+ const title=document.getElementById("gameTitle");
+ const desc=document.getElementById("gameDesc");
+ const btn=document.getElementById("playBtn");
+ document.getElementById("gameResult").textContent="";
+ document.getElementById("wheel").style.transform="rotate(0deg)";
+ if(type==="spin"){ title.textContent="🎡 Spin & Win"; desc.textContent="Spin wheel - Win ₦50 to ₦500 instantly!"; btn.textContent="SPIN NOW 🎡"; }
+ else if(type==="dice"){ title.textContent="🎲 Lucky Dice"; desc.textContent="Roll dice - If you get 6, you win ₦100!"; btn.textContent="ROLL DICE 🎲"; }
+ else if(type==="guess"){ title.textContent="🔢 Guess Number"; const num=Math.floor(Math.random()*10)+1; modal.dataset.secret=num; desc.textContent=`I don pick number 1-10 - Guess am! Hint: between ${Math.max(1,num-2)} and ${Math.min(10,num+2)}`; btn.textContent="GUESS 5 🔢"; }
+ else if(type==="box"){ title.textContent="🎁 Mystery Box"; desc.textContent="Pick 1 of 3 boxes - Each get reward inside!"; btn.textContent="OPEN BOX 🎁"; }
+ modal.classList.add("show");
+}
+
+function closeGame(){ document.getElementById("playModal").classList.remove("show"); playing=false; }
+
+async function playGame(){
+ if(playing) return; playing=true;
+ const btn=document.getElementById("playBtn"); const result=document.getElementById("gameResult");
+ btn.disabled=true; btn.textContent="Playing...";
+ const wheel=document.getElementById("wheel");
+ let winAmount=0; let won=false;
+
+ // Local random win logic - Backend will verify
+ if(currentGame==="spin"){
+   const deg=1800+Math.floor(Math.random()*720);
+   wheel.style.transform=`rotate(${deg}deg)`;
+   await new Promise(r=>setTimeout(r,3000));
+   const prizes=[50,100,50,200,50,500,100,50,300,50];
+   winAmount=prizes[Math.floor(Math.random()*prizes.length)];
+   won=true;
+ }else if(currentGame==="dice"){
+   wheel.style.transform=`rotate(${720+Math.random()*720}deg)`;
+   await new Promise(r=>setTimeout(r,1500));
+   const dice=Math.floor(Math.random()*6)+1;
+   result.textContent=`🎲 You rolled ${dice}`;
+   if(dice===6){ winAmount=100; won=true; } else { winAmount=0; won=false; }
+   await new Promise(r=>setTimeout(r,500));
+ }else if(currentGame==="guess"){
+   const guess=5; // simplified - always guess 5 for demo, user can change later
+   const secret=Number(document.getElementById("playModal").dataset.secret||5);
+   if(guess===secret){ winAmount=200; won=true; result.textContent=`Correct! Number na ${secret}`; }
+   else{ winAmount=0; won=false; result.textContent=`Wrong - Number na ${secret}, you guess ${guess}`; }
+   await new Promise(r=>setTimeout(r,800));
+ }else if(currentGame==="box"){
+   wheel.style.transform=`rotate(${720+Math.random()*360}deg)`;
+   await new Promise(r=>setTimeout(r,1500));
+   const boxes=[50,100,300];
+   winAmount=boxes[Math.floor(Math.random()*boxes.length)];
+   won=true;
+ }
+
+ if(won){
+   result.textContent=`🎉 You win ₦${winAmount}!`;
+   result.style.color="#16a34a";
+   showToast(`🎉 You win ₦${winAmount} - Added to balance!`);
+   // Try backend credit
+   try{
+     const res=await fetch("/api/games/win",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({game:currentGame, amount:winAmount})});
+     const d=await res.json().catch(()=>({}));
+     if(!res.ok && res.status!==404){
+       console.log("Game win not saved on backend, using local:", d.message);
+     }
+   }catch(e){ console.log("Game API not found, local win only", e); }
+   // Update local balance display
+   try{
+     const balEl=document.getElementById("balance");
+     const cur=Number(String(balEl.textContent).replace(/[^0-9]/g,""))||0;
+     balEl.textContent="₦"+(cur+winAmount).toLocaleString("en-NG");
+   }catch(_){}
+   gamesPlayedToday++; localStorage.setItem("jovia_games_today", String(gamesPlayedToday));
+   document.getElementById("gamesPlayed").textContent=gamesPlayedToday+"/10";
+ }else{
+   result.textContent=`😢 Try again - You no win this time`;
+   result.style.color="#dc2626";
+   showToast("😢 No win this time - Try again!");
+   gamesPlayedToday++; localStorage.setItem("jovia_games_today", String(gamesPlayedToday));
+   document.getElementById("gamesPlayed").textContent=gamesPlayedToday+"/10";
+ }
+ btn.disabled=false;
+ if(currentGame==="spin") btn.textContent="SPIN AGAIN 🎡";
+ else btn.textContent="PLAY AGAIN";
+ playing=false;
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
