@@ -155,23 +155,16 @@ function getUserFromResponse(data){return data?.user||data?.data?.user||data?.me
 
 async function loadUser(){
   try{
-    // Check localStorage SUPER first - instant SUPER UI even if server slow
     const localPlan = String(localStorage.getItem("jovia_plan")||localStorage.getItem("jovia_package")||"").toLowerCase();
     const isLocalSuper = localPlan.includes("super");
-
     const res=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
     const data=res.data;
     const user=getUserFromResponse(data);
     if(!user||!(user.id||user.email)) throw new Error("Invalid user");
     currentUser=user;
-
-    // If localStorage says SUPER but server still Gold, force SUPER for UI (server fix will catch up)
     if(isLocalSuper && !String(user.package||user.plan||"").toLowerCase().includes("super")){
-      console.log("Local SUPER detected, forcing UI to SUPER");
-      user.package = "SUPER";
-      user.plan = "SUPER";
+      user.package = "SUPER"; user.plan = "SUPER";
     }
-
     const email=safeText(user.email).toLowerCase().trim();
     if(email.includes("@")){
       try{
@@ -184,7 +177,7 @@ async function loadUser(){
       }catch(_){}
     }
     displayUser(user,data);
-    await Promise.allSettled([loadWallet(),loadReferrals()]);
+    await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
   }catch(e){
     console.error(e);
     document.getElementById("userName").textContent="Member";
@@ -212,11 +205,83 @@ async function loadReferrals(){
   }catch(e){}
 }
 
+// === FIXED POPUP FETCH - THIS WAS MISSING BEFORE ===
+async function loadPopups(){
+  await Promise.allSettled([loadGlobalPopup(), loadPrivatePopup()]);
+}
+async function loadGlobalPopup(){
+  const endpoints = [
+    "/api/global-popup","/api/popup","/api/announcements/active","/api/announcement","/api/global-announcement","/api/popups/active","/api/jovia/popup"
+  ];
+  for(const url of endpoints){
+    try{
+      const r = await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});
+      if(!r.ok) continue;
+      const d = await r.json().catch(()=>null);
+      if(!d) continue;
+      // Support multiple formats
+      const popup = d.popup || d.announcement || d.data || d;
+      if(!popup) continue;
+      const title = popup.title || popup.heading || "";
+      const text = popup.message || popup.text || popup.content || popup.body || "";
+      const show = popup.show ?? popup.active ?? popup.enabled ?? (title && text);
+      if(!show || (!title && !text)) continue;
+      // Don't show same popup twice in session if marked read
+      const id = popup.id || title;
+      const seenKey = "jovia_global_seen_"+btoa(id).slice(0,20);
+      // If admin forced, ignore seen check - check force flag
+      const force = popup.force || d.force;
+      if(!force && sessionStorage.getItem(seenKey)) continue;
+      
+      document.getElementById("joviaPopupTitle").textContent = title || "Official Announcement";
+      document.getElementById("joviaPopupText").textContent = text;
+      const channelBtn = document.getElementById("joviaChannelBtn");
+      if(popup.channel_url || popup.link) channelBtn.href = popup.channel_url || popup.link;
+      globalOverlay.classList.add("show");
+      globalPopupVisible = true;
+      document.body.style.overflow = "hidden";
+      // Mark seen on close via sessionStorage in close function
+      globalOverlay.dataset.seenKey = seenKey;
+      return;
+    }catch(_){}
+  }
+}
+async function loadPrivatePopup(){
+  const endpoints = [
+    "/api/user/private-messages/unread","/api/private-messages/unread","/api/user/private-messages","/api/private-messages","/api/user/messages/unread","/api/messages/private"
+  ];
+  for(const url of endpoints){
+    try{
+      const r = await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});
+      if(!r.ok) continue;
+      const d = await r.json().catch(()=>null);
+      if(!d) continue;
+      let msg = null;
+      if(Array.isArray(d)) msg = d[0];
+      else if(Array.isArray(d.messages)) msg = d.messages[0];
+      else if(Array.isArray(d.data)) msg = d.data[0];
+      else msg = d.message || d.privateMessage || d.data || d;
+      if(!msg || (!msg.message && !msg.content && !msg.text && !msg.body)) continue;
+      const title = msg.title || msg.subject || "Message from Admin";
+      const body = msg.message || msg.content || msg.text || msg.body || "";
+      const id = msg.id || msg._id || Date.now();
+      const time = msg.created_at || msg.time || "Just now";
+      
+      currentPrivatePopId = id;
+      document.getElementById("privatePopTitle").textContent = title;
+      document.getElementById("privatePopMessage").textContent = body;
+      document.getElementById("privatePopTime").textContent = time;
+      privateOverlay.classList.add("show");
+      document.body.style.overflow = "hidden";
+      return;
+    }catch(_){}
+  }
+}
+
 function displayUser(user,apiData={}){
  if(!user) return;
  let fullName=user.fullName||user.displayName||user.name||user.username||""; if(!fullName&&user.email) fullName=String(user.email).split("@")[0]; if(!fullName) fullName="Member";
  document.getElementById("userName").textContent=fullName;
-
  const planValues=[user.package, user.plan, user.package_name, user.user_package, apiData?.plan, apiData?.package, localStorage.getItem("jovia_plan"), localStorage.getItem("jovia_package")];
  let packageName="Silver";
  for(const v of planValues){
@@ -226,20 +291,16 @@ function displayUser(user,apiData={}){
    if(p.includes("silver")){packageName="Silver"; break;}
  }
  const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2");
- b1.textContent=packageName.toUpperCase();
- b2.textContent=packageName.toUpperCase();
+ b1.textContent=packageName.toUpperCase(); b2.textContent=packageName.toUpperCase();
  if(packageName==="Super"){b1.classList.add("super"); b2.classList.add("super");} else {b1.classList.remove("super"); b2.classList.remove("super");}
-
  const defaultBonus=packageName==="Gold"?15000:packageName==="Super"?25000:9000;
  const serverBonus=user.welcomeBonus??user.welcome_bonus??apiData?.welcomeBonus;
  const welcomeBonus=Number.isFinite(Number(serverBonus))?Number(serverBonus):defaultBonus;
  document.getElementById("welcomeBonus").textContent=money(welcomeBonus);
-
  const rawStatus=String(user.accountStatus??user.account_status??user.status??"pending").toLowerCase().trim();
  const statusEl=document.getElementById("accountStatus"),paymentButton=document.getElementById("paymentButton"),activityName=document.getElementById("activityName"),activityDate=document.getElementById("activityDate"),activityAmount=document.getElementById("activityAmount");
  const isActive=["approved","active","activated","super"].includes(rawStatus) || packageName==="Super";
  const isSuspended=rawStatus==="suspended"||rawStatus==="blocked";
-
  if(isActive){
    statusEl.textContent=packageName==="Super"?"Active • SUPER 👑":"Active";
    paymentButton.textContent=packageName==="Super"?"SUPER Active 👑 - Unlimited":"Account Activated ✓";
@@ -254,51 +315,51 @@ function displayUser(user,apiData={}){
    statusEl.textContent="Pending"; paymentButton.textContent="Continue to Payment"; paymentButton.disabled=false; paymentButton.style.opacity="1";
    activityName.textContent=packageName+" welcome bonus"; activityDate.textContent="Pending activation"; activityAmount.textContent="Pending"; activityAmount.className="activity-amount pending";
  }
-
  const upgradeCard=document.getElementById("upgradeCard");
  const upgradeDefault=document.getElementById("upgradeDefault");
  const upgradeSuccess=document.getElementById("upgradeSuccessBox");
  const upgradeTitle=document.getElementById("upgradeTitle");
  const upgradeBadge=document.getElementById("upgradeBadge");
  const upgradeDesc=document.getElementById("upgradeDesc");
-
  if(!isActive){
    upgradeCard.classList.remove("show");
  } else if(packageName==="Super"){
-   upgradeCard.classList.add("show");
-   upgradeDefault.style.display="none";
-   upgradeSuccess.classList.add("show");
+   upgradeCard.classList.add("show"); upgradeDefault.style.display="none"; upgradeSuccess.classList.add("show");
  } else if(packageName==="Silver"){
-   upgradeCard.classList.add("show");
-   upgradeDefault.style.display="block";
-   upgradeSuccess.classList.remove("show");
-   upgradeTitle.textContent="🚀 Silver → SUPER";
-   upgradeBadge.textContent="N16,000 CODE";
-   upgradeDesc.innerHTML="As <b>Silver</b>, upgrade to SUPER is <b>₦16,000</b>. Buy <b>SUPER-SILVER code (SUPER-XXXXXXXX)</b> from admin. Code is one-time use only - shows real name when used.";
+   upgradeCard.classList.add("show"); upgradeDefault.style.display="block"; upgradeSuccess.classList.remove("show");
+   upgradeTitle.textContent="🚀 Silver → SUPER"; upgradeBadge.textContent="N16,000 CODE";
+   upgradeDesc.innerHTML="As <b>Silver</b>, upgrade to SUPER is <b>₦16,000</b>. Buy <b>SUPER-SILVER code</b> from admin.";
  } else if(packageName==="Gold"){
-   upgradeCard.classList.add("show");
-   upgradeDefault.style.display="block";
-   upgradeSuccess.classList.remove("show");
-   upgradeTitle.textContent="🚀 Gold → SUPER";
-   upgradeBadge.textContent="N12,000 CODE";
-   upgradeDesc.innerHTML="As <b>Gold</b>, upgrade to SUPER is <b>₦12,000</b>. Buy <b>SUPER-GOLD code (SUPER-XXXXXXXX)</b> from admin. Code is one-time use only - shows real name when used.";
+   upgradeCard.classList.add("show"); upgradeDefault.style.display="block"; upgradeSuccess.classList.remove("show");
+   upgradeTitle.textContent="🚀 Gold → SUPER"; upgradeBadge.textContent="N12,000 CODE";
+   upgradeDesc.innerHTML="As <b>Gold</b>, upgrade to SUPER is <b>₦12,000</b>. Buy <b>SUPER-GOLD code</b> from admin.";
  }
-
  const referralCode=String(user.referralCode||user.username||user.id||"").replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
  if(referralCode){const url=new URL("register.html",window.location.href); url.searchParams.set("ref",referralCode); document.getElementById("referralLink").textContent=url.href;} else document.getElementById("referralLink").textContent="Not available yet.";
 }
 
-function closeGlobalPopup(){globalOverlay.classList.remove("show"); globalPopupVisible=false; document.body.style.overflow="";}
+function closeGlobalPopup(){
+  const key = globalOverlay.dataset.seenKey;
+  if(key) try{ sessionStorage.setItem(key,"1"); }catch(_){}
+  globalOverlay.classList.remove("show"); globalPopupVisible=false; document.body.style.overflow="";
+}
 document.getElementById("joviaPopupClose").addEventListener("click",closeGlobalPopup);
 document.getElementById("joviaPopupOk").addEventListener("click",closeGlobalPopup);
 globalOverlay.addEventListener("click",e=>{if(e.target===globalOverlay) closeGlobalPopup();});
+
 async function closePrivatePop(){
   if(currentPrivatePopId===null){privateOverlay.classList.remove("show"); document.body.style.overflow=""; return;}
   const id=currentPrivatePopId; privatePopBusy=true;
   const btn=document.getElementById("privatePopOk"); btn.disabled=true; btn.textContent="Please wait...";
   try{
-    const {data}=await fetchJSON("/api/user/private-messages/read",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
-    if(!data||!data.success) throw new Error();
+    // Try multiple read endpoints
+    const endpoints = ["/api/user/private-messages/read","/api/private-messages/read","/api/user/messages/read"];
+    for(const u of endpoints){
+      try{
+        const r = await fetch(u,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
+        if(r.ok) break;
+      }catch(_){}
+    }
     currentPrivatePopId=null; privateOverlay.classList.remove("show"); document.body.style.overflow="";
   }catch(e){alert("Could not mark as read");}finally{privatePopBusy=false; btn.disabled=false; btn.textContent="OK, I Understand ✓";}
 }
@@ -316,7 +377,6 @@ async function copyReferral(){
 function openPage(p){const a=["dashboard.html","jobs.html","history.html","profile.html","withdraw.html","payment.html","login.html"]; if(!a.includes(p)) return; location.href=p;}
 function activate(){if(!currentUser) return; const s=String(currentUser.accountStatus??currentUser.account_status??"pending").toLowerCase(); if(["active","approved","activated","super"].includes(s) || String(currentUser.package||"").toLowerCase().includes("super")) return; location.href="payment.html";}
 
-// === FIXED: INSTANT SUPER UI + NO REPEAT ===
 function showSuperSuccessInstant(){
   try{
     const upgradeCard=document.getElementById("upgradeCard");
@@ -324,19 +384,15 @@ function showSuperSuccessInstant(){
     const upgradeSuccess=document.getElementById("upgradeSuccessBox");
     const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2");
     const statusEl=document.getElementById("accountStatus"),paymentButton=document.getElementById("paymentButton");
-
     if(b1){ b1.textContent="SUPER"; b1.classList.add("super"); }
     if(b2){ b2.textContent="SUPER"; b2.classList.add("super"); }
     if(statusEl){ statusEl.textContent="Active • SUPER 👑"; }
     if(paymentButton){ paymentButton.textContent="SUPER Active 👑 - Unlimited"; paymentButton.disabled=true; paymentButton.style.opacity=".7"; }
-
     if(upgradeCard){ upgradeCard.classList.add("show"); }
     if(upgradeDefault){ upgradeDefault.style.display="none"; }
     if(upgradeSuccess){ upgradeSuccess.classList.add("show"); }
-
-    localStorage.setItem("jovia_plan","SUPER");
-    localStorage.setItem("jovia_package","SUPER");
-  }catch(e){ console.log("showSuper error", e); }
+    localStorage.setItem("jovia_plan","SUPER"); localStorage.setItem("jovia_package","SUPER");
+  }catch(e){}
 }
 
 async function applySuperUpgrade(){
@@ -344,67 +400,38 @@ async function applySuperUpgrade(){
  const input=document.getElementById("upgradeCodeInput"),msg=document.getElementById("upgradeMsg"),btn=document.getElementById("upgradeBtn");
  let code=String(input.value||"").toUpperCase().trim();
  if(!code.startsWith("SUPER-")||code.length!==14){
-   msg.textContent="❌ Must be SUPER-XXXXXXXX (14 chars) - e.g SUPER-AB12CD34"; msg.className="upgrade-msg error"; return;
+   msg.textContent="❌ Must be SUPER-XXXXXXXX (14 chars)"; msg.className="upgrade-msg error"; return;
  }
  if(!currentUser){
-   msg.textContent="⏳ Loading user... wait 2 seconds then try again"; msg.className="upgrade-msg error"; await loadUser(); return;
+   msg.textContent="⏳ Loading user... wait 2 seconds"; msg.className="upgrade-msg error"; await loadUser(); return;
  }
  upgradeBusy=true; btn.disabled=true; btn.textContent="Checking...";
  msg.textContent="⏳ Verifying as "+(currentUser.email||currentUser.username)+"..."; msg.className="upgrade-msg";
  try{
   const r=await fetch("/api/upgrade/apply",{
-    method:"POST",
-    credentials:"include",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      code: code,
-      superCode: code,
-      email: currentUser.email,
-      userEmail: currentUser.email,
-      username: currentUser.username,
-      fullName: currentUser.fullName||currentUser.name||currentUser.username||""
-    })
+    method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({code: code,superCode: code,email: currentUser.email,userEmail: currentUser.email,username: currentUser.username,fullName: currentUser.fullName||currentUser.name||currentUser.username||""})
   });
   const d=await r.json().catch(()=>({}));
   if(!r.ok) throw new Error(d?.message||"Server error "+r.status);
   if(!d.success) throw new Error(d?.message||"Invalid code");
-
-  // === THIS FIXES YOUR 2 ISSUES ===
-  msg.innerHTML="✅ <b>"+(d.message||"Upgraded to SUPER!")+"</b><br><small style='color:#15803d'>Code marked USED - One time only ✓<br>Updating dashboard to SUPER...</small>";
-  msg.className="upgrade-msg success";
-  btn.textContent="SUCCESS ✓ SUPER";
-  btn.style.background="linear-gradient(135deg,#16a34a,#15803d)";
-  btn.style.color="#fff";
-  input.disabled=true;
-  input.value=code+" ✓ USED";
-
-  // INSTANTLY show SUPER UI - no need to reload to see SUPER
+  msg.innerHTML="✅ <b>"+(d.message||"Upgraded to SUPER!")+"</b><br><small style='color:#15803d'>Code USED - One time only ✓</small>"; msg.className="upgrade-msg success";
+  btn.textContent="SUCCESS ✓ SUPER"; btn.style.background="linear-gradient(135deg,#16a34a,#15803d)"; btn.style.color="#fff";
+  input.disabled=true; input.value=code+" ✓ USED";
   showSuperSuccessInstant();
   if(currentUser){ currentUser.package="SUPER"; currentUser.plan="SUPER"; displayUser(currentUser); }
-
-  // Reload fresh after 2 sec to confirm from server
-  setTimeout(async ()=>{
-    try{ await loadUser(); }catch(e){}
-    showSuperSuccessInstant();
-  },1500);
-
+  setTimeout(async ()=>{ try{ await loadUser(); }catch(e){} showSuperSuccessInstant(); },1500);
  }catch(e){
-   msg.textContent="❌ "+(e.message||"Failed"); 
-   msg.className="upgrade-msg error"; 
-   btn.disabled=false; 
-   btn.textContent="UPGRADE →"; 
-   btn.style.background="";
-   btn.style.color="";
-   upgradeBusy=false;
+   msg.textContent="❌ "+(e.message||"Failed"); msg.className="upgrade-msg error"; 
+   btn.disabled=false; btn.textContent="UPGRADE →"; btn.style.background=""; btn.style.color=""; upgradeBusy=false;
  }
 }
 document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,14); document.getElementById("upgradeMsg").textContent="";});
 document.getElementById("upgradeCodeInput").addEventListener("keydown",e=>{if(e.key==="Enter") applySuperUpgrade();});
-
 async function logout(){if(logoutInProgress) return; logoutInProgress=true; try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");}
-
 document.addEventListener("DOMContentLoaded",()=>{loadUser();});
-setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals();}},45000);
+setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups();}},45000);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
 </script>
 </body>
 </html>
