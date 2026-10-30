@@ -2,14 +2,12 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  // ============= TABLES =============
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
     code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
     used INTEGER DEFAULT 0, used_by TEXT DEFAULT '', used_by_name TEXT DEFAULT '',
     used_by_email TEXT DEFAULT '', used_by_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP, used_at TEXT
   );`);
-  
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_game_accounts (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE NOT NULL,
     game_balance INTEGER DEFAULT 0, points INTEGER DEFAULT 0,
@@ -18,7 +16,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
-
   db.exec(`CREATE TABLE IF NOT EXISTS game_transactions (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL,
     amount INTEGER DEFAULT 0, points_change INTEGER DEFAULT 0, game_type TEXT DEFAULT '',
@@ -26,7 +23,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     balance_before INTEGER DEFAULT 0, balance_after INTEGER DEFAULT 0,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
-
   db.exec(`CREATE TABLE IF NOT EXISTS game_deposits (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
     reference TEXT UNIQUE NOT NULL, payment_method TEXT DEFAULT 'manual',
@@ -34,7 +30,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     confirmed_by INTEGER DEFAULT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     confirmed_at TEXT, FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
-
   db.exec(`CREATE TABLE IF NOT EXISTS game_withdrawals (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
     bank_name TEXT DEFAULT '', account_number TEXT DEFAULT '', account_name TEXT DEFAULT '',
@@ -42,27 +37,24 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     processed_at TEXT, processed_by INTEGER DEFAULT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
-
   db.exec(`CREATE TABLE IF NOT EXISTS game_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL,
     score INTEGER DEFAULT 0, multiplier REAL DEFAULT 0, result TEXT DEFAULT '',
     win_amount INTEGER DEFAULT 0, is_demo INTEGER DEFAULT 1,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
-
   db.exec(`CREATE TABLE IF NOT EXISTS game_bets (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL,
     bet_amount INTEGER NOT NULL, win_amount INTEGER DEFAULT 0, result TEXT DEFAULT 'loss',
     multiplier REAL DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(user_id) REFERENCES users(id)
   );`);
-
   try{ db.exec(`ALTER TABLE game_deposits ADD COLUMN proof_image TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  console.log("✅ JOVIA PROFESSIONAL - BALANCED - 20% WIN 80% LOSE - MIN WITHDRAW 2500");
+  console.log("✅ JOVIA FINAL - BOTTLE 360x4 UP/DOWN ONLY - SPIN FROM 0.5x - WINNING RATE SURE - MIN 2500");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -70,13 +62,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const [n,...d] = c.split(" "); try{ addUserColumnIfMissing(n, d.join(" ")); }catch{}
   });
   const hasColumn = name => userColumns().includes(name);
-
   const codeColumns = () => db.prepare("PRAGMA table_info(jovia_codes)").all().map(c => c.name);
   const addCodeColumnIfMissing = (name, def) => { if (!codeColumns().includes(name)) db.exec(`ALTER TABLE jovia_codes ADD COLUMN ${name} ${def}`); };
   ["used_by TEXT DEFAULT ''","used_by_name TEXT DEFAULT ''","used_by_email TEXT DEFAULT ''","used_by_id INTEGER","created_at TEXT","used_at TEXT"].forEach(c=>{
     const [n,...d] = c.split(" "); addCodeColumnIfMissing(n, d.join(" "));
   });
-
   const normalizeCode = v => String(v||"").trim().toUpperCase();
   const randomCode = (len,prefix) => {
     const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -85,7 +75,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
-
   const getSureUser = user => {
     const email=String(user.email||"").trim();
     const username=String(user.username||"").trim();
@@ -93,7 +82,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const sureName=username||fullName||(email?email.split("@")[0]:"")||`User${user.id}`;
     return { sureName, sureEmail: email, display: email?`${sureName} (${email})`:`${sureName} (ID ${user.id})`, id: user.id };
   };
-
   const getRedeemer = row => {
     let user=null;
     if(row.used_by_id!=null) user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE id = ?`).get(row.used_by_id)||null;
@@ -112,7 +100,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const id=user?.id??row.used_by_id??null;
     return { user, name, email, id, display: name?(email?`${name} (${email})`:name):id?`User ID ${id}`:"Name not saved" };
   };
-
   const safeCodeRecord = row => {
     const used=Number(row.used)===1; const redeemer=used?getRedeemer(row):null;
     return {
@@ -124,7 +111,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       created_at: row.created_at||null, used_at: row.used_at||null
     };
   };
-
   const getOrCreateGameAccount = (userId) => {
     let acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
     if(!acc){
@@ -133,7 +119,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
     return acc;
   };
-
   const activateUserByEmail = (email, plan, orderId) => {
     const cleanEmail = String(email||"").trim().toLowerCase();
     const cleanPlan = (plan||"Gold").toLowerCase().includes("gold") ? "Gold" : "Silver";
@@ -153,17 +138,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return user;
     }catch(e){ return null; }
   };
-
   app.get("/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
   app.get("/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
   app.post("/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
   app.get("/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
-
   const userGuard=(req,res,next)=>{ if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."}); return requireUser(req,res,()=>{ if(!req.user||!req.user.id) return res.status(401).json({success:false,message:"Please log in."}); next(); }); };
   const adminGuard=(req,res,next)=>{ const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim(); const bp=String(req.body?.adminPass||req.body?.password||"").trim(); if((hp&&hp===ADMIN_PASS)||(bp&&bp===ADMIN_PASS)||req.session?.isAdmin===true) return next(); return res.status(401).json({success:false,message:"Admin authentication required."}); };
   const adminLoginHandler=(req,res)=>{ const p=String(req.body?.password||"").trim(); if(p!==ADMIN_PASS) return res.status(401).json({success:false,message:"Wrong password."}); if(req.session){ req.session.isAdmin=true; return req.session.save(()=>res.json({success:true})); } return res.json({success:true}); };
   app.post("/api/admin/codes/login",adminLoginHandler); app.post("/api/admin/login",adminLoginHandler);
-
   app.post("/api/admin/codes/generate",adminGuard,(req,res)=>{
     try{
       const t=String(req.body?.type||"").toLowerCase();
@@ -178,7 +160,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   app.get("/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   app.get("/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
-
   app.post("/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
@@ -199,7 +180,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
-
   app.post("/api/withdraw/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
@@ -214,17 +194,15 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
-
   app.get("/api/games/me", userGuard, (req,res)=>{
     try{
       const acc = getOrCreateGameAccount(req.user.id);
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
       const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id);
-      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, odds:{winPercent:20, lossPercent:80}, minWithdraw:2500});
+      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, minWithdraw:2500});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   app.post("/api/games/deposit", userGuard, (req,res)=>{
     try{
       const amount = Number(req.body?.amount);
@@ -243,7 +221,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   });
 
-  // ============= FIXED GAMES - BALANCED + PROFITABLE =============
+  // ============= FINAL FIXED GAMES - BOTTLE 360° x4 - SPIN FROM 0.5x =============
   app.post("/api/games/play", userGuard, (req,res)=>{
     try{
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
@@ -256,19 +234,17 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       
       let isWin = false;
       let mult = 0;
-      let segmentLabel = "0x";
-      let finalSide = null; // for bottle/updown
+      let segmentLabel = "LOSE";
+      let finalSide = null;
 
       if(gameType === "spin_bottle"){
-        // BOTTLE - UP/DOWN ONLY - VICE VERSA - 20% WIN
-        const pick = String(req.body?.prediction||"up").toLowerCase().trim(); // up or down
+        const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 20; // 20% win
-        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up"); // if win, bottle lands on pick, if lose opposite
+        isWin = crypto.randomInt(0,100) < 20;
+        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide.toUpperCase();
       } else if(gameType === "up_down"){
-        // UP/DOWN TRADING - GREEN/RED - 20% WIN - VICE VERSA
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
         isWin = crypto.randomInt(0,100) < 20;
@@ -276,31 +252,25 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide === "up" ? "GREEN" : "RED";
       } else if(gameType === "spin_wheel"){
-        // SPIN WHEEL - PROFITABLE - NO BANKRUPTCY
-        // Segments: 0x, 0.1x, 0.2x, 0.3x, 0.5x, 0.8x, 1.2x, 2x, 5x, 20x, 100x
-        // 100x & 20x NEVER WIN - only visual attraction
-        // House keeps 80%+
+        // NEW: START FROM 0.5x - NO 0.1x, 0.2x, 0.3x - VICE VERSA BUT LOSE MORE
+        // LOSE 30%, 0.5x 25%, 0.8x 15%, 1.2x 10%, 1.5x 8%, 2x 6%, 5x 3%, 20x 2%, 100x 1%
         const rand = crypto.randomInt(0,100);
-        if(rand < 35){ mult = 0; segmentLabel="0x"; isWin=false; } // 35% lose all - BEST PROFIT
-        else if(rand < 55){ mult = 0.1; segmentLabel="0.1x"; isWin=false; } // 20% returns 10%
-        else if(rand < 70){ mult = 0.2; segmentLabel="0.2x"; isWin=false; } // 15% returns 20%
-        else if(rand < 80){ mult = 0.3; segmentLabel="0.3x"; isWin=false; } // 10%
-        else if(rand < 88){ mult = 0.5; segmentLabel="0.5x"; isWin=false; } // 8%
-        else if(rand < 93){ mult = 0.8; segmentLabel="0.8x"; isWin=false; } // 5% returns 80% (small loss for house)
-        else if(rand < 97){ mult = 1.2; segmentLabel="1.2x"; isWin=true; } // 4% small win
-        else if(rand < 99){ mult = 2; segmentLabel="2x"; isWin=true; } // 2%
-        else { mult = 5; segmentLabel="5x"; isWin=true; } // 1% RARE 4th biggest - 100x & 20x NEVER
-        // Safety: never return 20x or 100x
-        if(segmentLabel==="20x" || segmentLabel==="100x"){ mult=0; segmentLabel="0x"; isWin=false; }
+        if(rand < 30){ mult = 0; segmentLabel="LOSE"; isWin=false; }
+        else if(rand < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
+        else if(rand < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
+        else if(rand < 80){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
+        else if(rand < 88){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
+        else if(rand < 94){ mult = 2; segmentLabel="2x"; isWin=true; }
+        else if(rand < 97){ mult = 5; segmentLabel="5x"; isWin=true; }
+        else if(rand < 99){ mult = 20; segmentLabel="20x"; isWin=true; }
+        else { mult = 100; segmentLabel="100x"; isWin=true; }
       } else {
-        // number_predict and others - coming soon, but still handle as 20%
         isWin = crypto.randomInt(0,100) < 20;
         mult = isWin ? 2.5 : 0;
-        segmentLabel = isWin ? `${mult}x` : "0x";
+        segmentLabel = isWin ? `${mult}x` : "LOSE";
       }
 
-      const winAmount = isWin ? Math.floor(bet*mult) : Math.floor(bet*mult); // for wheel, 0.1x still gives small return
-      // For bottle/updown, winAmount=0 if lose
+      const winAmount = Math.floor(bet*mult);
       const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
       const newBal = acc.game_balance - bet + finalWin;
       
@@ -316,10 +286,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         winAmount: finalWin, 
         multiplier: mult, 
         segment: segmentLabel,
-        finalSide: finalSide, // up/down for bottle, GREEN/RED for updown
+        finalSide: finalSide,
         newBalance:newBal, 
-        message: gameType==="spin_bottle" ? (finalSide===String(req.body?.prediction||"up").toLowerCase() ? `BOTTLE ${finalSide.toUpperCase()} - YOU WIN ₦${finalWin}!` : `BOTTLE ${finalSide.toUpperCase()} - YOU LOSE ₦${bet}`) : 
-                 gameType==="spin_wheel" ? (finalWin===0 ? `Wheel ${segmentLabel} - LOSE ALL ₦${bet}` : finalWin<bet ? `Wheel ${segmentLabel} - Bet ₦${bet}, Return ₦${finalWin}` : `WIN! Wheel ${segmentLabel} - WIN ₦${finalWin}!`) :
+        message: gameType==="spin_bottle" ? `BOTTLE ${finalSide.toUpperCase()} - ${isWin?'WIN':'LOSE'} ${isWin?`₦${finalWin}`:`₦${bet}`}` : 
+                 gameType==="spin_wheel" ? (finalWin===0 ? `Wheel ${segmentLabel} - LOSE ₦${bet}` : finalWin<bet ? `Wheel ${segmentLabel} - Return ₦${finalWin}` : `WIN! Wheel ${segmentLabel} - WIN ₦${finalWin}!`) :
                  (isWin?`WIN ₦${finalWin} (${mult}x)`:`Lose ₦${bet}`),
         gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), 
         minWithdraw:2500
@@ -348,7 +318,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
   app.get("/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
   app.get("/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
-
   app.post("/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
     try{
       const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
@@ -363,7 +332,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Confirmed ₦${dep.amount} - funded`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   app.post("/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
     try{
       const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
@@ -372,7 +340,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:"Declined"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   app.post("/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
     try{
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
@@ -381,7 +348,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Paid ₦${w.amount} to ${w.account_number}`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   app.post("/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
     try{
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
@@ -394,5 +360,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ PROFESSIONAL JOVIA API FIXED - BOTTLE UP/DOWN ONLY, SPIN PROFITABLE (100x & 20x NEVER), MIN WITHDRAW 2500");
+  console.log("✅ FINAL JOVIA - BOTTLE 360° x4 UP/DOWN - SPIN FROM 0.5x NO 0.1x - WINNING RATE SURE - MIN 2500");
 };
