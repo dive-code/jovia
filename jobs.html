@@ -105,11 +105,8 @@ button,input,select{font:inherit}button:disabled{opacity:.55;cursor:not-allowed}
 .history-item:last-child{border-bottom:0}
 .history-muted{color:var(--m);font-size:10px}
 .small-tag{display:inline-flex;border-radius:8px;padding:4px 7px;font-size:9px;font-weight:900;background:#f5f3f7;color:var(--m)}
-.bottle-stage{position:relative;height:260px;background:radial-gradient(circle at 50% 35%,#2a1a4a,#0e0a1f);border-radius:18px;border:1px solid #2a2250;display:flex;align-items:center;justify-content:center;overflow:hidden}
-.bottle{font-size:100px;transition:transform 2.2s cubic-bezier(.2,.8,.15,1);filter:drop-shadow(0 10px 25px rgba(255,196,0,.25));will-change:transform}
-.bottle.up{transform:rotate(0deg) !important}
-.bottle.down{transform:rotate(180deg) !important}
-.bottle.spin{transform:rotate(720deg) !important}
+.bottle-stage{position:relative;height:280px;background:radial-gradient(circle at 50% 35%,#2a1a4a,#0e0a1f);border-radius:18px;border:1px solid #2a2250;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bottle{font-size:110px;transition:transform 2.2s cubic-bezier(.2,.8,.15,1);filter:drop-shadow(0 10px 25px rgba(255,196,0,.25));will-change:transform;transform:rotate(0deg)}
 .bottle-label{position:absolute;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;font-size:10px;font-weight:900;pointer-events:none}
 .bottle-label.up{top:14px;background:#052e16;border:1px solid #22c55e;color:#22c55e}
 .bottle-label.down{bottom:14px;background:#450a0a;border:1px solid #ef4444;color:#ef4444}
@@ -228,7 +225,7 @@ button,input,select{font:inherit}button:disabled{opacity:.55;cursor:not-allowed}
       <div class="game-notice">Pick UP or DOWN. Bottle will land exactly UP or DOWN only - not sideways. Match = WIN.</div>
       <div class="bottle-stage">
         <div class="bottle-label up">⬆ UP</div>
-        <div class="bottle up" id="bottle">🍾</div>
+        <div class="bottle" id="bottle" style="transform:rotate(0deg)">🍾</div>
         <div class="bottle-label down">⬇ DOWN</div>
       </div>
       <div id="bottleResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick UP or DOWN</div>
@@ -437,13 +434,13 @@ function closeGamePanels(){document.querySelectorAll(".game-panel").forEach(p=>p
 function setGameResult(id,msg,type="info"){const el=document.getElementById(id);el.textContent=msg;el.classList.add("show");el.style.background=type==="success"?"#dcfce7":type==="error"?"#fee2e2":"#f5f3ff";el.style.color=type==="success"?"#166534":type==="error"?"#991b1b":"#4c1d95";}
 function clearGameResult(id){const el=document.getElementById(id);el.textContent="";el.classList.remove("show");}
 
-// BOTTLE FIXED - UP (0deg) OR DOWN (180deg) ONLY - NO SIDEWAYS
+// === BOTTLE FIXED - 1440deg UP, 1620deg DOWN - NO SIDEWAYS EVER ===
 function pickBottle(side){
   bottlePick=side;
   document.getElementById('bottlePickUp').className='pred up'+(side==='up'?' selected':'');
   document.getElementById('bottlePickDown').className='pred down'+(side==='down'?' selected':'');
   document.getElementById('bottlePlayBtn').innerText=`🍾 SPIN BOTTLE - ${side.toUpperCase()}`;
-  document.getElementById('bottleResultText').innerText=`You picked ${side.toUpperCase()} - Spin!`;
+  document.getElementById('bottleResultText').innerHTML=`You picked <b>${side.toUpperCase()}</b> - If bottle lands <b>${side.toUpperCase()}</b> you WIN`;
   document.getElementById('bottleResultText').style.color='#211827';
 }
 async function playBottleUpDown(){
@@ -455,37 +452,37 @@ async function playBottleUpDown(){
   const btn=document.getElementById('bottlePlayBtn');
   gameBusy=true; btn.disabled=true; btn.innerText='🍾 Spinning...';
   clearGameResult('bottleResult');
-  bottle.className='bottle spin';
-  resText.innerText='Spinning...'; resText.style.color='#211827';
+  bottle.style.transform='rotate(0deg)';
+  void bottle.offsetWidth;
+  bottle.style.transform='rotate(1440deg)';
+  resText.innerText='Bottle spinning... UP or DOWN...'; resText.style.color='#211827';
   try{
     const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_bottle',bet_amount:stake,amount:stake,prediction:bottlePick})});
     const isWin = d.isWin === true || String(d.result).toLowerCase()==='win';
-    const finalSide = isWin ? bottlePick : (bottlePick==='up'?'down':'up');
+    const finalSide = d.finalSide || (isWin ? bottlePick : (bottlePick==='up'?'down':'up'));
     setTimeout(()=>{
-      bottle.className='bottle '+finalSide;
-      if(finalSide === bottlePick){
-        resText.innerHTML=`🎉 BOTTLE <b>${finalSide.toUpperCase()}</b> - YOU WIN ₦${d.winAmount}!`;
-        resText.style.color='#15803d';
-        setGameResult('bottleResult',`WIN! Bottle ${finalSide.toUpperCase()} matches your pick ${bottlePick.toUpperCase()} - WIN ₦${d.winAmount} (${d.multiplier}x) - Bal ${formatNaira(d.newBalance)}`,'success');
-      } else {
-        resText.innerHTML=`💔 BOTTLE <b>${finalSide.toUpperCase()}</b> - YOU LOSE ₦${stake}`;
-        resText.style.color='#b91c1c';
-        setGameResult('bottleResult',`LOSE! Bottle ${finalSide.toUpperCase()} but you picked ${bottlePick.toUpperCase()} - LOSE ₦${stake} - Bal ${formatNaira(d.newBalance)}`,'error');
-      }
-      if(d.gameAccount) updateGameBalance(d.gameAccount);
-      refreshGameData();
-      btn.disabled=false; btn.innerText=`🍾 SPIN AGAIN - ${bottlePick.toUpperCase()}`;
-      gameBusy=false;
-    },2200);
+      bottle.style.transform = finalSide==='up' ? 'rotate(1440deg)' : 'rotate(1620deg)';
+      setTimeout(()=>{
+        if(finalSide===bottlePick){
+          resText.innerHTML=`🎉 BOTTLE <b>${finalSide.toUpperCase()}</b> - YOU WIN ₦${d.winAmount}!`;
+          resText.style.color='#15803d';
+          setGameResult('bottleResult',`✅ WIN! Bottle ${finalSide.toUpperCase()} = WIN ₦${d.winAmount} (${d.multiplier}x) - Bal ${formatNaira(d.newBalance)}`,'success');
+        } else {
+          resText.innerHTML=`💔 BOTTLE <b>${finalSide.toUpperCase()}</b> - YOU LOSE ₦${stake}`;
+          resText.style.color='#b91c1c';
+          setGameResult('bottleResult',`❌ LOSE! Bottle ${finalSide.toUpperCase()} but pick ${bottlePick.toUpperCase()} - Bal ${formatNaira(d.newBalance)}`,'error');
+        }
+        if(d.gameAccount) updateGameBalance(d.gameAccount);
+        refreshGameData();
+        btn.disabled=false; btn.innerText=`🍾 SPIN AGAIN - ${bottlePick.toUpperCase()}`;
+        gameBusy=false;
+      },350);
+    },2300);
   }catch(e){
-    setTimeout(()=>{
-      bottle.className='bottle up';
-      resText.innerText='❌ '+e.message;
-      resText.style.color='#b91c1c';
-      setGameResult('bottleResult',e.message,'error');
-      btn.disabled=false; btn.innerText=`🍾 SPIN BOTTLE - ${bottlePick.toUpperCase()}`;
-      gameBusy=false;
-    },800);
+    bottle.style.transform='rotate(0deg)';
+    resText.innerText='❌ '+e.message; resText.style.color='#b91c1c';
+    setGameResult('bottleResult',e.message,'error');
+    btn.disabled=false; btn.innerText=`🍾 SPIN BOTTLE - ${bottlePick.toUpperCase()}`; gameBusy=false;
   }
 }
 function pickUpDown(side){
@@ -493,6 +490,7 @@ function pickUpDown(side){
   document.getElementById('upPickUp').className='pred up'+(side==='up'?' selected':'');
   document.getElementById('upPickDown').className='pred down'+(side==='down'?' selected':'');
   document.getElementById('updownPlayBtn').innerText=`📈 PLACE ORDER - ${side.toUpperCase()}`;
+  document.getElementById('updownResultText').innerHTML=`You picked <b>${side.toUpperCase()}</b> - If candle <b>${side==='up'?'GREEN':'RED'}</b> you WIN`;
 }
 async function playUpDownTrading(){
   if(gameBusy) return;
@@ -586,21 +584,16 @@ async function playWheel(){
     const spins = 5*360 + targetAngleDeg;
     const startAngle = wheelAngle*180/Math.PI;
     const endAngle = startAngle + spins;
-    let current = startAngle; const duration=3800; const startTime=Date.now();
+    const startTime=Date.now(); const duration=3800;
     const animate=()=>{
       const elapsed=Date.now()-startTime; const progress=Math.min(elapsed/duration,1);
       const ease=1-Math.pow(1-progress,3);
-      current = startAngle + (endAngle-startAngle)*ease;
-      wheelAngle = current*Math.PI/180; drawWheel();
+      wheelAngle = (startAngle + (endAngle-startAngle)*ease)*Math.PI/180; drawWheel();
       if(progress<1) requestAnimationFrame(animate);
       else {
-        if(d.winAmount===0){
-          resText.innerHTML=`💔 Wheel <b>${targetLabel}</b> - LOSE ₦${stake}`;
-        } else if(d.winAmount < stake){
-          resText.innerHTML=`Wheel <b>${targetLabel}</b> - Return ₦${d.winAmount}`;
-        } else {
-          resText.innerHTML=`🎉 WIN <b>${targetLabel}</b> - WIN ₦${d.winAmount}!`;
-        }
+        if(d.winAmount===0) resText.innerHTML=`💔 Wheel <b>${targetLabel}</b> - LOSE ₦${stake}`;
+        else if(d.winAmount < stake) resText.innerHTML=`Wheel <b>${targetLabel}</b> - Return ₦${d.winAmount}`;
+        else resText.innerHTML=`🎉 WIN <b>${targetLabel}</b> - WIN ₦${d.winAmount}!`;
         setGameResult('wheelResult',d.message||`${targetLabel} - Bal ${formatNaira(d.newBalance)}`, d.isWin && d.winAmount>=stake?'success':'info');
         if(d.gameAccount) updateGameBalance(d.gameAccount);
         refreshGameData();
@@ -618,7 +611,7 @@ function openPlayGame(type){
   if(type==='bottle'){
     clearGameResult('bottleResult'); pickBottle('up');
     document.getElementById('bottleStake').value='100';
-    document.getElementById('bottle').className='bottle up';
+    document.getElementById('bottle').style.transform='rotate(0deg)';
     showGamePanel('bottlePanel'); return;
   }
   if(type==='updown'){
@@ -630,9 +623,7 @@ function openPlayGame(type){
     clearGameResult('wheelResult');
     showGamePanel('wheelPanel'); drawWheel(); return;
   }
-  if(type==='guess'){
-    showGamePanel('guessPanel'); return;
-  }
+  if(type==='guess'){ showGamePanel('guessPanel'); return; }
 }
 function getServerBalance(data){
   const me=data?.gameAccount||data?.user||data;
@@ -685,7 +676,7 @@ async function submitDeposit(event){
   gameBusy=true;const btn=document.getElementById("depositSubmit");btn.disabled=true;btn.textContent="Uploading Proof...";clearGameResult("depositResult");
   try{
     const d=await apiRequest("/api/games/deposit",{method:"POST",body:JSON.stringify({amount, reference:ref, proof_image:proofBase64})});
-    setGameResult("depositResult",d.message||`Proof submitted! Pending admin verification for 1850772192. Ref: ${ref}`,"info");
+    setGameResult("depositResult",d.message||`Proof submitted! Pending 1850772192`,"info");
     document.getElementById("depositAmount").value="";document.getElementById("depositRef").value="";document.getElementById("depositProof").value="";proofBase64="";document.getElementById("proofPreview").style.display="none";
     await refreshGameData();
   }catch(e){setGameResult("depositResult",e.message,"error");}
@@ -703,7 +694,7 @@ async function submitWithdrawal(event){
   gameBusy=true;const btn=document.getElementById("withdrawSubmit");btn.disabled=true;btn.textContent="Requesting...";clearGameResult("withdrawResult");
   try{
     const d=await apiRequest("/api/games/withdraw",{method:"POST",body:JSON.stringify({amount,bank_name,account_number,account_name})});
-    setGameResult("withdrawResult",d.message||`Withdrawal request ₦${amount} to ${account_number} pending - admin will pay from 1850772192`,"info");
+    setGameResult("withdrawResult",d.message||`Withdrawal request ₦${amount} pending`,"info");
     document.getElementById("withdrawAmount").value="";
     await refreshGameData();await getCurrentUser();
   }catch(e){setGameResult("withdrawResult",e.message,"error");}
@@ -779,7 +770,7 @@ document.getElementById("popupClose").addEventListener("click",closePopup);
 document.getElementById("inactivePopup").addEventListener("click",e=>{if(e.target.id==="inactivePopup")closePopup();});
 document.getElementById("retryButton").addEventListener("click",loadAll);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeGamesLobby();closePopup();}});
-document.addEventListener("DOMContentLoaded",()=>{restoreTaskTimers();startTaskTimerTicker();loadAll();pickBottle('up');pickUpDown('up');});
+document.addEventListener("DOMContentLoaded",()=>{restoreTaskTimers();startTaskTimerTicker();loadAll();pickBottle('up');pickUpDown('up');drawWheel();});
 </script>
 </body>
 </html>
