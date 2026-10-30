@@ -54,7 +54,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  console.log("✅ JOVIA FINAL - BOTTLE 360x4 UP/DOWN ONLY - SPIN FROM 0.5x - WINNING RATE SURE - MIN 2500");
+  console.log("✅ JOVIA FINAL - BOTTLE 360x4 - SPIN 0.5x - SILVER/GOLD PRICE FIXED - MIN 2500");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -160,13 +160,32 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   app.get("/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   app.get("/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
+
+  // FIXED: SILVER TO SUPER vs GOLD TO SUPER - PRICE MUST MATTER
   app.post("/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
       const tx=db.transaction(()=>{
         const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
         const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-        if(!code) throw new Error("INVALID"); if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
+        if(!code) throw new Error("INVALID CODE"); 
+        if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
+        
+        const currentPackage = String(user.package||user.plan||"Silver").toLowerCase();
+        const isSilver = currentPackage.includes("silver");
+        const isGold = currentPackage.includes("gold");
+        const codeType = String(code.type||"").toLowerCase();
+
+        if(isSilver && codeType !== "super-silver"){
+          throw new Error(`SILVER plan requires SUPER-SILVER code (₦16000). You used ${codeType.toUpperCase()} (₦${code.price}). Price different - buy correct code.`);
+        }
+        if(isGold && codeType !== "super-gold"){
+          throw new Error(`GOLD plan requires SUPER-GOLD code (₦12000). You used ${codeType.toUpperCase()} (₦${code.price}). Price different - buy correct code.`);
+        }
+        if(!["super-silver","super-gold"].includes(codeType)){
+          throw new Error("INVALID CODE TYPE FOR UPGRADE TO SUPER");
+        }
+
         const sure=getSureUser(user);
         const sets=["package=?","is_super=?"]; const vals=["SUPER",1];
         if(hasColumn("plan")){ sets.push("plan=?"); vals.push("SUPER"); }
@@ -180,6 +199,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
+
   app.post("/api/withdraw/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
@@ -220,8 +240,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.status(500).json({success:false,message:e.message});
     }
   });
-
-  // ============= FINAL FIXED GAMES - BOTTLE 360° x4 - SPIN FROM 0.5x =============
   app.post("/api/games/play", userGuard, (req,res)=>{
     try{
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
@@ -231,72 +249,52 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}. Deposit to 1850772192`});
-      
-      let isWin = false;
-      let mult = 0;
-      let segmentLabel = "LOSE";
-      let finalSide = null;
-
+      let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
       if(gameType === "spin_bottle"){
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 20;
+        isWin = crypto.randomInt(0,100) < 30;
         finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide.toUpperCase();
       } else if(gameType === "up_down"){
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 20;
+        isWin = crypto.randomInt(0,100) < 30;
         finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide === "up" ? "GREEN" : "RED";
       } else if(gameType === "spin_wheel"){
-        // NEW: START FROM 0.5x - NO 0.1x, 0.2x, 0.3x - VICE VERSA BUT LOSE MORE
-        // LOSE 30%, 0.5x 25%, 0.8x 15%, 1.2x 10%, 1.5x 8%, 2x 6%, 5x 3%, 20x 2%, 100x 1%
-        const rand = crypto.randomInt(0,100);
-        if(rand < 30){ mult = 0; segmentLabel="LOSE"; isWin=false; }
-        else if(rand < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
-        else if(rand < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
-        else if(rand < 80){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
-        else if(rand < 88){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
-        else if(rand < 94){ mult = 2; segmentLabel="2x"; isWin=true; }
-        else if(rand < 97){ mult = 5; segmentLabel="5x"; isWin=true; }
-        else if(rand < 99){ mult = 20; segmentLabel="20x"; isWin=true; }
+        const rand = crypto.randomInt(0,1000);
+        if(rand < 250){ mult = 0; segmentLabel="LOSE"; isWin=false; }
+        else if(rand < 450){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
+        else if(rand < 600){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
+        else if(rand < 750){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
+        else if(rand < 850){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
+        else if(rand < 920){ mult = 2; segmentLabel="2x"; isWin=true; }
+        else if(rand < 960){ mult = 5; segmentLabel="5x"; isWin=true; }
+        else if(rand < 985){ mult = 20; segmentLabel="20x"; isWin=true; }
         else { mult = 100; segmentLabel="100x"; isWin=true; }
       } else {
-        isWin = crypto.randomInt(0,100) < 20;
+        isWin = crypto.randomInt(0,100) < 30;
         mult = isWin ? 2.5 : 0;
         segmentLabel = isWin ? `${mult}x` : "LOSE";
       }
-
       const winAmount = Math.floor(bet*mult);
       const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
       const newBal = acc.game_balance - bet + finalWin;
-      
       db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, (isWin && mult>=1)?1:0, req.user.id);
       db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, finalWin, isWin?'win':'loss', mult);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?finalWin:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
-      
       return res.json({
-        success:true, 
-        result:isWin?'win':'loss', 
-        isWin, 
-        bet, 
-        winAmount: finalWin, 
-        multiplier: mult, 
-        segment: segmentLabel,
-        finalSide: finalSide,
-        newBalance:newBal, 
-        message: gameType==="spin_bottle" ? `BOTTLE ${finalSide.toUpperCase()} - ${isWin?'WIN':'LOSE'} ${isWin?`₦${finalWin}`:`₦${bet}`}` : 
+        success:true, result:isWin?'win':'loss', isWin, bet, winAmount: finalWin, multiplier: mult, segment: segmentLabel, finalSide: finalSide, newBalance:newBal, 
+        message: gameType==="spin_bottle" ? `BOTTLE ${finalSide.toUpperCase()} - 360° x4 - ${isWin?'WIN':'LOSE'} ${isWin?`₦${finalWin}`:`₦${bet}`}` : 
                  gameType==="spin_wheel" ? (finalWin===0 ? `Wheel ${segmentLabel} - LOSE ₦${bet}` : finalWin<bet ? `Wheel ${segmentLabel} - Return ₦${finalWin}` : `WIN! Wheel ${segmentLabel} - WIN ₦${finalWin}!`) :
                  (isWin?`WIN ₦${finalWin} (${mult}x)`:`Lose ₦${bet}`),
-        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), 
-        minWithdraw:2500
+        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), minWithdraw:2500
       });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   app.post("/api/games/withdraw", userGuard, (req,res)=>{
     try{
       const amount = Number(req.body?.amount);
@@ -314,7 +312,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending - admin will pay from 1850772192 (Min ₦2500)`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
   app.get("/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
   app.get("/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
@@ -359,6 +356,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Declined and refunded ₦${w.amount}`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
-  console.log("✅ FINAL JOVIA - BOTTLE 360° x4 UP/DOWN - SPIN FROM 0.5x NO 0.1x - WINNING RATE SURE - MIN 2500");
+  console.log("✅ FINAL JOVIA - SILVER/GOLD PRICE FIXED - BOTTLE 360° x4 - SPIN 0.5x - WINNING SURE - MIN 2500");
 };
