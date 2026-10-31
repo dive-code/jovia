@@ -2,7 +2,28 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL - NO MAIN DASHBOARD OVERWRITE - DAILY ONE EARN + MUST FINISH");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - DAILY ONE + MUST FINISH - Railway Safe");
+
+  // Helper to check if route already exists - So we no overwrite main dashboard
+  const routeExists = (path, method) => {
+    try{
+      if(!app._router || !app._router.stack) return false;
+      return app._router.stack.some(layer => {
+        if(!layer.route) return false;
+        const routePath = layer.route.path;
+        const routeMethod = Object.keys(layer.route.methods)[0];
+        return routePath === path && routeMethod === method;
+      });
+    }catch{ return false; }
+  };
+  const safeAdd = (method, path, ...handlers) => {
+    if(routeExists(path, method)){
+      console.log(`⏭️ Skipping ${method.toUpperCase()} ${path} - Main server already get am - Main dashboard safe`);
+      return;
+    }
+    app[method](path, ...handlers);
+    console.log(`✅ Added ${method.toUpperCase()} ${path}`);
+  };
 
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
     code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
@@ -87,7 +108,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  // SAFE CLEANING - After 5 sec - Daily duplicates bounce back
   setTimeout(()=>{
     try{
       const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1`).all();
@@ -122,8 +142,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       `).run();
     }
   }catch{}
-
-  console.log("✅ JOVIA SECOND SERVER - FULL - MAIN DASHBOARD NOT OVERWRITTEN - DAILY ONE EARN + MUST FINISH READY");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -223,10 +241,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return user;
     }catch(e){ return null; }
   };
-  app.get("/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
-  app.get("/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
-  app.post("/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
-  app.get("/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
 
   const userGuard=(req,res,next)=>{
     if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."});
@@ -268,25 +282,27 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
     return res.json({success:true, admin:{username:"admin"}});
   };
-  app.post("/api/admin/codes/login",adminLoginHandler);
-  app.post("/api/admin/login",adminLoginHandler);
 
-  app.get("/api/admin/me", (req,res)=>{
+  // === CORE ROUTES - ALWAYS ADD ===
+  safeAdd("post","/api/admin/codes/login",adminLoginHandler);
+  safeAdd("post","/api/admin/login",adminLoginHandler);
+  safeAdd("get","/api/admin/me", (req,res)=>{
     const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
     if(req.session && req.session.isAdmin){ return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
     if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
     return res.status(401).json({success:false,message:"Not admin - Session expired"});
   });
+  safeAdd("get","/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
+  safeAdd("get","/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
+  safeAdd("post","/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
+  safeAdd("get","/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
 
-  // === REMOVED DASHBOARD OVERWRITE - Your main server dashboard will load full info now ===
-  // I removed app.get("/api/admin/dashboard") etc here - So your main admin board no go empty again
-
-  app.post("/api/admin/logout", (req,res)=>{
+  // === ADMIN CODE ROUTES ===
+  safeAdd("post","/api/admin/logout", (req,res)=>{
     if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
     return res.json({success:true});
   });
-
-  app.post("/api/admin/user/suspend", adminGuard, (req,res)=>{
+  safeAdd("post","/api/admin/user/suspend", adminGuard, (req,res)=>{
     try{
       const userId = Number(req.body?.userId||req.body?.id);
       const reason = String(req.body?.reason||"Suspended by admin").slice(0,200);
@@ -295,7 +311,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`User ${userId} suspended ⛔ - ${reason}`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.post("/api/admin/user/unsuspend", adminGuard, (req,res)=>{
+  safeAdd("post","/api/admin/user/unsuspend", adminGuard, (req,res)=>{
     try{
       const userId = Number(req.body?.userId||req.body?.id);
       if(!userId) return res.status(400).json({success:false,message:"userId required"});
@@ -303,15 +319,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`User ${userId} unsuspended ✅`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.get("/api/admin/users", adminGuard, (req,res)=>{
+  safeAdd("get","/api/admin/users", adminGuard, (req,res)=>{
     try{
       const users = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, created_at FROM users ORDER BY id DESC LIMIT 300`).all();
       const withFlag = users.map(u=>({...u, is_suspended: isSuspendedStatus(u.account_status||u.status), is_super: isSuperUserCheck(u)}));
       return res.json({success:true,users:withFlag});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
-  app.post("/api/admin/codes/generate",adminGuard,(req,res)=>{
+  safeAdd("post","/api/admin/codes/generate",adminGuard,(req,res)=>{
     try{
       const t=String(req.body?.type||"").toLowerCase();
       const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":null;
@@ -323,10 +338,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,codes:tx(),total:getTotalCodes()});
     }catch(e){ return res.status(500).json({success:false,message:"Could not generate."}); }
   });
-  app.get("/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
-  app.get("/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
+  safeAdd("get","/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
+  safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
 
-  app.post("/api/upgrade/apply",userGuard,(req,res)=>{
+  // === USER UPGRADE ROUTES ===
+  safeAdd("post","/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
       const tx=db.transaction(()=>{
@@ -355,8 +371,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
-
-  app.post("/api/withdraw/apply",userGuard,(req,res)=>{
+  safeAdd("post","/api/withdraw/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
       const tx=db.transaction(()=>{
@@ -372,28 +387,27 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
 
-  app.get("/api/music/tracks", userGuard, (req,res)=>{
+  // === MUSIC ROUTES - DAILY ONE EARN + MUST FINISH ===
+  safeAdd("get","/api/music/tracks", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"⛔ Suspended - Contact Admin",suspended:true});
+      if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true});
       if(!isSuperUserCheck(u)) return res.status(403).json({success:false,message:"👑 SUPER ONLY",super_only:true});
       if(!isActiveStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"Activate first"});
       const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all();
       return res.json({success:true,super:true,tracks,count:tracks.length});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
-  app.get("/api/music/list", (req,res)=>{
+  safeAdd("get","/api/music/list", (req,res)=>{
     try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length}); }catch(e){ return res.json({success:true,tracks:[],count:0}); }
   });
-  app.get("/api/music/all", (req,res)=>{
+  safeAdd("get","/api/music/all", (req,res)=>{
     try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length,super:true}); }catch(e){ return res.json({success:true,tracks:[]}); }
   });
-  app.get("/api/music/public", (req,res)=>{
+  safeAdd("get","/api/music/public", (req,res)=>{
     try{ const tracks = db.prepare(`SELECT id,title,artist,url,cover,reward,category,plays FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks}); }catch(e){ return res.json({success:true,tracks:[]}); }
   });
-
-  app.get("/api/music/stats", userGuard, (req,res)=>{
+  safeAdd("get","/api/music/stats", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,suspended:true});
@@ -403,8 +417,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({ success:true, today: today.sum||0, todayEarnings: today.sum||0, completed: today.cnt||0, songsCompleted: today.cnt||0, total: total.sum||0, totalEarnings: total.sum||0, target: 10, targetCount: `${today.cnt||0} / 10 songs` });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
-  app.get("/api/music/history", userGuard, (req,res)=>{
+  safeAdd("get","/api/music/history", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT account_status,status,package,plan,is_super FROM users WHERE id=?`).get(req.user.id);
       if(!isSuperUserCheck(u)) return res.status(403).json({success:false,super_only:true});
@@ -412,20 +425,17 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,history:rows,earnings:rows});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
-  app.post("/api/music/complete", userGuard, (req,res)=>{
+  safeAdd("post","/api/music/complete", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT * FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended",suspended:true});
-      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,message:"👑 Super Only - Upgrade to SUPER",super_only:true});
+      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,message:"👑 Super Only",super_only:true});
       const trackId = Number(req.body?.trackId||req.body?.id||0);
       const watched = Number(req.body?.watchedSeconds||0);
       const duration = Number(req.body?.duration||0);
       const finished = req.body?.finished === true || req.body?.finished === 1 || String(req.body?.finished).toLowerCase() === "true";
-
       const track = db.prepare(`SELECT * FROM jovia_music WHERE id=?`).get(trackId) || {title:"Music Track",reward:100};
       const reward = Number(track.reward||100);
-
       if(!finished){
         return res.status(400).json({success:false,message:`You must listen to the music finish before earning - Play till end 🎧`});
       }
@@ -435,12 +445,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(duration > 0 && watched < Math.max(60, duration * 0.85)){
         return res.status(400).json({success:false,message:`You must finish the music - ${Math.floor(watched)}s / ${Math.floor(duration)}s - Keep playing till end`});
       }
-
       const todayExists = db.prepare(`SELECT id, created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=DATE('now') LIMIT 1`).get(req.user.id, trackId);
       if(todayExists){
         return res.status(403).json({success:false,message:"✅ Already earned for this song today - Come back tomorrow - One song per day only", already:true, nextDay:true});
       }
-
       db.transaction(()=>{
         db.prepare(`INSERT INTO jovia_music_earnings (user_id,track_id,title,amount,watched_seconds) VALUES (?,?,?,?,?)`).run(req.user.id, trackId, track.title, reward, watched);
         db.prepare(`UPDATE jovia_music SET plays=plays+1 WHERE id=?`).run(trackId);
@@ -450,8 +458,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({ success:true, message:`Super Earned ${reward} - Come back tomorrow for same song`, reward: reward, amount: reward, walletBalance: updatedUser?.wallet_balance||0, balance: updatedUser?.wallet_balance||0, nextDay:true });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
-  app.post("/api/music/play/:id", userGuard, (req,res)=>{
+  safeAdd("post","/api/music/play/:id", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,suspended:true});
@@ -462,7 +469,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.json({success:false}); }
   });
 
-  app.post("/api/admin/music/add", adminGuard, (req,res)=>{
+  // === ADMIN MUSIC ===
+  safeAdd("post","/api/admin/music/add", adminGuard, (req,res)=>{
     try{
       const {title,artist,url,cover,reward,category} = req.body;
       if(!title||!url) return res.status(400).json({success:false,message:"title and url required"});
@@ -470,23 +478,24 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:"Added"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.get("/api/admin/music/list", adminGuard, (req,res)=>{
+  safeAdd("get","/api/admin/music/list", adminGuard, (req,res)=>{
     const rows = db.prepare(`SELECT * FROM jovia_music ORDER BY id DESC`).all();
     return res.json({success:true,tracks:rows});
   });
-  app.put("/api/admin/music/:id", adminGuard, (req,res)=>{
+  safeAdd("put","/api/admin/music/:id", adminGuard, (req,res)=>{
     try{
       const {title,artist,url,cover,reward,category} = req.body;
       db.prepare(`UPDATE jovia_music SET title=?,artist=?,url=?,cover=?,reward=?,category=? WHERE id=?`).run(title,artist||"Jovia Sounds",url,cover||"♫",Number(reward||100),category||"Super Hits",Number(req.params.id));
       return res.json({success:true,message:"Updated"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.delete("/api/admin/music/:id", adminGuard, (req,res)=>{
+  safeAdd("delete","/api/admin/music/:id", adminGuard, (req,res)=>{
     db.prepare(`DELETE FROM jovia_music WHERE id=?`).run(Number(req.params.id));
     return res.json({success:true});
   });
 
-  app.get("/api/games/me", userGuard, (req,res)=>{
+  // === GAMES - Only if not exists in main server - Main dashboard safe ===
+  safeAdd("get","/api/games/me", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(userRow?.account_status||userRow?.status)){ return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true}); }
@@ -497,7 +506,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, minWithdraw:2500});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.post("/api/games/deposit", userGuard, (req,res)=>{
+  safeAdd("post","/api/games/deposit", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended"});
@@ -516,10 +525,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.status(500).json({success:false,message:e.message});
     }
   });
-  app.post("/api/games/play", userGuard, (req,res)=>{
+  safeAdd("post","/api/games/play", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended - Contact Admin",suspended:true});
+      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended",suspended:true});
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
       const map = {bottle:"spin_bottle", wheel:"spin_wheel", updown:"up_down", up_down:"up_down", guess:"number_predict", spin_bottle:"spin_bottle", spin_wheel:"spin_wheel", number_predict:"number_predict"};
       const gameType = map[rawType] || "spin_bottle";
@@ -570,7 +579,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.post("/api/games/withdraw", userGuard, (req,res)=>{
+  safeAdd("post","/api/games/withdraw", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended"});
@@ -589,10 +598,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
-  app.get("/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
-  app.get("/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
-  app.post("/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
+  safeAdd("get","/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
+  safeAdd("get","/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
+  safeAdd("get","/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
+  safeAdd("post","/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
     try{
       const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
       if(!dep) return res.status(404).json({success:false,message:"Not found"}); if(dep.status === "confirmed") return res.status(409).json({success:false,message:"Already confirmed"});
@@ -606,7 +615,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Confirmed ₦${dep.amount} - funded`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.post("/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
+  safeAdd("post","/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
     try{
       const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
       if(!dep) return res.status(404).json({success:false}); if(dep.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
@@ -614,7 +623,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:"Declined"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.post("/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
+  safeAdd("post","/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
     try{
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
       if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
@@ -622,7 +631,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Paid ₦${w.amount} to ${w.account_number}`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  app.post("/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
+  safeAdd("post","/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
     try{
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
       if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
@@ -634,5 +643,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL FULL FILE - MAIN DASHBOARD WILL LOAD ALL INFO NOW - DAILY ONE EARN + MUST FINISH STILL ACTIVE");
+  console.log("✅ FINAL FULL GUARD FILE - MAIN DASHBOARD SAFE - NO OVERWRITE - DAILY ONE + MUST FINISH - Railway build go succeed now");
 };
