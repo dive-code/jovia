@@ -2,11 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - DAILY ONE EARN + MUST FINISH - SAFE VERSION");
-
-  // === REMOVED RISKY AUTO-ALIGN - THIS WAS BREAKING DASHBOARD ===
-  // Old code dey move 404 handler wey make dashboard no open - I disable am now
-  // Dashboard go open now
+  console.log("🔧 JOVIA SECOND SERVER - FULL - NO MAIN DASHBOARD OVERWRITE - DAILY ONE EARN + MUST FINISH");
 
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
     code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
@@ -91,17 +87,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  // === SAFE CLEANING - Run after server don start - No go crash dashboard ===
+  // SAFE CLEANING - After 5 sec - Daily duplicates bounce back
   setTimeout(()=>{
     try{
-      const dups = db.prepare(`
-        SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt
-        FROM jovia_music_earnings 
-        GROUP BY user_id, track_id, DATE(created_at) 
-        HAVING COUNT(*) > 1
-      `).all();
+      const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1`).all();
       if(dups.length > 0){
-        console.log(`⚠️ Found ${dups.length} same-day duplicates - Cleaning safely...`);
+        console.log(`⚠️ Found ${dups.length} same-day duplicates - Cleaning...`);
         for(const dup of dups){
           try{
             const rows = db.prepare(`SELECT id, amount FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.track_id, dup.day);
@@ -116,8 +107,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         }
         console.log(`✅ Cleaned duplicates safely`);
       }
-    }catch(e){ console.log("Safe clean skip:", e.message); }
-  }, 5000); // Run 5 seconds after server start - Dashboard go don open
+    }catch(e){ console.log("Clean skip", e.message); }
+  }, 5000);
 
   try{
     const c = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt;
@@ -132,7 +123,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   }catch{}
 
-  console.log("✅ JOVIA FIXED SERVER - SAFE - DASHBOARD WILL OPEN - DAILY ONE MUSIC EARN + MUST FINISH");
+  console.log("✅ JOVIA SECOND SERVER - FULL - MAIN DASHBOARD NOT OVERWRITTEN - DAILY ONE EARN + MUST FINISH READY");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -287,33 +278,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.status(401).json({success:false,message:"Not admin - Session expired"});
   });
 
-  app.get("/api/admin/dashboard", adminGuard, (req,res)=>{
-    try{
-      const users = db.prepare("SELECT COUNT(*) as c FROM users").get().c;
-      const pending = db.prepare("SELECT COUNT(*) as c FROM users WHERE account_status='pending' OR status='pending'").get().c;
-      const active = db.prepare("SELECT COUNT(*) as c FROM users WHERE account_status='active' OR account_status='approved' OR status='active' OR status='approved'").get().c;
-      const music = db.prepare("SELECT COUNT(*) as c FROM jovia_music").get().c;
-      return res.json({success:true, users, pendingUsers: pending, activeUsers: active, videos: music, withdrawals:{pending:0}, music});
-    }catch(e){ return res.json({success:true, users:0, pendingUsers:0, activeUsers:0, videos:0, withdrawals:{pending:0}}); }
-  });
+  // === REMOVED DASHBOARD OVERWRITE - Your main server dashboard will load full info now ===
+  // I removed app.get("/api/admin/dashboard") etc here - So your main admin board no go empty again
 
-  app.get("/api/settings/withdrawals", (req,res)=>{ return res.json({success:true, regularEnabled:true, affiliateEnabled:true}); });
-  app.get("/api/announcement", (req,res)=>{
-    try{
-      const row = db.prepare("SELECT * FROM jovia_announcement ORDER BY id DESC LIMIT 1").get();
-      if(row) return res.json({success:true, title: row.title, message: row.message, enabled: Boolean(row.enabled), channelUrl: row.channel_url, channelText: row.channel_text});
-      return res.json({success:true, title:"🚨 Join Official Channel", message:"Stay updated", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"});
-    }catch{ return res.json({success:true, title:"🚨 Join Official Channel", message:"Join channel", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"}); }
-  });
-  app.post("/api/announcement", adminGuard, (req,res)=>{
-    try{ db.prepare(`INSERT INTO jovia_announcement (title,message,enabled,channel_url,channel_text,updated_at) VALUES (?,?,?,?,?,?)`).run(req.body.title, req.body.message, req.body.enabled?1:0, req.body.channelUrl, req.body.channelText, new Date().toISOString()); return res.json({success:true}); }catch(e){ return res.json({success:true}); }
-  });
-  app.get("/api/admin/withdrawals", adminGuard, (req,res)=>{ return res.json({success:true, withdrawals:[]}); });
-  app.get("/api/admin/private-messages", adminGuard, (req,res)=>{ return res.json({success:true, messages:[]}); });
-  app.post("/api/admin/private-messages", adminGuard, (req,res)=>{ return res.json({success:true}); });
-  app.get("/api/admin/jobs", adminGuard, (req,res)=>{ return res.json({success:true, jobs:[]}); });
-  app.post("/api/admin/jobs", adminGuard, (req,res)=>{ return res.json({success:true, job:{id:Date.now()}}); });
-  app.get("/api/admin/videos", adminGuard, (req,res)=>{ return res.json({success:true, videos:[]}); });
   app.post("/api/admin/logout", (req,res)=>{
     if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
     return res.json({success:true});
@@ -446,7 +413,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // === FIXED - DAILY ONE EARN + MUST FINISH ===
   app.post("/api/music/complete", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT * FROM users WHERE id=?`).get(req.user.id);
@@ -460,7 +426,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const track = db.prepare(`SELECT * FROM jovia_music WHERE id=?`).get(trackId) || {title:"Music Track",reward:100};
       const reward = Number(track.reward||100);
 
-      // RULE 1: Must finish music
       if(!finished){
         return res.status(400).json({success:false,message:`You must listen to the music finish before earning - Play till end 🎧`});
       }
@@ -471,7 +436,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         return res.status(400).json({success:false,message:`You must finish the music - ${Math.floor(watched)}s / ${Math.floor(duration)}s - Keep playing till end`});
       }
 
-      // RULE 2: One song per day only - Reset tomorrow
       const todayExists = db.prepare(`SELECT id, created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=DATE('now') LIMIT 1`).get(req.user.id, trackId);
       if(todayExists){
         return res.status(403).json({success:false,message:"✅ Already earned for this song today - Come back tomorrow - One song per day only", already:true, nextDay:true});
@@ -670,5 +634,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL JOVIA FIXED SERVER - SAFE - DASHBOARD WILL OPEN - READY");
+  console.log("✅ FINAL FULL FILE - MAIN DASHBOARD WILL LOAD ALL INFO NOW - DAILY ONE EARN + MUST FINISH STILL ACTIVE");
 };
