@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE - ADMIN LOGIN AS USER");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - VERCEL SAFE - COOKIE IMPERSONATE - NO SESSION NEEDED - DASHBOARD 0 FIXED - 70/30 NO 100X");
 
   const routeExists = (path, method) => {
     try{
@@ -17,7 +17,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const safeAdd = (method, path, ...handlers) => {
     if(routeExists(path, method)){
-      console.log(`⏭️ Skipping ${method.toUpperCase()} ${path} - Main server already get am - Main dashboard safe`);
+      console.log(`⏭️ Skipping ${method.toUpperCase()} ${path} - Main server already get am`);
       return;
     }
     app[method](path, ...handlers);
@@ -102,6 +102,13 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     channel_text TEXT DEFAULT 'Join Channel',
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   );`);
+  db.exec(`CREATE TABLE IF NOT EXISTS admin_impersonate_tokens (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    admin_email TEXT DEFAULT '',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    expires_at TEXT
+  );`);
   try{ db.exec(`ALTER TABLE game_deposits ADD COLUMN proof_image TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
@@ -110,7 +117,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   setTimeout(()=>{
     try{
       const cnt = db.prepare(`SELECT COUNT(*) as c FROM jovia_music_earnings`).get().c;
-      if(cnt > 5000){ console.log("Skip clean - too many rows for Railway"); return; }
+      if(cnt > 5000){ return; }
       const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1 LIMIT 20`).all();
       if(dups.length > 0){
         for(const dup of dups){
@@ -241,6 +248,25 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
 
   const userGuard=(req,res,next)=>{
+    // Check impersonate token first - Vercel safe - no session
+    try{
+      const cookieHeader = req.headers.cookie || "";
+      const cookies = {};
+      cookieHeader.split(";").forEach(c=>{
+        const parts = c.trim().split("=");
+        if(parts[0]) cookies[parts[0]] = parts.slice(1).join("=");
+      });
+      const impToken = cookies["jovia_impersonate_token"] || req.query.impersonate_token || req.headers["x-impersonate-token"];
+      if(impToken){
+        try{
+          const row = db.prepare(`SELECT * FROM admin_impersonate_tokens WHERE token=? AND expires_at > datetime('now')`).get(impToken);
+          if(row){
+            req.user = { id: row.user_id };
+            return next();
+          }
+        }catch{}
+      }
+    }catch{}
     if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."});
     return requireUser(req,res,()=>{
       if(!req.user||!req.user.id) return res.status(401).json({success:false,message:"Please log in."});
@@ -306,8 +332,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
+  console.log("✅ FIXED DASHBOARD 0 - Now shows real numbers");
 
-  // ===== ADMIN LOGIN AS USER - NO PASSWORD CHANGE - SAFE IMPERSONATE =====
+  // ===== ADMIN LOGIN AS USER - VERCEL SAFE - NO SESSION - COOKIE TOKEN =====
   safeAdd("get","/api/admin/login-as", adminGuard, (req,res)=>{
     try{
       const email = String(req.query?.email||"").trim().toLowerCase();
@@ -315,71 +342,48 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const user = db.prepare(`SELECT id, email, full_name, username, package, plan, account_status, status, wallet_balance FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
       if(!user) return res.status(404).json({success:false,message:"User not found: "+email});
       
-      if(req.session){
-        // Save original admin state
-        req.session.originalAdmin = req.session.isAdmin;
-        req.session.isAdmin = false;
-        req.session.isImpersonating = true;
-        req.session.impersonatedUserId = user.id;
-        req.session.userId = user.id;
-        req.session.user = { id: user.id, email: user.email };
-        
-        return req.session.save((err)=>{
-          if(err) return res.status(500).json({success:false,message:"Session save failed"});
-          // Return JSON with redirect info - frontend can redirect
-          return res.json({
-            success:true,
-            message:`Now logged in as ${user.email} - No password changed - View as user`,
-            impersonating: true,
-            user: user,
-            redirect: "/dashboard.html",
-            gameAccount: getOrCreateGameAccount(user.id),
-            stopUrl: "/api/admin/stop-impersonate?adminPass=Divine@@1"
-          });
-        });
-      } else {
-        return res.json({success:false,message:"Session not enabled on server - Cannot impersonate without session"});
-      }
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
+      const token = crypto.randomBytes(32).toString("hex");
+      db.prepare(`INSERT OR REPLACE INTO admin_impersonate_tokens (token, user_id, admin_email, expires_at) VALUES (?, ?, ?, datetime('now', '+2 hours'))`).run(token, user.id, "admin");
 
-  safeAdd("get","/api/admin/impersonate", adminGuard, (req,res)=>{
-    try{
-      const email = String(req.query?.email||"").trim().toLowerCase();
-      if(!email) return res.status(400).json({success:false,message:"email required"});
-      const user = db.prepare(`SELECT id, email FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
-      if(!user) return res.status(404).json({success:false,message:"User not found"});
-      if(req.session){
-        req.session.originalAdmin = true;
-        req.session.isAdmin = false;
-        req.session.isImpersonating = true;
-        req.session.userId = user.id;
-        req.session.user = { id: user.id, email: user.email };
-        return req.session.save(()=> res.redirect("/"));
-      }
-      return res.json({success:true, user});
+      const acc = getOrCreateGameAccount(user.id);
+      const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(user.id);
+      const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id=? ORDER BY requested_at DESC LIMIT 10`).all(user.id);
+      const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(user.id);
+      const txs = db.prepare(`SELECT * FROM game_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(user.id);
+      const glitchBets = bets.filter(b=>b.multiplier>=5 || b.win_amount > b.bet_amount*3);
+
+      res.setHeader('Set-Cookie', `jovia_impersonate_token=${token}; Path=/; Max-Age=7200; SameSite=Lax`);
+
+      return res.json({
+        success:true,
+        message:`Logged in as ${user.email} - Token valid 2 hours - No password changed`,
+        impersonating: true,
+        token: token,
+        user: user,
+        gameAccount: acc,
+        deposits: deps,
+        withdrawals: withs,
+        bets: bets,
+        transactions: txs,
+        glitchBets: glitchBets,
+        howHeGot10050: glitchBets.length>0 ? glitchBets : bets.slice(0,10),
+        usage: {
+          dashboard: "Now open /dashboard.html or /games.html - Cookie will auto login you as this user",
+          apiAsUser: `Use header x-impersonate-token: ${token} or query ?impersonate_token=${token} for /api/games/me`,
+          stop: "/api/admin/stop-impersonate?adminPass=Divine@@1&token="+token
+        }
+      });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
   safeAdd("get","/api/admin/stop-impersonate", (req,res)=>{
     try{
-      const qp = String(req.query?.adminPass||"").trim();
-      if(qp !== ADMIN_PASS && !(req.session && req.session.originalAdmin)){
-        // Allow if session is impersonating
-        if(!(req.session && req.session.isImpersonating)) return res.status(401).json({success:false,message:"Not impersonating"});
+      const token = req.query.token || (req.headers.cookie||"").match(/jovia_impersonate_token=([^;]+)/)?.[1];
+      if(token){
+        try{ db.prepare(`DELETE FROM admin_impersonate_tokens WHERE token=?`).run(token); }catch{}
       }
-      if(req.session){
-        req.session.isImpersonating = false;
-        req.session.impersonatedUserId = null;
-        req.session.userId = null;
-        req.session.user = null;
-        req.session.isAdmin = true;
-        req.session.originalAdmin = null;
-        return req.session.save(()=>{
-          return res.json({success:true,message:"Stopped impersonating - Back to admin"});
-        });
-      }
-      return res.json({success:true,message:"Stopped"});
+      res.setHeader('Set-Cookie', `jovia_impersonate_token=; Path=/; Max-Age=0; SameSite=Lax`);
+      return res.json({success:true,message:"Stopped impersonating - Cookie cleared - Back to admin"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -433,8 +437,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/admin/me", (req,res)=>{
     const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
     if(req.session && req.session.isAdmin){ return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
-    if(req.session && req.session.isImpersonating){ return res.json({success:true, impersonating:true, userId: req.session.userId}); }
-    if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
+    if(hp && hp===ADMIN_PASS){ return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
     return res.status(401).json({success:false,message:"Not admin - Session expired"});
   });
   safeAdd("get","/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
@@ -443,6 +446,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
   safeAdd("post","/api/admin/logout", (req,res)=>{
     if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
+    res.setHeader('Set-Cookie', `jovia_impersonate_token=; Path=/; Max-Age=0`);
     return res.json({success:true});
   });
   safeAdd("post","/api/admin/user/suspend", adminGuard, (req,res)=>{
@@ -770,5 +774,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL UPDATED FULL FILE - DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH + BALANCED 70/30 NO 100X + PROFESSIONAL + KANU FIX + ADMIN LOGIN AS USER + ONE CODE PER ACC + RAILWAY SAFE");
+  console.log("✅ FINAL UPDATED FULL FILE - VERCEL SAFE COOKIE IMPERSONATE - DASHBOARD 0 FIXED - DAILY ONE - MUST FINISH - BALANCED 70/30 NO 100X - PROFESSIONAL - KANU FIX - ONE CODE PER ACC - Build go succeed");
 };
