@@ -1,655 +1,454 @@
-"use strict";
-const crypto = require("crypto");
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JOVIA Admin - Professional + Proof + Music Secure - ALIGNED</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
+body{background:#f1f5f9;padding:12px}
+.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:680px;margin:0 auto 12px}
+.container{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+input,select,textarea{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:10px;outline:none;font-weight:700;font-size:14px}
+textarea{resize:vertical;min-height:80px}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:800;cursor:pointer;transition:.2s}
+.btn:active{transform:scale(.98)}
+.btn-black{background:#0f172a;color:#22c55e}
+.btn-gold{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000}
+.btn-silver{background:linear-gradient(135deg,#94a3b8,#cbd5e1);color:#000}
+.btn-light{background:#f1f5f9;color:#0f172a}
+.btn-purple{background:#5b21b6;color:#fff}
+.code-box{background:#0f172a;border-radius:12px;padding:16px;text-align:center;display:none;margin-top:12px}
+.code{color:#22c55e;font-size:22px;font-weight:900;letter-spacing:2px;word-break:break-all;margin-top:6px}
+.code.super{color:#fbbf24}
+.item{border:1.5px solid #f1f5f9;border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.item.used{opacity:.7;background:#fff7f7}
+.badge{font-size:10px;padding:4px 8px;border-radius:20px;font-weight:800;white-space:nowrap}
+.lock{position:fixed;inset:0;background:#0f172a;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.lock-box{background:#fff;width:100%;max-width:340px;border-radius:20px;padding:24px;text-align:center}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab{flex:1;padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-size:10px;font-weight:900;cursor:pointer;text-align:center;min-width:80px}
+.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.tab.super-active{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;border-color:#ff9a00}
+.tab.game-active{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:#22c55e}
+.tab.with-active{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#ef4444}
+.tab.music-active{background:#5b21b6;color:#fff;border-color:#5b21b6}
+.dep-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
+.dep-item.pending{background:#fffbeb;border-color:#fbbf24}
+.bank-box{background:#f8fafc;border:1px dashed #94a3b8;padding:10px;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:10px}
+.proof-img{width:100%;max-height:300px;object-fit:contain;border-radius:10px;border:1.5px solid #e2e8f0;margin:10px 0;cursor:zoom-in;background:#f8fafc}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal img{max-width:100%;max-height:90vh;border-radius:12px}
+</style>
+</head>
+<body>
+<div id="lock" class="lock"><div class="lock-box">
+<h2 style="font-size:20px">🔐 Admin Only</h2>
+<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password - Secure session - ALIGNED</p>
+<input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
+<button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
+<p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
+</div></div>
 
-module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - Auto-aligning with main server - Fixing API endpoint not found");
+<div id="imgModal" class="modal" onclick="this.classList.remove('show')"><img id="modalImg" src=""></div>
 
-  // === AUTO-ALIGN FIX - Makes second server work even if main server has 404 handler before it ===
-  // This was missing in your file - Na why deposits endpoint dey return API endpoint not found
+<div class="top">
+<div><h3 style="font-size:14px">JOVIA ADMIN SECURE - ALIGNED</h3><small style="font-size:10px;color:#94a3b8">Codes + Deposits + Withdrawals + Music + Proof - Aligned with second server</small></div>
+<span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">ALIGNED DB</span>
+</div>
+<div class="container">
+<div class="tabs">
+<button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Codes</button>
+<button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
+<button class="tab" id="tabM" onclick="setTab('music')">♫ Music</button>
+<button class="tab" id="tabG" onclick="setTab('deposits')">🎮 Deposits</button>
+<button class="tab" id="tabWD" onclick="setTab('withdrawals')">💰 Withdraw</button>
+</div>
+
+<div class="card" id="cardWithdraw">
+<h3 style="font-size:14px;margin-bottom:8px">💸 Generate Withdrawal Code</h3>
+<button class="btn btn-black" id="btnWithdraw" onclick="generate('withdraw')">Generate JOVIA Code</button>
+<div id="resultWithdraw" class="code-box">
+<div style="color:#94a3b8;font-size:10px">WITHDRAWAL CODE</div>
+<div id="codeTextWithdraw" class="code"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<button class="btn btn-light" onclick="copyCode('withdraw')">📋 Copy</button>
+<button class="btn btn-light" onclick="shareCode('withdraw')">💬 WhatsApp</button>
+</div>
+</div>
+</div>
+
+<div class="card" id="cardSuper" style="display:none">
+<h3 style="font-size:14px;margin-bottom:8px">👑 Generate SUPER Upgrade Code</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button class="btn btn-gold" id="btnGold" onclick="generate('super-gold')">GOLD → SUPER<br><span style="font-size:12px">N12,000</span></button>
+<button class="btn btn-silver" id="btnSilver" onclick="generate('super-silver')">SILVER → SUPER<br><span style="font-size:12px">N16,000</span></button>
+</div>
+<div id="resultSuper" class="code-box" style="border:1.5px solid #fbbf24">
+<div style="color:#fbbf24;font-size:10px;font-weight:800" id="superTypeLabel">SUPER CODE</div>
+<div id="codeTextSuper" class="code super"></div>
+<div style="color:#fff;font-size:11px;margin-top:8px;line-height:1.5" id="superPriceLabel"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<button class="btn btn-light" onclick="copyCode('super')">📋 Copy</button>
+<button class="btn btn-light" onclick="shareCode('super')">💬 WhatsApp</button>
+</div>
+</div>
+</div>
+
+<div class="card" id="cardMusic" style="display:none">
+<h3 style="font-size:14px;margin-bottom:8px">♫ Music Management - Super Only - YOU set price - ALIGNED</h3>
+<div style="background:#eef2ff;border:1px dashed #5b21b6;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">🔒 Aligned - Uses session + fallback header - MP3 must be direct .mp3 like catbox.moe - YOU set reward</div>
+<input id="musicTitle" placeholder="Music Title * e.g Afro Vibes">
+<input id="musicArtist" placeholder="Artist * e.g Jovia Sounds" value="Jovia Sounds">
+<input id="musicUrl" placeholder="MP3 URL * direct .mp3 e.g https://files.catbox.moe/xxxxx.mp3">
+<input id="musicCover" placeholder="Cover emoji or image URL e.g ♫">
+<input id="musicReward" type="number" placeholder="Reward ₦ * e.g 100" value="100">
+<select id="musicCategory"><option>Super Hits</option><option>Afrobeat</option><option>Super Mix</option><option>Super Anthem</option><option>General</option></select>
+<button class="btn btn-purple" id="btnMusic" onclick="saveMusic()">＋ Upload Music & Set Price - ALIGNED</button>
+<button class="btn btn-light" id="cancelMusicEdit" style="display:none;margin-top:8px" onclick="cancelMusicEdit()">Cancel Edit</button>
+<div id="musicStatus" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:11px;font-weight:700"></div>
+<div style="margin-top:14px">
+<input id="searchMusic" placeholder="🔍 Search music..." oninput="filterMusic()" style="margin-bottom:10px">
+<div id="musicList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh to load</p></div>
+<button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music</button>
+</div>
+</div>
+
+<div class="card" id="cardDeposits" style="display:none">
+<h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Proof Verification - ALIGNED</h3>
+<div class="bank-box">
+Bank: <b>Kredi Money MFB Ltd</b><br>
+Acc: <b style="color:#d00;font-size:14px">1850772192</b> <button onclick="navigator.clipboard.writeText('1850772192');alert('Copied')" style="padding:2px 8px;font-size:10px">Copy</button><br>
+Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
+<small>Check Kredi app + proof screenshot before approving</small>
+</div>
+<button class="btn btn-black" onclick="loadDeposits()" style="margin-bottom:10px">🔄 Refresh Deposits</button>
+<div id="depositsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
+</div>
+
+<div class="card" id="cardWithdrawals" style="display:none">
+<h3 style="font-size:14px;margin-bottom:8px">💰 Game Withdrawals - Pay Users - ALIGNED</h3>
+<div class="bank-box">You will pay from your <b>1850772192 Kredi MFB</b> account to users below. Copy account number and transfer, then click Paid.</div>
+<button class="btn btn-black" onclick="loadWithdrawals()" style="margin-bottom:10px">🔄 Refresh Withdrawals</button>
+<div id="withdrawalsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
+</div>
+
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code</h3>
+<input id="checkCode" placeholder="Paste code">
+<button class="btn btn-black" onclick="validate()">Check From Server</button>
+<div id="checkResult" style="text-align:center;font-weight:800;margin-top:12px;font-size:13px;min-height:20px;line-height:1.6"></div>
+</div>
+
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
+<h3 style="font-size:14px" id="listTitle">All Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
+</div>
+<input id="searchInput" class="search" placeholder="🔍 Search code or email..." oninput="filterList()" style="padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;width:100%;margin-bottom:10px">
+<div id="list"></div>
+<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
+<button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock - Logout Secure</button>
+</div>
+</div>
+<script>
+let currentTab='withdraw';
+let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
+let allServerCodes = [];
+let rawMusic = [];
+let editingMusicId = null;
+
+// === FIXED ALIGNED - No more session expired - Sends fallback header + cookie ===
+function getHeaders(){ 
+  const pass = sessionStorage.getItem('jovia_session_pass') || '';
+  const headers = { 'Content-Type':'application/json' };
+  if(pass) headers['x-admin-password'] = pass; // fallback for auto-aligned second server
+  return headers; 
+}
+
+if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
+
+function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').classList.add('show'); }
+
+async function unlock(){
+  const val = document.getElementById('passInput').value.trim();
+  const err = document.getElementById('passError');
+  err.style.display='none';
+  if(!val){ err.innerText='❌ Enter password'; err.style.display='block'; return; }
   try{
-    if(app._router && app._router.stack){
-      const stack = app._router.stack;
-      const saved404 = [];
-      for(let i=stack.length-1; i>=0; i--){
-        const layer = stack[i];
-        if(!layer.route){
-          const fnStr = layer.handle ? layer.handle.toString() : '';
-          if(fnStr.includes('API endpoint not found') || fnStr.includes('endpoint not found') || (layer.handle.length===2 && fnStr.includes('404'))){
-            saved404.push(...stack.splice(i,1));
-          }
-        }
-      }
-      if(saved404.length){
-        console.log(`⚠️ Found ${saved404.length} 404 handler(s) blocking second server - Moving to end - Now /api/admin/games/deposits will work`);
-        app._saved404Handlers = saved404;
-      }
-    }
-  }catch(e){ console.log("Auto-align warning", e.message); }
-
-  db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
-    code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
-    used INTEGER DEFAULT 0, used_by TEXT DEFAULT '', used_by_name TEXT DEFAULT '',
-    used_by_email TEXT DEFAULT '', used_by_id INTEGER,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP, used_at TEXT
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS jovia_game_accounts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE NOT NULL,
-    game_balance INTEGER DEFAULT 0, points INTEGER DEFAULT 0,
-    total_deposits INTEGER DEFAULT 0, total_withdrawals INTEGER DEFAULT 0, total_wins INTEGER DEFAULT 0,
-    candy_high_score INTEGER DEFAULT 0, flight_high_multiplier REAL DEFAULT 0, ludo_wins INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP, updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS game_transactions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL,
-    amount INTEGER DEFAULT 0, points_change INTEGER DEFAULT 0, game_type TEXT DEFAULT '',
-    reference TEXT DEFAULT '', status TEXT DEFAULT 'completed',
-    balance_before INTEGER DEFAULT 0, balance_after INTEGER DEFAULT 0,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS game_deposits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
-    reference TEXT UNIQUE NOT NULL, payment_method TEXT DEFAULT 'manual',
-    proof_image TEXT DEFAULT '', status TEXT DEFAULT 'pending',
-    confirmed_by INTEGER DEFAULT NULL, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    confirmed_at TEXT, FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS game_withdrawals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL,
-    bank_name TEXT DEFAULT '', account_number TEXT DEFAULT '', account_name TEXT DEFAULT '',
-    status TEXT DEFAULT 'pending', requested_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    processed_at TEXT, processed_by INTEGER DEFAULT NULL,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS game_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL,
-    score INTEGER DEFAULT 0, multiplier REAL DEFAULT 0, result TEXT DEFAULT '',
-    win_amount INTEGER DEFAULT 0, is_demo INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS game_bets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, game_type TEXT NOT NULL,
-    bet_amount INTEGER NOT NULL, win_amount INTEGER DEFAULT 0, result TEXT DEFAULT 'loss',
-    multiplier REAL DEFAULT 0, created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS jovia_music (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    artist TEXT DEFAULT 'Jovia Sounds',
-    url TEXT NOT NULL,
-    cover TEXT DEFAULT '♫',
-    reward INTEGER DEFAULT 100,
-    category TEXT DEFAULT 'Super Hits',
-    plays INTEGER DEFAULT 0,
-    is_super INTEGER DEFAULT 1,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS jovia_music_earnings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    track_id INTEGER DEFAULT 0,
-    title TEXT DEFAULT '',
-    amount INTEGER DEFAULT 0,
-    watched_seconds INTEGER DEFAULT 60,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES users(id)
-  );`);
-  db.exec(`CREATE TABLE IF NOT EXISTS jovia_announcement (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT DEFAULT '',
-    message TEXT DEFAULT '',
-    enabled INTEGER DEFAULT 1,
-    channel_url TEXT DEFAULT 'https://t.me/jovianetwerk',
-    channel_text TEXT DEFAULT 'Join Channel',
-    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-  );`);
-  try{ db.exec(`ALTER TABLE game_deposits ADD COLUMN proof_image TEXT DEFAULT ''`); }catch{}
-  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
-  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
-  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
-
-  try{
-    const c = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt;
-    if(c===0){
-      db.prepare(`INSERT INTO jovia_music (title,artist,url,cover,reward,category) VALUES 
-        ('Afro Vibes - Summer','Jovia Sounds','https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3','♫',100,'Super Hits'),
-        ('Naija Hits 2024 - Super','Top Artist','https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3','🎵',120,'Afrobeat'),
-        ('Chill & Earn - Super','Jovia Mix','https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3','🎧',90,'Super Mix'),
-        ('Money Flow - Super Mix','Jovia DJ','https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3','💰',150,'Super Mix'),
-        ('Jovia Super Anthem','Jovia Official','https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3','👑',200,'Super Anthem')
-      `).run();
-    }
-  }catch{}
-
-  console.log("✅ JOVIA FIXED SERVER - NO SESSION EXPIRED - NO IMMEDIATE LOGOUT - MUSIC CALLING ADDED - AUTO-ALIGNED - READY");
-
-  const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
-  const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
-  ["package TEXT DEFAULT 'Silver'","plan TEXT DEFAULT 'Silver'","is_super INTEGER DEFAULT 0","account_status TEXT DEFAULT 'active'","status TEXT DEFAULT 'active'","username TEXT","full_name TEXT","activated_at TEXT","wallet_balance INTEGER DEFAULT 0","is_active INTEGER DEFAULT 1"].forEach(c=>{
-    const [n,...d] = c.split(" "); try{ addUserColumnIfMissing(n, d.join(" ")); }catch{}
-  });
-  const hasColumn = name => userColumns().includes(name);
-  const codeColumns = () => db.prepare("PRAGMA table_info(jovia_codes)").all().map(c => c.name);
-  const addCodeColumnIfMissing = (name, def) => { if (!codeColumns().includes(name)) db.exec(`ALTER TABLE jovia_codes ADD COLUMN ${name} ${def}`); };
-  ["used_by TEXT DEFAULT ''","used_by_name TEXT DEFAULT ''","used_by_email TEXT DEFAULT ''","used_by_id INTEGER","created_at TEXT","used_at TEXT"].forEach(c=>{
-    const [n,...d] = c.split(" "); addCodeColumnIfMissing(n, d.join(" "));
-  });
-  const normalizeCode = v => String(v||"").trim().toUpperCase();
-  const randomCode = (len,prefix) => {
-    const alphabet="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let s=""; for(let i=0;i<len;i++) s+=alphabet[crypto.randomInt(0,alphabet.length)];
-    return prefix+s;
-  };
-  const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
-  const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
-
-  const isSuspendedStatus = (status) => {
-    const s = String(status||"").toLowerCase().trim();
-    return ["suspended","banned","blocked","disabled","suspend"].includes(s);
-  };
-  const isActiveStatus = (status) => {
-    if(isSuspendedStatus(status)) return false;
-    const s = String(status||"").toLowerCase().trim();
-    return ["active","approved","activated"].includes(s);
-  };
-  const isSuperUserCheck = (user) => {
-    if(!user) return false;
-    const pkg = String(user.package||user.plan||"").toLowerCase();
-    return pkg.includes("super") || Number(user.is_super)===1 || String(user.super_user)==="1";
-  };
-
-  const getSureUser = user => {
-    const email=String(user.email||"").trim();
-    const username=String(user.username||"").trim();
-    const fullName=String(user.full_name||"").trim();
-    const sureName=username||fullName||(email?email.split("@")[0]:"")||`User${user.id}`;
-    return { sureName, sureEmail: email, display: email?`${sureName} (${email})`:`${sureName} (ID ${user.id})`, id: user.id };
-  };
-  const getRedeemer = row => {
-    let user=null;
-    if(row.used_by_id!=null) user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE id = ?`).get(row.used_by_id)||null;
-    if(!user){
-      const e=String(row.used_by_email||"").trim(); const n=String(row.used_by_name||"").trim();
-      if(e){ try{ user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(e)||null; }catch(_){} }
-      if(!user&&n){
-        const cols=userColumns(); const conds=[];
-        if(cols.includes("username")) conds.push("LOWER(TRIM(username))=LOWER(TRIM(?))");
-        if(cols.includes("full_name")) conds.push("LOWER(TRIM(full_name))=LOWER(TRIM(?))");
-        if(conds.length) try{ user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE ${conds.join(" OR ")} LIMIT 1`).get(...conds.map(()=>n))||null; }catch(_){}
-      }
-    }
-    const name=(user?String(user.full_name||user.username||user.email||`User ID ${user.id}`).trim():"")||String(row.used_by_name||"").trim();
-    const email=(user?String(user.email||"").trim():"")||String(row.used_by_email||"").trim();
-    const id=user?.id??row.used_by_id??null;
-    return { user, name, email, id, display: name?(email?`${name} (${email})`:name):id?`User ID ${id}`:"Name not saved" };
-  };
-  const safeCodeRecord = row => {
-    const used=Number(row.used)===1; const redeemer=used?getRedeemer(row):null;
-    return {
-      code: row.code, type: row.type, price: row.price, used,
-      status: used?"USED":"UNUSED", used_by: row.used_by||"",
-      used_by_name: redeemer?.name||row.used_by_name||"", used_by_email: redeemer?.email||row.used_by_email||"",
-      used_by_id: redeemer?.id??row.used_by_id??null, used_by_display: redeemer?.display||row.used_by||"",
-      user_details: used?{ name: redeemer.name||"Name not saved", email: redeemer.email||"", user_id: redeemer.id, display: redeemer.display, full_user: redeemer.user }:null,
-      created_at: row.created_at||null, used_at: row.used_at||null
-    };
-  };
-  const getOrCreateGameAccount = (userId) => {
-    let acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
-    if(!acc){
-      db.prepare(`INSERT INTO jovia_game_accounts (user_id, game_balance, points) VALUES (?, 0, 0)`).run(userId);
-      acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
-    }
-    return acc;
-  };
-  const activateUserByEmail = (email, plan, orderId) => {
-    const cleanEmail = String(email||"").trim().toLowerCase();
-    const cleanPlan = (plan||"Gold").toLowerCase().includes("gold") ? "Gold" : "Silver";
-    if(!cleanEmail) return null;
-    try{
-      const cols = userColumns(); let setClause = []; let params = [];
-      if(cols.includes("account_status")) setClause.push("account_status='approved'");
-      if(cols.includes("status")) setClause.push("status='active'");
-      if(cols.includes("package")){ setClause.push("package=?"); params.push(cleanPlan); }
-      if(cols.includes("plan")){ setClause.push("plan=?"); params.push(cleanPlan); }
-      if(cols.includes("is_active")) setClause.push("is_active=1");
-      if(cols.includes("activated_at")) setClause.push("activated_at=datetime('now')");
-      if(!setClause.length) setClause.push("account_status='approved'");
-      const sql = `UPDATE users SET ${setClause.join(", ")} WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) OR id=283 OR id=?`;
-      db.prepare(sql).run(...params, cleanEmail, 283);
-      const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) OR id=283 ORDER BY id DESC LIMIT 1`).get(cleanEmail);
-      return user;
-    }catch(e){ return null; }
-  };
-  app.get("/api/activate-user", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
-  app.get("/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
-  app.post("/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
-  app.get("/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
-
-  const userGuard=(req,res,next)=>{
-    if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."});
-    return requireUser(req,res,()=>{
-      if(!req.user||!req.user.id) return res.status(401).json({success:false,message:"Please log in."});
-      try{
-        const u = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-        if(u && isSuspendedStatus(u.account_status||u.status)){
-          if(req.path.includes("/games/")||req.path.includes("/music/")){
-            return res.status(403).json({success:false,message:"⛔ Account Suspended - Contact Admin",suspended:true});
-          }
-        }
-      }catch{}
-      next();
+    const res = await fetch('/api/admin/codes/login',{
+      method:'POST',
+      headers: { 'Content-Type':'application/json' },
+      credentials:'include',
+      body: JSON.stringify({username: "admin", password: val})
     });
-  };
-
-  const adminGuard=(req,res,next)=>{
-    const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
-    const bp=String(req.body?.adminPass||req.body?.adminPassword||req.body?.password||"").trim();
-    const qp=String(req.query?.adminPass||"").trim();
-    if(req.session && req.session.isAdmin===true) return next();
-    if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return next(); }
-    if(bp && bp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return next(); }
-    if(qp && qp===ADMIN_PASS) return next();
-    return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"});
-  };
-
-  const adminLoginHandler=(req,res)=>{
-    const p=String(req.body?.password||"").trim();
-    if(p!==ADMIN_PASS) return res.status(401).json({success:false,message:"Wrong password."});
-    if(req.session){
-      req.session.isAdmin=true;
-      req.session.adminUser="admin";
-      return req.session.save((err)=>{
-        if(err){ console.error("Session save error", err); return res.status(500).json({success:false,message:"Session save failed - Check express-session middleware in server.js"}); }
-        return res.json({success:true, admin:{username:"admin"}});
-      });
+    const data = await res.json();
+    if(!res.ok || data.success===false) throw new Error(data.message||'Wrong password');
+    sessionStorage.setItem('jovia_session_pass', val); // ALIGNED - fallback for cookie
+    localStorage.setItem('jovia_ok','yes');
+    document.getElementById('lock').style.display='none';
+    await loadFromServer();
+    await loadMusic();
+  }catch(e){ err.innerText='❌ '+e.message; err.style.display='block'; }
+}
+async function logoutAdmin(){ 
+  try{ await fetch('/api/admin/logout',{method:'POST',credentials:'include', headers: getHeaders()}); }catch{}
+  sessionStorage.removeItem('jovia_session_pass');
+  localStorage.removeItem('jovia_ok'); 
+  location.reload(); 
+}
+function setTab(t){
+  currentTab=t;
+  document.getElementById('tabW').className=t==='withdraw'?'tab active':'tab';
+  document.getElementById('tabS').className=t==='super'?'tab super-active':'tab';
+  document.getElementById('tabM').className=t==='music'?'tab music-active':'tab';
+  document.getElementById('tabG').className=t==='deposits'?'tab game-active':'tab';
+  document.getElementById('tabWD').className=t==='withdrawals'?'tab with-active':'tab';
+  document.getElementById('cardWithdraw').style.display=t==='withdraw'?'block':'none';
+  document.getElementById('cardSuper').style.display=t==='super'?'block':'none';
+  document.getElementById('cardMusic').style.display=t==='music'?'block':'none';
+  document.getElementById('cardDeposits').style.display=t==='deposits'?'block':'none';
+  document.getElementById('cardWithdrawals').style.display=t==='withdrawals'?'block':'none';
+  if(t==='deposits') loadDeposits();
+  if(t==='withdrawals') loadWithdrawals();
+  if(t==='music') loadMusic();
+  filterList();
+}
+async function generate(type){
+  const btnId = type==='withdraw' ? 'btnWithdraw' : type==='super-gold' ? 'btnGold' : 'btnSilver';
+  const btn = document.getElementById(btnId);
+  const oldText = btn.innerHTML;
+  btn.innerHTML = "⏳ Generating..."; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/codes/generate', {
+      method: 'POST',
+      headers: getHeaders(),
+      credentials:'include',
+      body: JSON.stringify({ type: type, count: 1 })
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    const newCode = data.codes[0].code;
+    if(type==='withdraw'){
+      lastWithdraw=newCode;
+      document.getElementById('resultWithdraw').style.display='block';
+      document.getElementById('codeTextWithdraw').innerText=newCode;
+    } else {
+      lastSuper=newCode; lastSuperPrice=type==='super-gold'?12000:16000; lastSuperType=type==='super-gold'?'GOLD → SUPER':'SILVER → SUPER';
+      document.getElementById('resultSuper').style.display='block';
+      document.getElementById('codeTextSuper').innerText=newCode;
+      document.getElementById('superTypeLabel').innerText=lastSuperType+' - SAVED';
+      document.getElementById('superPriceLabel').innerHTML='Price: <b>N'+lastSuperPrice.toLocaleString()+'</b>';
     }
-    return res.json({success:true, admin:{username:"admin"}});
-  };
-  app.post("/api/admin/codes/login",adminLoginHandler);
-  app.post("/api/admin/login",adminLoginHandler);
-
-  app.get("/api/admin/me", (req,res)=>{
-    const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
-    if(req.session && req.session.isAdmin){ return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
-    if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
-    return res.status(401).json({success:false,message:"Not admin - Session expired"});
-  });
-
-  app.get("/api/admin/dashboard", adminGuard, (req,res)=>{
-    try{
-      const users = db.prepare("SELECT COUNT(*) as c FROM users").get().c;
-      const pending = db.prepare("SELECT COUNT(*) as c FROM users WHERE account_status='pending' OR status='pending'").get().c;
-      const active = db.prepare("SELECT COUNT(*) as c FROM users WHERE account_status='active' OR account_status='approved' OR status='active' OR status='approved'").get().c;
-      const music = db.prepare("SELECT COUNT(*) as c FROM jovia_music").get().c;
-      return res.json({success:true, users, pendingUsers: pending, activeUsers: active, videos: music, withdrawals:{pending:0}, music});
-    }catch(e){ return res.json({success:true, users:0, pendingUsers:0, activeUsers:0, videos:0, withdrawals:{pending:0}}); }
-  });
-
-  app.get("/api/settings/withdrawals", (req,res)=>{ return res.json({success:true, regularEnabled:true, affiliateEnabled:true}); });
-  app.get("/api/announcement", (req,res)=>{
-    try{
-      const row = db.prepare("SELECT * FROM jovia_announcement ORDER BY id DESC LIMIT 1").get();
-      if(row) return res.json({success:true, title: row.title, message: row.message, enabled: Boolean(row.enabled), channelUrl: row.channel_url, channelText: row.channel_text});
-      return res.json({success:true, title:"🚨 Join Official Channel", message:"Stay updated", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"});
-    }catch{ return res.json({success:true, title:"🚨 Join Official Channel", message:"Join channel", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"}); }
-  });
-  app.post("/api/announcement", adminGuard, (req,res)=>{
-    try{ db.prepare(`INSERT INTO jovia_announcement (title,message,enabled,channel_url,channel_text,updated_at) VALUES (?,?,?,?,?,?)`).run(req.body.title, req.body.message, req.body.enabled?1:0, req.body.channelUrl, req.body.channelText, new Date().toISOString()); return res.json({success:true}); }catch(e){ return res.json({success:true}); }
-  });
-  app.get("/api/admin/withdrawals", adminGuard, (req,res)=>{ return res.json({success:true, withdrawals:[]}); });
-  app.get("/api/admin/private-messages", adminGuard, (req,res)=>{ return res.json({success:true, messages:[]}); });
-  app.post("/api/admin/private-messages", adminGuard, (req,res)=>{ return res.json({success:true}); });
-  app.get("/api/admin/jobs", adminGuard, (req,res)=>{ return res.json({success:true, jobs:[]}); });
-  app.post("/api/admin/jobs", adminGuard, (req,res)=>{ return res.json({success:true, job:{id:Date.now()}}); });
-  app.get("/api/admin/videos", adminGuard, (req,res)=>{ return res.json({success:true, videos:[]}); });
-  app.post("/api/admin/logout", (req,res)=>{
-    if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
-    return res.json({success:true});
-  });
-
-  app.post("/api/admin/user/suspend", adminGuard, (req,res)=>{
-    try{
-      const userId = Number(req.body?.userId||req.body?.id);
-      const reason = String(req.body?.reason||"Suspended by admin").slice(0,200);
-      if(!userId) return res.status(400).json({success:false,message:"userId required"});
-      db.prepare(`UPDATE users SET account_status='suspended', status='suspended' WHERE id=?`).run(userId);
-      return res.json({success:true,message:`User ${userId} suspended ⛔ - ${reason}`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.post("/api/admin/user/unsuspend", adminGuard, (req,res)=>{
-    try{
-      const userId = Number(req.body?.userId||req.body?.id);
-      if(!userId) return res.status(400).json({success:false,message:"userId required"});
-      db.prepare(`UPDATE users SET account_status='active', status='active' WHERE id=?`).run(userId);
-      return res.json({success:true,message:`User ${userId} unsuspended ✅`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.get("/api/admin/users", adminGuard, (req,res)=>{
-    try{
-      const users = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, created_at FROM users ORDER BY id DESC LIMIT 300`).all();
-      const withFlag = users.map(u=>({...u, is_suspended: isSuspendedStatus(u.account_status||u.status), is_super: isSuperUserCheck(u)}));
-      return res.json({success:true,users:withFlag});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  app.post("/api/admin/codes/generate",adminGuard,(req,res)=>{
-    try{
-      const t=String(req.body?.type||"").toLowerCase();
-      const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":null;
-      if(!type) return res.status(400).json({success:false,message:"Invalid type."});
-      const count=Number(req.body?.count??1);
-      const price=type==="super-gold"?12000:type==="super-silver"?16000:10000;
-      const prefix=type==="withdraw"?"JOVIA-":"SUPER-"; const len=type==="withdraw"?6:8;
-      const tx=db.transaction(()=>{ const arr=[]; while(arr.length<count){ const c=randomCode(len,prefix); const r=db.prepare(`INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,0,datetime('now'))`).run(c,type,price); if(r.changes===1) arr.push({code:c,type,price}); } return arr; });
-      return res.json({success:true,codes:tx(),total:getTotalCodes()});
-    }catch(e){ return res.status(500).json({success:false,message:"Could not generate."}); }
-  });
-  app.get("/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
-  app.get("/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
-
-  app.post("/api/upgrade/apply",userGuard,(req,res)=>{
-    const raw=normalizeCode(req.body?.code);
-    try{
-      const tx=db.transaction(()=>{
-        const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
-        if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED - Contact Admin");
-        const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-        if(!code) throw new Error("INVALID CODE"); 
-        if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
-        const currentPackage = String(user.package||user.plan||"Silver").toLowerCase();
-        const isSilver = currentPackage.includes("silver");
-        const isGold = currentPackage.includes("gold");
-        const codeType = String(code.type||"").toLowerCase();
-        if(isSilver && codeType !== "super-silver"){ throw new Error(`SILVER plan requires SUPER-SILVER code (₦16000). You used ${codeType.toUpperCase()} (₦${code.price}).`); }
-        if(isGold && codeType !== "super-gold"){ throw new Error(`GOLD plan requires SUPER-GOLD code (₦12000). You used ${codeType.toUpperCase()} (₦${code.price}).`); }
-        if(!["super-silver","super-gold"].includes(codeType)){ throw new Error("INVALID CODE TYPE FOR UPGRADE TO SUPER"); }
-        const sure=getSureUser(user);
-        const sets=["package=?","is_super=?"]; const vals=["SUPER",1];
-        if(hasColumn("plan")){ sets.push("plan=?"); vals.push("SUPER"); }
-        if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
-        if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
-        vals.push(user.id);
-        db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
-        db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,raw);
-        return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-      });
-      const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
-    }catch(e){ return res.status(400).json({success:false,message:e.message}); }
-  });
-
-  app.post("/api/withdraw/apply",userGuard,(req,res)=>{
-    const raw=normalizeCode(req.body?.code);
-    try{
-      const tx=db.transaction(()=>{
-        const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
-        if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED");
-        const row=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-        if(!row) throw new Error("INVALID"); if(row.type!=="withdraw") throw new Error("WRONG_TYPE"); if(Number(row.used)===1) throw new Error(`USED:${getRedeemer(row).display}`);
-        const sure=getSureUser(user);
-        db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,raw);
-        return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-      });
-      const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
-    }catch(e){ return res.status(400).json({success:false,message:e.message}); }
-  });
-
-  app.get("/api/music/tracks", userGuard, (req,res)=>{
-    try{
-      const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"⛔ Suspended - Contact Admin",suspended:true});
-      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,message:"👑 SUPER ONLY",super_only:true});
-      if(!isActiveStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"Activate first"});
-      const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all();
-      return res.json({success:true,super:true,tracks,count:tracks.length});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  app.get("/api/music/list", (req,res)=>{
-    try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length}); }catch(e){ return res.json({success:true,tracks:[],count:0}); }
-  });
-  app.get("/api/music/all", (req,res)=>{
-    try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length,super:true}); }catch(e){ return res.json({success:true,tracks:[]}); }
-  });
-  app.get("/api/music/public", (req,res)=>{
-    try{ const tracks = db.prepare(`SELECT id,title,artist,url,cover,reward,category,plays FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks}); }catch(e){ return res.json({success:true,tracks:[]}); }
-  });
-
-  app.get("/api/music/stats", userGuard, (req,res)=>{
-    try{
-      const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,suspended:true});
-      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,super_only:true});
-      const today = db.prepare(`SELECT COALESCE(SUM(amount),0) as sum, COUNT(*) as cnt FROM jovia_music_earnings WHERE user_id=? AND DATE(created_at)=DATE('now')`).get(req.user.id);
-      const total = db.prepare(`SELECT COALESCE(SUM(amount),0) as sum, COUNT(*) as cnt FROM jovia_music_earnings WHERE user_id=?`).get(req.user.id);
-      return res.json({ success:true, today: today.sum||0, todayEarnings: today.sum||0, completed: today.cnt||0, songsCompleted: today.cnt||0, total: total.sum||0, totalEarnings: total.sum||0, target: 10, targetCount: `${today.cnt||0} / 10 songs` });
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  app.get("/api/music/history", userGuard, (req,res)=>{
-    try{
-      const u = db.prepare(`SELECT account_status,status,package,plan,is_super FROM users WHERE id=?`).get(req.user.id);
-      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,super_only:true});
-      const rows = db.prepare(`SELECT * FROM jovia_music_earnings WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
-      return res.json({success:true,history:rows,earnings:rows});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  app.post("/api/music/complete", userGuard, (req,res)=>{
-    try{
-      const u = db.prepare(`SELECT * FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended",suspended:true});
-      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,message:"👑 Super Only - Upgrade to SUPER",super_only:true});
-      const trackId = Number(req.body?.trackId||req.body?.id||0);
-      const watched = Number(req.body?.watchedSeconds||60);
-      if(watched < 50) return res.status(400).json({success:false,message:`Listen at least 60s - You listened ${watched}s`});
-      const track = db.prepare(`SELECT * FROM jovia_music WHERE id=?`).get(trackId) || {title:"Music Track",reward:100};
-      const reward = Number(track.reward||100);
-      const last = db.prepare(`SELECT created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? ORDER BY created_at DESC LIMIT 1`).get(req.user.id, trackId);
-      if(last){ const diff = (Date.now() - new Date(last.created_at).getTime())/1000; if(diff < 55) return res.status(429).json({success:false,message:`Wait ${Math.ceil(60-diff)}s before earning same track again`}); }
-      db.transaction(()=>{
-        db.prepare(`INSERT INTO jovia_music_earnings (user_id,track_id,title,amount,watched_seconds) VALUES (?,?,?,?,?)`).run(req.user.id, trackId, track.title, reward, watched);
-        db.prepare(`UPDATE jovia_music SET plays=plays+1 WHERE id=?`).run(trackId);
-        try{ if(userColumns().includes("wallet_balance")){ db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id=?`).run(reward, req.user.id); } }catch{}
-      })();
-      const updatedUser = db.prepare(`SELECT wallet_balance FROM users WHERE id=?`).get(req.user.id);
-      return res.json({ success:true, message:`Super Earned ${reward}`, reward: reward, amount: reward, walletBalance: updatedUser?.wallet_balance||0, balance: updatedUser?.wallet_balance||0 });
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  app.post("/api/music/play/:id", userGuard, (req,res)=>{
-    try{
-      const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,suspended:true});
-      if(!isSuperUserCheck(u)) return res.status(403).json({success:false,super_only:true});
-      const id = Number(req.params.id);
-      db.prepare(`UPDATE jovia_music SET plays=plays+1 WHERE id=?`).run(id);
-      return res.json({success:true});
-    }catch(e){ return res.json({success:false}); }
-  });
-
-  app.post("/api/admin/music/add", adminGuard, (req,res)=>{
-    try{
-      const {title,artist,url,cover,reward,category} = req.body;
-      if(!title||!url) return res.status(400).json({success:false,message:"title and url required"});
-      db.prepare(`INSERT INTO jovia_music (title,artist,url,cover,reward,category) VALUES (?,?,?,?,?,?)`).run(title,artist||"Jovia Sounds",url,cover||"♫",Number(reward||100),category||"Super Hits");
-      return res.json({success:true,message:"Added"});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.get("/api/admin/music/list", adminGuard, (req,res)=>{
-    const rows = db.prepare(`SELECT * FROM jovia_music ORDER BY id DESC`).all();
-    return res.json({success:true,tracks:rows});
-  });
-  app.put("/api/admin/music/:id", adminGuard, (req,res)=>{
-    try{
-      const {title,artist,url,cover,reward,category} = req.body;
-      db.prepare(`UPDATE jovia_music SET title=?,artist=?,url=?,cover=?,reward=?,category=? WHERE id=?`).run(title,artist||"Jovia Sounds",url,cover||"♫",Number(reward||100),category||"Super Hits",Number(req.params.id));
-      return res.json({success:true,message:"Updated"});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.delete("/api/admin/music/:id", adminGuard, (req,res)=>{
-    db.prepare(`DELETE FROM jovia_music WHERE id=?`).run(Number(req.params.id));
-    return res.json({success:true});
-  });
-
-  app.get("/api/games/me", userGuard, (req,res)=>{
-    try{
-      const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)){ return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true}); }
-      const acc = getOrCreateGameAccount(req.user.id);
-      const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
-      const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
-      const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id);
-      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, minWithdraw:2500});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.post("/api/games/deposit", userGuard, (req,res)=>{
-    try{
-      const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended"});
-      const amount = Number(req.body?.amount);
-      if(!amount || amount < 100) return res.status(400).json({success:false,message:"Minimum deposit is ₦100"});
-      let reference = String(req.body?.reference||"").trim().toUpperCase();
-      if(!reference) reference = "JVG-"+Date.now()+"-"+crypto.randomInt(1000,9999);
-      const proof_image = String(req.body?.proof_image||"").slice(0,800000);
-      if(!proof_image) return res.status(400).json({success:false,message:"Payment proof is required - upload screenshot"});
-      const exists = db.prepare(`SELECT id FROM game_deposits WHERE reference = ?`).get(reference);
-      if(exists) return res.status(409).json({success:false,message:"This reference already exists"});
-      db.prepare(`INSERT INTO game_deposits (user_id, amount, reference, proof_image, status) VALUES (?, ?, ?, ?, 'pending')`).run(req.user.id, amount, reference, proof_image);
-      return res.json({success:true,message:`Deposit ₦${amount.toLocaleString()} submitted with proof! Admin will verify Kredi MFB 1850772192.`,reference,status:"pending"});
-    }catch(e){
-      if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate submission"});
-      return res.status(500).json({success:false,message:e.message});
-    }
-  });
-  app.post("/api/games/play", userGuard, (req,res)=>{
-    try{
-      const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended - Contact Admin",suspended:true});
-      const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
-      const map = {bottle:"spin_bottle", wheel:"spin_wheel", updown:"up_down", up_down:"up_down", guess:"number_predict", spin_bottle:"spin_bottle", spin_wheel:"spin_wheel", number_predict:"number_predict"};
-      const gameType = map[rawType] || "spin_bottle";
-      const bet = Number(req.body?.bet_amount ?? req.body?.amount ?? 100);
-      if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
-      const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}. Deposit to 1850772192`});
-      let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
-      if(gameType === "spin_bottle"){
-        const pick = String(req.body?.prediction||"up").toLowerCase().trim();
-        const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 30;
-        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
-        mult = isWin ? 1.8 : 0;
-        segmentLabel = finalSide.toUpperCase();
-      } else if(gameType === "up_down"){
-        const pick = String(req.body?.prediction||"up").toLowerCase().trim();
-        const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 30;
-        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
-        mult = isWin ? 1.8 : 0;
-        segmentLabel = finalSide === "up" ? "GREEN" : "RED";
-      } else if(gameType === "spin_wheel"){
-        const rand = crypto.randomInt(0,1000);
-        if(rand < 250){ mult = 0; segmentLabel="LOSE"; isWin=false; }
-        else if(rand < 450){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
-        else if(rand < 600){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
-        else if(rand < 750){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
-        else if(rand < 850){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
-        else if(rand < 920){ mult = 2; segmentLabel="2x"; isWin=true; }
-        else if(rand < 960){ mult = 5; segmentLabel="5x"; isWin=true; }
-        else if(rand < 985){ mult = 20; segmentLabel="20x"; isWin=true; }
-        else { mult = 100; segmentLabel="100x"; isWin=true; }
-      } else {
-        isWin = crypto.randomInt(0,100) < 30;
-        mult = isWin ? 2.5 : 0;
-        segmentLabel = isWin ? `${mult}x` : "LOSE";
-      }
-      const winAmount = Math.floor(bet*mult);
-      const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
-      const newBal = acc.game_balance - bet + finalWin;
-      db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, (isWin && mult>=1)?1:0, req.user.id);
-      db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, finalWin, isWin?'win':'loss', mult);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?finalWin:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
-      return res.json({
-        success:true, result:isWin?'win':'loss', isWin, bet, winAmount: finalWin, multiplier: mult, segment: segmentLabel, finalSide: finalSide, newBalance:newBal, 
-        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), minWithdraw:2500
-      });
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.post("/api/games/withdraw", userGuard, (req,res)=>{
-    try{
-      const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended"});
-      const amount = Number(req.body?.amount);
-      const bank_name = String(req.body?.bank_name||"").trim();
-      const account_number = String(req.body?.account_number||"").trim();
-      const account_name = String(req.body?.account_name||"").trim();
-      if(!amount || amount < 2500) return res.status(400).json({success:false,message:"Minimum withdrawal for game is ₦2500"});
-      if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Complete your bank details"});
-      const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient ₦${acc.game_balance}`});
-      const newBal = acc.game_balance - amount;
-      db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
-      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
-      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending - admin will pay from 1850772192 (Min ₦2500)`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
-  app.get("/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
-  app.get("/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
-  app.post("/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
-    try{
-      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
-      if(!dep) return res.status(404).json({success:false,message:"Not found"}); if(dep.status === "confirmed") return res.status(409).json({success:false,message:"Already confirmed"});
-      const tx = db.transaction(()=>{
-        const acc = getOrCreateGameAccount(dep.user_id);
-        const newBal = acc.game_balance + dep.amount;
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, dep.amount, dep.user_id);
-        db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
-        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal);
-      }); tx();
-      return res.json({success:true,message:`Confirmed ₦${dep.amount} - funded`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.post("/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
-    try{
-      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
-      if(!dep) return res.status(404).json({success:false}); if(dep.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
-      db.prepare(`UPDATE game_deposits SET status='declined', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
-      return res.json({success:true,message:"Declined"});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.post("/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
-    try{
-      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
-      if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
-      db.prepare(`UPDATE game_withdrawals SET status='confirmed', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-      return res.json({success:true,message:`Paid ₦${w.amount} to ${w.account_number}`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  app.post("/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
-    try{
-      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
-      if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
-      db.transaction(()=>{
-        db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(w.amount, w.user_id);
-      })();
-      return res.json({success:true,message:`Declined and refunded ₦${w.amount}`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  // === AUTO-ALIGN - Re-add saved 404 handlers at end - So second server aligns with main server ===
+    await loadFromServer();
+  } catch(e){ alert('❌ '+e.message); }
+  btn.innerHTML = oldText; btn.disabled = false;
+}
+async function loadFromServer(){
+  try {
+    const res = await fetch('/api/admin/codes/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    allServerCodes = data.codes || [];
+    filterList();
+  } catch(e){
+    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+' - Login again</p>';
+  }
+}
+function filterList(){
+  const q = (document.getElementById('searchInput').value||'').toUpperCase().trim();
+  let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : currentTab==='super' ? allServerCodes.filter(c=>c.type&&c.type.startsWith('super')) : allServerCodes;
+  if(q) filtered = filtered.filter(c=> c.code.toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q) || (c.used_by_email||'').toUpperCase().includes(q));
+  renderServer(filtered, allServerCodes.length);
+}
+function renderServer(filtered, totalAll){
+  document.getElementById('count').innerText = `${filtered.length} / ${totalAll} total`;
+  if(!filtered.length){
+    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet</p>';
+    return;
+  }
+  document.getElementById('list').innerHTML = filtered.map((c)=>{
+    const used = !!c.used;
+    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ${used?'USED by '+(c.used_by_name||c.used_by_email||c.used_by):'ACTIVE'}<br>${c.used_at||''}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
+  }).join('');
+}
+function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
+function shareCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); window.open('https://wa.me/?text='+encodeURIComponent('Your code: '+code),'_blank'); }
+async function validate(){
+  const code=document.getElementById('checkCode').value.trim().toUpperCase();
+  const r=document.getElementById('checkResult');
+  if(!code) return;
+  r.innerHTML='⏳ Checking...';
   try{
-    if(app._saved404Handlers && app._saved404Handlers.length){
-      app._saved404Handlers.forEach(layer=>{
-        app._router.stack.push(layer);
-      });
-      console.log("✅ Auto-aligned - 404 handler moved to end - Second server now works with main server without touching main server - /api/admin/games/deposits will work now");
-    }
-  }catch(e){}
+    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const data = await res.json();
+    if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid</span>'; return; }
+    if(data.used){ r.innerHTML=`<span style="color:#ef4444">❌ Already USED by ${data.used_by||data.used_by_name||'user'}</span>`; return; }
+    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active - ${data.type}</span>`;
+  } catch(e){ r.innerHTML='<span style="color:red">❌ '+e.message+'</span>'; }
+}
 
-  console.log("✅ FINAL JOVIA FIXED SERVER - NO SESSION EXPIRED - MUSIC CALLING ADDED HERE - ADMIN ME + DASHBOARD + DEPOSITS/WITHDRAWALS FIXED - READY");
-};
+async function loadMusic(){
+  const listDiv = document.getElementById('musicList');
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading music...</p>';
+  try{
+    const res = await fetch('/api/admin/music/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    if(res.status===401){ listDiv.innerHTML='<p style="color:orange;text-align:center">Session expired - Logout and login again</p>'; return; }
+    if(res.status===404){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ API endpoint not found - Second server not auto-aligned - Use fixed second server file with auto-align code at top</p>'; return; }
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    rawMusic = data.tracks || data.music || [];
+    filterMusic();
+  }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
+}
+function filterMusic(){
+  const q = (document.getElementById('searchMusic').value||'').toLowerCase();
+  const filtered = rawMusic.filter(m=> `${m.title||''} ${m.artist||''} ${m.category||''}`.toLowerCase().includes(q));
+  const listDiv = document.getElementById('musicList');
+  if(!filtered.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No music - Upload with direct .mp3 link (catbox.moe) + Set reward price YOU control</p>'; return; }
+  listDiv.innerHTML = filtered.map(m=>{
+    return `<div class="item"><div style="flex:1"><b>${m.title}</b> - ${m.artist||'Jovia'}<br><span style="font-size:10px;color:#5b21b6">Reward: ₦${Number(m.reward||0)} 👑 - YOU set - User earns per 60s</span><br><span style="font-size:9px;color:#94a3b8">${m.category||''} - Plays ${m.plays||0}</span></div><div><button onclick="editMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#2563eb;color:#fff;border:none;border-radius:6px;margin-bottom:4px;width:100%">Edit</button><button onclick="deleteMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;width:100%">Delete</button></div></div>`;
+  }).join('');
+}
+function musicStatus(msg, success=false){
+  const el=document.getElementById('musicStatus');
+  el.style.display='block';
+  el.style.background=success?'#dcfce7':'#fee2e2';
+  el.style.color=success?'#166534':'#991b1b';
+  el.textContent=msg;
+}
+async function saveMusic(){
+  const title=document.getElementById('musicTitle').value.trim();
+  const artist=document.getElementById('musicArtist').value.trim()||'Jovia Sounds';
+  const url=document.getElementById('musicUrl').value.trim();
+  const cover=document.getElementById('musicCover').value.trim()||'♫';
+  const reward=Number(document.getElementById('musicReward').value);
+  const category=document.getElementById('musicCategory').value;
+  if(!title||!url){ return musicStatus('Title and MP3 URL required', false); }
+  if(!Number.isFinite(reward)||reward<10){ return musicStatus('Reward must be at least ₦10', false); }
+  const btn=document.getElementById('btnMusic');
+  btn.disabled=true; btn.textContent='Uploading...';
+  try{
+    const payload={title,artist,url,cover,reward,category};
+    const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:'/api/admin/music/add';
+    const method=editingMusicId?'PUT':'POST';
+    const res=await fetch(endpoint,{method,headers:getHeaders(),credentials:'include',body:JSON.stringify(payload)});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.success){
+      if(res.status===401) throw new Error('Session expired - Logout and login again');
+      if(res.status===404) throw new Error('API endpoint not found - Second server not aligned - Use auto-aligned second server file');
+      throw new Error(data.message||'Could not save music');
+    }
+    musicStatus(`✅ Music uploaded - Reward ₦${reward} - Aligned`, true);
+    cancelMusicEdit();
+    await loadMusic();
+  }catch(e){ musicStatus(e.message, false); }
+  finally{ btn.disabled=false; btn.textContent=editingMusicId?'Save Changes':'＋ Upload Music & Set Price - ALIGNED'; }
+}
+function editMusic(id){
+  const m=rawMusic.find(x=>Number(x.id)===Number(id));
+  if(!m) return;
+  editingMusicId=Number(id);
+  document.getElementById('musicTitle').value=m.title||'';
+  document.getElementById('musicArtist').value=m.artist||'Jovia Sounds';
+  document.getElementById('musicUrl').value=m.url||'';
+  document.getElementById('musicCover').value=m.cover||'♫';
+  document.getElementById('musicReward').value=Number(m.reward||100);
+  document.getElementById('musicCategory').value=m.category||'Super Hits';
+  document.getElementById('btnMusic').textContent='Save Changes - Update Price';
+  document.getElementById('cancelMusicEdit').style.display='block';
+}
+function cancelMusicEdit(){
+  editingMusicId=null;
+  document.getElementById('musicTitle').value='';
+  document.getElementById('musicArtist').value='Jovia Sounds';
+  document.getElementById('musicUrl').value='';
+  document.getElementById('musicCover').value='';
+  document.getElementById('musicReward').value='100';
+  document.getElementById('musicCategory').value='Super Hits';
+  document.getElementById('btnMusic').textContent='＋ Upload Music & Set Price - ALIGNED';
+  document.getElementById('cancelMusicEdit').style.display='none';
+}
+async function deleteMusic(id){
+  if(!confirm(`Delete music #${id}?`)) return;
+  try{
+    const res=await fetch(`/api/admin/music/${Number(id)}`,{method:'DELETE',headers: getHeaders(), credentials:'include'});
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.message||'Delete failed');
+    await loadMusic();
+    musicStatus('Music deleted', true);
+  }catch(e){ musicStatus(e.message, false); }
+}
+
+async function loadDeposits(){
+  const listDiv = document.getElementById('depositsList');
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading deposits...</p>';
+  try{
+    const res = await fetch('/api/admin/games/deposits?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    if(res.status===404){ throw new Error('API endpoint not found: GET /api/admin/games/deposits - Second server not auto-aligned - Replace second server file with auto-aligned version (has auto-align code at top)'); }
+    if(res.status===401){ throw new Error('Admin authentication required - Session expired - Logout and login again'); }
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    if(!data.deposits.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No deposits yet</p>'; return; }
+    listDiv.innerHTML = data.deposits.map(d=>{
+      const isPending = d.status==='pending';
+      const proof = d.proof_image ? `<img src="${d.proof_image}" class="proof-img" onclick="openModal('${d.proof_image}')"><div style="font-size:10px;color:#22c55e;text-align:center">📸 Payment Proof - Click to enlarge</div>` : '<div style="color:red;font-size:11px;padding:10px;background:#fee2e2;border-radius:8px">❌ No proof uploaded</div>';
+      return `<div class="dep-item ${isPending?'pending':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>Ref: <b>${d.reference}</b><br>Date: ${d.created_at}</div>${proof}${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve & Fund ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineDeposit(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Funded at ${d.confirmed_at||''}</div>`}</div>`;
+    }).join('');
+  }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center;padding:15px">❌ '+e.message+'</p>'; }
+}
+async function confirmDeposit(depositId, amount){
+  if(!confirm(`Check Kredi 1850772192? See ₦${amount}? Approve?`)) return;
+  try{
+    const res = await fetch('/api/admin/games/deposit/confirm',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({depositId})});
+    const data = await res.json(); if(!data.success) throw new Error(data.message);
+    alert('✅ '+data.message); loadDeposits();
+  }catch(e){ alert('❌ '+e.message); }
+}
+async function declineDeposit(depositId){
+  if(!confirm('Decline?')) return;
+  try{
+    const res = await fetch('/api/admin/games/deposit/decline',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({depositId})});
+    const data = await res.json(); if(!data.success) throw new Error(data.message);
+    alert('Declined'); loadDeposits();
+  }catch(e){ alert('❌ '+e.message); }
+}
+async function loadWithdrawals(){
+  const listDiv = document.getElementById('withdrawalsList');
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading withdrawals...</p>';
+  try{
+    const res = await fetch('/api/admin/games/withdrawals?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    if(res.status===404){ throw new Error('API endpoint not found: GET /api/admin/games/withdrawals - Use auto-aligned second server'); }
+    if(res.status===401){ throw new Error('Admin authentication required - Login again'); }
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    if(!data.withdrawals.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No withdrawals yet</p>'; return; }
+    listDiv.innerHTML = data.withdrawals.map(d=>{
+      const isPending = d.status==='pending';
+      return `<div class="dep-item ${isPending?'pending':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>Bank: <b>${d.bank_name||''}</b><br>Acc: <b style="color:#d00">${d.account_number||''}</b> <button onclick="navigator.clipboard.writeText('${d.account_number||''}');alert('Copied')" style="padding:3px 8px;font-size:10px;background:#0f172a;color:#22c55e;border:none;border-radius:6px">Copy</button><br>Name: <b>${d.account_name||''}</b><br>Date: ${d.requested_at}</div>${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Paid at ${d.processed_at||''}</div>`}</div>`;
+    }).join('');
+  }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center;padding:15px">❌ '+e.message+'</p>'; }
+}
+async function confirmWithdrawal(withdrawalId, amount, acc){
+  if(!confirm(`You don pay ₦${amount} to ${acc} from 1850772192? Confirm Paid?`)) return;
+  try{
+    const res = await fetch('/api/admin/games/withdraw/confirm',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({withdrawalId})});
+    const data = await res.json(); if(!data.success) throw new Error(data.message);
+    alert('✅ '+data.message); loadWithdrawals();
+  }catch(e){ alert('❌ '+e.message); }
+}
+async function declineWithdrawal(withdrawalId){
+  if(!confirm('Decline and refund?')) return;
+  try{
+    const res = await fetch('/api/admin/games/withdraw/decline',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({withdrawalId})});
+    const data = await res.json(); if(!data.success) throw new Error(data.message);
+    alert('✅ '+data.message); loadWithdrawals();
+  }catch(e){ alert('❌ '+e.message); }
+}
+document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') unlock(); });
+loadFromServer();
+setTab('withdraw');
+</script>
+</body>
+</html>
