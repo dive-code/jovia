@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE - ADMIN LOGIN AS USER");
 
   const routeExists = (path, method) => {
     try{
@@ -107,14 +107,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  // RAILWAY SAFE CLEAN - LIMIT 20 - NO HEAVY BUILD FAIL
   setTimeout(()=>{
     try{
       const cnt = db.prepare(`SELECT COUNT(*) as c FROM jovia_music_earnings`).get().c;
       if(cnt > 5000){ console.log("Skip clean - too many rows for Railway"); return; }
       const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1 LIMIT 20`).all();
       if(dups.length > 0){
-        console.log(`⚠️ Found ${dups.length} same-day duplicates - Cleaning...`);
         for(const dup of dups){
           try{
             const rows = db.prepare(`SELECT id, amount FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.track_id, dup.day);
@@ -127,7 +125,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
             }
           }catch{}
         }
-        console.log(`✅ Cleaned duplicates safely`);
       }
     }catch(e){ console.log("Clean skip", e.message); }
   }, 10000);
@@ -281,7 +278,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.json({success:true, admin:{username:"admin"}});
   };
 
-  // ===== MAIN DASHBOARD 0 FIX - FORCE OVERWRITE BROKEN ONE =====
   try{
     if(app._router && app._router.stack){
       app._router.stack = app._router.stack.filter(layer => {
@@ -310,9 +306,83 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
-  console.log("✅ FIXED DASHBOARD 0 - Now shows real numbers");
 
-  // ===== FIX FOR kanujosephbenson@gmail.com - 1000 DEPOSIT RESET =====
+  // ===== ADMIN LOGIN AS USER - NO PASSWORD CHANGE - SAFE IMPERSONATE =====
+  safeAdd("get","/api/admin/login-as", adminGuard, (req,res)=>{
+    try{
+      const email = String(req.query?.email||"").trim().toLowerCase();
+      if(!email) return res.status(400).json({success:false,message:"email required - example: /api/admin/login-as?email=kanujosephbenson@gmail.com&adminPass=Divine@@1"});
+      const user = db.prepare(`SELECT id, email, full_name, username, package, plan, account_status, status, wallet_balance FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).json({success:false,message:"User not found: "+email});
+      
+      if(req.session){
+        // Save original admin state
+        req.session.originalAdmin = req.session.isAdmin;
+        req.session.isAdmin = false;
+        req.session.isImpersonating = true;
+        req.session.impersonatedUserId = user.id;
+        req.session.userId = user.id;
+        req.session.user = { id: user.id, email: user.email };
+        
+        return req.session.save((err)=>{
+          if(err) return res.status(500).json({success:false,message:"Session save failed"});
+          // Return JSON with redirect info - frontend can redirect
+          return res.json({
+            success:true,
+            message:`Now logged in as ${user.email} - No password changed - View as user`,
+            impersonating: true,
+            user: user,
+            redirect: "/dashboard.html",
+            gameAccount: getOrCreateGameAccount(user.id),
+            stopUrl: "/api/admin/stop-impersonate?adminPass=Divine@@1"
+          });
+        });
+      } else {
+        return res.json({success:false,message:"Session not enabled on server - Cannot impersonate without session"});
+      }
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  safeAdd("get","/api/admin/impersonate", adminGuard, (req,res)=>{
+    try{
+      const email = String(req.query?.email||"").trim().toLowerCase();
+      if(!email) return res.status(400).json({success:false,message:"email required"});
+      const user = db.prepare(`SELECT id, email FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      if(req.session){
+        req.session.originalAdmin = true;
+        req.session.isAdmin = false;
+        req.session.isImpersonating = true;
+        req.session.userId = user.id;
+        req.session.user = { id: user.id, email: user.email };
+        return req.session.save(()=> res.redirect("/"));
+      }
+      return res.json({success:true, user});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  safeAdd("get","/api/admin/stop-impersonate", (req,res)=>{
+    try{
+      const qp = String(req.query?.adminPass||"").trim();
+      if(qp !== ADMIN_PASS && !(req.session && req.session.originalAdmin)){
+        // Allow if session is impersonating
+        if(!(req.session && req.session.isImpersonating)) return res.status(401).json({success:false,message:"Not impersonating"});
+      }
+      if(req.session){
+        req.session.isImpersonating = false;
+        req.session.impersonatedUserId = null;
+        req.session.userId = null;
+        req.session.user = null;
+        req.session.isAdmin = true;
+        req.session.originalAdmin = null;
+        return req.session.save(()=>{
+          return res.json({success:true,message:"Stopped impersonating - Back to admin"});
+        });
+      }
+      return res.json({success:true,message:"Stopped"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   safeAdd("get","/api/admin/fix/kanu", adminGuard, (req,res)=>{
     try{
       const email = "kanujosephbenson@gmail.com";
@@ -350,10 +420,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const user = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, created_at FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
       if(!user) return res.status(404).json({success:false,message:"User not found"});
       const acc = getOrCreateGameAccount(user.id);
-      const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(user.id);
+      const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(user.id);
       const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id=? ORDER BY requested_at DESC LIMIT 10`).all(user.id);
-      const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(user.id);
-      return res.json({success:true, user, gameAccount: acc, deposits: deps, withdrawals: withs, bets});
+      const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(user.id);
+      const txs = db.prepare(`SELECT * FROM game_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 30`).all(user.id);
+      return res.json({success:true, user, gameAccount: acc, deposits: deps, withdrawals: withs, bets, transactions: txs});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -362,6 +433,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/admin/me", (req,res)=>{
     const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
     if(req.session && req.session.isAdmin){ return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
+    if(req.session && req.session.isImpersonating){ return res.json({success:true, impersonating:true, userId: req.session.userId}); }
     if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
     return res.status(401).json({success:false,message:"Not admin - Session expired"});
   });
@@ -417,6 +489,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const tx=db.transaction(()=>{
         const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
         if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED - Contact Admin");
+        if(isSuperUserCheck(user)) throw new Error("Already SUPER - One code per account only");
         const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
         if(!code) throw new Error("INVALID CODE"); 
         if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
@@ -599,21 +672,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
-
-      // ===== YOUR BALANCED 70/30 LOGIC - NO 100X GLITCH - PROFESSIONAL =====
       let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
-      const houseRoll = crypto.randomInt(0,100); // 0-99
-
+      const houseRoll = crypto.randomInt(0,100);
       if(gameType === "spin_wheel"){
-        // 70% LOSE, 30% WIN - Max 2x - Balanced
-        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }           // 40% lose all
-        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }    // 15% lose half
-        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }    // 15% lose small
-        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }     // 15% win small
-        else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }     // 8% win medium
-        else { mult = 2; segmentLabel="2x"; isWin=true; }                           // 7% win max
+        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }
+        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
+        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
+        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
+        else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
+        else { mult = 2; segmentLabel="2x"; isWin=true; }
       } else if(gameType === "spin_bottle" || gameType === "up_down"){
-        // Bottle & UpDown: 70% lose, 30% win 1.8x
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
         isWin = houseRoll < 30;
@@ -626,7 +694,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         mult = isWin ? 1.8 : 0;
         segmentLabel = isWin ? "WIN" : "LOSE";
       }
-
       const winAmount = Math.floor(bet*mult);
       const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
       const newBal = acc.game_balance - bet + finalWin;
@@ -703,5 +770,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL UPDATED FULL FILE - MAIN DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH + BALANCED 70/30 NO 100X + PROFESSIONAL + KANU FIX + RAILWAY SAFE - Build go succeed");
+  console.log("✅ FINAL UPDATED FULL FILE - DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH + BALANCED 70/30 NO 100X + PROFESSIONAL + KANU FIX + ADMIN LOGIN AS USER + ONE CODE PER ACC + RAILWAY SAFE");
 };
