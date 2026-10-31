@@ -3,20 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Admin - Professional + Proof</title>
+<title>JOVIA Admin - Professional + Proof + Music Secure</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
 .top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:680px;margin:0 auto 12px}
 .container{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
-input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:10px;outline:none;font-weight:700}
+input,select,textarea{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:10px;outline:none;font-weight:700;font-size:14px}
+textarea{resize:vertical;min-height:80px}
 .btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:800;cursor:pointer;transition:.2s}
 .btn:active{transform:scale(.98)}
 .btn-black{background:#0f172a;color:#22c55e}
 .btn-gold{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000}
 .btn-silver{background:linear-gradient(135deg,#94a3b8,#cbd5e1);color:#000}
 .btn-light{background:#f1f5f9;color:#0f172a}
+.btn-purple{background:#5b21b6;color:#fff}
 .code-box{background:#0f172a;border-radius:12px;padding:16px;text-align:center;display:none;margin-top:12px}
 .code{color:#22c55e;font-size:22px;font-weight:900;letter-spacing:2px;word-break:break-all;margin-top:6px}
 .code.super{color:#fbbf24}
@@ -31,6 +33,7 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 .tab.super-active{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;border-color:#ff9a00}
 .tab.game-active{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:#22c55e}
 .tab.with-active{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#ef4444}
+.tab.music-active{background:#5b21b6;color:#fff;border-color:#5b21b6}
 .dep-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
 .dep-item.pending{background:#fffbeb;border-color:#fbbf24}
 .bank-box{background:#f8fafc;border:1px dashed #94a3b8;padding:10px;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:10px}
@@ -38,12 +41,15 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.show{display:flex}
 .modal img{max-width:100%;max-height:90vh;border-radius:12px}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px}
+th,td{padding:8px;border-bottom:1px solid #e2e8f0;text-align:left}
+th{background:#f8fafc;font-size:10px}
 </style>
 </head>
 <body>
 <div id="lock" class="lock"><div class="lock-box">
 <h2 style="font-size:20px">🔐 Admin Only</h2>
-<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password</p>
+<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password - Secure session</p>
 <input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
@@ -52,13 +58,14 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 <div id="imgModal" class="modal" onclick="this.classList.remove('show')"><img id="modalImg" src=""></div>
 
 <div class="top">
-<div><h3 style="font-size:14px">JOVIA ADMIN</h3><small style="font-size:10px;color:#94a3b8">Codes + Deposits + Withdrawals + Proof</small></div>
-<span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SERVER DB</span>
+<div><h3 style="font-size:14px">JOVIA ADMIN SECURE</h3><small style="font-size:10px;color:#94a3b8">Codes + Deposits + Withdrawals + Music + Proof - No password exposure</small></div>
+<span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SECURE DB</span>
 </div>
 <div class="container">
 <div class="tabs">
 <button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Codes</button>
 <button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
+<button class="tab" id="tabM" onclick="setTab('music')">♫ Music</button>
 <button class="tab" id="tabG" onclick="setTab('deposits')">🎮 Deposits</button>
 <button class="tab" id="tabWD" onclick="setTab('withdrawals')">💰 Withdraw</button>
 </div>
@@ -90,6 +97,25 @@ input{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;marg
 <button class="btn btn-light" onclick="copyCode('super')">📋 Copy</button>
 <button class="btn btn-light" onclick="shareCode('super')">💬 WhatsApp</button>
 </div>
+</div>
+</div>
+
+<div class="card" id="cardMusic" style="display:none">
+<h3 style="font-size:14px;margin-bottom:8px">♫ Music Management - Super Only - YOU set price user earns - Secure</h3>
+<div style="background:#eef2ff;border:1px dashed #5b21b6;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">🔒 Secure - Uses session only - No password in code - MP3 must be direct .mp3 link like catbox.moe link - YOU set reward price, user earns per 60s</div>
+<input id="musicTitle" placeholder="Music Title * e.g Afro Vibes - Summer">
+<input id="musicArtist" placeholder="Artist * e.g Jovia Sounds" value="Jovia Sounds">
+<input id="musicUrl" placeholder="MP3 URL * direct .mp3 link e.g https://files.catbox.moe/xxxxx.mp3">
+<input id="musicCover" placeholder="Cover emoji or image URL e.g ♫">
+<input id="musicReward" type="number" placeholder="Reward ₦ * e.g 100 - YOU set - User earns this per 60s" value="100">
+<select id="musicCategory"><option>Super Hits</option><option>Afrobeat</option><option>Super Mix</option><option>Super Anthem</option><option>General</option></select>
+<button class="btn btn-purple" id="btnMusic" onclick="saveMusic()">＋ Upload Music & Set Price - Secure</button>
+<button class="btn btn-light" id="cancelMusicEdit" style="display:none;margin-top:8px" onclick="cancelMusicEdit()">Cancel Edit</button>
+<div id="musicStatus" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:11px;font-weight:700"></div>
+<div style="margin-top:14px">
+<input id="searchMusic" placeholder="🔍 Search music..." oninput="filterMusic()" style="margin-bottom:10px">
+<div id="musicList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh to load</p></div>
+<button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music</button>
 </div>
 </div>
 
@@ -126,15 +152,19 @@ Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
 <input id="searchInput" class="search" placeholder="🔍 Search code or email..." oninput="filterList()" style="padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;width:100%;margin-bottom:10px">
 <div id="list"></div>
 <button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
-<button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock</button>
+<button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock - Logout Secure</button>
 </div>
 </div>
 <script>
 let currentTab='withdraw';
 let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
 let allServerCodes = [];
-function getPass(){ return localStorage.getItem('jovia_pass') || 'Divine@@1'; }
-function getHeaders(){ return { 'Content-Type':'application/json', 'x-admin-password': getPass() }; }
+let rawMusic = [];
+let editingMusicId = null;
+
+function getHeaders(){ return { 'Content-Type':'application/json' }; }
+function getHeadersNoContent(){ return {}; }
+
 if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
 
 function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').classList.add('show'); }
@@ -153,25 +183,32 @@ async function unlock(){
     });
     const data = await res.json();
     if(!res.ok || data.success===false) throw new Error(data.message||'Wrong password');
-    localStorage.setItem('jovia_pass', val);
     localStorage.setItem('jovia_ok','yes');
     document.getElementById('lock').style.display='none';
     await loadFromServer();
+    await loadMusic();
   }catch(e){ err.innerText='❌ '+e.message; err.style.display='block'; }
 }
-async function logoutAdmin(){ localStorage.removeItem('jovia_ok'); location.reload(); }
+async function logoutAdmin(){ 
+  try{ await fetch('/api/admin/logout',{method:'POST',credentials:'include'}); }catch{}
+  localStorage.removeItem('jovia_ok'); 
+  location.reload(); 
+}
 function setTab(t){
   currentTab=t;
   document.getElementById('tabW').className=t==='withdraw'?'tab active':'tab';
   document.getElementById('tabS').className=t==='super'?'tab super-active':'tab';
+  document.getElementById('tabM').className=t==='music'?'tab music-active':'tab';
   document.getElementById('tabG').className=t==='deposits'?'tab game-active':'tab';
   document.getElementById('tabWD').className=t==='withdrawals'?'tab with-active':'tab';
   document.getElementById('cardWithdraw').style.display=t==='withdraw'?'block':'none';
   document.getElementById('cardSuper').style.display=t==='super'?'block':'none';
+  document.getElementById('cardMusic').style.display=t==='music'?'block':'none';
   document.getElementById('cardDeposits').style.display=t==='deposits'?'block':'none';
   document.getElementById('cardWithdrawals').style.display=t==='withdrawals'?'block':'none';
   if(t==='deposits') loadDeposits();
   if(t==='withdrawals') loadWithdrawals();
+  if(t==='music') loadMusic();
   filterList();
 }
 async function generate(type){
@@ -184,7 +221,7 @@ async function generate(type){
       method: 'POST',
       headers: getHeaders(),
       credentials:'include',
-      body: JSON.stringify({ type: type, count: 1, password: getPass(), adminPass: getPass() })
+      body: JSON.stringify({ type: type, count: 1 })
     });
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
@@ -206,13 +243,13 @@ async function generate(type){
 }
 async function loadFromServer(){
   try {
-    const res = await fetch('/api/admin/codes/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const res = await fetch('/api/admin/codes/list?t='+Date.now(),{credentials:'include'});
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     allServerCodes = data.codes || [];
     filterList();
   } catch(e){
-    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+'</p>';
+    document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+' - Login again</p>';
   }
 }
 function filterList(){
@@ -240,18 +277,111 @@ async function validate(){
   if(!code) return;
   r.innerHTML='⏳ Checking...';
   try{
-    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const res = await fetch('/api/admin/codes/check/'+encodeURIComponent(code)+'?t='+Date.now(),{credentials:'include'});
     const data = await res.json();
     if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid</span>'; return; }
     if(data.used){ r.innerHTML=`<span style="color:#ef4444">❌ Already USED by ${data.used_by||data.used_by_name||'user'}</span>`; return; }
     r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active - ${data.type}</span>`;
   } catch(e){ r.innerHTML='<span style="color:red">❌ '+e.message+'</span>'; }
 }
+
+// === MUSIC CALLING ADDED HERE - Secure Session Only ===
+async function loadMusic(){
+  const listDiv = document.getElementById('musicList');
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading music...</p>';
+  try{
+    const res = await fetch('/api/admin/music/list?t='+Date.now(),{credentials:'include'});
+    if(res.status===401){ listDiv.innerHTML='<p style="color:orange;text-align:center">Session expired - Logout and login again</p>'; return; }
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    rawMusic = data.tracks || data.music || [];
+    filterMusic();
+  }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
+}
+function filterMusic(){
+  const q = (document.getElementById('searchMusic').value||'').toLowerCase();
+  const filtered = rawMusic.filter(m=> `${m.title||''} ${m.artist||''} ${m.category||''}`.toLowerCase().includes(q));
+  const listDiv = document.getElementById('musicList');
+  if(!filtered.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No music - Upload with direct .mp3 link (catbox.moe) + Set reward price YOU control</p>'; return; }
+  listDiv.innerHTML = filtered.map(m=>{
+    return `<div class="item"><div style="flex:1"><b>${m.title}</b> - ${m.artist||'Jovia'}<br><span style="font-size:10px;color:#5b21b6">Reward: ₦${Number(m.reward||0)} 👑 - YOU set - User earns per 60s</span><br><span style="font-size:9px;color:#94a3b8">${m.category||''} - Plays ${m.plays||0} - ${m.url?m.url.slice(0,40)+'...':''}</span></div><div><button onclick="editMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#2563eb;color:#fff;border:none;border-radius:6px;margin-bottom:4px;width:100%">Edit</button><button onclick="deleteMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;width:100%">Delete</button></div></div>`;
+  }).join('');
+}
+function musicStatus(msg, success=false){
+  const el=document.getElementById('musicStatus');
+  el.style.display='block';
+  el.style.background=success?'#dcfce7':'#fee2e2';
+  el.style.color=success?'#166534':'#991b1b';
+  el.textContent=msg;
+}
+async function saveMusic(){
+  const title=document.getElementById('musicTitle').value.trim();
+  const artist=document.getElementById('musicArtist').value.trim()||'Jovia Sounds';
+  const url=document.getElementById('musicUrl').value.trim();
+  const cover=document.getElementById('musicCover').value.trim()||'♫';
+  const reward=Number(document.getElementById('musicReward').value);
+  const category=document.getElementById('musicCategory').value;
+  if(!title||!url){ return musicStatus('Title and MP3 URL required - Use direct .mp3 like catbox.moe link', false); }
+  if(!Number.isFinite(reward)||reward<10){ return musicStatus('Reward must be at least ₦10 - YOU set it', false); }
+  const btn=document.getElementById('btnMusic');
+  btn.disabled=true; btn.textContent='Uploading securely...';
+  try{
+    const payload={title,artist,url,cover,reward,category};
+    const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:'/api/admin/music/add';
+    const method=editingMusicId?'PUT':'POST';
+    const res=await fetch(endpoint,{method,headers:getHeaders(),credentials:'include',body:JSON.stringify(payload)});
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok||!data.success){
+      if(res.status===401) throw new Error('Session expired - Logout and login again to refresh session');
+      throw new Error(data.message||'Could not save music - Check MP3 link is direct .mp3 like catbox.moe');
+    }
+    musicStatus(`✅ Music uploaded - Reward ₦${reward} per 60s - Super users earn this`, true);
+    cancelMusicEdit();
+    await loadMusic();
+  }catch(e){ musicStatus(e.message, false); }
+  finally{ btn.disabled=false; btn.textContent=editingMusicId?'Save Changes - Update Price':'＋ Upload Music & Set Price - Secure'; }
+}
+function editMusic(id){
+  const m=rawMusic.find(x=>Number(x.id)===Number(id));
+  if(!m) return;
+  editingMusicId=Number(id);
+  document.getElementById('musicTitle').value=m.title||'';
+  document.getElementById('musicArtist').value=m.artist||'Jovia Sounds';
+  document.getElementById('musicUrl').value=m.url||'';
+  document.getElementById('musicCover').value=m.cover||'♫';
+  document.getElementById('musicReward').value=Number(m.reward||100);
+  document.getElementById('musicCategory').value=m.category||'Super Hits';
+  document.getElementById('btnMusic').textContent='Save Changes - Update Price';
+  document.getElementById('cancelMusicEdit').style.display='block';
+  document.getElementById('cardMusic').scrollIntoView({behavior:'smooth'});
+}
+function cancelMusicEdit(){
+  editingMusicId=null;
+  document.getElementById('musicTitle').value='';
+  document.getElementById('musicArtist').value='Jovia Sounds';
+  document.getElementById('musicUrl').value='';
+  document.getElementById('musicCover').value='';
+  document.getElementById('musicReward').value='100';
+  document.getElementById('musicCategory').value='Super Hits';
+  document.getElementById('btnMusic').textContent='＋ Upload Music & Set Price - Secure';
+  document.getElementById('cancelMusicEdit').style.display='none';
+}
+async function deleteMusic(id){
+  if(!confirm(`Delete music #${id}?`)) return;
+  try{
+    const res=await fetch(`/api/admin/music/${Number(id)}`,{method:'DELETE',credentials:'include'});
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.message||'Delete failed');
+    await loadMusic();
+    musicStatus('Music deleted', true);
+  }catch(e){ musicStatus(e.message, false); }
+}
+
 async function loadDeposits(){
   const listDiv = document.getElementById('depositsList');
   listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading deposits...</p>';
   try{
-    const res = await fetch('/api/admin/games/deposits?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const res = await fetch('/api/admin/games/deposits?t='+Date.now(),{credentials:'include'});
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     if(!data.deposits.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No deposits yet</p>'; return; }
@@ -266,14 +396,13 @@ async function loadDeposits(){
         Date: ${d.created_at}<br>
         </div>
         ${proof}
-        <div style="margin-top:8px;background:#f0fff4;padding:8px;border-radius:8px;font-size:10px;color:#166534">👉 Check your Kredi MFB app 1850772192 - Amount ₦${d.amount} match proof? If YES approve.</div>
         ${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve & Fund Game Wallet ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineDeposit(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline Deposit</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Funded at ${d.confirmed_at||''}</div>`}
       </div>`;
     }).join('');
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
 }
 async function confirmDeposit(depositId, amount){
-  if(!confirm(`Have you checked Kredi MFB 1850772192?\nDid you see ₦${amount}?\nDoes proof screenshot match?\nApprove?`)) return;
+  if(!confirm(`Have you checked Kredi MFB 1850772192?\nDid you see ₦${amount}?\nApprove?`)) return;
   try{
     const res = await fetch('/api/admin/games/deposit/confirm',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({depositId})});
     const data = await res.json(); if(!data.success) throw new Error(data.message);
@@ -292,7 +421,7 @@ async function loadWithdrawals(){
   const listDiv = document.getElementById('withdrawalsList');
   listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading withdrawals...</p>';
   try{
-    const res = await fetch('/api/admin/games/withdrawals?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
+    const res = await fetch('/api/admin/games/withdrawals?t='+Date.now(),{credentials:'include'});
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     if(!data.withdrawals.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No withdrawals yet</p>'; return; }
@@ -304,18 +433,18 @@ async function loadWithdrawals(){
         User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>
         <div style="background:#f8fafc;padding:10px;border-radius:10px;margin:8px 0;border:1px solid #e2e8f0">
         Bank: <b>${d.bank_name||''}</b><br>
-        Acc No: <b style="color:#d00;font-size:14px">${d.account_number||''}</b> <button onclick="navigator.clipboard.writeText('${d.account_number||''}');alert('Copied ${d.account_number||''}')" style="padding:3px 8px;font-size:10px;background:#0f172a;color:#22c55e;border:none;border-radius:6px">Copy</button><br>
+        Acc No: <b style="color:#d00;font-size:14px">${d.account_number||''}</b> <button onclick="navigator.clipboard.writeText('${d.account_number||''}');alert('Copied')" style="padding:3px 8px;font-size:10px;background:#0f172a;color:#22c55e;border:none;border-radius:6px">Copy</button><br>
         Name: <b>${d.account_name||''}</b>
         </div>
         Date: ${d.requested_at}
         </div>
-        ${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(d.amount).toLocaleString()} to ${d.account_number||''}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund to Game Wallet</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Paid at ${d.processed_at||''} to ${d.account_number}</div>`}
+        ${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Paid at ${d.processed_at||''}</div>`}
       </div>`;
     }).join('');
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
 }
 async function confirmWithdrawal(withdrawalId, amount, acc){
-  if(!confirm(`You don pay ₦${amount} to account ${acc} from your 1850772192 Kredi MFB?\nConfirm as Paid?`)) return;
+  if(!confirm(`You don pay ₦${amount} to ${acc} from 1850772192?\nConfirm as Paid?`)) return;
   try{
     const res = await fetch('/api/admin/games/withdraw/confirm',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({withdrawalId})});
     const data = await res.json(); if(!data.success) throw new Error(data.message);
@@ -323,7 +452,7 @@ async function confirmWithdrawal(withdrawalId, amount, acc){
   }catch(e){ alert('❌ '+e.message); }
 }
 async function declineWithdrawal(withdrawalId){
-  if(!confirm('Decline and refund to game wallet?')) return;
+  if(!confirm('Decline and refund?')) return;
   try{
     const res = await fetch('/api/admin/games/withdraw/decline',{method:'POST',headers: getHeaders(),credentials:'include',body: JSON.stringify({withdrawalId})});
     const data = await res.json(); if(!data.success) throw new Error(data.message);
