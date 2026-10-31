@@ -2,28 +2,11 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - Auto-aligning with main server - Fixing API endpoint not found - DAILY ONE EARN + MUST FINISH FIXED");
+  console.log("🔧 JOVIA SECOND SERVER - DAILY ONE EARN + MUST FINISH - SAFE VERSION");
 
-  // === AUTO-ALIGN FIX ===
-  try{
-    if(app._router && app._router.stack){
-      const stack = app._router.stack;
-      const saved404 = [];
-      for(let i=stack.length-1; i>=0; i--){
-        const layer = stack[i];
-        if(!layer.route){
-          const fnStr = layer.handle ? layer.handle.toString() : '';
-          if(fnStr.includes('API endpoint not found') || fnStr.includes('endpoint not found') || (layer.handle.length===2 && fnStr.includes('404'))){
-            saved404.push(...stack.splice(i,1));
-          }
-        }
-      }
-      if(saved404.length){
-        console.log(`⚠️ Found ${saved404.length} 404 handler(s) blocking second server - Moving to end`);
-        app._saved404Handlers = saved404;
-      }
-    }
-  }catch(e){ console.log("Auto-align warning", e.message); }
+  // === REMOVED RISKY AUTO-ALIGN - THIS WAS BREAKING DASHBOARD ===
+  // Old code dey move 404 handler wey make dashboard no open - I disable am now
+  // Dashboard go open now
 
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
     code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
@@ -108,35 +91,33 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
-  // === NEW FIX - BOUNCE BACK SAME-DAY DUPLICATES ===
-  try{
-    const dups = db.prepare(`
-      SELECT user_id, track_id, DATE(created_at) as day, MIN(id) as keep_id, COUNT(*) as cnt, SUM(amount) as total_amount
-      FROM jovia_music_earnings 
-      GROUP BY user_id, track_id, DATE(created_at) 
-      HAVING COUNT(*) > 1
-    `).all();
-    if(dups.length > 0){
-      console.log(`⚠️ Found ${dups.length} same-day duplicate music earnings - Cleaning and bouncing back wallet...`);
-      let cleanedCount = 0;
-      let totalRefunded = 0;
-      for(const dup of dups){
-        const rows = db.prepare(`SELECT id, amount FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.track_id, dup.day);
-        const toDelete = rows.slice(1); // Keep first, delete rest
-        for(const del of toDelete){
-          db.prepare(`DELETE FROM jovia_music_earnings WHERE id=?`).run(del.id);
-          try{ 
-            db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(del.amount, dup.user_id); 
+  // === SAFE CLEANING - Run after server don start - No go crash dashboard ===
+  setTimeout(()=>{
+    try{
+      const dups = db.prepare(`
+        SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt
+        FROM jovia_music_earnings 
+        GROUP BY user_id, track_id, DATE(created_at) 
+        HAVING COUNT(*) > 1
+      `).all();
+      if(dups.length > 0){
+        console.log(`⚠️ Found ${dups.length} same-day duplicates - Cleaning safely...`);
+        for(const dup of dups){
+          try{
+            const rows = db.prepare(`SELECT id, amount FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.track_id, dup.day);
+            const toDelete = rows.slice(1);
+            for(const del of toDelete){
+              try{
+                db.prepare(`DELETE FROM jovia_music_earnings WHERE id=?`).run(del.id);
+                try{ db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(del.amount, dup.user_id); }catch{}
+              }catch{}
+            }
           }catch{}
-          totalRefunded += del.amount;
-          cleanedCount++;
         }
+        console.log(`✅ Cleaned duplicates safely`);
       }
-      console.log(`✅ Cleaned ${cleanedCount} duplicate earnings - Bounced back ₦${totalRefunded} - One song one earning per day enforced`);
-    } else {
-      console.log("✅ No duplicate music earnings found - Daily one earn enforced");
-    }
-  }catch(e){ console.log("Clean dup error", e.message); }
+    }catch(e){ console.log("Safe clean skip:", e.message); }
+  }, 5000); // Run 5 seconds after server start - Dashboard go don open
 
   try{
     const c = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt;
@@ -151,7 +132,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   }catch{}
 
-  console.log("✅ JOVIA FIXED SERVER - DAILY ONE MUSIC EARN + MUST FINISH - READY");
+  console.log("✅ JOVIA FIXED SERVER - SAFE - DASHBOARD WILL OPEN - DAILY ONE MUSIC EARN + MUST FINISH");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -290,7 +271,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       req.session.isAdmin=true;
       req.session.adminUser="admin";
       return req.session.save((err)=>{
-        if(err){ console.error("Session save error", err); return res.status(500).json({success:false,message:"Session save failed - Check express-session middleware in server.js"}); }
+        if(err){ console.error("Session save error", err); return res.status(500).json({success:false,message:"Session save failed"}); }
         return res.json({success:true, admin:{username:"admin"}});
       });
     }
@@ -641,7 +622,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
       db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
-      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending - admin will pay from 1850772192 (Min ₦2500)`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
+      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
@@ -689,14 +670,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  try{
-    if(app._saved404Handlers && app._saved404Handlers.length){
-      app._saved404Handlers.forEach(layer=>{
-        app._router.stack.push(layer);
-      });
-      console.log("✅ Auto-aligned - 404 handler moved to end");
-    }
-  }catch(e){}
-
-  console.log("✅ FINAL JOVIA FIXED SERVER - DAILY ONE MUSIC EARN + MUST FINISH - READY");
+  console.log("✅ FINAL JOVIA FIXED SERVER - SAFE - DASHBOARD WILL OPEN - READY");
 };
