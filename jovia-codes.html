@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JOVIA Admin - Professional + Proof + Music Secure - ALIGNED</title>
+<title>JOVIA Admin</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
@@ -46,7 +46,7 @@ textarea{resize:vertical;min-height:80px}
 <body>
 <div id="lock" class="lock"><div class="lock-box">
 <h2 style="font-size:20px">🔐 Admin Only</h2>
-<p style="font-size:11px;color:#64748b;margin-top:6px">Enter admin password - Secure session - ALIGNED</p>
+<p style="font-size:11px;color:#64748b;margin-top:6px">Daily One Earn + Must Finish - SAFE</p>
 <input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
@@ -55,14 +55,14 @@ textarea{resize:vertical;min-height:80px}
 <div id="imgModal" class="modal" onclick="this.classList.remove('show')"><img id="modalImg" src=""></div>
 
 <div class="top">
-<div><h3 style="font-size:14px">JOVIA ADMIN SECURE - ALIGNED</h3><small style="font-size:10px;color:#94a3b8">Codes + Deposits + Withdrawals + Music + Proof - Aligned with second server</small></div>
-<span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">ALIGNED DB</span>
+<div><h3 style="font-size:14px">JOVIA ADMIN - DAILY ONE EARN SAFE</h3><small style="font-size:10px;color:#94a3b8">Dashboard Safe + Music Daily Reset + Must Finish</small></div>
+<span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SAFE</span>
 </div>
 <div class="container">
 <div class="tabs">
 <button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Codes</button>
 <button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
-<button class="tab" id="tabM" onclick="setTab('music')">♫ Music</button>
+<button class="tab" id="tabM" onclick="setTab('music')">♫ Music Daily</button>
 <button class="tab" id="tabG" onclick="setTab('deposits')">🎮 Deposits</button>
 <button class="tab" id="tabWD" onclick="setTab('withdrawals')">💰 Withdraw</button>
 </div>
@@ -98,26 +98,26 @@ textarea{resize:vertical;min-height:80px}
 </div>
 
 <div class="card" id="cardMusic" style="display:none">
-<h3 style="font-size:14px;margin-bottom:8px">♫ Music Management - Super Only - YOU set price - ALIGNED</h3>
-<div style="background:#eef2ff;border:1px dashed #5b21b6;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">🔒 Aligned - Uses session + fallback header - MP3 must be direct .mp3 like catbox.moe - YOU set reward</div>
+<h3 style="font-size:14px;margin-bottom:8px">♫ Music Management - ONE PER DAY + MUST FINISH</h3>
+<div style="background:#eef2ff;border:1px dashed #5b21b6;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">🔒 DAILY RESET: One song = One earning per day - Tomorrow same song fit earn again. MUST FINISH: User must play till end.</div>
 <input id="musicTitle" placeholder="Music Title * e.g Afro Vibes">
 <input id="musicArtist" placeholder="Artist * e.g Jovia Sounds" value="Jovia Sounds">
 <input id="musicUrl" placeholder="MP3 URL * direct .mp3 e.g https://files.catbox.moe/xxxxx.mp3">
 <input id="musicCover" placeholder="Cover emoji or image URL e.g ♫">
 <input id="musicReward" type="number" placeholder="Reward ₦ * e.g 100" value="100">
 <select id="musicCategory"><option>Super Hits</option><option>Afrobeat</option><option>Super Mix</option><option>Super Anthem</option><option>General</option></select>
-<button class="btn btn-purple" id="btnMusic" onclick="saveMusic()">＋ Upload Music & Set Price - ALIGNED</button>
+<button class="btn btn-purple" id="btnMusic" onclick="saveMusic()">＋ Upload Music & Set Price - DAILY ONE</button>
 <button class="btn btn-light" id="cancelMusicEdit" style="display:none;margin-top:8px" onclick="cancelMusicEdit()">Cancel Edit</button>
 <div id="musicStatus" style="display:none;margin-top:10px;padding:10px;border-radius:10px;font-size:11px;font-weight:700"></div>
 <div style="margin-top:14px">
 <input id="searchMusic" placeholder="🔍 Search music..." oninput="filterMusic()" style="margin-bottom:10px">
 <div id="musicList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh to load</p></div>
-<button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music</button>
+<button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music - Daily Reset Active</button>
 </div>
 </div>
 
 <div class="card" id="cardDeposits" style="display:none">
-<h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Proof Verification - ALIGNED</h3>
+<h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Proof Verification</h3>
 <div class="bank-box">
 Bank: <b>Kredi Money MFB Ltd</b><br>
 Acc: <b style="color:#d00;font-size:14px">1850772192</b> <button onclick="navigator.clipboard.writeText('1850772192');alert('Copied')" style="padding:2px 8px;font-size:10px">Copy</button><br>
@@ -129,7 +129,7 @@ Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
 </div>
 
 <div class="card" id="cardWithdrawals" style="display:none">
-<h3 style="font-size:14px;margin-bottom:8px">💰 Game Withdrawals - Pay Users - ALIGNED</h3>
+<h3 style="font-size:14px;margin-bottom:8px">💰 Game Withdrawals - Pay Users</h3>
 <div class="bank-box">You will pay from your <b>1850772192 Kredi MFB</b> account to users below. Copy account number and transfer, then click Paid.</div>
 <button class="btn btn-black" onclick="loadWithdrawals()" style="margin-bottom:10px">🔄 Refresh Withdrawals</button>
 <div id="withdrawalsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
@@ -159,11 +159,10 @@ let allServerCodes = [];
 let rawMusic = [];
 let editingMusicId = null;
 
-// === FIXED ALIGNED - No more session expired - Sends fallback header + cookie ===
 function getHeaders(){ 
   const pass = sessionStorage.getItem('jovia_session_pass') || '';
   const headers = { 'Content-Type':'application/json' };
-  if(pass) headers['x-admin-password'] = pass; // fallback for auto-aligned second server
+  if(pass) headers['x-admin-password'] = pass;
   return headers; 
 }
 
@@ -185,7 +184,7 @@ async function unlock(){
     });
     const data = await res.json();
     if(!res.ok || data.success===false) throw new Error(data.message||'Wrong password');
-    sessionStorage.setItem('jovia_session_pass', val); // ALIGNED - fallback for cookie
+    sessionStorage.setItem('jovia_session_pass', val);
     localStorage.setItem('jovia_ok','yes');
     document.getElementById('lock').style.display='none';
     await loadFromServer();
@@ -238,8 +237,8 @@ async function generate(type){
       lastSuper=newCode; lastSuperPrice=type==='super-gold'?12000:16000; lastSuperType=type==='super-gold'?'GOLD → SUPER':'SILVER → SUPER';
       document.getElementById('resultSuper').style.display='block';
       document.getElementById('codeTextSuper').innerText=newCode;
-      document.getElementById('superTypeLabel').innerText=lastSuperType+' - SAVED';
-      document.getElementById('superPriceLabel').innerHTML='Price: <b>N'+lastSuperPrice.toLocaleString()+'</b>';
+      document.getElementById('superTypeLabel').innerText=lastSuperType+' - DAILY RESET';
+      document.getElementById('superPriceLabel').innerHTML='Price: <b>N'+lastSuperPrice.toLocaleString()+'</b> - One per day';
     }
     await loadFromServer();
   } catch(e){ alert('❌ '+e.message); }
@@ -291,11 +290,11 @@ async function validate(){
 
 async function loadMusic(){
   const listDiv = document.getElementById('musicList');
-  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading music...</p>';
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading music - Daily one earn active...</p>';
   try{
     const res = await fetch('/api/admin/music/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
     if(res.status===401){ listDiv.innerHTML='<p style="color:orange;text-align:center">Session expired - Logout and login again</p>'; return; }
-    if(res.status===404){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ API endpoint not found - Second server not auto-aligned - Use fixed second server file with auto-align code at top</p>'; return; }
+    if(res.status===404){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ API endpoint not found - Use SAFE second server file (without risky auto-align)</p>'; return; }
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     rawMusic = data.tracks || data.music || [];
@@ -306,9 +305,9 @@ function filterMusic(){
   const q = (document.getElementById('searchMusic').value||'').toLowerCase();
   const filtered = rawMusic.filter(m=> `${m.title||''} ${m.artist||''} ${m.category||''}`.toLowerCase().includes(q));
   const listDiv = document.getElementById('musicList');
-  if(!filtered.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No music - Upload with direct .mp3 link (catbox.moe) + Set reward price YOU control</p>'; return; }
+  if(!filtered.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No music - Upload with direct .mp3 link (catbox.moe) - One per day - Must finish</p>'; return; }
   listDiv.innerHTML = filtered.map(m=>{
-    return `<div class="item"><div style="flex:1"><b>${m.title}</b> - ${m.artist||'Jovia'}<br><span style="font-size:10px;color:#5b21b6">Reward: ₦${Number(m.reward||0)} 👑 - YOU set - User earns per 60s</span><br><span style="font-size:9px;color:#94a3b8">${m.category||''} - Plays ${m.plays||0}</span></div><div><button onclick="editMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#2563eb;color:#fff;border:none;border-radius:6px;margin-bottom:4px;width:100%">Edit</button><button onclick="deleteMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;width:100%">Delete</button></div></div>`;
+    return `<div class="item"><div style="flex:1"><b>${m.title}</b> - ${m.artist||'Jovia'}<br><span style="font-size:10px;color:#5b21b6">Reward: ₦${Number(m.reward||0)} 👑 - ONE PER DAY - Must finish</span><br><span style="font-size:9px;color:#94a3b8">${m.category||''} - Plays ${m.plays||0}</span></div><div><button onclick="editMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#2563eb;color:#fff;border:none;border-radius:6px;margin-bottom:4px;width:100%">Edit</button><button onclick="deleteMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;width:100%">Delete</button></div></div>`;
   }).join('');
 }
 function musicStatus(msg, success=false){
@@ -328,7 +327,7 @@ async function saveMusic(){
   if(!title||!url){ return musicStatus('Title and MP3 URL required', false); }
   if(!Number.isFinite(reward)||reward<10){ return musicStatus('Reward must be at least ₦10', false); }
   const btn=document.getElementById('btnMusic');
-  btn.disabled=true; btn.textContent='Uploading...';
+  btn.disabled=true; btn.textContent='Uploading - Daily One...';
   try{
     const payload={title,artist,url,cover,reward,category};
     const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:'/api/admin/music/add';
@@ -337,14 +336,14 @@ async function saveMusic(){
     const data=await res.json().catch(()=>({}));
     if(!res.ok||!data.success){
       if(res.status===401) throw new Error('Session expired - Logout and login again');
-      if(res.status===404) throw new Error('API endpoint not found - Second server not aligned - Use auto-aligned second server file');
+      if(res.status===404) throw new Error('API endpoint not found - Use SAFE second server file');
       throw new Error(data.message||'Could not save music');
     }
-    musicStatus(`✅ Music uploaded - Reward ₦${reward} - Aligned`, true);
+    musicStatus(`✅ Music uploaded - ₦${reward} - One per day - Must finish - SAFE`, true);
     cancelMusicEdit();
     await loadMusic();
   }catch(e){ musicStatus(e.message, false); }
-  finally{ btn.disabled=false; btn.textContent=editingMusicId?'Save Changes':'＋ Upload Music & Set Price - ALIGNED'; }
+  finally{ btn.disabled=false; btn.textContent=editingMusicId?'Save Changes - Daily One':'＋ Upload Music & Set Price - DAILY ONE'; }
 }
 function editMusic(id){
   const m=rawMusic.find(x=>Number(x.id)===Number(id));
@@ -356,7 +355,7 @@ function editMusic(id){
   document.getElementById('musicCover').value=m.cover||'♫';
   document.getElementById('musicReward').value=Number(m.reward||100);
   document.getElementById('musicCategory').value=m.category||'Super Hits';
-  document.getElementById('btnMusic').textContent='Save Changes - Update Price';
+  document.getElementById('btnMusic').textContent='Save Changes - Daily One';
   document.getElementById('cancelMusicEdit').style.display='block';
 }
 function cancelMusicEdit(){
@@ -367,7 +366,7 @@ function cancelMusicEdit(){
   document.getElementById('musicCover').value='';
   document.getElementById('musicReward').value='100';
   document.getElementById('musicCategory').value='Super Hits';
-  document.getElementById('btnMusic').textContent='＋ Upload Music & Set Price - ALIGNED';
+  document.getElementById('btnMusic').textContent='＋ Upload Music & Set Price - DAILY ONE';
   document.getElementById('cancelMusicEdit').style.display='none';
 }
 async function deleteMusic(id){
@@ -386,8 +385,8 @@ async function loadDeposits(){
   listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading deposits...</p>';
   try{
     const res = await fetch('/api/admin/games/deposits?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
-    if(res.status===404){ throw new Error('API endpoint not found: GET /api/admin/games/deposits - Second server not auto-aligned - Replace second server file with auto-aligned version (has auto-align code at top)'); }
-    if(res.status===401){ throw new Error('Admin authentication required - Session expired - Logout and login again'); }
+    if(res.status===404){ throw new Error('API endpoint not found - Use SAFE second server file'); }
+    if(res.status===401){ throw new Error('Session expired - Logout and login again'); }
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     if(!data.deposits.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No deposits yet</p>'; return; }
@@ -419,8 +418,8 @@ async function loadWithdrawals(){
   listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading withdrawals...</p>';
   try{
     const res = await fetch('/api/admin/games/withdrawals?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
-    if(res.status===404){ throw new Error('API endpoint not found: GET /api/admin/games/withdrawals - Use auto-aligned second server'); }
-    if(res.status===401){ throw new Error('Admin authentication required - Login again'); }
+    if(res.status===404){ throw new Error('API endpoint not found - Use SAFE second server'); }
+    if(res.status===401){ throw new Error('Session expired - Login again'); }
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     if(!data.withdrawals.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No withdrawals yet</p>'; return; }
