@@ -2,6 +2,30 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
+  console.log("🔧 JOVIA SECOND SERVER - Auto-aligning with main server - Fixing API endpoint not found");
+
+  // === AUTO-ALIGN FIX - Makes second server work even if main server has 404 handler before it ===
+  // This was missing in your file - Na why deposits endpoint dey return API endpoint not found
+  try{
+    if(app._router && app._router.stack){
+      const stack = app._router.stack;
+      const saved404 = [];
+      for(let i=stack.length-1; i>=0; i--){
+        const layer = stack[i];
+        if(!layer.route){
+          const fnStr = layer.handle ? layer.handle.toString() : '';
+          if(fnStr.includes('API endpoint not found') || fnStr.includes('endpoint not found') || (layer.handle.length===2 && fnStr.includes('404'))){
+            saved404.push(...stack.splice(i,1));
+          }
+        }
+      }
+      if(saved404.length){
+        console.log(`⚠️ Found ${saved404.length} 404 handler(s) blocking second server - Moving to end - Now /api/admin/games/deposits will work`);
+        app._saved404Handlers = saved404;
+      }
+    }
+  }catch(e){ console.log("Auto-align warning", e.message); }
+
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
     code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
     used INTEGER DEFAULT 0, used_by TEXT DEFAULT '', used_by_name TEXT DEFAULT '',
@@ -98,7 +122,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   }catch{}
 
-  console.log("✅ JOVIA FINAL FIXED - NO IMMEDIATE LOGOUT - ADMIN ME ADDED - MUSIC SYNCED");
+  console.log("✅ JOVIA FIXED SERVER - NO SESSION EXPIRED - NO IMMEDIATE LOGOUT - MUSIC CALLING ADDED - AUTO-ALIGNED - READY");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -120,7 +144,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
 
-  // === SUSPENDED CHECKS ===
   const isSuspendedStatus = (status) => {
     const s = String(status||"").toLowerCase().trim();
     return ["suspended","banned","blocked","disabled","suspend"].includes(s);
@@ -219,61 +242,61 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       next();
     });
   };
-  const adminGuard=(req,res,next)=>{ 
-    const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim(); 
-    const bp=String(req.body?.adminPass||req.body?.password||req.body?.adminPassword||"").trim(); 
-    if((hp&&hp===ADMIN_PASS)||(bp&&bp===ADMIN_PASS)||(req.session?.isAdmin===true)) return next(); 
-    return res.status(401).json({success:false,message:"Admin authentication required."}); 
+
+  const adminGuard=(req,res,next)=>{
+    const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
+    const bp=String(req.body?.adminPass||req.body?.adminPassword||req.body?.password||"").trim();
+    const qp=String(req.query?.adminPass||"").trim();
+    if(req.session && req.session.isAdmin===true) return next();
+    if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return next(); }
+    if(bp && bp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return next(); }
+    if(qp && qp===ADMIN_PASS) return next();
+    return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"});
   };
-  const adminLoginHandler=(req,res)=>{ 
-    const p=String(req.body?.password||"").trim(); 
-    if(p!==ADMIN_PASS) return res.status(401).json({success:false,message:"Wrong password."}); 
-    if(req.session){ 
-      req.session.isAdmin=true; 
+
+  const adminLoginHandler=(req,res)=>{
+    const p=String(req.body?.password||"").trim();
+    if(p!==ADMIN_PASS) return res.status(401).json({success:false,message:"Wrong password."});
+    if(req.session){
+      req.session.isAdmin=true;
       req.session.adminUser="admin";
-      return req.session.save(()=>res.json({success:true, admin:{username:"admin"}})); 
-    } 
-    return res.json({success:true, admin:{username:"admin"}}); 
+      return req.session.save((err)=>{
+        if(err){ console.error("Session save error", err); return res.status(500).json({success:false,message:"Session save failed - Check express-session middleware in server.js"}); }
+        return res.json({success:true, admin:{username:"admin"}});
+      });
+    }
+    return res.json({success:true, admin:{username:"admin"}});
   };
-  app.post("/api/admin/codes/login",adminLoginHandler); 
+  app.post("/api/admin/codes/login",adminLoginHandler);
   app.post("/api/admin/login",adminLoginHandler);
 
-  // === FIXED - MISSING ENDPOINTS - No more immediate logout - ADDED NOW ===
   app.get("/api/admin/me", (req,res)=>{
     const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
-    if((req.session && req.session.isAdmin) || hp===ADMIN_PASS){
-      if(req.session) req.session.isAdmin=true;
-      return res.json({success:true, admin:{username:"admin", isAdmin:true}});
-    }
-    return res.status(401).json({success:false,message:"Not admin"});
+    if(req.session && req.session.isAdmin){ return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
+    if(hp && hp===ADMIN_PASS){ if(req.session) req.session.isAdmin=true; return res.json({success:true, admin:{username:"admin", isAdmin:true}}); }
+    return res.status(401).json({success:false,message:"Not admin - Session expired"});
   });
+
   app.get("/api/admin/dashboard", adminGuard, (req,res)=>{
     try{
       const users = db.prepare("SELECT COUNT(*) as c FROM users").get().c;
       const pending = db.prepare("SELECT COUNT(*) as c FROM users WHERE account_status='pending' OR status='pending'").get().c;
       const active = db.prepare("SELECT COUNT(*) as c FROM users WHERE account_status='active' OR account_status='approved' OR status='active' OR status='approved'").get().c;
       const music = db.prepare("SELECT COUNT(*) as c FROM jovia_music").get().c;
-      return res.json({success:true, users, pendingUsers: pending, activeUsers: active, videos:0, withdrawals:{pending:0}, music});
+      return res.json({success:true, users, pendingUsers: pending, activeUsers: active, videos: music, withdrawals:{pending:0}, music});
     }catch(e){ return res.json({success:true, users:0, pendingUsers:0, activeUsers:0, videos:0, withdrawals:{pending:0}}); }
   });
-  app.get("/api/settings/withdrawals", (req,res)=>{
-    return res.json({success:true, regularEnabled:true, affiliateEnabled:true});
-  });
+
+  app.get("/api/settings/withdrawals", (req,res)=>{ return res.json({success:true, regularEnabled:true, affiliateEnabled:true}); });
   app.get("/api/announcement", (req,res)=>{
     try{
       const row = db.prepare("SELECT * FROM jovia_announcement ORDER BY id DESC LIMIT 1").get();
       if(row) return res.json({success:true, title: row.title, message: row.message, enabled: Boolean(row.enabled), channelUrl: row.channel_url, channelText: row.channel_text});
-      return res.json({success:true, title:"🚨 Join Official Channel", message:"Join channel", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"});
-    }catch{
-      return res.json({success:true, title:"🚨 Join Official Channel", message:"Join channel", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"});
-    }
+      return res.json({success:true, title:"🚨 Join Official Channel", message:"Stay updated", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"});
+    }catch{ return res.json({success:true, title:"🚨 Join Official Channel", message:"Join channel", enabled:true, channelUrl:"https://t.me/jovianetwerk", channelText:"Join →"}); }
   });
   app.post("/api/announcement", adminGuard, (req,res)=>{
-    try{
-      db.prepare(`INSERT INTO jovia_announcement (title,message,enabled,channel_url,channel_text,updated_at) VALUES (?,?,?,?,?,?)`)
-        .run(req.body.title, req.body.message, req.body.enabled?1:0, req.body.channelUrl, req.body.channelText, new Date().toISOString());
-      return res.json({success:true});
-    }catch(e){ return res.json({success:true}); }
+    try{ db.prepare(`INSERT INTO jovia_announcement (title,message,enabled,channel_url,channel_text,updated_at) VALUES (?,?,?,?,?,?)`).run(req.body.title, req.body.message, req.body.enabled?1:0, req.body.channelUrl, req.body.channelText, new Date().toISOString()); return res.json({success:true}); }catch(e){ return res.json({success:true}); }
   });
   app.get("/api/admin/withdrawals", adminGuard, (req,res)=>{ return res.json({success:true, withdrawals:[]}); });
   app.get("/api/admin/private-messages", adminGuard, (req,res)=>{ return res.json({success:true, messages:[]}); });
@@ -282,13 +305,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   app.post("/api/admin/jobs", adminGuard, (req,res)=>{ return res.json({success:true, job:{id:Date.now()}}); });
   app.get("/api/admin/videos", adminGuard, (req,res)=>{ return res.json({success:true, videos:[]}); });
   app.post("/api/admin/logout", (req,res)=>{
-    if(req.session) req.session.isAdmin=false;
-    if(req.session && req.session.destroy){ req.session.destroy(()=>{}); }
+    if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
     return res.json({success:true});
   });
-  // === END FIX ===
 
-  // === ADMIN SUSPEND / UNSUSPEND ===
   app.post("/api/admin/user/suspend", adminGuard, (req,res)=>{
     try{
       const userId = Number(req.body?.userId||req.body?.id);
@@ -342,15 +362,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         const isSilver = currentPackage.includes("silver");
         const isGold = currentPackage.includes("gold");
         const codeType = String(code.type||"").toLowerCase();
-        if(isSilver && codeType !== "super-silver"){
-          throw new Error(`SILVER plan requires SUPER-SILVER code (₦16000). You used ${codeType.toUpperCase()} (₦${code.price}).`);
-        }
-        if(isGold && codeType !== "super-gold"){
-          throw new Error(`GOLD plan requires SUPER-GOLD code (₦12000). You used ${codeType.toUpperCase()} (₦${code.price}).`);
-        }
-        if(!["super-silver","super-gold"].includes(codeType)){
-          throw new Error("INVALID CODE TYPE FOR UPGRADE TO SUPER");
-        }
+        if(isSilver && codeType !== "super-silver"){ throw new Error(`SILVER plan requires SUPER-SILVER code (₦16000). You used ${codeType.toUpperCase()} (₦${code.price}).`); }
+        if(isGold && codeType !== "super-gold"){ throw new Error(`GOLD plan requires SUPER-GOLD code (₦12000). You used ${codeType.toUpperCase()} (₦${code.price}).`); }
+        if(!["super-silver","super-gold"].includes(codeType)){ throw new Error("INVALID CODE TYPE FOR UPGRADE TO SUPER"); }
         const sure=getSureUser(user);
         const sets=["package=?","is_super=?"]; const vals=["SUPER",1];
         if(hasColumn("plan")){ sets.push("plan=?"); vals.push("SUPER"); }
@@ -381,7 +395,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
 
-  // ==================== JOVIA MUSIC API FOR YOUR music.html ====================
   app.get("/api/music/tracks", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -393,6 +406,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
+  app.get("/api/music/list", (req,res)=>{
+    try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length}); }catch(e){ return res.json({success:true,tracks:[],count:0}); }
+  });
+  app.get("/api/music/all", (req,res)=>{
+    try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length,super:true}); }catch(e){ return res.json({success:true,tracks:[]}); }
+  });
+  app.get("/api/music/public", (req,res)=>{
+    try{ const tracks = db.prepare(`SELECT id,title,artist,url,cover,reward,category,plays FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks}); }catch(e){ return res.json({success:true,tracks:[]}); }
+  });
+
   app.get("/api/music/stats", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -400,17 +423,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(!isSuperUserCheck(u)) return res.status(403).json({success:false,super_only:true});
       const today = db.prepare(`SELECT COALESCE(SUM(amount),0) as sum, COUNT(*) as cnt FROM jovia_music_earnings WHERE user_id=? AND DATE(created_at)=DATE('now')`).get(req.user.id);
       const total = db.prepare(`SELECT COALESCE(SUM(amount),0) as sum, COUNT(*) as cnt FROM jovia_music_earnings WHERE user_id=?`).get(req.user.id);
-      return res.json({
-        success:true,
-        today: today.sum||0,
-        todayEarnings: today.sum||0,
-        completed: today.cnt||0,
-        songsCompleted: today.cnt||0,
-        total: total.sum||0,
-        totalEarnings: total.sum||0,
-        target: 10,
-        targetCount: `${today.cnt||0} / 10 songs`
-      });
+      return res.json({ success:true, today: today.sum||0, todayEarnings: today.sum||0, completed: today.cnt||0, songsCompleted: today.cnt||0, total: total.sum||0, totalEarnings: total.sum||0, target: 10, targetCount: `${today.cnt||0} / 10 songs` });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -434,28 +447,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const track = db.prepare(`SELECT * FROM jovia_music WHERE id=?`).get(trackId) || {title:"Music Track",reward:100};
       const reward = Number(track.reward||100);
       const last = db.prepare(`SELECT created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? ORDER BY created_at DESC LIMIT 1`).get(req.user.id, trackId);
-      if(last){
-        const diff = (Date.now() - new Date(last.created_at).getTime())/1000;
-        if(diff < 55) return res.status(429).json({success:false,message:`Wait ${Math.ceil(60-diff)}s before earning same track again`});
-      }
+      if(last){ const diff = (Date.now() - new Date(last.created_at).getTime())/1000; if(diff < 55) return res.status(429).json({success:false,message:`Wait ${Math.ceil(60-diff)}s before earning same track again`}); }
       db.transaction(()=>{
         db.prepare(`INSERT INTO jovia_music_earnings (user_id,track_id,title,amount,watched_seconds) VALUES (?,?,?,?,?)`).run(req.user.id, trackId, track.title, reward, watched);
         db.prepare(`UPDATE jovia_music SET plays=plays+1 WHERE id=?`).run(trackId);
-        try{
-          if(userColumns().includes("wallet_balance")){
-            db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id=?`).run(reward, req.user.id);
-          }
-        }catch{}
+        try{ if(userColumns().includes("wallet_balance")){ db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id=?`).run(reward, req.user.id); } }catch{}
       })();
       const updatedUser = db.prepare(`SELECT wallet_balance FROM users WHERE id=?`).get(req.user.id);
-      return res.json({
-        success:true,
-        message:`Super Earned ${reward}`,
-        reward: reward,
-        amount: reward,
-        walletBalance: updatedUser?.wallet_balance||0,
-        balance: updatedUser?.wallet_balance||0
-      });
+      return res.json({ success:true, message:`Super Earned ${reward}`, reward: reward, amount: reward, walletBalance: updatedUser?.wallet_balance||0, balance: updatedUser?.wallet_balance||0 });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -494,13 +493,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.json({success:true});
   });
 
-  // Games API (kept same)
   app.get("/api/games/me", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)){
-        return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true});
-      }
+      if(isSuspendedStatus(userRow?.account_status||userRow?.status)){ return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true}); }
       const acc = getOrCreateGameAccount(req.user.id);
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
@@ -517,11 +513,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       let reference = String(req.body?.reference||"").trim().toUpperCase();
       if(!reference) reference = "JVG-"+Date.now()+"-"+crypto.randomInt(1000,9999);
       const proof_image = String(req.body?.proof_image||"").slice(0,800000);
-      if(!proof_image) return res.status(400).json({success:false,message:"Payment proof is required"});
+      if(!proof_image) return res.status(400).json({success:false,message:"Payment proof is required - upload screenshot"});
       const exists = db.prepare(`SELECT id FROM game_deposits WHERE reference = ?`).get(reference);
       if(exists) return res.status(409).json({success:false,message:"This reference already exists"});
       db.prepare(`INSERT INTO game_deposits (user_id, amount, reference, proof_image, status) VALUES (?, ?, ?, ?, 'pending')`).run(req.user.id, amount, reference, proof_image);
-      return res.json({success:true,message:`Deposit ₦${amount.toLocaleString()} submitted!`,reference,status:"pending"});
+      return res.json({success:true,message:`Deposit ₦${amount.toLocaleString()} submitted with proof! Admin will verify Kredi MFB 1850772192.`,reference,status:"pending"});
     }catch(e){
       if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate submission"});
       return res.status(500).json({success:false,message:e.message});
@@ -530,14 +526,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   app.post("/api/games/play", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended",suspended:true});
+      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended - Contact Admin",suspended:true});
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
       const map = {bottle:"spin_bottle", wheel:"spin_wheel", updown:"up_down", up_down:"up_down", guess:"number_predict", spin_bottle:"spin_bottle", spin_wheel:"spin_wheel", number_predict:"number_predict"};
       const gameType = map[rawType] || "spin_bottle";
       const bet = Number(req.body?.bet_amount ?? req.body?.amount ?? 100);
       if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}`});
+      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}. Deposit to 1850772192`});
       let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
       if(gameType === "spin_bottle"){
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
@@ -589,7 +585,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const bank_name = String(req.body?.bank_name||"").trim();
       const account_number = String(req.body?.account_number||"").trim();
       const account_name = String(req.body?.account_name||"").trim();
-      if(!amount || amount < 2500) return res.status(400).json({success:false,message:"Minimum withdrawal ₦2500"});
+      if(!amount || amount < 2500) return res.status(400).json({success:false,message:"Minimum withdrawal for game is ₦2500"});
       if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Complete your bank details"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient ₦${acc.game_balance}`});
@@ -597,10 +593,63 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
       db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
-      return res.json({success:true,message:`Withdrawal ₦${amount} pending`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
+      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending - admin will pay from 1850772192 (Min ₦2500)`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   app.get("/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
+  app.get("/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
+  app.get("/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
+  app.post("/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
+    try{
+      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
+      if(!dep) return res.status(404).json({success:false,message:"Not found"}); if(dep.status === "confirmed") return res.status(409).json({success:false,message:"Already confirmed"});
+      const tx = db.transaction(()=>{
+        const acc = getOrCreateGameAccount(dep.user_id);
+        const newBal = acc.game_balance + dep.amount;
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, dep.amount, dep.user_id);
+        db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
+        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal);
+      }); tx();
+      return res.json({success:true,message:`Confirmed ₦${dep.amount} - funded`});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  app.post("/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
+    try{
+      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
+      if(!dep) return res.status(404).json({success:false}); if(dep.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
+      db.prepare(`UPDATE game_deposits SET status='declined', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
+      return res.json({success:true,message:"Declined"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  app.post("/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
+    try{
+      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
+      if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
+      db.prepare(`UPDATE game_withdrawals SET status='confirmed', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
+      return res.json({success:true,message:`Paid ₦${w.amount} to ${w.account_number}`});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  app.post("/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
+    try{
+      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
+      if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
+      db.transaction(()=>{
+        db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(w.amount, w.user_id);
+      })();
+      return res.json({success:true,message:`Declined and refunded ₦${w.amount}`});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
 
-  console.log("✅ FINAL JOVIA FIXED - /api/admin/me ADDED - NO IMMEDIATE LOGOUT - MUSIC SYNCED - READY");
+  // === AUTO-ALIGN - Re-add saved 404 handlers at end - So second server aligns with main server ===
+  try{
+    if(app._saved404Handlers && app._saved404Handlers.length){
+      app._saved404Handlers.forEach(layer=>{
+        app._router.stack.push(layer);
+      });
+      console.log("✅ Auto-aligned - 404 handler moved to end - Second server now works with main server without touching main server - /api/admin/games/deposits will work now");
+    }
+  }catch(e){}
+
+  console.log("✅ FINAL JOVIA FIXED SERVER - NO SESSION EXPIRED - MUSIC CALLING ADDED HERE - ADMIN ME + DASHBOARD + DEPOSITS/WITHDRAWALS FIXED - READY");
 };
