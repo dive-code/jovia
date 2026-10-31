@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - VERCEL SAFE - COOKIE IMPERSONATE - NO SESSION NEEDED - DASHBOARD 0 FIXED - 70/30 NO 100X");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - VERCEL SAFE - FULL DASHBOARD LOGIN AS USER - DASHBOARD 0 FIXED - 70/30 NO 100X");
 
   const routeExists = (path, method) => {
     try{
@@ -248,7 +248,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
 
   const userGuard=(req,res,next)=>{
-    // Check impersonate token first - Vercel safe - no session
     try{
       const cookieHeader = req.headers.cookie || "";
       const cookies = {};
@@ -256,7 +255,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         const parts = c.trim().split("=");
         if(parts[0]) cookies[parts[0]] = parts.slice(1).join("=");
       });
-      const impToken = cookies["jovia_impersonate_token"] || req.query.impersonate_token || req.headers["x-impersonate-token"];
+      const impToken = cookies["jovia_impersonate_token"] || req.query.impersonate_token || req.query.token || req.headers["x-impersonate-token"];
       if(impToken){
         try{
           const row = db.prepare(`SELECT * FROM admin_impersonate_tokens WHERE token=? AND expires_at > datetime('now')`).get(impToken);
@@ -332,58 +331,80 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
-  console.log("✅ FIXED DASHBOARD 0 - Now shows real numbers");
 
-  // ===== ADMIN LOGIN AS USER - VERCEL SAFE - NO SESSION - COOKIE TOKEN =====
+  // ===== ADMIN LOGIN AS USER - VERCEL SAFE - JSON =====
   safeAdd("get","/api/admin/login-as", adminGuard, (req,res)=>{
     try{
       const email = String(req.query?.email||"").trim().toLowerCase();
-      if(!email) return res.status(400).json({success:false,message:"email required - example: /api/admin/login-as?email=kanujosephbenson@gmail.com&adminPass=Divine@@1"});
+      if(!email) return res.status(400).json({success:false,message:"email required"});
       const user = db.prepare(`SELECT id, email, full_name, username, package, plan, account_status, status, wallet_balance FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
       if(!user) return res.status(404).json({success:false,message:"User not found: "+email});
-      
       const token = crypto.randomBytes(32).toString("hex");
-      db.prepare(`INSERT OR REPLACE INTO admin_impersonate_tokens (token, user_id, admin_email, expires_at) VALUES (?, ?, ?, datetime('now', '+2 hours'))`).run(token, user.id, "admin");
-
+      db.prepare(`INSERT OR REPLACE INTO admin_impersonate_tokens (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+2 hours'))`).run(token, user.id);
       const acc = getOrCreateGameAccount(user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(user.id);
-      const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id=? ORDER BY requested_at DESC LIMIT 10`).all(user.id);
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(user.id);
-      const txs = db.prepare(`SELECT * FROM game_transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 50`).all(user.id);
       const glitchBets = bets.filter(b=>b.multiplier>=5 || b.win_amount > b.bet_amount*3);
-
       res.setHeader('Set-Cookie', `jovia_impersonate_token=${token}; Path=/; Max-Age=7200; SameSite=Lax`);
-
       return res.json({
         success:true,
         message:`Logged in as ${user.email} - Token valid 2 hours - No password changed`,
-        impersonating: true,
-        token: token,
-        user: user,
-        gameAccount: acc,
-        deposits: deps,
-        withdrawals: withs,
-        bets: bets,
-        transactions: txs,
-        glitchBets: glitchBets,
-        howHeGot10050: glitchBets.length>0 ? glitchBets : bets.slice(0,10),
-        usage: {
-          dashboard: "Now open /dashboard.html or /games.html - Cookie will auto login you as this user",
-          apiAsUser: `Use header x-impersonate-token: ${token} or query ?impersonate_token=${token} for /api/games/me`,
-          stop: "/api/admin/stop-impersonate?adminPass=Divine@@1&token="+token
-        }
+        token, user, gameAccount: acc, deposits: deps, bets, glitchBets,
+        howHeGot10050: glitchBets.length>0 ? glitchBets : bets.slice(0,10)
       });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  // ===== FULL DASHBOARD LOGIN - LIKE USING HIS PASSWORD - HTML AUTO REDIRECT =====
+  safeAdd("get","/api/admin/full-login", adminGuard, (req,res)=>{
+    try{
+      const email = String(req.query?.email||"").trim().toLowerCase();
+      if(!email) return res.status(400).send("email required - ?email=kanujosephbenson@gmail.com&adminPass=Divine@@1");
+      const user = db.prepare(`SELECT id, email, full_name, username FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).send("User not found: "+email);
+      const token = crypto.randomBytes(32).toString("hex");
+      db.prepare(`INSERT OR REPLACE INTO admin_impersonate_tokens (token, user_id, expires_at) VALUES (?, ?, datetime('now', '+2 hours'))`).run(token, user.id);
+      const acc = getOrCreateGameAccount(user.id);
+      const html = `<!DOCTYPE html><html><head><title>Logging in as ${user.email}...</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>body{font-family:Arial;background:#0f0f0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0} .box{background:#1a1a1a;padding:30px;border-radius:12px;text-align:center;max-width:400px} h2{color:#00ff88} .bal{font-size:28px;color:#00ff88;margin:10px 0} .btn{background:#00ff88;color:#000;padding:12px 24px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:15px}</style>
+</head><body><div class="box">
+<h2>🔐 Full Login as User</h2>
+<p><b>${user.email}</b></p>
+<div class="bal">₦${acc.game_balance}</div>
+<p>${user.full_name||user.username||''}</p>
+<p style="font-size:13px;color:#aaa">You will see full dashboard like you used his password<br>No password changed - Safe</p>
+<button class="btn" onclick="doLogin()">Enter Dashboard Now →</button>
+<p style="margin-top:15px;font-size:12px"><a href="/api/admin/stop-impersonate?adminPass=Divine@@1" style="color:#888">Back to Admin</a></p>
+</div>
+<script>
+function doLogin(){
+  localStorage.clear(); sessionStorage.clear();
+  localStorage.setItem('jovia_impersonate_token','${token}');
+  localStorage.setItem('impersonate_token','${token}');
+  localStorage.setItem('jovia_user_id','${user.id}');
+  localStorage.setItem('user_id','${user.id}');
+  localStorage.setItem('userId','${user.id}');
+  localStorage.setItem('auth_token','${token}');
+  localStorage.setItem('token','${token}');
+  localStorage.setItem('user', JSON.stringify({id:${user.id}, email:'${user.email}'}));
+  document.cookie = 'jovia_impersonate_token=${token}; Path=/; Max-Age=7200; SameSite=Lax';
+  window.location.href = '/dashboard.html?impersonate=${user.id}&token=${token}';
+}
+setTimeout(doLogin, 1200);
+</script></body></html>`;
+      res.setHeader('Content-Type','text/html');
+      res.setHeader('Set-Cookie', `jovia_impersonate_token=${token}; Path=/; Max-Age=7200; SameSite=Lax`);
+      return res.send(html);
+    }catch(e){ return res.status(500).send(e.message); }
   });
 
   safeAdd("get","/api/admin/stop-impersonate", (req,res)=>{
     try{
       const token = req.query.token || (req.headers.cookie||"").match(/jovia_impersonate_token=([^;]+)/)?.[1];
-      if(token){
-        try{ db.prepare(`DELETE FROM admin_impersonate_tokens WHERE token=?`).run(token); }catch{}
-      }
+      if(token){ try{ db.prepare(`DELETE FROM admin_impersonate_tokens WHERE token=?`).run(token); }catch{} }
       res.setHeader('Set-Cookie', `jovia_impersonate_token=; Path=/; Max-Age=0; SameSite=Lax`);
-      return res.json({success:true,message:"Stopped impersonating - Cookie cleared - Back to admin"});
+      return res.json({success:true,message:"Stopped impersonating - Cookie cleared - Back to admin - Clear localStorage too"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -670,109 +691,4 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended",suspended:true});
       const rawType = String(req.body?.game_type || req.body?.game || "").toLowerCase().trim();
-      const map = {bottle:"spin_bottle", wheel:"spin_wheel", updown:"up_down", up_down:"up_down", guess:"number_predict", spin_bottle:"spin_bottle", spin_wheel:"spin_wheel", number_predict:"number_predict"};
-      const gameType = map[rawType] || "spin_bottle";
-      const bet = Number(req.body?.bet_amount ?? req.body?.amount ?? 100);
-      if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
-      const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
-      let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
-      const houseRoll = crypto.randomInt(0,100);
-      if(gameType === "spin_wheel"){
-        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }
-        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
-        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
-        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
-        else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
-        else { mult = 2; segmentLabel="2x"; isWin=true; }
-      } else if(gameType === "spin_bottle" || gameType === "up_down"){
-        const pick = String(req.body?.prediction||"up").toLowerCase().trim();
-        const pickNorm = pick === "down" ? "down" : "up";
-        isWin = houseRoll < 30;
-        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
-        mult = isWin ? 1.8 : 0;
-        segmentLabel = finalSide.toUpperCase();
-        if(gameType === "up_down") segmentLabel = finalSide === "up" ? "GREEN" : "RED";
-      } else {
-        isWin = houseRoll < 30;
-        mult = isWin ? 1.8 : 0;
-        segmentLabel = isWin ? "WIN" : "LOSE";
-      }
-      const winAmount = Math.floor(bet*mult);
-      const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
-      const newBal = acc.game_balance - bet + finalWin;
-      db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, (isWin && mult>=1)?1:0, req.user.id);
-      db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, finalWin, isWin?'win':'loss', mult);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?finalWin:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
-      return res.json({
-        success:true, result:isWin?'win':'loss', isWin, bet, winAmount: finalWin, multiplier: mult, segment: segmentLabel, finalSide: finalSide, newBalance:newBal, 
-        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)
-      });
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  safeAdd("post","/api/games/withdraw", userGuard, (req,res)=>{
-    try{
-      const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended"});
-      const amount = Number(req.body?.amount);
-      const bank_name = String(req.body?.bank_name||"").trim();
-      const account_number = String(req.body?.account_number||"").trim();
-      const account_name = String(req.body?.account_name||"").trim();
-      if(!amount || amount < 100) return res.status(400).json({success:false,message:"Enter valid amount"});
-      if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Complete your bank details"});
-      const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
-      const newBal = acc.game_balance - amount;
-      db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
-      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
-      return res.json({success:true,message:`Withdrawal request submitted. Status: Processing`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  safeAdd("get","/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
-  safeAdd("get","/api/admin/games/deposits", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT d.*, u.email FROM game_deposits d LEFT JOIN users u ON u.id=d.user_id ORDER BY d.created_at DESC LIMIT 100`).all(); return res.json({success:true,deposits:rows}); });
-  safeAdd("get","/api/admin/games/withdrawals", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT w.*, u.email FROM game_withdrawals w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.requested_at DESC LIMIT 100`).all(); return res.json({success:true,withdrawals:rows}); });
-  safeAdd("post","/api/admin/games/deposit/confirm", adminGuard, (req,res)=>{
-    try{
-      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
-      if(!dep) return res.status(404).json({success:false,message:"Not found"}); if(dep.status === "confirmed") return res.status(409).json({success:false,message:"Already confirmed"});
-      const tx = db.transaction(()=>{
-        const acc = getOrCreateGameAccount(dep.user_id);
-        const newBal = acc.game_balance + dep.amount;
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, dep.amount, dep.user_id);
-        db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
-        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal);
-      }); tx();
-      return res.json({success:true,message:`Deposit confirmed. Status: Successful`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  safeAdd("post","/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
-    try{
-      const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
-      if(!dep) return res.status(404).json({success:false}); if(dep.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
-      db.prepare(`UPDATE game_deposits SET status='declined', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
-      return res.json({success:true,message:"Declined. Status: Failed"});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  safeAdd("post","/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
-    try{
-      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
-      if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
-      db.prepare(`UPDATE game_withdrawals SET status='confirmed', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-      return res.json({success:true,message:`Withdrawal confirmed. Status: Successful`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-  safeAdd("post","/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
-    try{
-      const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
-      if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
-      db.transaction(()=>{
-        db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(w.amount, w.user_id);
-      })();
-      return res.json({success:true,message:`Declined. Status: Failed. Refunded to wallet`});
-    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-  });
-
-  console.log("✅ FINAL UPDATED FULL FILE - VERCEL SAFE COOKIE IMPERSONATE - DASHBOARD 0 FIXED - DAILY ONE - MUST FINISH - BALANCED 70/30 NO 100X - PROFESSIONAL - KANU FIX - ONE CODE PER ACC - Build go succeed");
-};
+      const map = {bottle:"spin_bottle", wheel:"spin_wheel", updown:"up_down", up_down:"up_down", guess:"
