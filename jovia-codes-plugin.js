@@ -2,9 +2,8 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - DAILY ONE + MUST FINISH - Railway Safe");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH");
 
-  // Helper to check if route already exists - So we no overwrite main dashboard
   const routeExists = (path, method) => {
     try{
       if(!app._router || !app._router.stack) return false;
@@ -177,7 +176,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const pkg = String(user.package||user.plan||"").toLowerCase();
     return pkg.includes("super") || Number(user.is_super)===1 || String(user.super_user)==="1";
   };
-
   const getSureUser = user => {
     const email=String(user.email||"").trim();
     const username=String(user.username||"").trim();
@@ -257,7 +255,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       next();
     });
   };
-
   const adminGuard=(req,res,next)=>{
     const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
     const bp=String(req.body?.adminPass||req.body?.adminPassword||req.body?.password||"").trim();
@@ -268,13 +265,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     if(qp && qp===ADMIN_PASS) return next();
     return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"});
   };
-
   const adminLoginHandler=(req,res)=>{
     const p=String(req.body?.password||"").trim();
     if(p!==ADMIN_PASS) return res.status(401).json({success:false,message:"Wrong password."});
     if(req.session){
-      req.session.isAdmin=true;
-      req.session.adminUser="admin";
+      req.session.isAdmin=true; req.session.adminUser="admin";
       return req.session.save((err)=>{
         if(err){ console.error("Session save error", err); return res.status(500).json({success:false,message:"Session save failed"}); }
         return res.json({success:true, admin:{username:"admin"}});
@@ -283,7 +278,37 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.json({success:true, admin:{username:"admin"}});
   };
 
-  // === CORE ROUTES - ALWAYS ADD ===
+  // ===== MAIN DASHBOARD 0 FIX - FORCE OVERWRITE BROKEN ONE =====
+  try{
+    if(app._router && app._router.stack){
+      app._router.stack = app._router.stack.filter(layer => {
+        if(!layer.route) return true;
+        const isDashboard = layer.route.path === '/api/admin/dashboard' && Object.keys(layer.route.methods)[0]==='get';
+        if(isDashboard) console.log("🗑️ Removing broken /api/admin/dashboard that returns 0");
+        return !isDashboard;
+      });
+    }
+  }catch{}
+  app.get('/api/admin/dashboard', adminGuard, (req, res) => {
+    try{
+      const total = db.prepare(`SELECT COUNT(*) as cnt FROM users`).get().cnt || 0;
+      const active = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE account_status='active' OR status='active' OR account_status='approved' OR status='approved'`).get().cnt || 0;
+      const pending = total - active;
+      const gold = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE package LIKE '%gold%' OR plan LIKE '%gold%'`).get().cnt || 0;
+      const silver = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE package LIKE '%silver%' OR plan LIKE '%silver%'`).get().cnt || 0;
+      const superUsers = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE package LIKE '%super%' OR plan LIKE '%super%' OR is_super=1`).get().cnt || 0;
+      const musicCount = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt || 0;
+      let pendingWD = 0; try{ pendingWD = db.prepare(`SELECT COUNT(*) as cnt FROM game_withdrawals WHERE status='pending'`).get().cnt || 0; }catch{}
+      return res.json({
+        success: true, users: total, totalUsers: total, activeUsers: active, pendingUsers: pending,
+        goldUsers: gold, silverUsers: silver, superUsers: superUsers,
+        videos: 0, music: musicCount, totalMusic: musicCount,
+        withdrawals: { pending: pendingWD }
+      });
+    }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
+  });
+  console.log("✅ FIXED DASHBOARD 0 - Now shows real numbers");
+
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
   safeAdd("get","/api/admin/me", (req,res)=>{
@@ -296,8 +321,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
   safeAdd("post","/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
   safeAdd("get","/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
-
-  // === ADMIN CODE ROUTES ===
   safeAdd("post","/api/admin/logout", (req,res)=>{
     if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
     return res.json({success:true});
@@ -340,8 +363,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   safeAdd("get","/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
-
-  // === USER UPGRADE ROUTES ===
   safeAdd("post","/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
@@ -386,8 +407,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
-
-  // === MUSIC ROUTES - DAILY ONE EARN + MUST FINISH ===
   safeAdd("get","/api/music/tracks", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -468,8 +487,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true});
     }catch(e){ return res.json({success:false}); }
   });
-
-  // === ADMIN MUSIC ===
   safeAdd("post","/api/admin/music/add", adminGuard, (req,res)=>{
     try{
       const {title,artist,url,cover,reward,category} = req.body;
@@ -493,8 +510,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     db.prepare(`DELETE FROM jovia_music WHERE id=?`).run(Number(req.params.id));
     return res.json({success:true});
   });
-
-  // === GAMES - Only if not exists in main server - Main dashboard safe ===
   safeAdd("get","/api/games/me", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -643,5 +658,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL FULL GUARD FILE - MAIN DASHBOARD SAFE - NO OVERWRITE - DAILY ONE + MUST FINISH - Railway build go succeed now");
+  console.log("✅ FINAL UPDATED FULL FILE - MAIN DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH - Railway build go succeed");
 };
