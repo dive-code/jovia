@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE");
 
   const routeExists = (path, method) => {
     try{
@@ -107,9 +107,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
+  // RAILWAY SAFE CLEAN - LIMIT 20 - NO HEAVY BUILD FAIL
   setTimeout(()=>{
     try{
-      const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1`).all();
+      const cnt = db.prepare(`SELECT COUNT(*) as c FROM jovia_music_earnings`).get().c;
+      if(cnt > 5000){ console.log("Skip clean - too many rows for Railway"); return; }
+      const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1 LIMIT 20`).all();
       if(dups.length > 0){
         console.log(`⚠️ Found ${dups.length} same-day duplicates - Cleaning...`);
         for(const dup of dups){
@@ -127,7 +130,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         console.log(`✅ Cleaned duplicates safely`);
       }
     }catch(e){ console.log("Clean skip", e.message); }
-  }, 5000);
+  }, 10000);
 
   try{
     const c = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt;
@@ -308,6 +311,51 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
   console.log("✅ FIXED DASHBOARD 0 - Now shows real numbers");
+
+  // ===== FIX FOR kanujosephbenson@gmail.com - 1000 DEPOSIT RESET =====
+  safeAdd("get","/api/admin/fix/kanu", adminGuard, (req,res)=>{
+    try{
+      const email = "kanujosephbenson@gmail.com";
+      const user = db.prepare(`SELECT id,email FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase());
+      if(!user) return res.status(404).json({success:false,message:"User not found: "+email});
+      const acc = getOrCreateGameAccount(user.id);
+      const oldBal = acc.game_balance;
+      const newBal = 1000;
+      db.transaction(()=>{
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, user.id);
+        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'admin_correction', ?, ?, ?, ?, 'completed')`).run(user.id, newBal - oldBal, `FIX-KANU-${Date.now()}`, oldBal, newBal);
+      })();
+      return res.json({success:true, message:`Fixed ${email}: ${oldBal} -> ${newBal} (removed ${oldBal - newBal})`, oldBalance: oldBal, newBalance: newBal, email});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  safeAdd("post","/api/admin/games/fix-balance", adminGuard, (req,res)=>{
+    try{
+      const email = String(req.body?.email||"kanujosephbenson@gmail.com").trim().toLowerCase();
+      const targetBalance = Number(req.body?.balance||1000);
+      const user = db.prepare(`SELECT id,email FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      const acc = getOrCreateGameAccount(user.id);
+      const oldBal = acc.game_balance;
+      db.transaction(()=>{
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(targetBalance, user.id);
+        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'admin_correction', ?, ?, ?, ?, 'completed')`).run(user.id, targetBalance - oldBal, `ADMIN-FIX-${Date.now()}`, oldBal, targetBalance);
+      })();
+      return res.json({success:true, message:`Balance for ${email}: ${oldBal} -> ${targetBalance}`, oldBalance: oldBal, newBalance: targetBalance});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  safeAdd("get","/api/admin/user/by-email", adminGuard, (req,res)=>{
+    try{
+      const email = String(req.query?.email||"").trim().toLowerCase();
+      if(!email) return res.status(400).json({success:false,message:"email required"});
+      const user = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, created_at FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      const acc = getOrCreateGameAccount(user.id);
+      const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(user.id);
+      const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id=? ORDER BY requested_at DESC LIMIT 10`).all(user.id);
+      const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id=? ORDER BY created_at DESC LIMIT 20`).all(user.id);
+      return res.json({success:true, user, gameAccount: acc, deposits: deps, withdrawals: withs, bets});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
 
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
@@ -518,7 +566,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
       const withs = db.prepare(`SELECT id,amount,bank_name,account_number,status,requested_at FROM game_withdrawals WHERE user_id = ? ORDER BY requested_at DESC LIMIT 10`).all(req.user.id);
-      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs, minWithdraw:2500});
+      return res.json({success:true, gameAccount: acc, recentBets: bets, bets, deposits: deps, withdrawals: withs});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/games/deposit", userGuard, (req,res)=>{
@@ -534,7 +582,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const exists = db.prepare(`SELECT id FROM game_deposits WHERE reference = ?`).get(reference);
       if(exists) return res.status(409).json({success:false,message:"This reference already exists"});
       db.prepare(`INSERT INTO game_deposits (user_id, amount, reference, proof_image, status) VALUES (?, ?, ?, ?, 'pending')`).run(req.user.id, amount, reference, proof_image);
-      return res.json({success:true,message:`Deposit ₦${amount.toLocaleString()} submitted with proof! Admin will verify Kredi MFB 1850772192.`,reference,status:"pending"});
+      return res.json({success:true,message:`Deposit submitted. Status: Processing`,reference,status:"pending"});
     }catch(e){
       if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate submission"});
       return res.status(500).json({success:false,message:e.message});
@@ -550,38 +598,35 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const bet = Number(req.body?.bet_amount ?? req.body?.amount ?? 100);
       if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance ₦${acc.game_balance}. Deposit to 1850772192`});
+      if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
+
+      // ===== YOUR BALANCED 70/30 LOGIC - NO 100X GLITCH - PROFESSIONAL =====
       let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
-      if(gameType === "spin_bottle"){
+      const houseRoll = crypto.randomInt(0,100); // 0-99
+
+      if(gameType === "spin_wheel"){
+        // 70% LOSE, 30% WIN - Max 2x - Balanced
+        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }           // 40% lose all
+        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }    // 15% lose half
+        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }    // 15% lose small
+        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }     // 15% win small
+        else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }     // 8% win medium
+        else { mult = 2; segmentLabel="2x"; isWin=true; }                           // 7% win max
+      } else if(gameType === "spin_bottle" || gameType === "up_down"){
+        // Bottle & UpDown: 70% lose, 30% win 1.8x
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 30;
+        isWin = houseRoll < 30;
         finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide.toUpperCase();
-      } else if(gameType === "up_down"){
-        const pick = String(req.body?.prediction||"up").toLowerCase().trim();
-        const pickNorm = pick === "down" ? "down" : "up";
-        isWin = crypto.randomInt(0,100) < 30;
-        finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
-        mult = isWin ? 1.8 : 0;
-        segmentLabel = finalSide === "up" ? "GREEN" : "RED";
-      } else if(gameType === "spin_wheel"){
-        const rand = crypto.randomInt(0,1000);
-        if(rand < 250){ mult = 0; segmentLabel="LOSE"; isWin=false; }
-        else if(rand < 450){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
-        else if(rand < 600){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
-        else if(rand < 750){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
-        else if(rand < 850){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
-        else if(rand < 920){ mult = 2; segmentLabel="2x"; isWin=true; }
-        else if(rand < 960){ mult = 5; segmentLabel="5x"; isWin=true; }
-        else if(rand < 985){ mult = 20; segmentLabel="20x"; isWin=true; }
-        else { mult = 100; segmentLabel="100x"; isWin=true; }
+        if(gameType === "up_down") segmentLabel = finalSide === "up" ? "GREEN" : "RED";
       } else {
-        isWin = crypto.randomInt(0,100) < 30;
-        mult = isWin ? 2.5 : 0;
-        segmentLabel = isWin ? `${mult}x` : "LOSE";
+        isWin = houseRoll < 30;
+        mult = isWin ? 1.8 : 0;
+        segmentLabel = isWin ? "WIN" : "LOSE";
       }
+
       const winAmount = Math.floor(bet*mult);
       const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
       const newBal = acc.game_balance - bet + finalWin;
@@ -590,7 +635,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?finalWin:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
       return res.json({
         success:true, result:isWin?'win':'loss', isWin, bet, winAmount: finalWin, multiplier: mult, segment: segmentLabel, finalSide: finalSide, newBalance:newBal, 
-        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id), minWithdraw:2500
+        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)
       });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
@@ -602,15 +647,15 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const bank_name = String(req.body?.bank_name||"").trim();
       const account_number = String(req.body?.account_number||"").trim();
       const account_name = String(req.body?.account_name||"").trim();
-      if(!amount || amount < 2500) return res.status(400).json({success:false,message:"Minimum withdrawal for game is ₦2500"});
+      if(!amount || amount < 100) return res.status(400).json({success:false,message:"Enter valid amount"});
       if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Complete your bank details"});
       const acc = getOrCreateGameAccount(req.user.id);
-      if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient ₦${acc.game_balance}`});
+      if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
       const newBal = acc.game_balance - amount;
       db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
       db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
-      return res.json({success:true,message:`Withdrawal ₦${amount} to ${account_number} pending`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
+      return res.json({success:true,message:`Withdrawal request submitted. Status: Processing`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("get","/api/admin/games/accounts", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT g.*, u.email, u.username, u.account_status FROM jovia_game_accounts g LEFT JOIN users u ON u.id = g.user_id ORDER BY g.updated_at DESC LIMIT 100`).all(); return res.json({success:true,accounts:rows}); });
@@ -627,7 +672,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
         db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal);
       }); tx();
-      return res.json({success:true,message:`Confirmed ₦${dep.amount} - funded`});
+      return res.json({success:true,message:`Deposit confirmed. Status: Successful`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/admin/games/deposit/decline", adminGuard, (req,res)=>{
@@ -635,7 +680,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
       if(!dep) return res.status(404).json({success:false}); if(dep.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
       db.prepare(`UPDATE game_deposits SET status='declined', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
-      return res.json({success:true,message:"Declined"});
+      return res.json({success:true,message:"Declined. Status: Failed"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/admin/games/withdraw/confirm", adminGuard, (req,res)=>{
@@ -643,7 +688,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
       if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
       db.prepare(`UPDATE game_withdrawals SET status='confirmed', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-      return res.json({success:true,message:`Paid ₦${w.amount} to ${w.account_number}`});
+      return res.json({success:true,message:`Withdrawal confirmed. Status: Successful`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/admin/games/withdraw/decline", adminGuard, (req,res)=>{
@@ -654,9 +699,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
         db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(w.amount, w.user_id);
       })();
-      return res.json({success:true,message:`Declined and refunded ₦${w.amount}`});
+      return res.json({success:true,message:`Declined. Status: Failed. Refunded to wallet`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL UPDATED FULL FILE - MAIN DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH - Railway build go succeed");
+  console.log("✅ FINAL UPDATED FULL FILE - MAIN DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH + BALANCED 70/30 NO 100X + PROFESSIONAL + KANU FIX + RAILWAY SAFE - Build go succeed");
 };
