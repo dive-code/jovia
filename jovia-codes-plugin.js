@@ -2,10 +2,9 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - Auto-aligning with main server - Fixing API endpoint not found");
+  console.log("🔧 JOVIA SECOND SERVER - Auto-aligning with main server - Fixing API endpoint not found - DAILY ONE EARN + MUST FINISH FIXED");
 
-  // === AUTO-ALIGN FIX - Makes second server work even if main server has 404 handler before it ===
-  // This was missing in your file - Na why deposits endpoint dey return API endpoint not found
+  // === AUTO-ALIGN FIX ===
   try{
     if(app._router && app._router.stack){
       const stack = app._router.stack;
@@ -20,7 +19,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         }
       }
       if(saved404.length){
-        console.log(`⚠️ Found ${saved404.length} 404 handler(s) blocking second server - Moving to end - Now /api/admin/games/deposits will work`);
+        console.log(`⚠️ Found ${saved404.length} 404 handler(s) blocking second server - Moving to end`);
         app._saved404Handlers = saved404;
       }
     }
@@ -109,6 +108,36 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
 
+  // === NEW FIX - BOUNCE BACK SAME-DAY DUPLICATES ===
+  try{
+    const dups = db.prepare(`
+      SELECT user_id, track_id, DATE(created_at) as day, MIN(id) as keep_id, COUNT(*) as cnt, SUM(amount) as total_amount
+      FROM jovia_music_earnings 
+      GROUP BY user_id, track_id, DATE(created_at) 
+      HAVING COUNT(*) > 1
+    `).all();
+    if(dups.length > 0){
+      console.log(`⚠️ Found ${dups.length} same-day duplicate music earnings - Cleaning and bouncing back wallet...`);
+      let cleanedCount = 0;
+      let totalRefunded = 0;
+      for(const dup of dups){
+        const rows = db.prepare(`SELECT id, amount FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.track_id, dup.day);
+        const toDelete = rows.slice(1); // Keep first, delete rest
+        for(const del of toDelete){
+          db.prepare(`DELETE FROM jovia_music_earnings WHERE id=?`).run(del.id);
+          try{ 
+            db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(del.amount, dup.user_id); 
+          }catch{}
+          totalRefunded += del.amount;
+          cleanedCount++;
+        }
+      }
+      console.log(`✅ Cleaned ${cleanedCount} duplicate earnings - Bounced back ₦${totalRefunded} - One song one earning per day enforced`);
+    } else {
+      console.log("✅ No duplicate music earnings found - Daily one earn enforced");
+    }
+  }catch(e){ console.log("Clean dup error", e.message); }
+
   try{
     const c = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt;
     if(c===0){
@@ -122,7 +151,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
   }catch{}
 
-  console.log("✅ JOVIA FIXED SERVER - NO SESSION EXPIRED - NO IMMEDIATE LOGOUT - MUSIC CALLING ADDED - AUTO-ALIGNED - READY");
+  console.log("✅ JOVIA FIXED SERVER - DAILY ONE MUSIC EARN + MUST FINISH - READY");
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
@@ -436,25 +465,44 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
+  // === FIXED - DAILY ONE EARN + MUST FINISH ===
   app.post("/api/music/complete", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT * FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(u?.account_status||u?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended",suspended:true});
       if(!isSuperUserCheck(u)) return res.status(403).json({success:false,message:"👑 Super Only - Upgrade to SUPER",super_only:true});
       const trackId = Number(req.body?.trackId||req.body?.id||0);
-      const watched = Number(req.body?.watchedSeconds||60);
-      if(watched < 50) return res.status(400).json({success:false,message:`Listen at least 60s - You listened ${watched}s`});
+      const watched = Number(req.body?.watchedSeconds||0);
+      const duration = Number(req.body?.duration||0);
+      const finished = req.body?.finished === true || req.body?.finished === 1 || String(req.body?.finished).toLowerCase() === "true";
+
       const track = db.prepare(`SELECT * FROM jovia_music WHERE id=?`).get(trackId) || {title:"Music Track",reward:100};
       const reward = Number(track.reward||100);
-      const last = db.prepare(`SELECT created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? ORDER BY created_at DESC LIMIT 1`).get(req.user.id, trackId);
-      if(last){ const diff = (Date.now() - new Date(last.created_at).getTime())/1000; if(diff < 55) return res.status(429).json({success:false,message:`Wait ${Math.ceil(60-diff)}s before earning same track again`}); }
+
+      // RULE 1: Must finish music
+      if(!finished){
+        return res.status(400).json({success:false,message:`You must listen to the music finish before earning - Play till end 🎧`});
+      }
+      if(watched < 50){
+        return res.status(400).json({success:false,message:`Listen at least 60s and finish the music - You listened ${watched}s`});
+      }
+      if(duration > 0 && watched < Math.max(60, duration * 0.85)){
+        return res.status(400).json({success:false,message:`You must finish the music - ${Math.floor(watched)}s / ${Math.floor(duration)}s - Keep playing till end`});
+      }
+
+      // RULE 2: One song per day only - Reset tomorrow
+      const todayExists = db.prepare(`SELECT id, created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=DATE('now') LIMIT 1`).get(req.user.id, trackId);
+      if(todayExists){
+        return res.status(403).json({success:false,message:"✅ Already earned for this song today - Come back tomorrow - One song per day only", already:true, nextDay:true});
+      }
+
       db.transaction(()=>{
         db.prepare(`INSERT INTO jovia_music_earnings (user_id,track_id,title,amount,watched_seconds) VALUES (?,?,?,?,?)`).run(req.user.id, trackId, track.title, reward, watched);
         db.prepare(`UPDATE jovia_music SET plays=plays+1 WHERE id=?`).run(trackId);
         try{ if(userColumns().includes("wallet_balance")){ db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id=?`).run(reward, req.user.id); } }catch{}
       })();
       const updatedUser = db.prepare(`SELECT wallet_balance FROM users WHERE id=?`).get(req.user.id);
-      return res.json({ success:true, message:`Super Earned ${reward}`, reward: reward, amount: reward, walletBalance: updatedUser?.wallet_balance||0, balance: updatedUser?.wallet_balance||0 });
+      return res.json({ success:true, message:`Super Earned ${reward} - Come back tomorrow for same song`, reward: reward, amount: reward, walletBalance: updatedUser?.wallet_balance||0, balance: updatedUser?.wallet_balance||0, nextDay:true });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
@@ -641,15 +689,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // === AUTO-ALIGN - Re-add saved 404 handlers at end - So second server aligns with main server ===
   try{
     if(app._saved404Handlers && app._saved404Handlers.length){
       app._saved404Handlers.forEach(layer=>{
         app._router.stack.push(layer);
       });
-      console.log("✅ Auto-aligned - 404 handler moved to end - Second server now works with main server without touching main server - /api/admin/games/deposits will work now");
+      console.log("✅ Auto-aligned - 404 handler moved to end");
     }
   }catch(e){}
 
-  console.log("✅ FINAL JOVIA FIXED SERVER - NO SESSION EXPIRED - MUSIC CALLING ADDED HERE - ADMIN ME + DASHBOARD + DEPOSITS/WITHDRAWALS FIXED - READY");
+  console.log("✅ FINAL JOVIA FIXED SERVER - DAILY ONE MUSIC EARN + MUST FINISH - READY");
 };
