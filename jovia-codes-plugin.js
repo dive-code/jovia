@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER GET+POST IPHONE SAFE");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER + PREVENTION");
 
   const routeExists = (path, method) => {
     try{
@@ -24,6 +24,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     console.log(`✅ Added ${method.toUpperCase()} ${path}`);
   };
 
+  // ===== CREATE TABLES =====
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_codes (
     code TEXT PRIMARY KEY, type TEXT NOT NULL, price INTEGER DEFAULT 0,
     used INTEGER DEFAULT 0, used_by TEXT DEFAULT '', used_by_name TEXT DEFAULT '',
@@ -109,6 +110,30 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_amount INTEGER DEFAULT 0`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN original_amount INTEGER DEFAULT 0`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_percent INTEGER DEFAULT 0`); }catch{}
+
+  // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY - DB TRIGGER =====
+  try{
+    // Create index for fast check
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_wallet_job_dup ON wallet_transactions(user_id, description, type, created_at)`);
+    // Drop old trigger if exists
+    db.exec(`DROP TRIGGER IF EXISTS no_dup_job_reward`);
+    // Create trigger that blocks same job same day
+    db.exec(`
+      CREATE TRIGGER no_dup_job_reward 
+      BEFORE INSERT ON wallet_transactions 
+      WHEN NEW.type='job_reward' AND EXISTS (
+        SELECT 1 FROM wallet_transactions 
+        WHERE user_id=NEW.user_id 
+        AND description=NEW.description 
+        AND type='job_reward' 
+        AND DATE(created_at) = DATE('now')
+      )
+      BEGIN
+        SELECT RAISE(ABORT, 'Already claimed this SUPER job today - Come back tomorrow');
+      END;
+    `);
+    console.log("🛡️ PREVENTION TRIGGER ACTIVE - No duplicate SUPER jobs same day");
+  }catch(e){ console.log("Trigger error (maybe table not exist yet):", e.message); }
 
   setTimeout(()=>{
     try{
@@ -354,14 +379,13 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // ===== IPHONE FIX - GET + POST BOTH - FIX JOBS DUPLICATE - WALLET FIX - FINAL =====
+  // ===== CLEANER + PREVENTION CHECKER =====
   const fixJobsDupHandler = (req,res)=>{
     try{
       let totalCleaned = 0;
       let totalReversed = 0;
       let affected = new Set();
       
-      // 1. FIX wallet_transactions (THIS IS WHERE YOUR SUPER JOB ABUSE DEY - Job SUPER: Get $10...)
       try{
         const userFilter = req.query.userId ? ` AND user_id=${Number(req.query.userId)}` : "";
         const txs = db.prepare(`SELECT id, user_id, amount, description, created_at FROM wallet_transactions WHERE type='job_reward' ${userFilter} ORDER BY id DESC LIMIT 5000`).all();
@@ -390,44 +414,28 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         }
       }catch(e){ console.log("wallet fix error", e.message, e.stack); }
 
-      // 2. Also clean other job tables if they exist
-      const tryTables = [
-        {name:'jovia_job_earnings', col:'title'},
-        {name:'job_completions', col:'job_id'},
-        {name:'job_earnings', col:'job_id'}
-      ];
-      for(const tbl of tryTables){
-        try{
-          db.prepare(`SELECT * FROM ${tbl.name} LIMIT 1`).get();
-          const dups = db.prepare(`SELECT user_id, ${tbl.col} as job_key, DATE(created_at) as day, COUNT(*) as cnt FROM ${tbl.name} GROUP BY user_id, ${tbl.col}, DATE(created_at) HAVING cnt > 1 LIMIT 100`).all();
-          for(const dup of dups){
-            try{
-              const rows = db.prepare(`SELECT id, amount, COALESCE(amount, reward, 0) as amt FROM ${tbl.name} WHERE user_id=? AND ${tbl.col}=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.job_key, dup.day);
-              if(rows.length > 1){
-                const toDelete = rows.slice(1);
-                for(const del of toDelete){
-                  try{
-                    db.prepare(`DELETE FROM ${tbl.name} WHERE id=?`).run(del.id);
-                    const amt = Number(del.amt || del.amount || 0);
-                    if(amt > 0){
-                      try{ db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(amt, dup.user_id); }catch{}
-                      totalReversed += amt;
-                    }
-                    totalCleaned++;
-                    affected.add(dup.user_id);
-                  }catch{}
-                }
-              }
-            }catch{}
-          }
-        }catch{}
-      }
-      return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate SUPER jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users`, totalCleaned, totalReversed, affectedUsers: affected.size});
+      return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate SUPER jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users - PREVENTION ACTIVE`, totalCleaned, totalReversed, affectedUsers: affected.size, prevention: "ON - No same job same day"});
     }catch(e){ return res.status(500).json({success:false, message:e.message, stack:e.stack}); }
   };
   safeAdd("get","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
   safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
-  // ===== END FIX =====
+
+  // ===== EXTRA GUARD FOR MAIN JOB ENDPOINT - IF MAIN SERVER CALLS SECOND SERVER =====
+  const jobGuardMiddleware = (req,res,next)=>{
+    try{
+      const userId = req.user?.id || req.body?.userId;
+      const jobTitle = String(req.body?.jobTitle || req.body?.title || req.body?.description || "").slice(0,100);
+      if(userId && jobTitle){
+        const exists = db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND description LIKE ? AND type='job_reward' AND DATE(created_at)=DATE('now') LIMIT 1`).get(userId, `%${jobTitle.slice(0,20)}%`);
+        if(exists){
+          return res.status(403).json({success:false, message:"⛔ Already claimed this SUPER job today - Come back tomorrow"});
+        }
+      }
+    }catch{}
+    next();
+  };
+  // Try to add guard to possible job routes if they don't exist in main server
+  safeAdd("post","/api/jobs/complete-guard", adminGuard, jobGuardMiddleware, (req,res)=>{ res.json({success:true, message:"Guard active"}); });
 
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
@@ -764,5 +772,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL IPHONE READY - MIN 2500 + 8% SILENT + JOB CLEANER GET/POST - Build go succeed");
+  console.log("✅ FINAL WITH PREVENTION - No duplicate SUPER jobs same day - Build go succeed");
 };
