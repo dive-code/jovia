@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE - MIN 2500 8% SILENT + JOB CLEANER");
 
   const routeExists = (path, method) => {
     try{
@@ -360,6 +360,86 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
+  // ===== NEW: FIX JOBS DUPLICATE - REMOVE OVER-EARNED MONEY =====
+  safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, (req,res)=>{
+    try{
+      let totalCleaned = 0;
+      let totalReversed = 0;
+      let affected = new Set();
+
+      const tryTables = [
+        {name:'jovia_job_earnings', col:'title'},
+        {name:'job_completions', col:'job_id'},
+        {name:'job_earnings', col:'job_id'},
+        {name:'transactions', col:'description'}
+      ];
+
+      for(const tbl of tryTables){
+        try{
+          db.prepare(`SELECT * FROM ${tbl.name} LIMIT 1`).get();
+          const dups = db.prepare(`
+            SELECT user_id, ${tbl.col} as job_key, DATE(created_at) as day, COUNT(*) as cnt
+            FROM ${tbl.name}
+            WHERE DATE(created_at) >= DATE('now','-7 days')
+            GROUP BY user_id, ${tbl.col}, DATE(created_at)
+            HAVING cnt > 1
+            LIMIT 100
+          `).all();
+
+          for(const dup of dups){
+            try{
+              const rows = db.prepare(`SELECT id, amount, COALESCE(amount, reward, 0) as amt FROM ${tbl.name} WHERE user_id=? AND ${tbl.col}=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.job_key, dup.day);
+              if(rows.length > 1){
+                const toDelete = rows.slice(1);
+                for(const del of toDelete){
+                  try{
+                    db.prepare(`DELETE FROM ${tbl.name} WHERE id=?`).run(del.id);
+                    const amt = Number(del.amt || del.amount || 0);
+                    if(amt > 0){
+                      db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(amt, dup.user_id);
+                      totalReversed += amt;
+                    }
+                    totalCleaned++;
+                    affected.add(dup.user_id);
+                  }catch{}
+                }
+              }
+            }catch{}
+          }
+        }catch{}
+      }
+
+      // Also clean wallet transactions duplicate titles same minute
+      try{
+        const transDups = db.prepare(`
+          SELECT user_id, title, DATE(created_at) as day, COUNT(*) as cnt
+          FROM jovia_job_earnings
+          GROUP BY user_id, title, DATE(created_at)
+          HAVING cnt > 1
+          LIMIT 100
+        `).all();
+        for(const dup of transDups){
+          const rows = db.prepare(`SELECT id, amount FROM jovia_job_earnings WHERE user_id=? AND title=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.title, dup.day);
+          if(rows.length > 1){
+            for(const del of rows.slice(1)){
+              db.prepare(`DELETE FROM jovia_job_earnings WHERE id=?`).run(del.id);
+              db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(del.amount, dup.user_id);
+              totalCleaned++; totalReversed+=del.amount; affected.add(dup.user_id);
+            }
+          }
+        }
+      }catch{}
+
+      return res.json({
+        success:true,
+        message:`Cleaned ${totalCleaned} duplicate jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users`,
+        totalCleaned,
+        totalReversed,
+        affectedUsers: affected.size
+      });
+    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+  });
+
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
   safeAdd("get","/api/admin/me", (req,res)=>{
@@ -602,21 +682,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(!bet || bet < 100) return res.status(400).json({success:false,message:"Minimum bet ₦100"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
-
-      // ===== YOUR BALANCED 70/30 LOGIC - NO 100X GLITCH - PROFESSIONAL =====
       let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
-      const houseRoll = crypto.randomInt(0,100); // 0-99
-
+      const houseRoll = crypto.randomInt(0,100);
       if(gameType === "spin_wheel"){
-        // 70% LOSE, 30% WIN - Max 2x - Balanced
-        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }           // 40% lose all
-        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }    // 15% lose half
-        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }    // 15% lose small
-        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }     // 15% win small
-        else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }     // 8% win medium
-        else { mult = 2; segmentLabel="2x"; isWin=true; }                           // 7% win max
+        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }
+        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
+        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
+        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
+        else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
+        else { mult = 2; segmentLabel="2x"; isWin=true; }
       } else if(gameType === "spin_bottle" || gameType === "up_down"){
-        // Bottle & UpDown: 70% lose, 30% win 1.8x
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
         isWin = houseRoll < 30;
@@ -629,7 +704,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         mult = isWin ? 1.8 : 0;
         segmentLabel = isWin ? "WIN" : "LOSE";
       }
-
       const winAmount = Math.floor(bet*mult);
       const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
       const newBal = acc.game_balance - bet + finalWin;
@@ -703,13 +777,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     try{
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
       if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
+      const refundAmount = w.original_amount || w.amount;
       db.transaction(()=>{
         db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(w.amount, w.user_id);
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(refundAmount, w.user_id);
       })();
-      return res.json({success:true,message:`Declined. Status: Failed. Refunded to wallet`});
+      return res.json({success:true,message:`Declined. Status: Failed. Refunded ₦${refundAmount} to wallet`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL UPDATED FULL FILE - MAIN DASHBOARD 0 FIXED + DAILY ONE + MUST FINISH + BALANCED 70/30 NO 100X + PROFESSIONAL + KANU FIX + RAILWAY SAFE - Build go succeed");
+  console.log("✅ FINAL UPDATED FULL FILE - MIN 2500 + 8% SILENT + REFUND FIXED + JOB CLEANER - Build go succeed");
 };
