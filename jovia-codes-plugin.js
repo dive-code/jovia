@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - NO OVERWRITE - MAIN DASHBOARD 0 FIXED - DAILY ONE + MUST FINISH - BALANCED 70/30 - NO 100X - PROFESSIONAL - RAILWAY SAFE - MIN 2500 8% SILENT + JOB CLEANER");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER GET+POST IPHONE SAFE");
 
   const routeExists = (path, method) => {
     try{
@@ -17,7 +17,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const safeAdd = (method, path, ...handlers) => {
     if(routeExists(path, method)){
-      console.log(`⏭️ Skipping ${method.toUpperCase()} ${path} - Main server already get am - Main dashboard safe`);
+      console.log(`⏭️ Skipping ${method.toUpperCase()} ${path} - Main server already get am`);
       return;
     }
     app[method](path, ...handlers);
@@ -110,14 +110,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN original_amount INTEGER DEFAULT 0`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_percent INTEGER DEFAULT 0`); }catch{}
 
-  // RAILWAY SAFE CLEAN - LIMIT 20 - NO HEAVY BUILD FAIL
   setTimeout(()=>{
     try{
       const cnt = db.prepare(`SELECT COUNT(*) as c FROM jovia_music_earnings`).get().c;
-      if(cnt > 5000){ console.log("Skip clean - too many rows for Railway"); return; }
+      if(cnt > 5000) return;
       const dups = db.prepare(`SELECT user_id, track_id, DATE(created_at) as day, COUNT(*) as cnt FROM jovia_music_earnings GROUP BY user_id, track_id, DATE(created_at) HAVING COUNT(*) > 1 LIMIT 20`).all();
       if(dups.length > 0){
-        console.log(`⚠️ Found ${dups.length} same-day duplicates - Cleaning...`);
         for(const dup of dups){
           try{
             const rows = db.prepare(`SELECT id, amount FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.track_id, dup.day);
@@ -130,9 +128,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
             }
           }catch{}
         }
-        console.log(`✅ Cleaned duplicates safely`);
       }
-    }catch(e){ console.log("Clean skip", e.message); }
+    }catch(e){}
   }, 10000);
 
   try{
@@ -284,7 +281,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.json({success:true, admin:{username:"admin"}});
   };
 
-  // ===== MAIN DASHBOARD 0 FIX - FORCE OVERWRITE BROKEN ONE =====
   try{
     if(app._router && app._router.stack){
       app._router.stack = app._router.stack.filter(layer => {
@@ -313,9 +309,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
-  console.log("✅ FIXED DASHBOARD 0 - Now shows real numbers");
 
-  // ===== FIX FOR kanujosephbenson@gmail.com - 1000 DEPOSIT RESET =====
   safeAdd("get","/api/admin/fix/kanu", adminGuard, (req,res)=>{
     try{
       const email = "kanujosephbenson@gmail.com";
@@ -328,7 +322,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, user.id);
         db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'admin_correction', ?, ?, ?, ?, 'completed')`).run(user.id, newBal - oldBal, `FIX-KANU-${Date.now()}`, oldBal, newBal);
       })();
-      return res.json({success:true, message:`Fixed ${email}: ${oldBal} -> ${newBal} (removed ${oldBal - newBal})`, oldBalance: oldBal, newBalance: newBal, email});
+      return res.json({success:true, message:`Fixed ${email}: ${oldBal} -> ${newBal}`, oldBalance: oldBal, newBalance: newBal, email});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/admin/games/fix-balance", adminGuard, (req,res)=>{
@@ -360,32 +354,21 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // ===== NEW: FIX JOBS DUPLICATE - REMOVE OVER-EARNED MONEY =====
-  safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, (req,res)=>{
+  // ===== IPHONE FIX - GET + POST BOTH - FIX JOBS DUPLICATE =====
+  const fixJobsDupHandler = (req,res)=>{
     try{
       let totalCleaned = 0;
       let totalReversed = 0;
       let affected = new Set();
-
       const tryTables = [
         {name:'jovia_job_earnings', col:'title'},
         {name:'job_completions', col:'job_id'},
-        {name:'job_earnings', col:'job_id'},
-        {name:'transactions', col:'description'}
+        {name:'job_earnings', col:'job_id'}
       ];
-
       for(const tbl of tryTables){
         try{
           db.prepare(`SELECT * FROM ${tbl.name} LIMIT 1`).get();
-          const dups = db.prepare(`
-            SELECT user_id, ${tbl.col} as job_key, DATE(created_at) as day, COUNT(*) as cnt
-            FROM ${tbl.name}
-            WHERE DATE(created_at) >= DATE('now','-7 days')
-            GROUP BY user_id, ${tbl.col}, DATE(created_at)
-            HAVING cnt > 1
-            LIMIT 100
-          `).all();
-
+          const dups = db.prepare(`SELECT user_id, ${tbl.col} as job_key, DATE(created_at) as day, COUNT(*) as cnt FROM ${tbl.name} WHERE DATE(created_at) >= DATE('now','-7 days') GROUP BY user_id, ${tbl.col}, DATE(created_at) HAVING cnt > 1 LIMIT 100`).all();
           for(const dup of dups){
             try{
               const rows = db.prepare(`SELECT id, amount, COALESCE(amount, reward, 0) as amt FROM ${tbl.name} WHERE user_id=? AND ${tbl.col}=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.job_key, dup.day);
@@ -408,37 +391,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           }
         }catch{}
       }
-
-      // Also clean wallet transactions duplicate titles same minute
-      try{
-        const transDups = db.prepare(`
-          SELECT user_id, title, DATE(created_at) as day, COUNT(*) as cnt
-          FROM jovia_job_earnings
-          GROUP BY user_id, title, DATE(created_at)
-          HAVING cnt > 1
-          LIMIT 100
-        `).all();
-        for(const dup of transDups){
-          const rows = db.prepare(`SELECT id, amount FROM jovia_job_earnings WHERE user_id=? AND title=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.title, dup.day);
-          if(rows.length > 1){
-            for(const del of rows.slice(1)){
-              db.prepare(`DELETE FROM jovia_job_earnings WHERE id=?`).run(del.id);
-              db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(del.amount, dup.user_id);
-              totalCleaned++; totalReversed+=del.amount; affected.add(dup.user_id);
-            }
-          }
-        }
-      }catch{}
-
-      return res.json({
-        success:true,
-        message:`Cleaned ${totalCleaned} duplicate jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users`,
-        totalCleaned,
-        totalReversed,
-        affectedUsers: affected.size
-      });
+      return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users`, totalCleaned, totalReversed, affectedUsers: affected.size});
     }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-  });
+  };
+  safeAdd("get","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
+  safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
 
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
@@ -586,19 +543,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const finished = req.body?.finished === true || req.body?.finished === 1 || String(req.body?.finished).toLowerCase() === "true";
       const track = db.prepare(`SELECT * FROM jovia_music WHERE id=?`).get(trackId) || {title:"Music Track",reward:100};
       const reward = Number(track.reward||100);
-      if(!finished){
-        return res.status(400).json({success:false,message:`You must listen to the music finish before earning - Play till end 🎧`});
-      }
-      if(watched < 50){
-        return res.status(400).json({success:false,message:`Listen at least 60s and finish the music - You listened ${watched}s`});
-      }
-      if(duration > 0 && watched < Math.max(60, duration * 0.85)){
-        return res.status(400).json({success:false,message:`You must finish the music - ${Math.floor(watched)}s / ${Math.floor(duration)}s - Keep playing till end`});
-      }
+      if(!finished) return res.status(400).json({success:false,message:`You must listen to the music finish before earning - Play till end 🎧`});
+      if(watched < 50) return res.status(400).json({success:false,message:`Listen at least 60s and finish the music - You listened ${watched}s`});
+      if(duration > 0 && watched < Math.max(60, duration * 0.85)) return res.status(400).json({success:false,message:`You must finish the music - ${Math.floor(watched)}s / ${Math.floor(duration)}s - Keep playing till end`});
       const todayExists = db.prepare(`SELECT id, created_at FROM jovia_music_earnings WHERE user_id=? AND track_id=? AND DATE(created_at)=DATE('now') LIMIT 1`).get(req.user.id, trackId);
-      if(todayExists){
-        return res.status(403).json({success:false,message:"✅ Already earned for this song today - Come back tomorrow - One song per day only", already:true, nextDay:true});
-      }
+      if(todayExists) return res.status(403).json({success:false,message:"✅ Already earned for this song today - Come back tomorrow - One song per day only", already:true, nextDay:true});
       db.transaction(()=>{
         db.prepare(`INSERT INTO jovia_music_earnings (user_id,track_id,title,amount,watched_seconds) VALUES (?,?,?,?,?)`).run(req.user.id, trackId, track.title, reward, watched);
         db.prepare(`UPDATE jovia_music SET plays=plays+1 WHERE id=?`).run(trackId);
@@ -644,7 +593,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/games/me", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
-      if(isSuspendedStatus(userRow?.account_status||userRow?.status)){ return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true}); }
+      if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Suspended",suspended:true});
       const acc = getOrCreateGameAccount(req.user.id);
       const bets = db.prepare(`SELECT * FROM game_bets WHERE user_id = ? ORDER BY created_at DESC LIMIT 20`).all(req.user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.user.id);
@@ -710,10 +659,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, total_wins=total_wins+?, updated_at=datetime('now') WHERE user_id=?`).run(newBal, (isWin && mult>=1)?1:0, req.user.id);
       db.prepare(`INSERT INTO game_bets (user_id, game_type, bet_amount, win_amount, result, multiplier) VALUES (?,?,?,?,?,?)`).run(req.user.id, gameType, bet, finalWin, isWin?'win':'loss', mult);
       db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status, game_type) VALUES (?,?,?,?,?,?,?,?)`).run(req.user.id, isWin?'game_win':'game_loss', isWin?finalWin:bet, `${gameType.toUpperCase()}-${Date.now()}`, acc.game_balance, newBal, 'completed', gameType);
-      return res.json({
-        success:true, result:isWin?'win':'loss', isWin, bet, winAmount: finalWin, multiplier: mult, segment: segmentLabel, finalSide: finalSide, newBalance:newBal, 
-        gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)
-      });
+      return res.json({ success:true, result:isWin?'win':'loss', isWin, bet, winAmount: finalWin, multiplier: mult, segment: segmentLabel, finalSide: finalSide, newBalance:newBal, gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id) });
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/games/withdraw", userGuard, (req,res)=>{
@@ -786,5 +732,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FINAL UPDATED FULL FILE - MIN 2500 + 8% SILENT + REFUND FIXED + JOB CLEANER - Build go succeed");
+  console.log("✅ FINAL IPHONE READY - MIN 2500 + 8% SILENT + JOB CLEANER GET/POST - Build go succeed");
 };
