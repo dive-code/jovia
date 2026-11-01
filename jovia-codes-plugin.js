@@ -354,12 +354,43 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // ===== IPHONE FIX - GET + POST BOTH - FIX JOBS DUPLICATE =====
+  // ===== IPHONE FIX - GET + POST BOTH - FIX JOBS DUPLICATE - WALLET FIX - FINAL =====
   const fixJobsDupHandler = (req,res)=>{
     try{
       let totalCleaned = 0;
       let totalReversed = 0;
       let affected = new Set();
+      
+      // 1. FIX wallet_transactions (THIS IS WHERE YOUR SUPER JOB ABUSE DEY - Job SUPER: Get $10...)
+      try{
+        const userFilter = req.query.userId ? ` AND user_id=${Number(req.query.userId)}` : "";
+        const txs = db.prepare(`SELECT id, user_id, amount, description, created_at FROM wallet_transactions WHERE type='job_reward' ${userFilter} ORDER BY id DESC LIMIT 5000`).all();
+        const seen = new Set();
+        for(const t of txs){
+          const desc = String(t.description||'').slice(0,60).trim();
+          const keyDay = `${t.user_id}_${desc}_${t.amount}_${String(t.created_at).slice(0,10)}`;
+          const keyMin = `${t.user_id}_${desc}_${t.amount}_${String(t.created_at).slice(0,16)}`;
+          if(seen.has(keyDay) || seen.has(keyMin)){
+            try{
+              db.prepare(`DELETE FROM wallet_transactions WHERE id=?`).run(t.id);
+              const amt = Number(t.amount||0);
+              if(amt>0){
+                try{ db.prepare(`UPDATE users SET wallet_balance = wallet_balance - ? WHERE id=?`).run(amt, t.user_id); }catch{
+                  try{ db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) - ? WHERE id=?`).run(amt, t.user_id); }catch{}
+                }
+                totalReversed += amt;
+              }
+              totalCleaned++;
+              affected.add(t.user_id);
+            }catch(e){}
+          }else{
+            seen.add(keyDay);
+            seen.add(keyMin);
+          }
+        }
+      }catch(e){ console.log("wallet fix error", e.message, e.stack); }
+
+      // 2. Also clean other job tables if they exist
       const tryTables = [
         {name:'jovia_job_earnings', col:'title'},
         {name:'job_completions', col:'job_id'},
@@ -368,7 +399,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       for(const tbl of tryTables){
         try{
           db.prepare(`SELECT * FROM ${tbl.name} LIMIT 1`).get();
-          const dups = db.prepare(`SELECT user_id, ${tbl.col} as job_key, DATE(created_at) as day, COUNT(*) as cnt FROM ${tbl.name} WHERE DATE(created_at) >= DATE('now','-7 days') GROUP BY user_id, ${tbl.col}, DATE(created_at) HAVING cnt > 1 LIMIT 100`).all();
+          const dups = db.prepare(`SELECT user_id, ${tbl.col} as job_key, DATE(created_at) as day, COUNT(*) as cnt FROM ${tbl.name} GROUP BY user_id, ${tbl.col}, DATE(created_at) HAVING cnt > 1 LIMIT 100`).all();
           for(const dup of dups){
             try{
               const rows = db.prepare(`SELECT id, amount, COALESCE(amount, reward, 0) as amt FROM ${tbl.name} WHERE user_id=? AND ${tbl.col}=? AND DATE(created_at)=? ORDER BY id ASC`).all(dup.user_id, dup.job_key, dup.day);
@@ -379,7 +410,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
                     db.prepare(`DELETE FROM ${tbl.name} WHERE id=?`).run(del.id);
                     const amt = Number(del.amt || del.amount || 0);
                     if(amt > 0){
-                      db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(amt, dup.user_id);
+                      try{ db.prepare(`UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0) - ?) WHERE id=?`).run(amt, dup.user_id); }catch{}
                       totalReversed += amt;
                     }
                     totalCleaned++;
@@ -391,11 +422,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           }
         }catch{}
       }
-      return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users`, totalCleaned, totalReversed, affectedUsers: affected.size});
-    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+      return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate SUPER jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users`, totalCleaned, totalReversed, affectedUsers: affected.size});
+    }catch(e){ return res.status(500).json({success:false, message:e.message, stack:e.stack}); }
   };
   safeAdd("get","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
   safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
+  // ===== END FIX =====
 
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
