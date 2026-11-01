@@ -106,6 +106,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_name TEXT DEFAULT ''`); }catch{}
+  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_amount INTEGER DEFAULT 0`); }catch{}
+  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN original_amount INTEGER DEFAULT 0`); }catch{}
+  try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_percent INTEGER DEFAULT 0`); }catch{}
 
   // RAILWAY SAFE CLEAN - LIMIT 20 - NO HEAVY BUILD FAIL
   setTimeout(()=>{
@@ -643,18 +646,23 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
       if(isSuspendedStatus(userRow?.account_status||userRow?.status)) return res.status(403).json({success:false,message:"⛔ Account Suspended"});
-      const amount = Number(req.body?.amount);
+      let amount = Number(req.body?.amount);
       const bank_name = String(req.body?.bank_name||"").trim();
       const account_number = String(req.body?.account_number||"").trim();
       const account_name = String(req.body?.account_name||"").trim();
-      if(!amount || amount < 100) return res.status(400).json({success:false,message:"Enter valid amount"});
+      if(!amount || amount < 2500) return res.status(400).json({success:false,message:"Minimum withdrawal is ₦2500"});
       if(!bank_name || !account_number || !account_name) return res.status(400).json({success:false,message:"Complete your bank details"});
       const acc = getOrCreateGameAccount(req.user.id);
       if(acc.game_balance < amount) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
+      const feePercent = 8;
+      const feeAmount = Math.floor(amount * feePercent / 100);
+      const netAmount = amount - feeAmount;
       const newBal = acc.game_balance - amount;
-      db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
-      db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status) VALUES (?, ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, bank_name, account_number, account_name);
-      db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
+      db.transaction(()=>{
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_withdrawals = total_withdrawals + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, amount, req.user.id);
+        db.prepare(`INSERT INTO game_withdrawals (user_id, amount, bank_name, account_number, account_name, status, fee_amount, original_amount, fee_percent) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)`).run(req.user.id, netAmount, bank_name, account_number, account_name, feeAmount, amount, feePercent);
+        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'withdraw', ?, ?, ?, ?, 'pending')`).run(req.user.id, amount, "WD-"+Date.now(), acc.game_balance, newBal);
+      })();
       return res.json({success:true,message:`Withdrawal request submitted. Status: Processing`,gameAccount: db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(req.user.id)});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
