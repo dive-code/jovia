@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,12 +61,6 @@ font-size:20px;font-weight:950
 .page-label:before{content:"";width:18px;height:2px;border-radius:10px;background:var(--gold)}
 .page-heading h1{color:var(--purple);font-size:31px;line-height:1.1;letter-spacing:-1.1px;font-weight:900}
 .page-heading p{max-width:560px;margin-top:9px;color:var(--muted);font-size:11px;line-height:1.7}
-.withdrawal-disabled-banner{
-display:flex;align-items:center;gap:10px;padding:14px 15px;margin-bottom:17px;
-border-radius:14px;background:linear-gradient(135deg,#fff8df,#fff1b8);
-border:1px solid #f0d88a;color:#7a5900;font-size:11px;font-weight:800;line-height:1.5
-}
-.withdrawal-disabled-banner.hide{display:none!important}
 .balance-card{
 position:relative;overflow:hidden;min-height:175px;margin-bottom:19px;
 padding:24px;border-radius:23px;
@@ -235,9 +230,7 @@ box-shadow:0 -8px 25px rgba(40,20,50,.035);backdrop-filter:blur(18px)
 <p>Manage your withdrawal requests and receive your available earnings through your preferred payment method.</p>
 </section>
 
-<div id="withdrawalDisabledBanner" class="withdrawal-disabled-banner hide">
-⏳ Withdrawals are currently unavailable. Please check again later.
-</div>
+<!-- The permanent withdrawal availability banner has been removed. -->
 
 <section class="balance-card">
 <div class="balance-top">
@@ -628,29 +621,19 @@ const o=document.getElementById("inactiveOverlay");
 o.classList.add("show");o.style.display="flex";document.body.style.overflow="hidden";
 }
 
+/* Load withdrawal availability without displaying a permanent banner. */
 async function loadWithdrawalSettings(){
 try{
-const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{credentials:"include",cache:"no-store"});
+const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{
+credentials:"include",
+cache:"no-store"
+});
 if(!r.ok)throw new Error("Settings unavailable");
 const d=await r.json();
 regularWithdrawalsEnabled=d.regularEnabled!==false;
 affiliateWithdrawalsEnabled=d.affiliateEnabled!==false;
-}catch(e){}
-finally{
-const banner=document.getElementById("withdrawalDisabledBanner");
-if(!banner)return;
-if(!regularWithdrawalsEnabled&&!affiliateWithdrawalsEnabled){
-banner.textContent="⏳ Withdrawals are currently unavailable. Please check again later.";
-banner.classList.remove("hide");banner.style.display="flex";
-}else if(document.getElementById("withdrawalType").value==="regular"&&!regularWithdrawalsEnabled){
-banner.textContent="⏳ Regular withdrawals are currently unavailable. Please check again later.";
-banner.classList.remove("hide");banner.style.display="flex";
-}else if(document.getElementById("withdrawalType").value==="affiliate"&&!affiliateWithdrawalsEnabled){
-banner.textContent="⏳ Affiliate withdrawals are currently unavailable. Please check again later.";
-banner.classList.remove("hide");banner.style.display="flex";
-}else{
-banner.classList.add("hide");banner.style.display="none";
-}
+}catch(e){
+/* Keep the existing default settings if the settings request fails. */
 }
 }
 
@@ -673,7 +656,6 @@ document.getElementById("typeBalanceLabel").textContent="Available balance";
 document.getElementById("amount").min=getMinimumWithdrawal(t);
 document.getElementById("infoCountry").textContent=document.getElementById("country").value;
 updateQuickAmounts(t);
-loadWithdrawalSettings();
 }
 
 function onCountryChange(){
@@ -866,6 +848,7 @@ if(r.status===401||r.status===403){
 location.href="login.html";
 return;
 }
+if(!r.ok)throw new Error("Unable to load account");
 const data=await r.json();
 const user=data.user||data.data?.user||data.member||data;
 currentUser=user;
@@ -948,29 +931,40 @@ if(e.target===this)closeConfirmModal();
 });
 
 function openActivationModal(){
-const wt=pendingWithdrawal?.withdrawalType||document.getElementById("withdrawalType").value;
-const isPortalOpen=wt==="affiliate"?affiliateWithdrawalsEnabled:regularWithdrawalsEnabled;
-if(!isPortalOpen){
-document.getElementById("confirmModal").classList.remove("show");
-document.body.style.overflow="";
-showMessage("Withdrawals are currently unavailable. Please check again later.","error");
-return;
-}
 if(!pendingWithdrawal){
 showMessage("Please enter your amount and payment details first.","error");
 return;
 }
+
+const wt=pendingWithdrawal.withdrawalType;
+const isPortalOpen=wt==="affiliate"?affiliateWithdrawalsEnabled:regularWithdrawalsEnabled;
+
+if(!isPortalOpen){
+document.getElementById("confirmModal").classList.remove("show");
+document.body.style.overflow="";
+showMessage(
+wt==="affiliate"
+?"Affiliate withdrawals are currently unavailable. Please try again later."
+:"Regular withdrawals are currently unavailable. Please try again later.",
+"error"
+);
+return;
+}
+
 const amt=Number(pendingWithdrawal.amount||0);
-const min=getMinimumWithdrawal(pendingWithdrawal.withdrawalType);
+const min=getMinimumWithdrawal(wt);
+
 if(amt<min){
 showMessage("Minimum withdrawal is "+money(min)+".","error");
 return;
 }
-if(pendingWithdrawal.withdrawalType==="affiliate"){
+
+if(wt==="affiliate"){
 document.getElementById("confirmModal").classList.remove("show");
 confirmWithdrawal("");
 return;
 }
+
 document.getElementById("confirmModal").classList.remove("show");
 const overlay=document.getElementById("activationOverlay");
 overlay.classList.add("show");overlay.style.display="flex";
@@ -1050,24 +1044,34 @@ const wt=document.getElementById("withdrawalType").value;
 const isPortalOpen=wt==="affiliate"?affiliateWithdrawalsEnabled:regularWithdrawalsEnabled;
 
 if(!isPortalOpen){
-showMessage("Withdrawals are currently unavailable. Please check again later.","error");
+showMessage(
+wt==="affiliate"
+?"Affiliate withdrawals are currently unavailable. Please try again later."
+:"Regular withdrawals are currently unavailable. Please try again later.",
+"error"
+);
 return;
 }
+
 if(!currentUser){
 showMessage("Your account is still loading. Please try again.","error");
 return;
 }
 
-const sel=getSelectedBalance(),min=getMinimumWithdrawal(wt),amt=Number(document.getElementById("amount").value);
+const sel=getSelectedBalance();
+const min=getMinimumWithdrawal(wt);
+const amt=Number(document.getElementById("amount").value);
 
 if(!Number.isFinite(amt)||amt<=0){
 showMessage("Please enter a valid withdrawal amount.","error");
 return;
 }
+
 if(amt<min){
-showMessage("Minimum withdrawal is "+money(min)+".","error");
+showMessage("Minimum withdrawal for "+(wt==="affiliate"?"Affiliate":"Regular")+" Earnings is "+money(min)+".","error");
 return;
 }
+
 if(amt>sel){
 showMessage("Insufficient balance. Your available balance is "+money(sel)+".","error");
 return;
@@ -1124,7 +1128,6 @@ try{data=await r.json();}catch(e){}
 
 if(!r.ok)throw new Error(data?.message||"Unable to submit withdrawal.");
 
-updateBalance();
 document.getElementById("confirmModal").classList.remove("show");
 
 const ov=document.getElementById("activationOverlay");
@@ -1136,6 +1139,7 @@ pendingWithdrawal=null;
 
 showMessage(data?.message||"Your withdrawal request has been submitted successfully.","success");
 await loadWithdrawalHistory();
+await loadUserBalanceOnly();
 
 }catch(e){
 const ov=document.getElementById("activationOverlay");
@@ -1149,6 +1153,18 @@ if(cb){cb.disabled=false;cb.textContent="Verify & Continue →";}
 document.getElementById("confirmWithdrawButton").disabled=false;
 document.getElementById("withdrawButton").disabled=false;
 }
+}
+
+async function loadUserBalanceOnly(){
+try{
+const r=await fetch("/api/me?t="+Date.now(),{credentials:"include",cache:"no-store"});
+if(!r.ok)return;
+const data=await r.json();
+const user=data.user||data.data?.user||data.member||data;
+walletBalance=Number(user.walletBalance??user.wallet_balance??walletBalance)||0;
+affiliateBalance=Number(user.affiliateBalance??user.affiliate_balance??affiliateBalance)||0;
+updateBalance();
+}catch(e){}
 }
 
 function escapeHTML(value){
@@ -1225,8 +1241,6 @@ e.style.display="none";
 }
 
 document.addEventListener("DOMContentLoaded",async function(){
-await loadWithdrawalSettings();
-updateBalance();
 await loadUser();
 });
 </script>
