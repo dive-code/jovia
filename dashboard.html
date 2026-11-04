@@ -229,7 +229,20 @@ async function fetchJSON(url,options={}){
 function getUserFromResponse(data){return data?.user||data?.data?.user||data?.member||data;}
 function isSuperUser(u){if(!u)return false;const pkg=String(u.package||u.plan||"").toLowerCase();const flag=Number(u.is_super)===1||String(u.is_super).toLowerCase()==="true";return pkg.includes("super")||flag;}
 function isSuspendedAccount(user){if(!user) return false;const s=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();return ["suspended","banned","blocked","disabled"].includes(s);}
-function isActiveAccount(user){if(!user) return false;if(isSuspendedAccount(user)) return false;const pkg=String(user.package||user.plan||"").toLowerCase();if(pkg.includes("super")) return true;const raw=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();return ["active","approved","activated"].includes(raw);}
+function isActiveAccount(user){
+  if(!user) return false;
+  if(isSuspendedAccount(user)) return false;
+  if(Number(user.is_active)===1||Number(user.is_activated)===1||Number(user.activated)===1||user.isActive===true||user.activated===true||user.isActivated===true) return true;
+  if(String(user.is_active).toLowerCase()==="true"||String(user.is_activated).toLowerCase()==="true") return true;
+  if(String(user.payment_status||"").toLowerCase()==="paid"||String(user.paymentStatus||"").toLowerCase()==="paid"||user.has_paid===true||Number(user.has_paid)===1||Number(user.paid)===1) return true;
+  const allStatus=[user.accountStatus,user.account_status,user.status,user.activation_status,user.member_status,user.accountState,user.state].map(v=>String(v||"").toLowerCase());
+  if(allStatus.some(s=>["active","approved","activated","verified","paid","success","completed"].includes(s))) return true;
+  if(allStatus.some(s=>["pending","inactive","unpaid","not_active","awaiting","processing"].includes(s))) return false;
+  const pkg=String(user.package||user.plan||"").toLowerCase();
+  if(pkg.includes("super")) return true;
+  if(!allStatus.join("").trim()) return true;
+  return false;
+}
 async function loadUser(){
   try{
     const localPlan = String(localStorage.getItem("jovia_plan")||"").toLowerCase();
@@ -264,7 +277,6 @@ async function loadGlobalPopup(){
     }catch(_){}
   }
 }
-// ===== LOCAL NOTIFICATION SYSTEM - ACTIVATED ONLY + NO PAST MESSAGE - NO API =====
 const NOTIF_KEY="jovia_notifications";
 function getUserStartDate(){
   let start=localStorage.getItem("jovia_activated_at")||localStorage.getItem("jovia_registered_at");
@@ -310,7 +322,17 @@ function addLocalNotif(title,message){
 window.addLocalNotif=addLocalNotif;
 window.joviaAddNotif=addLocalNotif;
 function loadNotifsLocal(showToast=false,newItem=null){
-  if(currentUser && !isActiveAccount(currentUser)){
+  if(!currentUser){
+    const bellBtn=document.getElementById("bellBtn");
+    if(bellBtn) bellBtn.style.display="grid";
+    allNotifs=getLocalNotifs();
+    const unread=allNotifs.filter(n=>!n.is_read).length;
+    const badge=document.getElementById("bellBadge");
+    if(unread>0){ badge.style.display="grid"; badge.textContent=unread>99?"99+":unread; } else badge.style.display="none";
+    renderNotifList();
+    return;
+  }
+  if(!isActiveAccount(currentUser)){
     const badge=document.getElementById("bellBadge");
     const bellBtn=document.getElementById("bellBtn");
     if(badge) badge.style.display="none";
