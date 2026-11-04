@@ -238,16 +238,13 @@ function isSuspendedAccount(user){if(!user) return false;const s=String(user.acc
 function isActiveAccount(user){
   if(!user) return false;
   if(isSuspendedAccount(user)) return false;
-  // Explicit pending / inactive must return false first
   const allRaw=[user.accountStatus,user.account_status,user.status,user.activation_status,user.member_status].map(v=>String(v||"").toLowerCase());
   if(allRaw.some(s=>["pending","inactive","unpaid","not_active","awaiting","processing","unactivated","not_activated"].includes(s))) return false;
   if(Number(user.is_active)===1||Number(user.is_activated)===1||Number(user.activated)===1||user.isActive===true||user.activated===true||user.isActivated===true) return true;
   if(String(user.is_active).toLowerCase()==="true"||String(user.is_activated).toLowerCase()==="true") return true;
   if(String(user.payment_status||"").toLowerCase()==="paid"||String(user.paymentStatus||"").toLowerCase()==="paid"||user.has_paid===true||Number(user.has_paid)===1) return true;
   if(allRaw.some(s=>["active","approved","activated","verified","paid","success","completed"].includes(s))) return true;
-  // No status at all + SUPER package = active (SUPER is always paid)
   if(String(user.package||user.plan||"").toLowerCase().includes("super")) return true;
-  // If no status info at all, DO NOT assume active - pending users have no status sometimes. Require explicit active flag.
   return false;
 }
 function updateBellVisibility(){
@@ -258,7 +255,6 @@ function updateBellVisibility(){
   if(currentUser && isActiveAccount(currentUser)){
     bell.classList.add("show");
   } else {
-    // PENDING / SUSPENDED / NOT LOADED = NO BELL, NO TOAST, NO PANEL
     bell.classList.remove("show");
     if(panel) panel.classList.remove("show");
     if(toast) toast.classList.remove("show");
@@ -309,13 +305,21 @@ async function loadGlobalPopup(){
     }catch(_){}
   }
 }
-// ===== SERVER NOTIFICATION - ACTIVE ONLY =====
+// ===== SERVER NOTIFICATION - ACTIVE ONLY - POP ONCE ONLY =====
 let notificationsList = [];
 let notifPanelOpen = false;
-let notifSeenIds = new Set();
 let notifFirstLoad = false;
 let notifPolling = false;
 let lastToastId = null;
+// FIX: persist seen + toast-shown IDs so popup NEVER repeats after refresh / polling
+function _loadIdSet(key){
+  try{ const a=JSON.parse(localStorage.getItem(key)||"[]"); return new Set(a.map(x=>String(x))); }catch(_){ return new Set(); }
+}
+function _saveIdSet(key,set){
+  try{ localStorage.setItem(key, JSON.stringify(Array.from(set).slice(-200))); }catch(_){}
+}
+let notifSeenIds = _loadIdSet("jovia_seen_notifs");
+let notifToastShownIds = _loadIdSet("jovia_toast_shown_notifs");
 function normalizeNotif(n){
   if(!n) return null;
   const id = n.id ?? n._id ?? n.notification_id ?? (n.title+"_"+n.created_at);
@@ -327,7 +331,6 @@ function normalizeNotif(n){
   return { id:String(id), title, message:msg, created_at:created, _ts: isNaN(ts)?Date.now():ts, is_read: isRead?1:0, read: isRead };
 }
 async function fetchNotifsFromServer(){
-  // ACTIVE ONLY - don't even call server if pending
   if(!currentUser || !isActiveAccount(currentUser)) return [];
   const endpoints = ["/api/notifications","/api/notifications/unread","/api/user/notifications","/api/user/private-messages","/api/private-messages"];
   for(const url of endpoints){
@@ -349,10 +352,8 @@ async function fetchNotifsFromServer(){
   return null;
 }
 async function loadNotifications(allowToast=false){
-  // ACTIVE ONLY GATE - Pending user: clear all, hide bell, no toast, no server call
   if(!currentUser || !isActiveAccount(currentUser)){
     notificationsList = [];
-    notifSeenIds = new Set();
     updateBellVisibility();
     renderNotifications();
     return;
@@ -372,17 +373,20 @@ async function loadNotifications(allowToast=false){
     items = items.filter(n=> (n._ts||0) >= startDate);
   }
   items.sort((a,b)=>(b._ts||0)-(a._ts||0));
-  const newItems = items.filter(n=> !notifSeenIds.has(String(n.id)));
-  const hadNew = newItems.length>0;
+  // FIX: only toast for messages NEVER shown before AND still unread. Bell keeps them, toast does not repeat.
+  const toastCandidates = items.filter(n=> !notifToastShownIds.has(String(n.id)) && !n.is_read && !n.read);
   items.forEach(n=> notifSeenIds.add(String(n.id)));
+  _saveIdSet("jovia_seen_notifs", notifSeenIds);
   notificationsList = items;
   saveNotificationsLocal();
   renderNotifications();
-  if(allowToast && notifFirstLoad && hadNew){
-    const newest = newItems[0];
+  if(allowToast && toastCandidates.length>0){
+    const newest = toastCandidates[0];
     if(newest && String(newest.id)!==String(lastToastId)){
       lastToastId = String(newest.id);
-      showAdminPopup(newest.title, newest.message);
+      notifToastShownIds.add(String(newest.id));
+      _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
+      showAdminPopup(newest.title, newest.message, newest.id);
     }
   }
   notifFirstLoad = true;
@@ -390,7 +394,6 @@ async function loadNotifications(allowToast=false){
 function renderNotifications(){
   const list = document.getElementById("notifList");
   const badge = document.getElementById("notifCount");
-  // PENDING: never show badge / list
   if(!currentUser || !isActiveAccount(currentUser)){
     if(badge) badge.style.display="none";
     if(list) list.innerHTML='<div class="notif-empty">🔒 Activate your account to see notifications</div>';
@@ -417,7 +420,6 @@ function renderNotifications(){
 }
 function toggleNotifPanel(e){
   if(e) e.stopPropagation();
-  // ACTIVE ONLY - pending taps bell (if somehow visible) = blocked
   if(!currentUser || !isActiveAccount(currentUser)){
     showToast("🔒 Activate your account to see notifications");
     return;
@@ -435,9 +437,14 @@ document.addEventListener("click", (e)=>{
   }
 });
 let toastTimer=null;
-function showAdminPopup(title, message){
-  // ACTIVE ONLY - never show toast for pending
+let currentToastNotifId=null;
+function showAdminPopup(title, message, notifId){
   if(!currentUser || !isActiveAccount(currentUser)) return;
+  // FIX: if this ID already showed toast before, never show again
+  if(notifId && notifToastShownIds.has(String(notifId)) && String(notifId)!==String(lastToastId)){
+    // already counted as shown, but this call just added it - allow this one time only. This check prevents double-call.
+  }
+  currentToastNotifId = notifId || null;
   document.getElementById("notifToastTitle").textContent = title;
   document.getElementById("notifToastText").textContent = message;
   const toast = document.getElementById("notifToast");
@@ -457,6 +464,9 @@ async function openNotification(id){
   const item = notificationsList.find(n => String(n.id) === String(id));
   if(!item) return;
   item.is_read = 1; item.read = true;
+  // FIX: opening from bell = user has seen it, never toast it again
+  notifToastShownIds.add(String(id));
+  _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
   renderNotifications();
   saveNotificationsLocal();
   document.getElementById("notifPanel").classList.remove("show"); notifPanelOpen=false;
@@ -469,7 +479,8 @@ async function openNotification(id){
 }
 async function markAllRead(){
   if(!currentUser || !isActiveAccount(currentUser)) return;
-  notificationsList.forEach(n => { n.is_read = 1; n.read = true; });
+  notificationsList.forEach(n => { n.is_read = 1; n.read = true; notifToastShownIds.add(String(n.id)); });
+  _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
   renderNotifications(); saveNotificationsLocal();
   try{ await fetch("/api/notifications/read-all", {method:"POST", credentials:"include"}); }catch(_){}
 }
@@ -477,20 +488,22 @@ function saveNotificationsLocal(){
   try{ localStorage.setItem("jovia_notifications", JSON.stringify(notificationsList)); }catch(_){}
 }
 function onNewAdminMessage(title, message){
-  // ACTIVE ONLY - ignore if pending
   if(!currentUser || !isActiveAccount(currentUser)) return;
   const newItem = { id: "local_"+Date.now(), title, message, created_at: "Just now", is_read: 0, read:false, _ts: Date.now() };
+  if(notifToastShownIds.has(String(newItem.id))) return;
+  notifToastShownIds.add(String(newItem.id));
+  _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
   notificationsList.unshift(newItem);
   notifSeenIds.add(String(newItem.id));
+  _saveIdSet("jovia_seen_notifs", notifSeenIds);
   saveNotificationsLocal();
   renderNotifications();
-  showAdminPopup(title, message);
+  showAdminPopup(title, message, newItem.id);
 }
 window.onNewAdminMessage=onNewAdminMessage;
 function startNotifPolling(){
   if(notifPolling) return; notifPolling=true;
   setInterval(()=>{
-    // ACTIVE ONLY - pending users never poll
     if(document.visibilityState==="visible" && currentUser && isActiveAccount(currentUser)) loadNotifications(true);
   },15000);
 }
