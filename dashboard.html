@@ -17,7 +17,18 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white}
 .logo-name{font-size:16px;font-weight:800;color:var(--purple)} .logo-sub{display:block;font-size:9px;letter-spacing:2.5px;color:var(--muted);font-weight:700;margin-top:1px}
 .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:grid;place-items:center}
-/* LEFT DRAWER - SHOWS ON LEFT */
+#bellBtn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;position:relative;display:grid;place-items:center}
+#bellBadge{display:none;position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;font-size:10px;font-weight:900;min-width:20px;height:20px;border-radius:20px;place-items:center;padding:0 4px;border:2px solid #fff;z-index:2}
+#notifOverlay{position:fixed;inset:0;background:rgba(18,6,32,.55);backdrop-filter:blur(4px);z-index:99995;display:none}
+#notifOverlay.show{display:block}
+#notifPanel{position:fixed;top:0;right:-100%;width:360px;max-width:92vw;height:100vh;background:#fff;z-index:99996;transition:right .3s cubic-bezier(.4,0,.2,1);box-shadow:-20px 0 60px rgba(0,0,0,.2);display:flex;flex-direction:column}
+#notifPanel.show{right:0}
+.notif-item{padding:14px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+.notif-item.unread{background:#fcf9ff}
+.notif-item.unread .notif-title{font-weight:800}
+.notif-dot{width:8px;height:8px;background:#ef4444;border-radius:50%;flex-shrink:0;margin-top:6px}
+#topNotifToast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-140%);width:calc(100% - 32px);max-width:440px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;z-index:100001;box-shadow:0 20px 50px rgba(0,0,0,.25);transition:.4s;display:flex;gap:10px;align-items:center}
+#topNotifToast.show{transform:translateX(-50%) translateY(0)}
 #drawerOverlay{position:fixed;inset:0;background:rgba(18,6,32,.55);backdrop-filter:blur(4px);z-index:9997;display:none;opacity:0;transition:.3s}
 #drawerOverlay.show{display:block;opacity:1}
 #topDrawer{position:fixed;top:0;left:-100%;width:300px;max-width:85vw;height:100vh;background:#fff;border-right:1px solid var(--border);z-index:9998;transition:left .35s cubic-bezier(.4,0,.2,1);box-shadow:20px 0 60px rgba(42,15,61,.18);display:flex;flex-direction:column}
@@ -126,7 +137,9 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <button class="menu-btn" type="button" id="hamburgerBtn" onclick="toggleDrawer()">☰</button>
 <div class="logo-area"><div class="logo">J</div><div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div></div>
 </div>
-<div style="width:42px"></div>
+<div style="position:relative">
+<button id="bellBtn" type="button" onclick="openNotifPanel()">🔔<span id="bellBadge">0</span></button>
+</div>
 </header>
 <section class="welcome"><div class="welcome-label">MEMBER AREA</div><h1>Hello, <span id="userName">Loading...</span></h1></section>
 <section class="account-card" id="accountCard"><div class="swipe-wrapper" id="swipeWrapper"><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AVAILABLE BALANCE</div><div class="account-balance" id="balance">₦0</div></div><div class="plan-badge" id="planBadge">LOADING</div></div><div class="account-info"><div class="info-box"><small>ACCOUNT STATUS</small><strong id="accountStatus">Loading...</strong></div><div class="info-box"><small>WELCOME BONUS</small><strong id="welcomeBonus">₦0</strong></div></div><button class="account-button" id="paymentButton" type="button" onclick="activate()">Continue to Payment</button></div><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AFFILIATE EARNINGS</div><div class="account-balance" id="affiliateBalance">₦0</div></div><div class="plan-badge" id="planBadge2">LOADING</div></div><div class="account-info"><div class="info-box"><small>REFERRALS</small><strong id="affiliateCountBig">0 Joined</strong></div><div class="info-box"><small>TOTAL EARNED</small><strong id="totalEarned">₦0</strong></div></div><button class="account-button" id="affiliateButton" type="button" disabled style="opacity:.7;cursor:default">Affiliate Balance</button></div></div><div class="swipe-dots"><div class="dot active" id="dot0"></div><div class="dot" id="dot1"></div></div></section>
@@ -152,7 +165,6 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 </section>
 <section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon" id="activityIconBox" style="background:#f3eef8">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate" style="font-size:11px;color:#8a8196">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></section>
 </div>
-<!-- LEFT DRAWER -->
 <div id="drawerOverlay" onclick="closeDrawer()"></div>
 <div id="topDrawer">
 <div class="drawer-head"><h3>☰ Menu</h3><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
@@ -180,12 +192,20 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <button class="nav" type="button" onclick="openPage('history.html')"><div class="nav-icon">◷</div>History</button>
 <button class="nav" type="button" onclick="openPage('profile.html')"><div class="nav-icon">◍</div>Profile</button>
 </nav>
+<div id="topNotifToast"><div style="font-size:22px">🔔</div><div style="flex:1"><div id="topNotifTitle" style="font-size:13px;font-weight:800;color:#2a0f3d">New Message from Admin</div><div id="topNotifText" style="font-size:11px;color:#8a8196;margin-top:2px"></div></div><button onclick="openNotifPanelFromToast()" style="background:#2a0f3d;color:#fff;border:0;padding:9px 14px;border-radius:10px;font-size:11px;font-weight:800;white-space:nowrap">View</button></div>
+<div id="notifOverlay" onclick="closeNotifPanel()"></div>
+<div id="notifPanel">
+<div style="padding:18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #ece6f1"><h3 style="font-size:16px;font-weight:800;color:#2a0f3d">🔔 Notifications</h3><button onclick="closeNotifPanel()" style="width:34px;height:34px;border-radius:50%;border:1px solid #ece6f1;background:#f6f0fa;font-weight:800;cursor:pointer">✕</button></div>
+<div style="padding:12px;display:flex;gap:8px"><button onclick="markAllNotifRead()" style="font-size:11px;font-weight:800;background:#f6f0fa;border:1px solid #ece6f1;padding:7px 12px;border-radius:20px;color:#2a0f3d;cursor:pointer">Mark all as read</button></div>
+<div id="notifList" style="flex:1;overflow-y:auto"></div>
+</div>
 <div id="toast"></div>
 <div id="joviaPopupOverlay"><div id="joviaPopupBox"><button id="joviaPopupClose" type="button">✕</button><div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div><div class="joviaPopupTitle" id="joviaPopupTitle"></div><div class="joviaPopupText" id="joviaPopupText"></div><div class="joviaPopupBtns"><a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a><button class="joviaBtn joviaBtnClose" id="joviaPopupOk" type="button">Continue to Dashboard →</button></div></div></div>
 <div id="privatePopOverlay"><div id="privatePopBox"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">✉️</div><div><div style="font-size:9px;font-weight:900;letter-spacing:1px;color:#7c3aed;text-transform:uppercase">Private Message</div><div id="privatePopTime" style="font-size:10px;color:#94a3b8;margin-top:2px">Just now</div></div><button id="privatePopCloseIcon" type="button" style="margin-left:auto;width:32px;height:32px;border-radius:50%;border:none;background:#f3f0ff;color:#7c3aed;font-weight:800;cursor:pointer">✕</button></div><h3 id="privatePopTitle" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:10px">Message from Admin</h3><div id="privatePopMessage" style="font-size:13px;line-height:1.7;color:#334155;background:#fcf9ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;white-space:pre-line;max-height:260px;overflow-y:auto"></div><button id="privatePopOk" type="button" style="width:100%;margin-top:16px;padding:14px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer">OK, I Understand ✓</button></div></div>
 <script>
 "use strict";
 let currentUser=null,currentSlide=0,currentPrivatePopId=null,logoutInProgress=false,upgradeBusy=false;
+let allNotifs=[];
 const wrapper=document.getElementById("swipeWrapper"),card=document.getElementById("accountCard"),privateOverlay=document.getElementById("privatePopOverlay"),globalOverlay=document.getElementById("joviaPopupOverlay");
 const drawer=document.getElementById("topDrawer"),drawerOverlay=document.getElementById("drawerOverlay");
 function toggleDrawer(){const isOpen=drawer.classList.contains("show"); if(isOpen) closeDrawer(); else openDrawer();}
@@ -217,12 +237,14 @@ async function loadUser(){
     const {data}=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
     const user=getUserFromResponse(data);if(!user||!(user.id||user.email)) throw new Error("Invalid user");currentUser=user;
     if(isLocalSuper && !String(user.package||user.plan||"").toLowerCase().includes("super") && !isSuspendedAccount(user)){user.package="SUPER"; user.plan="SUPER";}
-    displayUser(user,data);await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
-  }catch(e){console.error(e); document.getElementById("userName").textContent="Member";}
+    displayUser(user,data);
+    await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
+    loadNotifsLocal();
+  }catch(e){console.error(e); document.getElementById("userName").textContent="Member"; loadNotifsLocal();}
 }
 async function loadWallet(){try{const {data}=await fetchJSON("/api/wallet?t="+Date.now()); if(data?.success){ if(data.walletBalance!==undefined) document.getElementById("balance").textContent=money(data.walletBalance); if(data.affiliateBalance!==undefined) document.getElementById("affiliateBalance").textContent=money(data.affiliateBalance); if(data.totalEarned!==undefined) document.getElementById("totalEarned").textContent=money(data.totalEarned);} }catch(e){}}
 async function loadReferrals(){try{const {data}=await fetchJSON("/api/referrals?t="+Date.now()); if(data?.success){ const c=Number(data.totalReferrals??0); document.getElementById("memberCount").textContent=String(c); document.getElementById("affiliateCountBig").textContent=c+" Joined"; }}catch(e){}}
-async function loadPopups(){ await Promise.allSettled([loadGlobalPopup(), loadPrivatePopup()]); }
+async function loadPopups(){ await Promise.allSettled([loadGlobalPopup()]); }
 async function loadGlobalPopup(){
   const endpoints=["/api/announcement","/api/global-popup","/api/popup","/api/announcements/active"];
   for(const url of endpoints){
@@ -230,7 +252,7 @@ async function loadGlobalPopup(){
       const r=await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});if(!r.ok) continue;
       const d=await r.json().catch(()=>null); if(!d) continue;
       const popup=d.popup||d.announcement||d.data||d; if(!popup) continue;
-      const title=popup.title||d.title||""; const text=popup.message||popup.text||d.message||""; 
+      const title=popup.title||d.title||""; const text=popup.message||popup.text||d.message||"";
       const enabled=popup.enabled??popup.show??popup.active??d.enabled??true;
       if(!enabled||(!title&&!text)) continue;
       document.getElementById("joviaPopupTitle").textContent=title||"Official Announcement";
@@ -242,22 +264,148 @@ async function loadGlobalPopup(){
     }catch(_){}
   }
 }
-async function loadPrivatePopup(){
-  const endpoints=["/api/user/private-messages/unread","/api/private-messages/unread","/api/user/private-messages"];
-  for(const url of endpoints){
-    try{
-      const r=await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store"}); if(!r.ok) continue;
-      const d=await r.json().catch(()=>null); if(!d) continue;
-      let msg=null; if(Array.isArray(d)) msg=d[0]; else if(Array.isArray(d.messages)) msg=d.messages[0]; else msg=d.message||d.privateMessage||d.data||d;
-      if(!msg||(!msg.message&&!msg.content&&!msg.text)) continue;
-      currentPrivatePopId=msg.id||msg._id||Date.now();
-      document.getElementById("privatePopTitle").textContent=msg.title||"Message from Admin";
-      document.getElementById("privatePopMessage").textContent=msg.message||msg.content||"";
-      document.getElementById("privatePopTime").textContent=msg.created_at||"Just now";
-      privateOverlay.classList.add("show"); document.body.style.overflow="hidden"; return;
-    }catch(_){}
+// ===== LOCAL NOTIFICATION SYSTEM - ACTIVATED ONLY + NO PAST MESSAGE - NO API =====
+const NOTIF_KEY="jovia_notifications";
+function getUserStartDate(){
+  let start=localStorage.getItem("jovia_activated_at")||localStorage.getItem("jovia_registered_at");
+  if(currentUser){
+    const rawDate=currentUser.activated_at||currentUser.activatedAt||currentUser.activated_date||currentUser.created_at||currentUser.createdAt||currentUser.registered_at||currentUser.registeredAt;
+    if(rawDate && !start){
+      const t=new Date(rawDate).getTime();
+      if(!isNaN(t)){ start=String(t); localStorage.setItem("jovia_activated_at",String(t)); }
+    }
+    if(isActiveAccount(currentUser) && !start){
+      start=String(Date.now()); localStorage.setItem("jovia_activated_at",String(start));
+    }
   }
+  if(!start){ start=String(Date.now()); localStorage.setItem("jovia_activated_at",String(start)); }
+  return Number(start);
 }
+function getLocalNotifs(){
+  try{
+    const raw=localStorage.getItem(NOTIF_KEY);
+    const arr=raw?JSON.parse(raw):[];
+    if(!Array.isArray(arr)) return [];
+    const startDate=getUserStartDate();
+    return arr.filter(n=>{
+      const msgTime=n._ts||new Date(n.created_at||0).getTime()||0;
+      return msgTime>=startDate;
+    });
+  }catch(e){ return []; }
+}
+function saveLocalNotifs(list){
+  try{ localStorage.setItem(NOTIF_KEY,JSON.stringify(list.slice(0,100))); }catch(e){}
+  try{ localStorage.setItem("jovia_notif_ping",String(Date.now())); }catch(e){}
+}
+function addLocalNotif(title,message){
+  const list=JSON.parse(localStorage.getItem(NOTIF_KEY)||"[]");
+  const now=Date.now();
+  const item={id:"n_"+now+"_"+Math.floor(Math.random()*1000),title:title||"Message from Admin",message:message||"",is_read:0,_ts:now,created_at:new Date(now).toLocaleString("en-NG",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit"})};
+  list.unshift(item);
+  try{ localStorage.setItem(NOTIF_KEY,JSON.stringify(list.slice(0,100))); }catch(e){}
+  try{ localStorage.setItem("jovia_notif_ping",String(Date.now())); }catch(e){}
+  loadNotifsLocal(true,item);
+  return item;
+}
+window.addLocalNotif=addLocalNotif;
+window.joviaAddNotif=addLocalNotif;
+function loadNotifsLocal(showToast=false,newItem=null){
+  if(currentUser && !isActiveAccount(currentUser)){
+    const badge=document.getElementById("bellBadge");
+    const bellBtn=document.getElementById("bellBtn");
+    if(badge) badge.style.display="none";
+    if(bellBtn) bellBtn.style.display="none";
+    allNotifs=[]; renderNotifList(); return;
+  }
+  const bellBtn2=document.getElementById("bellBtn");
+  if(bellBtn2) bellBtn2.style.display="grid";
+  allNotifs=getLocalNotifs();
+  const unread=allNotifs.filter(n=>!n.is_read).length;
+  const badge=document.getElementById("bellBadge");
+  if(unread>0){ badge.style.display="grid"; badge.textContent=unread>99?"99+":unread; }
+  else badge.style.display="none";
+  if(showToast && newItem){
+    const startDate=getUserStartDate();
+    if((newItem._ts||Date.now())>=startDate){
+      document.getElementById("topNotifTitle").textContent=newItem.title||"New Message from Admin";
+      document.getElementById("topNotifText").textContent=(newItem.message||"").slice(0,70);
+      document.getElementById("topNotifToast").classList.add("show");
+      setTimeout(()=>document.getElementById("topNotifToast").classList.remove("show"),5000);
+    }
+  }
+  renderNotifList();
+}
+function renderNotifList(){
+  const box=document.getElementById("notifList");
+  if(!box) return;
+  if(currentUser && !isActiveAccount(currentUser)){
+    box.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:40px">🔒</div><p style="font-weight:800;margin-top:10px">Activate your account</p><p style="font-size:11px;color:#8a8196">Notifications go show after you activate</p></div>`;
+    return;
+  }
+  if(!allNotifs.length){
+    box.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:40px">🔔</div><p style="font-weight:800;margin-top:10px">No notifications yet</p><p style="font-size:11px;color:#8a8196">When admin send you message, e go show here</p></div>`;
+    return;
+  }
+  box.innerHTML=allNotifs.map(n=>{
+    const isRead=n.is_read==1||n.is_read===true;
+    const esc=(s)=>String(s||"").replace(/</g,"&lt;");
+    return `<div class="notif-item ${isRead?'':'unread'}" onclick="openOneNotif('${n.id}')">
+      ${isRead?'':'<div class="notif-dot"></div>'}
+      <div style="flex:1"><div class="notif-title" style="font-size:13px;color:#2a0f3d">${esc(n.title||"Message from Admin")}</div>
+      <div style="font-size:11px;color:#8a8196;margin-top:4px;line-height:1.5">${esc((n.message||"").slice(0,90))}...</div>
+      <div style="font-size:10px;color:#b0a8bd;margin-top:5px">${esc(n.created_at||"")}</div></div><div>›</div>
+    </div>`;
+  }).join("");
+}
+function openNotifPanel(){
+  if(currentUser && !isActiveAccount(currentUser)){ showToast("🔒 Activate your account first to see notifications"); return; }
+  document.getElementById("notifOverlay").classList.add("show");
+  document.getElementById("notifPanel").classList.add("show");
+  document.getElementById("topNotifToast").classList.remove("show");
+  renderNotifList();
+}
+function openNotifPanelFromToast(){ openNotifPanel(); }
+function closeNotifPanel(){
+  document.getElementById("notifOverlay").classList.remove("show");
+  document.getElementById("notifPanel").classList.remove("show");
+}
+function openOneNotif(id){
+  const n=allNotifs.find(x=> String(x.id)==String(id));
+  if(!n) return;
+  document.getElementById("privatePopTitle").textContent=n.title||"Message from Admin";
+  document.getElementById("privatePopMessage").textContent=n.message||"";
+  document.getElementById("privatePopTime").textContent=n.created_at||"";
+  currentPrivatePopId=id;
+  closeNotifPanel();
+  privateOverlay.classList.add("show");
+  n.is_read=1;
+  const full=JSON.parse(localStorage.getItem(NOTIF_KEY)||"[]");
+  const found=full.find(x=> String(x.id)==String(id));
+  if(found) found.is_read=1;
+  saveLocalNotifs(full);
+  loadNotifsLocal();
+}
+function markAllNotifRead(){
+  allNotifs.forEach(n=> n.is_read=1);
+  const full=JSON.parse(localStorage.getItem(NOTIF_KEY)||"[]");
+  full.forEach(n=>{ if(allNotifs.some(a=>String(a.id)==String(n.id))) n.is_read=1; });
+  saveLocalNotifs(full);
+  loadNotifsLocal();
+}
+window.addEventListener("storage",(e)=>{
+  if(e.key===NOTIF_KEY||e.key==="jovia_notif_ping"){
+    const freshList=getLocalNotifs();
+    const fresh=freshList.find(n=> !allNotifs.some(old=> String(old.id)===String(n.id)));
+    loadNotifsLocal(false);
+    if(fresh && !fresh.is_read){
+      document.getElementById("topNotifTitle").textContent=fresh.title;
+      document.getElementById("topNotifText").textContent=(fresh.message||"").slice(0,70);
+      document.getElementById("topNotifToast").classList.add("show");
+      setTimeout(()=>document.getElementById("topNotifToast").classList.remove("show"),5000);
+    }
+  }
+});
+setInterval(()=>{ if(document.visibilityState==="visible") loadNotifsLocal(); },3000);
 function displayUser(user,apiData={}){
  if(!user) return;
  let fullName=user.fullName||user.displayName||user.name||user.username||""; if(!fullName&&user.email) fullName=String(user.email).split("@")[0]; document.getElementById("userName").textContent=fullName||"Member";
@@ -324,10 +472,15 @@ function closeGlobalPopup(){globalOverlay.classList.remove("show"); if(!privateO
 document.getElementById("joviaPopupClose").addEventListener("click",closeGlobalPopup);
 document.getElementById("joviaPopupOk").addEventListener("click",closeGlobalPopup);
 globalOverlay.addEventListener("click",e=>{if(e.target===globalOverlay) closeGlobalPopup();});
-async function closePrivatePop(){
+function closePrivatePop(){
   if(currentPrivatePopId===null){privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow=""; return;}
-  const id=currentPrivatePopId; const btn=document.getElementById("privatePopOk"); btn.disabled=true; btn.textContent="Please wait...";
-  try{for(const u of ["/api/user/private-messages/read","/api/private-messages/read"]){try{ const r=await fetch(u,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})}); if(r.ok) break; }catch(_){}}currentPrivatePopId=null; privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow="";}finally{ btn.disabled=false; btn.textContent="OK, I Understand ✓"; }
+  const id=currentPrivatePopId;
+  const full=JSON.parse(localStorage.getItem(NOTIF_KEY)||"[]");
+  const found=full.find(n=> String(n.id)===String(id));
+  if(found){ found.is_read=1; saveLocalNotifs(full); }
+  currentPrivatePopId=null; privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow="";
+  loadNotifsLocal();
+  const btn=document.getElementById("privatePopOk"); btn.disabled=false; btn.textContent="OK, I Understand ✓";
 }
 document.getElementById("privatePopOk").addEventListener("click",closePrivatePop);
 document.getElementById("privatePopCloseIcon").addEventListener("click",closePrivatePop);
@@ -384,9 +537,9 @@ async function applySuperUpgrade(){
 }
 document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,14); document.getElementById("upgradeMsg").textContent="";});
 async function logout(){if(logoutInProgress) return; logoutInProgress=true; try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");}
-document.addEventListener("DOMContentLoaded",()=>{loadUser();});
+document.addEventListener("DOMContentLoaded",()=>{loadUser(); loadNotifsLocal();});
 setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups();}},45000);
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); closeNotifPanel(); if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
 </script>
 </body>
 </html>
