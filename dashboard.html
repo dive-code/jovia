@@ -17,8 +17,9 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white}
 .logo-name{font-size:16px;font-weight:800;color:var(--purple)} .logo-sub{display:block;font-size:9px;letter-spacing:2.5px;color:var(--muted);font-weight:700;margin-top:1px}
 .menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:grid;place-items:center}
-/* NOTIFICATION BELL */
-.notif-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:grid;place-items:center;position:relative}
+/* NOTIFICATION BELL - HIDDEN BY DEFAULT, ONLY ACTIVE USERS SEE IT */
+.notif-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:none;place-items:center;position:relative}
+.notif-btn.show{ display:grid !important; }
 .notif-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:20px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;border:2px solid #fff}
 #notifPanel{position:absolute;top:52px;right:0;width:320px;max-width:85vw;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 50px rgba(42,15,61,.20);z-index:9999;display:none;overflow:hidden}
 #notifPanel.show{display:block}
@@ -35,7 +36,6 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 .notif-empty{padding:22px;text-align:center;font-size:12px;color:var(--muted)}
 #notifToast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);width:calc(100% - 32px);max-width:420px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:100001;display:none;cursor:pointer}
 #notifToast.show{display:block;transform:translateX(-50%) translateY(0)}
-/* LEFT DRAWER - SHOWS ON LEFT */
 #drawerOverlay{position:fixed;inset:0;background:rgba(18,6,32,.55);backdrop-filter:blur(4px);z-index:9997;display:none;opacity:0;transition:.3s}
 #drawerOverlay.show{display:block;opacity:1}
 #topDrawer{position:fixed;top:0;left:-100%;width:300px;max-width:85vw;height:100vh;background:#fff;border-right:1px solid var(--border);z-index:9998;transition:left .35s cubic-bezier(.4,0,.2,1);box-shadow:20px 0 60px rgba(42,15,61,.18);display:flex;flex-direction:column}
@@ -212,6 +212,7 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 let currentUser=null,currentSlide=0,currentPrivatePopId=null,logoutInProgress=false,upgradeBusy=false;
 const wrapper=document.getElementById("swipeWrapper"),card=document.getElementById("accountCard"),privateOverlay=document.getElementById("privatePopOverlay"),globalOverlay=document.getElementById("joviaPopupOverlay");
 const drawer=document.getElementById("topDrawer"),drawerOverlay=document.getElementById("drawerOverlay");
+privateOverlay.classList.remove("show");
 function toggleDrawer(){const isOpen=drawer.classList.contains("show"); if(isOpen) closeDrawer(); else openDrawer();}
 function openDrawer(){drawer.classList.add("show");drawerOverlay.classList.add("show");document.body.style.overflow="hidden";}
 function closeDrawer(){drawer.classList.remove("show");drawerOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show") && !privateOverlay.classList.contains("show")) document.body.style.overflow="";}
@@ -233,7 +234,41 @@ async function fetchJSON(url,options={}){
 function getUserFromResponse(data){return data?.user||data?.data?.user||data?.member||data;}
 function isSuperUser(u){if(!u)return false;const pkg=String(u.package||u.plan||"").toLowerCase();const flag=Number(u.is_super)===1||String(u.is_super).toLowerCase()==="true";return pkg.includes("super")||flag;}
 function isSuspendedAccount(user){if(!user) return false;const s=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();return ["suspended","banned","blocked","disabled"].includes(s);}
-function isActiveAccount(user){if(!user) return false;if(isSuspendedAccount(user)) return false;const pkg=String(user.package||user.plan||"").toLowerCase();if(pkg.includes("super")) return true;const raw=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();return ["active","approved","activated"].includes(raw);}
+// ===== ACTIVE ONLY - PENDING = NOT ACTIVE =====
+function isActiveAccount(user){
+  if(!user) return false;
+  if(isSuspendedAccount(user)) return false;
+  // Explicit pending / inactive must return false first
+  const allRaw=[user.accountStatus,user.account_status,user.status,user.activation_status,user.member_status].map(v=>String(v||"").toLowerCase());
+  if(allRaw.some(s=>["pending","inactive","unpaid","not_active","awaiting","processing","unactivated","not_activated"].includes(s))) return false;
+  if(Number(user.is_active)===1||Number(user.is_activated)===1||Number(user.activated)===1||user.isActive===true||user.activated===true||user.isActivated===true) return true;
+  if(String(user.is_active).toLowerCase()==="true"||String(user.is_activated).toLowerCase()==="true") return true;
+  if(String(user.payment_status||"").toLowerCase()==="paid"||String(user.paymentStatus||"").toLowerCase()==="paid"||user.has_paid===true||Number(user.has_paid)===1) return true;
+  if(allRaw.some(s=>["active","approved","activated","verified","paid","success","completed"].includes(s))) return true;
+  // No status at all + SUPER package = active (SUPER is always paid)
+  if(String(user.package||user.plan||"").toLowerCase().includes("super")) return true;
+  // If no status info at all, DO NOT assume active - pending users have no status sometimes. Require explicit active flag.
+  return false;
+}
+function updateBellVisibility(){
+  const bell=document.getElementById("notifBell");
+  const panel=document.getElementById("notifPanel");
+  const toast=document.getElementById("notifToast");
+  if(!bell) return;
+  if(currentUser && isActiveAccount(currentUser)){
+    bell.classList.add("show");
+  } else {
+    // PENDING / SUSPENDED / NOT LOADED = NO BELL, NO TOAST, NO PANEL
+    bell.classList.remove("show");
+    if(panel) panel.classList.remove("show");
+    if(toast) toast.classList.remove("show");
+  }
+}
+function getUserStartDate(){
+  let start=localStorage.getItem("jovia_activated_at");
+  if(!start) return 0;
+  return Number(start);
+}
 async function loadUser(){
   try{
     const localPlan = String(localStorage.getItem("jovia_plan")||"").toLowerCase();
@@ -241,12 +276,20 @@ async function loadUser(){
     const {data}=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
     const user=getUserFromResponse(data);if(!user||!(user.id||user.email)) throw new Error("Invalid user");currentUser=user;
     if(isLocalSuper && !String(user.package||user.plan||"").toLowerCase().includes("super") && !isSuspendedAccount(user)){user.package="SUPER"; user.plan="SUPER";}
-    displayUser(user,data);await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups(),loadNotifications()]);
-  }catch(e){console.error(e); document.getElementById("userName").textContent="Member";}
+    if(isActiveAccount(user) && !localStorage.getItem("jovia_activated_at")){
+      const raw=user.activated_at||user.created_at||user.createdAt;
+      if(raw){ const t=new Date(raw).getTime(); if(!isNaN(t)) localStorage.setItem("jovia_activated_at",String(t)); }
+      else localStorage.setItem("jovia_activated_at",String(Date.now()));
+    }
+    displayUser(user,data);
+    updateBellVisibility();
+    await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
+    await loadNotifications(false);
+  }catch(e){console.error(e); document.getElementById("userName").textContent="Member"; currentUser=null; updateBellVisibility(); await loadNotifications(false);}
 }
 async function loadWallet(){try{const {data}=await fetchJSON("/api/wallet?t="+Date.now()); if(data?.success){ if(data.walletBalance!==undefined) document.getElementById("balance").textContent=money(data.walletBalance); if(data.affiliateBalance!==undefined) document.getElementById("affiliateBalance").textContent=money(data.affiliateBalance); if(data.totalEarned!==undefined) document.getElementById("totalEarned").textContent=money(data.totalEarned);} }catch(e){}}
 async function loadReferrals(){try{const {data}=await fetchJSON("/api/referrals?t="+Date.now()); if(data?.success){ const c=Number(data.totalReferrals??0); document.getElementById("memberCount").textContent=String(c); document.getElementById("affiliateCountBig").textContent=c+" Joined"; }}catch(e){}}
-async function loadPopups(){ await Promise.allSettled([loadGlobalPopup(), loadPrivatePopup()]); }
+async function loadPopups(){ await Promise.allSettled([loadGlobalPopup()]); }
 async function loadGlobalPopup(){
   const endpoints=["/api/announcement","/api/global-popup","/api/popup","/api/announcements/active"];
   for(const url of endpoints){
@@ -254,7 +297,7 @@ async function loadGlobalPopup(){
       const r=await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});if(!r.ok) continue;
       const d=await r.json().catch(()=>null); if(!d) continue;
       const popup=d.popup||d.announcement||d.data||d; if(!popup) continue;
-      const title=popup.title||d.title||""; const text=popup.message||popup.text||d.message||""; 
+      const title=popup.title||d.title||""; const text=popup.message||popup.text||d.message||"";
       const enabled=popup.enabled??popup.show??popup.active??d.enabled??true;
       if(!enabled||(!title&&!text)) continue;
       document.getElementById("joviaPopupTitle").textContent=title||"Official Announcement";
@@ -266,67 +309,93 @@ async function loadGlobalPopup(){
     }catch(_){}
   }
 }
-async function loadPrivatePopup(){
-  const endpoints=["/api/user/private-messages/unread","/api/private-messages/unread","/api/user/private-messages"];
-  for(const url of endpoints){
-    try{
-      const r=await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store"}); if(!r.ok) continue;
-      const d=await r.json().catch(()=>null); if(!d) continue;
-      let msg=null; if(Array.isArray(d)) msg=d[0]; else if(Array.isArray(d.messages)) msg=d.messages[0]; else msg=d.message||d.privateMessage||d.data||d;
-      if(!msg||(!msg.message&&!msg.content&&!msg.text)) continue;
-      currentPrivatePopId=msg.id||msg._id||Date.now();
-      document.getElementById("privatePopTitle").textContent=msg.title||"Message from Admin";
-      document.getElementById("privatePopMessage").textContent=msg.message||msg.content||"";
-      document.getElementById("privatePopTime").textContent=msg.created_at||"Just now";
-      privateOverlay.classList.add("show"); document.body.style.overflow="hidden"; return;
-    }catch(_){}
-  }
-}
-// ===== NOTIFICATION BELL SYSTEM =====
+// ===== SERVER NOTIFICATION - ACTIVE ONLY =====
 let notificationsList = [];
 let notifPanelOpen = false;
-function toggleNotifPanel(e){
-  if(e) e.stopPropagation();
-  const panel = document.getElementById("notifPanel");
-  notifPanelOpen = !notifPanelOpen;
-  panel.classList.toggle("show", notifPanelOpen);
-  if(notifPanelOpen) loadNotifications();
+let notifSeenIds = new Set();
+let notifFirstLoad = false;
+let notifPolling = false;
+let lastToastId = null;
+function normalizeNotif(n){
+  if(!n) return null;
+  const id = n.id ?? n._id ?? n.notification_id ?? (n.title+"_"+n.created_at);
+  const title = n.title || n.subject || "Message from Admin";
+  const msg = n.message || n.content || n.text || n.body || "";
+  const created = n.created_at || n.createdAt || n.date || "Just now";
+  const ts = n._ts || n.created_ts || (created ? new Date(created).getTime() : Date.now());
+  const isRead = (n.is_read==1||n.is_read===true||n.read===true||n.status==="read");
+  return { id:String(id), title, message:msg, created_at:created, _ts: isNaN(ts)?Date.now():ts, is_read: isRead?1:0, read: isRead };
 }
-document.addEventListener("click", (e)=>{
-  const panel = document.getElementById("notifPanel");
-  const bell = document.getElementById("notifBell");
-  if(panel && !panel.contains(e.target) && !bell.contains(e.target)){
-    panel.classList.remove("show"); notifPanelOpen = false;
+async function fetchNotifsFromServer(){
+  // ACTIVE ONLY - don't even call server if pending
+  if(!currentUser || !isActiveAccount(currentUser)) return [];
+  const endpoints = ["/api/notifications","/api/notifications/unread","/api/user/notifications","/api/user/private-messages","/api/private-messages"];
+  for(const url of endpoints){
+    try{
+      const r = await fetch(url+"?t="+Date.now(), {credentials:"include", cache:"no-store", headers:{"Accept":"application/json"}});
+      if(!r.ok) continue;
+      const d = await r.json().catch(()=>null); if(!d) continue;
+      let arr = [];
+      if(Array.isArray(d)) arr=d;
+      else if(Array.isArray(d.notifications)) arr=d.notifications;
+      else if(Array.isArray(d.data)) arr=d.data;
+      else if(Array.isArray(d.messages)) arr=d.messages;
+      else if(d.message || d.title) arr=[d];
+      if(arr.length || d.success===true){
+        return arr.map(normalizeNotif).filter(Boolean);
+      }
+    }catch(_){}
   }
-});
-async function loadNotifications(){
+  return null;
+}
+async function loadNotifications(allowToast=false){
+  // ACTIVE ONLY GATE - Pending user: clear all, hide bell, no toast, no server call
+  if(!currentUser || !isActiveAccount(currentUser)){
+    notificationsList = [];
+    notifSeenIds = new Set();
+    updateBellVisibility();
+    renderNotifications();
+    return;
+  }
+  updateBellVisibility();
+  let serverItems = await fetchNotifsFromServer();
   let items = [];
-  try{
-    const r = await fetch("/api/notifications?t="+Date.now(), {credentials:"include", cache:"no-store"});
-    const d = await r.json().catch(()=>null);
-    if(d && Array.isArray(d.notifications)) items = d.notifications;
-    else if(d && Array.isArray(d.data)) items = d.data;
-    else if(Array.isArray(d)) items = d;
-  }catch(_){}
-  if(!items.length){
-    try{ items = JSON.parse(localStorage.getItem("jovia_notifications")||"[]"); }catch(_){ items = []; }
+  if(serverItems && serverItems.length){
+    items = serverItems;
+  } else if(serverItems && serverItems.length===0){
+    try{ const cached = JSON.parse(localStorage.getItem("jovia_notifications")||"[]").map(normalizeNotif).filter(Boolean); if(cached.length && !notifFirstLoad) items=cached; else items=[]; }catch(_){ items=[]; }
+  } else {
+    try{ items = JSON.parse(localStorage.getItem("jovia_notifications")||"[]").map(normalizeNotif).filter(Boolean); }catch(_){ items=[]; }
   }
-  // Detect NEW admin message for popup - compare with previous count
-  const prevUnread = Number(localStorage.getItem("jovia_prev_unread")||0);
-  const newUnread = items.filter(n => !n.is_read && !n.read).length;
-  if(newUnread > prevUnread && items.length){
-    const newest = items[0];
-    if(newest && !newest._popupShown){
-      showAdminPopup(newest.title || "Message from Admin", newest.message || newest.content || "");
+  const startDate = getUserStartDate();
+  if(startDate>0){
+    items = items.filter(n=> (n._ts||0) >= startDate);
+  }
+  items.sort((a,b)=>(b._ts||0)-(a._ts||0));
+  const newItems = items.filter(n=> !notifSeenIds.has(String(n.id)));
+  const hadNew = newItems.length>0;
+  items.forEach(n=> notifSeenIds.add(String(n.id)));
+  notificationsList = items;
+  saveNotificationsLocal();
+  renderNotifications();
+  if(allowToast && notifFirstLoad && hadNew){
+    const newest = newItems[0];
+    if(newest && String(newest.id)!==String(lastToastId)){
+      lastToastId = String(newest.id);
+      showAdminPopup(newest.title, newest.message);
     }
   }
-  localStorage.setItem("jovia_prev_unread", String(newUnread));
-  notificationsList = items;
-  renderNotifications();
+  notifFirstLoad = true;
 }
 function renderNotifications(){
   const list = document.getElementById("notifList");
   const badge = document.getElementById("notifCount");
+  // PENDING: never show badge / list
+  if(!currentUser || !isActiveAccount(currentUser)){
+    if(badge) badge.style.display="none";
+    if(list) list.innerHTML='<div class="notif-empty">🔒 Activate your account to see notifications</div>';
+    return;
+  }
   const unread = notificationsList.filter(n => !n.is_read && !n.read).length;
   if(unread > 0){ badge.style.display = "grid"; badge.textContent = unread > 99 ? "99+" : unread; }
   else { badge.style.display = "none"; }
@@ -336,52 +405,94 @@ function renderNotifications(){
   }
   list.innerHTML = notificationsList.map(n => {
     const isUnread = !n.is_read && !n.read;
-    const title = n.title || "Message from Admin";
-    const msg = n.message || n.content || n.text || "";
-    const time = n.created_at || n.createdAt || "";
-    const safeMsg = String(msg).replace(/</g,"&lt;");
-    const safeTitle = String(title).replace(/</g,"&lt;");
-    return `<div class="notif-item ${isUnread ? "unread" : ""}" onclick="openNotification('${n.id || ""}')">
+    const safeMsg = String(n.message||"").replace(/</g,"&lt;");
+    const safeTitle = String(n.title||"Message from Admin").replace(/</g,"&lt;");
+    const nid = String(n.id).replace(/"/g,"");
+    return `<div class="notif-item ${isUnread ? "unread" : ""}" onclick="openNotification('${nid}')">
       <b>${isUnread ? '<span class="notif-dot"></span>' : ''}${safeTitle}</b>
       <p>${safeMsg}</p>
-      <small>${time}</small>
+      <small>${n.created_at||""}</small>
     </div>`;
   }).join("");
 }
+function toggleNotifPanel(e){
+  if(e) e.stopPropagation();
+  // ACTIVE ONLY - pending taps bell (if somehow visible) = blocked
+  if(!currentUser || !isActiveAccount(currentUser)){
+    showToast("🔒 Activate your account to see notifications");
+    return;
+  }
+  const panel = document.getElementById("notifPanel");
+  notifPanelOpen = !notifPanelOpen;
+  panel.classList.toggle("show", notifPanelOpen);
+  if(notifPanelOpen) loadNotifications(false);
+}
+document.addEventListener("click", (e)=>{
+  const panel = document.getElementById("notifPanel");
+  const bell = document.getElementById("notifBell");
+  if(panel && !panel.contains(e.target) && bell && !bell.contains(e.target)){
+    panel.classList.remove("show"); notifPanelOpen = false;
+  }
+});
+let toastTimer=null;
 function showAdminPopup(title, message){
+  // ACTIVE ONLY - never show toast for pending
+  if(!currentUser || !isActiveAccount(currentUser)) return;
   document.getElementById("notifToastTitle").textContent = title;
   document.getElementById("notifToastText").textContent = message;
   const toast = document.getElementById("notifToast");
   toast.classList.add("show");
-  setTimeout(()=> toast.classList.remove("show"), 6000);
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=> toast.classList.remove("show"), 6000);
 }
 function openNotifFromToast(){
+  if(!currentUser || !isActiveAccount(currentUser)){ document.getElementById("notifToast").classList.remove("show"); return; }
   document.getElementById("notifToast").classList.remove("show");
   const panel = document.getElementById("notifPanel");
   panel.classList.add("show"); notifPanelOpen = true;
+  loadNotifications(false);
 }
 async function openNotification(id){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
   const item = notificationsList.find(n => String(n.id) === String(id));
-  if(item){ item.is_read = 1; item.read = true; }
+  if(!item) return;
+  item.is_read = 1; item.read = true;
   renderNotifications();
   saveNotificationsLocal();
+  document.getElementById("notifPanel").classList.remove("show"); notifPanelOpen=false;
+  currentPrivatePopId = item.id;
+  document.getElementById("privatePopTitle").textContent = item.title || "Message from Admin";
+  document.getElementById("privatePopMessage").textContent = item.message || "";
+  document.getElementById("privatePopTime").textContent = item.created_at || "Just now";
+  privateOverlay.classList.add("show"); document.body.style.overflow="hidden";
   try{ await fetch("/api/notifications/read", {method:"POST", credentials:"include", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id})}); }catch(_){}
 }
 async function markAllRead(){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
   notificationsList.forEach(n => { n.is_read = 1; n.read = true; });
   renderNotifications(); saveNotificationsLocal();
-  localStorage.setItem("jovia_prev_unread","0");
   try{ await fetch("/api/notifications/read-all", {method:"POST", credentials:"include"}); }catch(_){}
 }
 function saveNotificationsLocal(){
   try{ localStorage.setItem("jovia_notifications", JSON.stringify(notificationsList)); }catch(_){}
 }
 function onNewAdminMessage(title, message){
-  const newItem = { id: Date.now(), title, message, created_at: "Just now", is_read: 0 };
+  // ACTIVE ONLY - ignore if pending
+  if(!currentUser || !isActiveAccount(currentUser)) return;
+  const newItem = { id: "local_"+Date.now(), title, message, created_at: "Just now", is_read: 0, read:false, _ts: Date.now() };
   notificationsList.unshift(newItem);
+  notifSeenIds.add(String(newItem.id));
   saveNotificationsLocal();
   renderNotifications();
   showAdminPopup(title, message);
+}
+window.onNewAdminMessage=onNewAdminMessage;
+function startNotifPolling(){
+  if(notifPolling) return; notifPolling=true;
+  setInterval(()=>{
+    // ACTIVE ONLY - pending users never poll
+    if(document.visibilityState==="visible" && currentUser && isActiveAccount(currentUser)) loadNotifications(true);
+  },15000);
 }
 function displayUser(user,apiData={}){
  if(!user) return;
@@ -509,8 +620,14 @@ async function applySuperUpgrade(){
 }
 document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,14); document.getElementById("upgradeMsg").textContent="";});
 async function logout(){if(logoutInProgress) return; logoutInProgress=true; try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");}
-document.addEventListener("DOMContentLoaded",()=>{loadUser(); loadNotifications();});
-setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups(); loadNotifications();}},15000);
+document.addEventListener("DOMContentLoaded",()=>{
+  privateOverlay.classList.remove("show");
+  document.getElementById("notifToast").classList.remove("show");
+  updateBellVisibility();
+  loadUser();
+  startNotifPolling();
+});
+setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups(); loadNotifications(false);}},45000);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
 </script>
 </body>
