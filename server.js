@@ -505,8 +505,57 @@ app.get("/api/notifications", requireUser, (req,res)=>{
     return res.json({success:true, notifications:out});
   }catch(e){ return res.json({success:true, notifications:[]}); }
 });
+
+app.get("/api/notifications/unread", requireUser, (req,res)=>{
+  try{
+    const u = req.user;
+    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
+      return res.json({success:true, notifications:[]});
+    }
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
+    const out = [];
+    for(const m of all){
+      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
+      if(!ids.includes(u.id)) continue;
+      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
+      if(!read) out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read:0, read:false});
+    }
+    return res.json({success:true, notifications:out});
+  }catch(e){ return res.json({success:true, notifications:[]}); }
+});
+
+app.get("/api/user/notifications", requireUser, (req,res)=>{
+  try{
+    const u = req.user;
+    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
+      return res.json({success:true, notifications:[]});
+    }
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
+    const out = [];
+    for(const m of all){
+      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
+      if(!ids.includes(u.id)) continue;
+      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
+      out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read: read?1:0, read: !!read});
+    }
+    return res.json({success:true, notifications:out});
+  }catch(e){ return res.json({success:true, notifications:[]}); }
+});
 app.post("/api/notifications/read", requireUser, (req,res)=>{
-  const id = Number(req.body?.id);
+  const id = Number(req.body?.id || req.body?.message_id);
+  if(!id) return res.json({success:false});
+  db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
+  return res.json({success:true});
+});
+app.post("/api/user/private-messages/read", requireUser, (req,res)=>{
+  const id = Number(req.body?.id || req.body?.message_id);
+  if(!id) return res.json({success:false});
+  db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
+  return res.json({success:true});
+});
+// NEW - aligns with dashboard pop-once: toast don show once, mark am, no pop again, but bell history still dey
+app.post("/api/notifications/toast-shown", requireUser, (req,res)=>{
+  const id = Number(req.body?.id || req.body?.message_id);
   if(!id) return res.json({success:false});
   db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
   return res.json({success:true});
