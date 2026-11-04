@@ -460,24 +460,73 @@ app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
     return res.json({success:true, message:"Marked as read"});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
-app.post("/api/admin/email/send",requireAdmin,async(req,res)=>{
+// === NOTIFICATIONS FOR BELL - ACTIVE ONLY, HISTORY STAYS ===
+app.get("/api/notifications", requireUser, (req,res)=>{
   try{
-    const {recipients, subject, message} = req.body||{};
-    if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients"});
-    const cleanSub = cleanString(subject,200);
-    const cleanMsg = cleanString(message,10000);
-    if(!cleanSub) return res.status(400).json({success:false,message:"Subject required"});
-    if(!cleanMsg) return res.status(400).json({success:false,message:"Message required"});
-    const unique = [...new Set(recipients.map(e=>normalizeEmail(e)).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))];
-    if(!unique.length) return res.status(400).json({success:false,message:"No valid emails"});
-    if(!BREVO_API_KEY) return res.status(400).json({success:false,message:"BREVO_API_KEY not set"});
-    let sent=0, failed=0;
-    const errors=[];
-    for(const email of unique){
-      try{ await sendBrevoEmail(email, cleanSub, cleanMsg); sent++; }catch(err){ failed++; errors.push(`${email}: ${err.message}`); }
+    const u = req.user;
+    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1 && String(u.email||'').toLowerCase()!=='divineabanum8@gmail.com'){
+      return res.json({success:true, notifications:[]});
     }
-    return res.json({success:true, sent, failed, total:unique.length, message:`Email campaign: Sent ${sent}, Failed ${failed} of ${unique.length}`, errors:errors.slice(0,5)});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
+    const out = [];
+    for(const m of all){
+      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
+      if(!ids.includes(u.id)) continue;
+      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
+      out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read: read?1:0, read: !!read});
+    }
+    return res.json({success:true, notifications:out});
+  }catch(e){ return res.json({success:true, notifications:[]}); }
+});
+app.get("/api/notifications/unread", requireUser, (req,res)=>{
+  try{
+    const u = req.user;
+    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1) return res.json({success:true, notifications:[]});
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
+    const out = [];
+    for(const m of all){
+      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
+      if(!ids.includes(u.id)) continue;
+      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
+      if(!read) out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read:0, read:false});
+    }
+    return res.json({success:true, notifications:out});
+  }catch(e){ return res.json({success:true, notifications:[]}); }
+});
+app.get("/api/user/notifications", requireUser, (req,res)=>{
+  try{
+    const u = req.user;
+    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1) return res.json({success:true, notifications:[]});
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
+    const out = [];
+    for(const m of all){
+      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
+      if(!ids.includes(u.id)) continue;
+      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
+      out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read: read?1:0, read: !!read});
+    }
+    return res.json({success:true, notifications:out});
+  }catch(e){ return res.json({success:true, notifications:[]}); }
+});
+app.post("/api/notifications/read", requireUser, (req,res)=>{
+  try{
+    const id = toPositiveInteger(req.body?.id || req.body?.message_id);
+    if(!id) return res.status(400).json({success:false,message:"Invalid id"});
+    db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
+    return res.json({success:true, message:"Marked as read"});
+  }catch(e){return res.status(400).json({success:false,message:e.message});}
+});
+app.post("/api/notifications/read-all", requireUser, (req,res)=>{
+  try{
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent'").all();
+    for(const m of all){
+      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
+      if(ids.includes(req.user.id)){
+        db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(m.id, req.user.id);
+      }
+    }
+    return res.json({success:true});
+  }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
 app.get("/api/announcement",(req,res)=>{
   try{
