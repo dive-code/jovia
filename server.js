@@ -162,7 +162,20 @@ function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)retur
 function requireAdmin(req,res,next){const a=getAdminSession(req);if(!a)return res.status(401).json({success:false,message:"Admin authentication required"});req.admin=a;next();}
 function updateUserBalance(id,col,amt){if(col!=="wallet_balance"&&col!=="affiliate_balance")throw new Error("Invalid column");db.prepare(`UPDATE users SET ${col}=${col}+? WHERE id=?`).run(amt,id);}
 function recordWalletTransaction(uid,type,amt,btype,ref,desc){try{db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}catch(e){}}
-function getReferralReward(referrerPackage, referredPackage){const a = String(referrerPackage||'').trim(); const b = String(referredPackage||'').trim(); if(a==="Gold" && b==="Gold") return 13000; if(a==="Gold" && b==="Silver") return 8000; if(a==="Silver" && b==="Silver") return 8000; if(a==="Silver" && b==="Gold") return 0; return 0;}
+function getReferralReward(referrerPackage, referredPackage, oldPackage){
+  const b = String(referredPackage||'').trim();
+  const old = String(oldPackage||'').trim();
+  // SUPER UPGRADE - Na old package decide am
+  if(b==="SUPER"){
+    if(old==="Silver") return 10000; // Silver -> SUPER = 10k
+    if(old==="Gold") return 6000;   // Gold -> SUPER = 6k
+    return 6000;
+  }
+  // NORMAL ACTIVATION - Silver / Gold
+  if(b==="Gold") return 13000;
+  if(b==="Silver") return 8000;
+  return 0;
+}
 function activateUserAndRewardsInternal(uid){const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u)throw new Error("User not found");db.prepare(`UPDATE users SET account_status='active' WHERE id=?`).run(uid);const f=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(f.welcome_bonus>0){const ex=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='welcome_bonus' LIMIT 1`).get(uid);if(!ex){updateUserBalance(uid,"wallet_balance",f.welcome_bonus);db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(f.welcome_bonus,uid);recordWalletTransaction(uid,"welcome_bonus",f.welcome_bonus,"wallet",`WELCOME_BONUS_${uid}`,"Package welcome bonus");}}if(!f.referrer_id)return;const ref=db.prepare("SELECT * FROM users WHERE id=?").get(f.referrer_id);if(!ref)return;const ex2=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? LIMIT 1`).get(uid);if(ex2)return;const rew=getReferralReward(ref.package,f.package);db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,f.package);if(rew>0){updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${f.package})`);}else{db.prepare(`UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(ref.id);}}
 function activateUserAndRewards(uid){return db.transaction(()=>activateUserAndRewardsInternal(uid))();}
 function monnifyConfigured(){return Boolean(MONNIFY_API_KEY&&MONNIFY_SECRET_KEY&&MONNIFY_CONTRACT_CODE);}
