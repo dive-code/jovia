@@ -487,6 +487,27 @@ app.get("/api/user/private-messages",requireUser,(req,res)=>{
     return res.json({success:true, messages:unread, count:unread.length});
   }catch(e){return res.status(500).json({success:false,message:e.message});}
 });
+app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
+  try{
+    const {recipientIds, title, message, type} = req.body||{};
+    if(!Array.isArray(recipientIds) || recipientIds.length===0) return res.status(400).json({success:false,message:"Select at least one recipient"});
+    const cleanTitle = cleanString(title,150);
+    const cleanMessage = cleanString(message,5000);
+    if(!cleanTitle) return res.status(400).json({success:false,message:"Title required"});
+    if(!cleanMessage) return res.status(400).json({success:false,message:"Message required"});
+    const validIds = recipientIds.map(n=>Number(n)).filter(n=>Number.isInteger(n)&&n>0);
+    if(!validIds.length) return res.status(400).json({success:false,message:"No valid recipient IDs"});
+    let summary = "";
+    if(validIds.length===1){
+      const u = db.prepare("SELECT full_name, username, email FROM users WHERE id=?").get(validIds[0]);
+      summary = u? `${u.full_name} (${u.username}) - ONE user` : `User ID ${validIds[0]} - ONE`;
+    } else {
+      summary = `${validIds.length} users - ALL/POP`;
+    }
+    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", req.admin.username||"admin");
+    return res.json({success:true, message:`Pop sent to ${validIds.length} user(s)`, id:result.lastInsertRowid, recipientCount:validIds.length, recipients:summary});
+  }catch(e){return res.status(500).json({success:false,message:e.message});}
+});
 app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
   try{
     const id = toPositiveInteger(req.body?.id || req.body?.message_id);
