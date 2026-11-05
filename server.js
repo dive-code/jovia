@@ -425,6 +425,7 @@ app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
         const pkg = String(u.package || "").toUpperCase();
         let correct = 0;
         if(pkg === "SUPER"){
+          // SUPER na UPGRADE ONLY, no direct registration
           // Gold -> SUPER = 13000 + 6000 = 19000
           // Silver -> SUPER = 8000 + 10000 = 18000
           // Never paid = assume Gold activation + Gold upgrade = 19000
@@ -435,7 +436,7 @@ app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
         } else if(pkg === "GOLD"){
           correct = 13000;
         } else if(pkg === "SILVER"){
-          // Silver na upgrade only, but backpay still pay am
+          // SILVER you fit register direct
           correct = 8000;
         } else {
           correct = 0;
@@ -457,27 +458,6 @@ app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
     })();
     return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-});
-app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
-  try{
-    const {recipientIds, title, message, type} = req.body||{};
-    if(!Array.isArray(recipientIds) || recipientIds.length===0) return res.status(400).json({success:false,message:"Select at least one recipient"});
-    const cleanTitle = cleanString(title,150);
-    const cleanMessage = cleanString(message,5000);
-    if(!cleanTitle) return res.status(400).json({success:false,message:"Title required"});
-    if(!cleanMessage) return res.status(400).json({success:false,message:"Message required"});
-    const validIds = recipientIds.map(n=>Number(n)).filter(n=>Number.isInteger(n)&&n>0);
-    if(!validIds.length) return res.status(400).json({success:false,message:"No valid recipient IDs"});
-    let summary = "";
-    if(validIds.length===1){
-      const u = db.prepare("SELECT full_name, username, email FROM users WHERE id=?").get(validIds[0]);
-      summary = u? `${u.full_name} (${u.username}) - ONE user` : `User ID ${validIds[0]} - ONE`;
-    } else {
-      summary = `${validIds.length} users - ALL/POP`;
-    }
-    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", req.admin.username||"admin");
-    return res.json({success:true, message:`Pop sent to ${validIds.length} user(s)`, id:result.lastInsertRowid, recipientCount:validIds.length, recipients:summary});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
 });
 app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
   try{
