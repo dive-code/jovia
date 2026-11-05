@@ -411,47 +411,53 @@ app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
-app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const statusRaw=String(req.body?.status||"").toLowerCase(); if(statusRaw==="approved"||statusRaw==="active"||statusRaw==="1"){activateUserAndRewards(id);} else if(statusRaw==="suspended"){db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id);} else if(statusRaw==="pending"){db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id);} return res.json({success:true,message:"Status updated"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.get("/api/admin/users/:id/status:statusValue",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);const raw=String(req.params.statusValue||"").replace(":","").toLowerCase();if(raw==="1"||raw==="approved"||raw==="active")activateUserAndRewards(id);else db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id);return res.json({success:true});}catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.get("/api/admin/users/:id/status/:statusValue",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);const raw=String(req.params.statusValue||"").toLowerCase();if(raw==="1"||raw==="approved"||raw==="active")activateUserAndRewards(id);else db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id);return res.json({success:true});}catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.post("/api/admin/users/:id/reset-password",requireAdmin,async(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id) return res.status(400).json({success:false,message:"Invalid user"});const h=await bcrypt.hash(String(req.body?.newPassword||"password123"),12);db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(h,id);return res.json({success:true,message:"Password reset"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid user."});activateUserAndRewards(id);const updated=db.prepare(`SELECT * FROM users WHERE id=?`).get(id);return res.json({success:true,user:publicUser(updated)});}catch(error){return res.status(500).json({success:false,message:error.message||"Unable to activate user."});}});
-// === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL === app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{ try{ const result = db.transaction(()=>{ let paidCount = 0, totalPaid = 0, details = []; // ALL - from beginning, no date filter const allActivated = db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all(); for(const u of allActivated){ if(!u.referrer_id) continue; const referrer = db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id); if(!referrer || referrer.id === u.id) continue;
-    const existing = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
-    const alreadyPaid = existing ? Number(existing.amount||0) : 0;
-    let correct = 0;
-    // If person na SUPER now, e get 2 money: activation + upgrade
-    if(u.package === "SUPER"){
-      // If e don already get 13000 before, na Gold -> SUPER, so upgrade = 6000, total = 19000
-      // If e don already get 8000 before, na Silver -> SUPER, so upgrade = 10000, total = 18000
-      // If e never get anything, we assume Gold activation + Gold upgrade = 13000 + 6000 = 19000
-      if(alreadyPaid === 13000) correct = 19000;
-      else if(alreadyPaid === 8000) correct = 18000;
-      else if(alreadyPaid === 0) correct = 19000;
-      else correct = alreadyPaid; // already correct, skip
-    } else {
-      // Normal Silver / Gold activation
-      // Silver = 8000, Gold = 13000
-      // Silver na upgrade only, no direct registration - but backpay still pay am
-      correct = getReferralReward(referrer.package, u.package);
-    }
-    if(correct <= 0) continue;
-    const toPay = correct - alreadyPaid;
-    if(toPay <= 0) continue;
-    if(existing){
-      db.prepare("UPDATE referral_rewards SET amount=? WHERE referred_user_id=?").run(correct, u.id);
-    } else {
-      db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, u.id, correct, referrer.package, u.package);
-    }
-    db.prepare("UPDATE users SET affiliate_balance = affiliate_balance + ?, total_earned = total_earned + ? WHERE id=?").run(toPay, toPay, referrer.id);
-    db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", toPay, "affiliate", `BACKPAY_ALL_${u.id}`, `Backpay TOTAL - ${u.username} ${u.package}`);
-    paidCount++; totalPaid += toPay;
-    details.push({referrer: referrer.username, referred: u.username, package: u.package, alreadyPaid, correct, paid: toPay});
-  }
-  return {paidCount, totalPaid, details};
-})();
-return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
-}catch(e){ return res.status(500).json({success:false, message:e.message}); } });
+app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
+  try{
+    const result = db.transaction(()=>{
+      let paidCount = 0, totalPaid = 0, details = [];
+      const allActivated = db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all();
+      for(const u of allActivated){
+        if(!u.referrer_id) continue;
+        const referrer = db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id);
+        if(!referrer || referrer.id === u.id) continue;
+        const existing = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
+        const alreadyPaid = existing ? Number(existing.amount||0) : 0;
+        const pkg = String(u.package || "").toUpperCase();
+        let correct = 0;
+        if(pkg === "SUPER"){
+          // Gold -> SUPER = 13000 + 6000 = 19000
+          // Silver -> SUPER = 8000 + 10000 = 18000
+          // Never paid = assume Gold activation + Gold upgrade = 19000
+          if(alreadyPaid === 13000) correct = 19000;
+          else if(alreadyPaid === 8000) correct = 18000;
+          else if(alreadyPaid === 0) correct = 19000;
+          else correct = alreadyPaid;
+        } else if(pkg === "GOLD"){
+          correct = 13000;
+        } else if(pkg === "SILVER"){
+          // Silver na upgrade only, but backpay still pay am
+          correct = 8000;
+        } else {
+          correct = 0;
+        }
+        if(correct <= 0) continue;
+        const toPay = correct - alreadyPaid;
+        if(toPay <= 0) continue;
+        if(existing){
+          db.prepare("UPDATE referral_rewards SET amount=? WHERE referred_user_id=?").run(correct, u.id);
+        } else {
+          db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, u.id, correct, referrer.package, u.package);
+        }
+        db.prepare("UPDATE users SET affiliate_balance = affiliate_balance + ?, total_earned = total_earned + ? WHERE id=?").run(toPay, toPay, referrer.id);
+        db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", toPay, "affiliate", `BACKPAY_ALL_${u.id}`, `Backpay TOTAL - ${u.username} ${u.package}`);
+        paidCount++; totalPaid += toPay;
+        details.push({referrer: referrer.username, referred: u.username, package: u.package, alreadyPaid, correct, paid: toPay});
+      }
+      return {paidCount, totalPaid, details};
+    })();
+    return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
 app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
   try{
     const {recipientIds, title, message, type} = req.body||{};
