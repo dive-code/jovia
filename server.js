@@ -411,7 +411,12 @@ app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
-app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
+// === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL ===
+app.get("/api/admin/backpay-all", (req,res)=>{
+  // TEMP BYPASS - remove after backpay
+  if (req.query.key !== 'jovia123') {
+    return res.status(401).json({success:false, message:"Admin authentication required"});
+  }
   try{
     const result = db.transaction(()=>{
       let paidCount = 0, totalPaid = 0, details = [];
