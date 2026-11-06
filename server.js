@@ -117,7 +117,6 @@ migrateDatabase();
     console.log("👑 Current owner:", check);
   }catch(e){ console.error("Force SUPER boot error:", e.message); }
 })();
-
 app.set("trust proxy",1);
 app.use(express.json({limit:"10mb",verify(req,res,buf){req.rawBody=Buffer.from(buf);}}));
 app.use(express.urlencoded({extended:true,limit:"10mb"}));
@@ -146,7 +145,7 @@ function getSessionUser(req){const t=getSessionToken(req,"jovia_session");if(!t)
 function getAdminSession(req){const t=getSessionToken(req,"jovia_admin_session");if(!t)return null;const s=adminSessions.get(t);if(!s||Date.now()>s.expiresAt){adminSessions.delete(t);return null;}return{username:s.username,token:t};}
 function publicUser(u){
   if(!u) return null;
-  const isOwner = (u.id===1) || String(u.email||'').toLowerCase()==='divineabanum8@gmail.com';
+const isOwner = (u.id===1) || String(u.email||'').toLowerCase()==='divineabanum8@gmail.com';
   let pkg = u.package;
   let plan = u.plan||u.package;
   let is_super = u.is_super||0;
@@ -158,25 +157,25 @@ function publicUser(u){
 function paymentResultForUser(p){if(!p)return null;return{id:p.id,userId:p.user_id,amount:p.amount,package:p.package,paymentReference:p.payment_reference,transactionReference:p.transaction_reference,gateway:p.gateway,paymentStatus:p.payment_status,createdAt:p.created_at};}
 function withdrawalResult(r){if(!r)return null;return{id:r.id,user_id:r.user_id,userId:r.user_id,amount:r.amount,type:r.type,withdrawal_type:r.type,status:r.status,bank_name:r.bank_name,bankName:r.bank_name,account_name:r.account_name,accountName:r.account_name,account_number:r.account_number,accountNumber:r.account_number,note:r.note,gateway:r.gateway,username:r.username,full_name:r.full_name,email:r.email,created_at:r.created_at,createdAt:r.created_at,approved_by:r.approved_by,rejected_by:r.rejected_by};}
 function requireUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});req.user=u;next();}
-function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});if(u.id!==1 && String(u.email).toLowerCase()!=='divineabanum8@gmail.com' && u.account_status!=="active"&&u.account_status!=="approved")return res.status(403).json({success:false,message:"Account not active yet"});req.user=u;next();}
+function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Account not active yet"});req.user=u;next();}
 function requireAdmin(req,res,next){const a=getAdminSession(req);if(!a)return res.status(401).json({success:false,message:"Admin authentication required"});req.admin=a;next();}
 function updateUserBalance(id,col,amt){if(col!=="wallet_balance"&&col!=="affiliate_balance")throw new Error("Invalid column");db.prepare(`UPDATE users SET ${col}=${col}+? WHERE id=?`).run(amt,id);}
 function recordWalletTransaction(uid,type,amt,btype,ref,desc){try{db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}catch(e){}}
 function getReferralReward(referrerPackage, referredPackage, oldPackage){
-  const b = String(referredPackage||'').trim();
-  const old = String(oldPackage||'').trim();
+  const b = String(referredPackage||'').trim().toUpperCase();
+  const old = String(oldPackage||'').trim().toUpperCase();
   // SUPER UPGRADE - Na old package decide am
   if(b==="SUPER"){
-    if(old==="Silver") return 10000; // Silver -> SUPER = 10k
-    if(old==="Gold") return 6000;   // Gold -> SUPER = 6k
+    if(old==="SILVER") return 10000; // Silver -> SUPER = 10k
+    if(old==="GOLD") return 6000;   // Gold -> SUPER = 6k
     return 6000;
   }
   // NORMAL ACTIVATION - Silver / Gold
-  if(b==="Gold") return 13000;
-  if(b==="Silver") return 8000;
+  if(b==="GOLD") return 13000;
+  if(b==="SILVER") return 8000;
   return 0;
 }
-function activateUserAndRewardsInternal(uid){const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u)throw new Error("User not found");db.prepare(`UPDATE users SET account_status='active' WHERE id=?`).run(uid);const f=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(f.welcome_bonus>0){const ex=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='welcome_bonus' LIMIT 1`).get(uid);if(!ex){updateUserBalance(uid,"wallet_balance",f.welcome_bonus);db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(f.welcome_bonus,uid);recordWalletTransaction(uid,"welcome_bonus",f.welcome_bonus,"wallet",`WELCOME_BONUS_${uid}`,"Package welcome bonus");}}if(!f.referrer_id)return;const ref=db.prepare("SELECT * FROM users WHERE id=?").get(f.referrer_id);if(!ref)return;const ex2=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? LIMIT 1`).get(uid);if(ex2)return;const rew=getReferralReward(ref.package,f.package);db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,f.package);if(rew>0){updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${f.package})`);}else{db.prepare(`UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(ref.id);}}
+function activateUserAndRewardsInternal(uid){const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u)throw new Error("User not found");db.prepare(`UPDATE users SET account_status='active' WHERE id=?`).run(uid);const f=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(f.welcome_bonus>0){const ex=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='welcome_bonus' LIMIT 1`).get(uid);if(!ex){updateUserBalance(uid,"wallet_balance",f.welcome_bonus);db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(f.welcome_bonus,uid);recordWalletTransaction(uid,"welcome_bonus",f.welcome_bonus,"wallet",`WELCOME_BONUS_${uid}`,"Package welcome bonus");}}if(!f.referrer_id)return;const ref=db.prepare("SELECT * FROM users WHERE id=?").get(f.referrer_id);if(!ref)return;const rew=getReferralReward(ref.package,f.package,u.package);const ex2=db.prepare(`SELECT * FROM referral_rewards WHERE referred_user_id=? LIMIT 1`).get(uid);if(ex2){if(Number(ex2.amount||0)>0)return;if(rew>0){db.prepare(`UPDATE referral_rewards SET amount=?, referrer_package=?, referred_package=? WHERE id=?`).run(rew,ref.package,f.package,ex2.id);updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${f.package})`);}return;}db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,f.package);if(rew>0){updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${f.package})`);}else{db.prepare(`UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(ref.id);}}
 function activateUserAndRewards(uid){return db.transaction(()=>activateUserAndRewardsInternal(uid))();}
 function monnifyConfigured(){return Boolean(MONNIFY_API_KEY&&MONNIFY_SECRET_KEY&&MONNIFY_CONTRACT_CODE);}
 function monnifyRequest(method,requestPath,body,bearerToken,extraHeaders){return new Promise((resolve,reject)=>{const url=new URL(MONNIFY_BASE_URL+requestPath);const payload=body==null?null:Buffer.from(JSON.stringify(body));const headers=Object.assign({},extraHeaders||{});if(payload){headers["Content-Type"]="application/json";headers["Content-Length"]=payload.length;}if(bearerToken)headers.Authorization=`Bearer ${bearerToken}`;const request=https.request({protocol:url.protocol,hostname:url.hostname,port:url.port||443,path:url.pathname+url.search,method,headers,timeout:30000},(response)=>{const chunks=[];response.on("data",(chunk)=>{chunks.push(chunk);});response.on("end",()=>{const raw=Buffer.concat(chunks).toString("utf8");let parsed;try{parsed=raw?JSON.parse(raw):{};}catch(_){parsed={raw};}resolve({statusCode:response.statusCode,body:parsed,raw});});});request.on("timeout",()=>{request.destroy(new Error("Monnify request timed out."));});request.on("error",reject);if(payload)request.write(payload);request.end();});}
