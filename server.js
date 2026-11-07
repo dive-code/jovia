@@ -116,8 +116,6 @@ migrateDatabase();
   try{const ann = db.prepare("SELECT id FROM announcements LIMIT 1").get(); if(!ann){db.prepare("INSERT INTO announcements (enabled,title,message,channel_url,channel_text) VALUES (1,'Join Official Channel or Miss Your Withdrawal!','ATTENTION ALL MEMBERS! All withdrawal codes are now posted ONLY in our official channel.','https://t.me/jovianetwerk','Join Official Channel')").run();}}catch(e){}
 }
 migrateDatabase();
-
-// === FORCED SUPER FOR OWNER ON EVERY BOOT ===
 (function forceSuperForOwner(){
   try{
     const r1 = db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=1").run();
@@ -168,8 +166,6 @@ function paymentResultForUser(p){if(!p)return null;return{id:p.id,userId:p.user_
 function withdrawalResult(r){if(!r)return null;return{id:r.id,user_id:r.user_id,userId:r.user_id,amount:r.amount,type:r.type,withdrawal_type:r.type,status:r.status,bank_name:r.bank_name,bankName:r.bank_name,account_name:r.account_name,accountName:r.account_name,account_number:r.account_number,accountNumber:r.account_number,note:r.note,gateway:r.gateway,username:r.username,full_name:r.full_name,email:r.email,created_at:r.created_at,createdAt:r.created_at,approved_by:r.approved_by,rejected_by:r.rejected_by};}
 function requireUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});req.user=u;next();}
 function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Account not active yet"});req.user=u;next();}
-
-// ===== FIXED: requireAdmin - accept cookie + Bearer token, no more cut off =====
 function requireAdmin(req,res,next){
   let a=null;
   try{ a=getAdminSession(req); }catch(e){ a=null; }
@@ -207,8 +203,6 @@ function getReferralReward(referrerPackage, referredPackage, oldPackage){
   if(b==="SILVER") return 8000;
   return 0;
 }
-
-// ===== FIXED: activateUserAndRewardsInternal - no 0-row block, sets both status columns =====
 function activateUserAndRewardsInternal(uid,paymentPackage,oldPackageFromPayment){
   const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
   if(!u) throw new Error("User not found");
@@ -287,8 +281,6 @@ async function initializeMonnifyPayment(payment){const token=await getMonnifyTok
 async function verifyMonnifyPayment(paymentReference){const token=await getMonnifyToken();const response=await monnifyRequest("GET","/api/v2/merchant/transactions/query?paymentReference="+encodeURIComponent(paymentReference),null,token);if(response.statusCode<200||response.statusCode>=300||!response.body.requestSuccessful)throw new Error(response.body?.responseMessage||"Unable to verify the Monnify transaction.");return(response.body.responseBody||{});}
 function addWithdrawalEvent(withdrawalId,action,actor,details){try{db.prepare(`INSERT INTO withdrawal_events (withdrawal_id,action,actor,details) VALUES (?,?,?,?)`).run(withdrawalId,action,actor||"",safeJson(details||{}));}catch(error){console.error("WITHDRAWAL EVENT ERROR:",error);}}
 function refundWithdrawalIfNeeded(withdrawalId,reason,actor){return db.transaction(()=>{const row=db.prepare("SELECT * FROM withdrawals WHERE id =?").get(withdrawalId);if(!row)throw new Error("Withdrawal not found.");if(row.refund_processed)return row;const balanceColumn=row.type==="affiliate"?"affiliate_balance":"wallet_balance";updateUserBalance(row.user_id,balanceColumn,row.amount);recordWalletTransaction(row.user_id,"withdrawal_refund",row.amount,row.type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_REFUND_${row.id}`,reason||"Withdrawal refunded");db.prepare(`UPDATE withdrawals SET status='rejected',refund_processed=1,note=?,rejected_by=?,rejected_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(reason||"Withdrawal refunded",actor||"system",row.id);addWithdrawalEvent(row.id,"rejected_refunded",actor||"system",{reason:reason||"Withdrawal refunded"});return db.prepare("SELECT * FROM withdrawals WHERE id =?").get(row.id);})();}
-
-// ===== FIXED: processSuccessfulPayment - if PAID but no reward, still pay reward (self-heal) =====
 function processSuccessfulPayment(paymentReference,verificationData){return db.transaction(()=>{const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference =? LIMIT 1`).get(paymentReference);if(!payment)throw new Error("Payment record not found.");if(payment.payment_status==="PAID"){
   // FIXED: PAID before no mean reward don pay. Try repair am.
   try{
@@ -486,8 +478,6 @@ app.post("/api/admin/logout",(req,res)=>{const token=getSessionToken(req,"jovia_
 app.get("/api/admin/me",requireAdmin,(req,res)=>{return res.json({success:true,admin:{username:req.admin.username}});});
 app.get("/api/admin/dashboard",requireAdmin,(req,res)=>{try{const users=db.prepare(`SELECT COUNT(*) AS count FROM users`).get().count;const activeUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status IN ('active','approved')`).get().count;const pendingUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status='pending'`).get().count;const pendingWithdrawals=db.prepare(`SELECT COUNT(*) AS count FROM withdrawals WHERE status='pending'`).get().count;const totalVideos=db.prepare(`SELECT COUNT(*) AS count FROM videos`).get().count;return res.json({success:true,users,activeUsers,pendingUsers,videos:totalVideos,withdrawals:{pending:pendingWithdrawals},withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),withdrawals_enabled:isWithdrawalsEnabled()? '1':'0'});}catch(error){return res.status(500).json({success:false,message:"Unable to load dashboard."});}});
 app.get("/api/admin/users",requireAdmin,(req,res)=>{try{const rows=db.prepare(`SELECT id,full_name,username,email,phone,package,package_amount,wallet_balance,affiliate_balance,total_earned,account_status,created_at,referral_code,referrer_id,referrals,plan,is_super FROM users ORDER BY id DESC`).all();return res.json({success:true,users:rows.map((user)=>({id:user.id,fullName:user.full_name,full_name:user.full_name,username:user.username,email:user.email,phone:user.phone,package:user.package,plan:user.plan,packageAmount:Number(user.package_amount||0),walletBalance:Number(user.wallet_balance||0),wallet_balance:user.wallet_balance,affiliateBalance:Number(user.affiliate_balance||0),affiliate_balance:user.affiliate_balance,totalEarned:Number(user.total_earned||0),total_earned:user.total_earned,accountStatus:user.account_status,account_status:user.account_status,createdAt:user.created_at,created_at:user.created_at,referral_code:user.referral_code,referrer_id:user.referrer_id,referrals:user.referrals,is_super:user.is_super}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load users."});}});
-
-// ===== FIXED: Admin status - suspend + activate both work, activate FORCES bonus like backpay =====
 app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
@@ -546,8 +536,6 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
     return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
-
-// ===== FIXED: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
   try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
   catch(e){ return res.status(500).json({success:false,message:e.message}); }
