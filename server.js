@@ -42,39 +42,29 @@ const upload = multer({storage,limits:{fileSize: 200 * 1024 * 1024},fileFilter:(
 const dbDir=path.dirname(DB_PATH);if(!fs.existsSync(dbDir))fs.mkdirSync(dbDir,{recursive:true});
 const db=new Database(DB_PATH);db.pragma("journal_mode = WAL");db.pragma("foreign_keys = ON");db.pragma("busy_timeout = 5000");
 db.exec(`
-CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, phone TEXT NOT NULL, password_hash TEXT NOT NULL, package TEXT NOT NULL DEFAULT 'Silver', package_amount INTEGER NOT NULL DEFAULT 9000, welcome_bonus INTEGER NOT NULL DEFAULT 0, referrer_id INTEGER, referral_code TEXT, referrals INTEGER NOT NULL DEFAULT 0, wallet_balance INTEGER NOT NULL DEFAULT 0, affiliate_balance INTEGER NOT NULL DEFAULT 0, total_earned INTEGER NOT NULL DEFAULT 0, account_status TEXT NOT NULL DEFAULT 'pending', status TEXT NOT NULL DEFAULT 'pending', plan TEXT, is_super INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(referrer_id) REFERENCES users(id) ON DELETE SET NULL);
-CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'General', slot TEXT NOT NULL DEFAULT 'General', reward INTEGER NOT NULL DEFAULT 0, link TEXT NOT NULL DEFAULT '', duration TEXT NOT NULL DEFAULT 'Flexible', status TEXT NOT NULL DEFAULT 'active', deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
-CREATE TABLE IF NOT EXISTS user_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, job_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', completed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, job_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS user_job_link_opens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, job_id INTEGER NOT NULL, opened_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, job_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS videos (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', video_url TEXT NOT NULL DEFAULT '', thumbnail_url TEXT NOT NULL DEFAULT '', reward INTEGER NOT NULL DEFAULT 0, duration INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
-CREATE TABLE IF NOT EXISTS user_videos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, video_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', completed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, video_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS wallet_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, amount INTEGER NOT NULL, balance_type TEXT NOT NULL DEFAULT 'wallet', reference TEXT, description TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER NOT NULL, referred_user_id INTEGER NOT NULL UNIQUE, amount INTEGER NOT NULL DEFAULT 0, referrer_package TEXT NOT NULL, referred_package TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(referrer_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(referred_user_id) REFERENCES users(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, type TEXT NOT NULL CHECK(type IN ('regular','affiliate')), status TEXT NOT NULL DEFAULT 'pending', bank_name TEXT NOT NULL DEFAULT '', bank_code TEXT NOT NULL DEFAULT '', account_name TEXT NOT NULL DEFAULT '', account_number TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '', gateway TEXT NOT NULL DEFAULT 'manual', gateway_reference TEXT, gateway_status TEXT NOT NULL DEFAULT '', gateway_response TEXT NOT NULL DEFAULT '', refund_processed INTEGER NOT NULL DEFAULT 0, approved_by TEXT NOT NULL DEFAULT '', approved_at TEXT, rejected_by TEXT NOT NULL DEFAULT '', rejected_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, package TEXT NOT NULL, payment_reference TEXT NOT NULL UNIQUE, transaction_reference TEXT NOT NULL DEFAULT '', gateway TEXT NOT NULL DEFAULT 'monnify', gateway_status TEXT NOT NULL DEFAULT '', payment_status TEXT NOT NULL DEFAULT 'PENDING', gateway_response TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS webhook_events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_key TEXT NOT NULL UNIQUE, event_type TEXT NOT NULL DEFAULT '', payload TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS withdrawal_events (id INTEGER PRIMARY KEY AUTOINCREMENT, withdrawal_id INTEGER NOT NULL, action TEXT NOT NULL, actor TEXT NOT NULL DEFAULT '', details TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(withdrawal_id) REFERENCES withdrawals(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL DEFAULT '', title TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'General', status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
-CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, message TEXT NOT NULL, recipient_ids TEXT NOT NULL DEFAULT '[]', recipient_summary TEXT NOT NULL DEFAULT '', type TEXT NOT NULL DEFAULT 'popup', status TEXT NOT NULL DEFAULT 'sent', created_by TEXT NOT NULL DEFAULT 'admin', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS private_message_reads (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, read_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(message_id, user_id), FOREIGN KEY(message_id) REFERENCES private_messages(id) ON DELETE CASCADE, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
-CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, enabled INTEGER NOT NULL DEFAULT 1, title TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', channel_url TEXT NOT NULL DEFAULT 'https://t.me/jovianetwerk', channel_text TEXT NOT NULL DEFAULT 'Join Official Channel', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
-CREATE TABLE IF NOT EXISTS withdrawal_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0, used_by TEXT NOT NULL DEFAULT '', used_by_id INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, used_at TEXT, expires_at TEXT);
+  CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, full_name TEXT NOT NULL, username TEXT NOT NULL UNIQUE, email TEXT NOT NULL UNIQUE, phone TEXT NOT NULL, password_hash TEXT NOT NULL, package TEXT NOT NULL DEFAULT 'Silver', package_amount INTEGER NOT NULL DEFAULT 9000, welcome_bonus INTEGER NOT NULL DEFAULT 0, referrer_id INTEGER, referral_code TEXT, referrals INTEGER NOT NULL DEFAULT 0, wallet_balance INTEGER NOT NULL DEFAULT 0, affiliate_balance INTEGER NOT NULL DEFAULT 0, total_earned INTEGER NOT NULL DEFAULT 0, account_status TEXT NOT NULL DEFAULT 'pending', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(referrer_id) REFERENCES users(id) ON DELETE SET NULL);
+  CREATE TABLE IF NOT EXISTS jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'General', slot TEXT NOT NULL DEFAULT 'General', reward INTEGER NOT NULL DEFAULT 0, link TEXT NOT NULL DEFAULT '', duration TEXT NOT NULL DEFAULT 'Flexible', status TEXT NOT NULL DEFAULT 'active', deleted_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
+  CREATE TABLE IF NOT EXISTS user_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, job_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', completed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, job_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS user_job_link_opens (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, job_id INTEGER NOT NULL, opened_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, job_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(job_id) REFERENCES jobs(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS videos (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', video_url TEXT NOT NULL DEFAULT '', thumbnail_url TEXT NOT NULL DEFAULT '', reward INTEGER NOT NULL DEFAULT 0, duration INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
+  CREATE TABLE IF NOT EXISTS user_videos (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, video_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'pending', completed_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(user_id, video_id), FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(video_id) REFERENCES videos(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS wallet_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, type TEXT NOT NULL, amount INTEGER NOT NULL, balance_type TEXT NOT NULL DEFAULT 'wallet', reference TEXT, description TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT, referrer_id INTEGER NOT NULL, referred_user_id INTEGER NOT NULL UNIQUE, amount INTEGER NOT NULL DEFAULT 0, referrer_package TEXT NOT NULL, referred_package TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(referrer_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY(referred_user_id) REFERENCES users(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS withdrawals (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, type TEXT NOT NULL CHECK(type IN ('regular','affiliate')), status TEXT NOT NULL DEFAULT 'pending', bank_name TEXT NOT NULL DEFAULT '', bank_code TEXT NOT NULL DEFAULT '', account_name TEXT NOT NULL DEFAULT '', account_number TEXT NOT NULL DEFAULT '', note TEXT NOT NULL DEFAULT '', gateway TEXT NOT NULL DEFAULT 'manual', gateway_reference TEXT, gateway_status TEXT NOT NULL DEFAULT '', gateway_response TEXT NOT NULL DEFAULT '', refund_processed INTEGER NOT NULL DEFAULT 0, approved_by TEXT NOT NULL DEFAULT '', approved_at TEXT, rejected_by TEXT NOT NULL DEFAULT '', rejected_at TEXT, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS payments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, amount INTEGER NOT NULL, package TEXT NOT NULL, payment_reference TEXT NOT NULL UNIQUE, transaction_reference TEXT NOT NULL DEFAULT '', gateway TEXT NOT NULL DEFAULT 'monnify', gateway_status TEXT NOT NULL DEFAULT '', payment_status TEXT NOT NULL DEFAULT 'PENDING', gateway_response TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS webhook_events (id INTEGER PRIMARY KEY AUTOINCREMENT, event_key TEXT NOT NULL UNIQUE, event_type TEXT NOT NULL DEFAULT '', payload TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  CREATE TABLE IF NOT EXISTS withdrawal_events (id INTEGER PRIMARY KEY AUTOINCREMENT, withdrawal_id INTEGER NOT NULL, action TEXT NOT NULL, actor TEXT NOT NULL DEFAULT '', details TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(withdrawal_id) REFERENCES withdrawals(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS links (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL DEFAULT '', title TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', category TEXT NOT NULL DEFAULT 'General', status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TEXT);
+  CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, message TEXT NOT NULL, recipient_ids TEXT NOT NULL DEFAULT '[]', recipient_summary TEXT NOT NULL DEFAULT '', type TEXT NOT NULL DEFAULT 'popup', status TEXT NOT NULL DEFAULT 'sent', created_by TEXT NOT NULL DEFAULT 'admin', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  CREATE TABLE IF NOT EXISTS private_message_reads (id INTEGER PRIMARY KEY AUTOINCREMENT, message_id INTEGER NOT NULL, user_id INTEGER NOT NULL, read_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE(message_id, user_id), FOREIGN KEY(message_id) REFERENCES private_messages(id) ON DELETE CASCADE, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);
+  CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, enabled INTEGER NOT NULL DEFAULT 1, title TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', channel_url TEXT NOT NULL DEFAULT 'https://t.me/jovianetwerk', channel_text TEXT NOT NULL DEFAULT 'Join Official Channel', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
+  CREATE TABLE IF NOT EXISTS withdrawal_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0, used_by TEXT NOT NULL DEFAULT '', used_by_id INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, used_at TEXT, expires_at TEXT);
 `);
 function tableExists(t){return Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1").get(t));}
 function columnExists(t,c){if(!tableExists(t))return false;return db.prepare(`PRAGMA table_info(${t})`).all().some(x=>x.name===c);}
 function addColumnIfMissing(t,c,d){if(!tableExists(t)||columnExists(t,c))return false;try{db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`);return true;}catch(e){return false;}}
 function migrateDatabase(){
-  addColumnIfMissing("users","status","TEXT NOT NULL DEFAULT 'pending'");
-  addColumnIfMissing("users","plan","TEXT");
-  addColumnIfMissing("users","is_super","INTEGER NOT NULL DEFAULT 0");
-  addColumnIfMissing("users","account_status","TEXT NOT NULL DEFAULT 'pending'");
-  try{ db.prepare("UPDATE users SET status = COALESCE(NULLIF(status,''), account_status, 'pending')").run(); }catch(e){}
-  try{ db.prepare("UPDATE users SET account_status = COALESCE(NULLIF(account_status,''), status, 'pending')").run(); }catch(e){}
-  try{ db.prepare("UPDATE users SET plan = COALESCE(NULLIF(plan,''), package, 'Silver')").run(); }catch(e){}
-  try{ db.prepare("UPDATE users SET is_super = 1 WHERE UPPER(COALESCE(plan,'') ) = 'SUPER' OR UPPER(COALESCE(package,'')) = 'SUPER'").run(); }catch(e){}
-}
-migrateDatabase();
   addColumnIfMissing("users","affiliate_balance","INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing("users","welcome_bonus","INTEGER NOT NULL DEFAULT 0");
   addColumnIfMissing("users","referrer_id","INTEGER");
@@ -116,6 +106,8 @@ migrateDatabase();
   try{const ann = db.prepare("SELECT id FROM announcements LIMIT 1").get(); if(!ann){db.prepare("INSERT INTO announcements (enabled,title,message,channel_url,channel_text) VALUES (1,'Join Official Channel or Miss Your Withdrawal!','ATTENTION ALL MEMBERS! All withdrawal codes are now posted ONLY in our official channel.','https://t.me/jovianetwerk','Join Official Channel')").run();}}catch(e){}
 }
 migrateDatabase();
+
+// === FORCED SUPER FOR OWNER ON EVERY BOOT ===
 (function forceSuperForOwner(){
   try{
     const r1 = db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=1").run();
@@ -166,6 +158,8 @@ function paymentResultForUser(p){if(!p)return null;return{id:p.id,userId:p.user_
 function withdrawalResult(r){if(!r)return null;return{id:r.id,user_id:r.user_id,userId:r.user_id,amount:r.amount,type:r.type,withdrawal_type:r.type,status:r.status,bank_name:r.bank_name,bankName:r.bank_name,account_name:r.account_name,accountName:r.account_name,account_number:r.account_number,accountNumber:r.account_number,note:r.note,gateway:r.gateway,username:r.username,full_name:r.full_name,email:r.email,created_at:r.created_at,createdAt:r.created_at,approved_by:r.approved_by,rejected_by:r.rejected_by};}
 function requireUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});req.user=u;next();}
 function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Account not active yet"});req.user=u;next();}
+
+// ===== FIXED: requireAdmin - accept cookie + Bearer token, no more cut off =====
 function requireAdmin(req,res,next){
   let a=null;
   try{ a=getAdminSession(req); }catch(e){ a=null; }
@@ -203,6 +197,8 @@ function getReferralReward(referrerPackage, referredPackage, oldPackage){
   if(b==="SILVER") return 8000;
   return 0;
 }
+
+// ===== FIXED: activateUserAndRewardsInternal - no 0-row block, sets both status columns =====
 function activateUserAndRewardsInternal(uid,paymentPackage,oldPackageFromPayment){
   const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
   if(!u) throw new Error("User not found");
@@ -281,6 +277,8 @@ async function initializeMonnifyPayment(payment){const token=await getMonnifyTok
 async function verifyMonnifyPayment(paymentReference){const token=await getMonnifyToken();const response=await monnifyRequest("GET","/api/v2/merchant/transactions/query?paymentReference="+encodeURIComponent(paymentReference),null,token);if(response.statusCode<200||response.statusCode>=300||!response.body.requestSuccessful)throw new Error(response.body?.responseMessage||"Unable to verify the Monnify transaction.");return(response.body.responseBody||{});}
 function addWithdrawalEvent(withdrawalId,action,actor,details){try{db.prepare(`INSERT INTO withdrawal_events (withdrawal_id,action,actor,details) VALUES (?,?,?,?)`).run(withdrawalId,action,actor||"",safeJson(details||{}));}catch(error){console.error("WITHDRAWAL EVENT ERROR:",error);}}
 function refundWithdrawalIfNeeded(withdrawalId,reason,actor){return db.transaction(()=>{const row=db.prepare("SELECT * FROM withdrawals WHERE id =?").get(withdrawalId);if(!row)throw new Error("Withdrawal not found.");if(row.refund_processed)return row;const balanceColumn=row.type==="affiliate"?"affiliate_balance":"wallet_balance";updateUserBalance(row.user_id,balanceColumn,row.amount);recordWalletTransaction(row.user_id,"withdrawal_refund",row.amount,row.type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_REFUND_${row.id}`,reason||"Withdrawal refunded");db.prepare(`UPDATE withdrawals SET status='rejected',refund_processed=1,note=?,rejected_by=?,rejected_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(reason||"Withdrawal refunded",actor||"system",row.id);addWithdrawalEvent(row.id,"rejected_refunded",actor||"system",{reason:reason||"Withdrawal refunded"});return db.prepare("SELECT * FROM withdrawals WHERE id =?").get(row.id);})();}
+
+// ===== FIXED: processSuccessfulPayment - if PAID but no reward, still pay reward (self-heal) =====
 function processSuccessfulPayment(paymentReference,verificationData){return db.transaction(()=>{const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference =? LIMIT 1`).get(paymentReference);if(!payment)throw new Error("Payment record not found.");if(payment.payment_status==="PAID"){
   // FIXED: PAID before no mean reward don pay. Try repair am.
   try{
@@ -478,64 +476,43 @@ app.post("/api/admin/logout",(req,res)=>{const token=getSessionToken(req,"jovia_
 app.get("/api/admin/me",requireAdmin,(req,res)=>{return res.json({success:true,admin:{username:req.admin.username}});});
 app.get("/api/admin/dashboard",requireAdmin,(req,res)=>{try{const users=db.prepare(`SELECT COUNT(*) AS count FROM users`).get().count;const activeUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status IN ('active','approved')`).get().count;const pendingUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status='pending'`).get().count;const pendingWithdrawals=db.prepare(`SELECT COUNT(*) AS count FROM withdrawals WHERE status='pending'`).get().count;const totalVideos=db.prepare(`SELECT COUNT(*) AS count FROM videos`).get().count;return res.json({success:true,users,activeUsers,pendingUsers,videos:totalVideos,withdrawals:{pending:pendingWithdrawals},withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),withdrawals_enabled:isWithdrawalsEnabled()? '1':'0'});}catch(error){return res.status(500).json({success:false,message:"Unable to load dashboard."});}});
 app.get("/api/admin/users",requireAdmin,(req,res)=>{try{const rows=db.prepare(`SELECT id,full_name,username,email,phone,package,package_amount,wallet_balance,affiliate_balance,total_earned,account_status,created_at,referral_code,referrer_id,referrals,plan,is_super FROM users ORDER BY id DESC`).all();return res.json({success:true,users:rows.map((user)=>({id:user.id,fullName:user.full_name,full_name:user.full_name,username:user.username,email:user.email,phone:user.phone,package:user.package,plan:user.plan,packageAmount:Number(user.package_amount||0),walletBalance:Number(user.wallet_balance||0),wallet_balance:user.wallet_balance,affiliateBalance:Number(user.affiliate_balance||0),affiliate_balance:user.affiliate_balance,totalEarned:Number(user.total_earned||0),total_earned:user.total_earned,accountStatus:user.account_status,account_status:user.account_status,createdAt:user.created_at,created_at:user.created_at,referral_code:user.referral_code,referrer_id:user.referrer_id,referrals:user.referrals,is_super:user.is_super}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load users."});}});
+
+// ===== FIXED: Admin status - suspend + activate both work, activate pays bonus =====
 app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
     const raw=String(req.body?.status||req.body?.account_status||req.body?.action||"").toLowerCase().trim();
+    // FIXED: accept ALL forms frontend fit send
     let ns;
     if(["suspend","suspended","ban","banned","blocked","block","disable","disabled"].includes(raw)) ns="suspended";
     else if(["pending","pend","waiting"].includes(raw)) ns="pending";
     else if(["active","approve","approved","activate","activated","enable","enabled","unblock","unban"].includes(raw)) ns="active";
-    else ns="active";
+    else ns="active"; // default no be suspend again
     const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
     if(!u) return res.status(404).json({success:false,message:"User not found"});
+    // SUSPEND path
     if(ns==="suspended"){
       try{ db.prepare("UPDATE users SET account_status='suspended', status='suspended' WHERE id=?").run(id); }
       catch(e){ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); }
       return res.json({success:true,message:`User suspended successfully`, status:"suspended", account_status:"suspended"});
     }
+    // PENDING path
     if(ns==="pending"){
       try{ db.prepare("UPDATE users SET account_status='pending', status='pending' WHERE id=?").run(id); }
       catch(e){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); }
       return res.json({success:true,message:`User set to pending`, status:"pending", account_status:"pending"});
     }
-    // ACTIVE path - FORCE PAY LIKE BACKPAY
+    // ACTIVE path - MUST pay bonus
     const result=db.transaction(()=>{
-      const fresh=db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
-      const pkg=String(fresh.package||"").toUpperCase();
-      let correct=0;
-      if(pkg==="GOLD") correct=13000;
-      else if(pkg==="SILVER") correct=8000;
-      else if(pkg==="SUPER"){
-        const already0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(fresh.id);
-        const paid0=already0?Number(already0.amount||0):0;
-        if(paid0===13000) correct=19000;
-        else if(paid0===8000) correct=18000;
-        else if(paid0===0) correct=19000;
-        else correct=paid0;
-      }
-      if(fresh.referrer_id && Number(fresh.referrer_id)!==Number(fresh.id) && correct>0){
-        const referrer=db.prepare("SELECT * FROM users WHERE id=?").get(fresh.referrer_id);
-        if(referrer){
-          const existing=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(fresh.id);
-          const alreadyPaid=existing?Number(existing.amount||0):0;
-          const toPay=correct-alreadyPaid;
-          if(toPay>0){
-            if(existing){ db.prepare("UPDATE referral_rewards SET amount=?, referrer_id=?, referrer_package=?, referred_package=? WHERE referred_user_id=?").run(correct, referrer.id, referrer.package, fresh.package, fresh.id); }
-            else{ db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, fresh.id, correct, referrer.package, fresh.package); }
-            db.prepare("UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ?, total_earned = COALESCE(total_earned,0) + ? WHERE id=?").run(toPay, toPay, referrer.id);
-            db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", toPay, "affiliate", `REFERRAL_${fresh.id}`, `Referral reward for ${fresh.username} (${pkg})`);
-          }
-        }
-      }
-      try{ db.prepare("UPDATE users SET account_status='active', status='active' WHERE id=?").run(u.id); }
-      catch(e){ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(u.id); }
-      try{ activateUserAndRewardsInternal(u.id, u.package, u.package); }catch(e){ console.error("activate internal (non-fatal):", e.message); }
+      activateUserAndRewardsInternal(u.id, u.package, u.package);
+      try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(u.id); }catch(e){}
       return db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
     })();
     return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
+
+// ===== NEW: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
   try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
   catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -545,30 +522,8 @@ app.post("/api/admin/repair-referral/:id",requireAdmin,(req,res)=>{
     const id=req.params.id;
     const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
     if(!u) return res.status(404).json({success:false,message:"User not found"});
-    const pkg=String(u.package||"").toUpperCase();
-    let correct=0;
-    if(pkg==="GOLD") correct=13000;
-    else if(pkg==="SILVER") correct=8000;
-    else if(pkg==="SUPER"){
-      const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
-      const p0=ex0?Number(ex0.amount||0):0;
-      if(p0===13000) correct=19000; else if(p0===8000) correct=18000; else if(p0===0) correct=19000; else correct=p0;
-    }
-    if(u.referrer_id && Number(u.referrer_id)!==Number(u.id) && correct>0){
-      const referrer=db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id);
-      if(referrer){
-        const existing=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
-        const alreadyPaid=existing?Number(existing.amount||0):0;
-        const toPay=correct-alreadyPaid;
-        if(toPay>0){
-          if(existing){ db.prepare("UPDATE referral_rewards SET amount=?, referrer_id=? WHERE referred_user_id=?").run(correct, referrer.id, u.id); }
-          else{ db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, u.id, correct, referrer.package, u.package); }
-          db.prepare("UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ?, total_earned = COALESCE(total_earned,0) + ? WHERE id=?").run(toPay, toPay, referrer.id);
-          db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", toPay, "affiliate", `REFERRAL_${u.id}`, `Referral repair for ${u.username} (${pkg})`);
-        }
-      }
-    }
-    try{ activateUserAndRewardsInternal(u.id, u.package, u.package); }catch(e){}
+    try{ db.prepare(`DELETE FROM referral_rewards WHERE referred_user_id=? AND amount=0`).run(id); }catch(e){}
+    activateUserAndRewardsInternal(u.id, u.package, u.package);
     const after=db.prepare("SELECT * FROM users WHERE id=?").get(id);
     return res.json({success:true,message:"Referral repaired", user:after});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -588,18 +543,21 @@ app.post("/api/admin/settings/regular-withdrawals",requireAdmin,(req,res)=>{try{
   setRegularWithdrawalsEnabled(enabled); setSettingValue('withdrawals_enabled', enabled?'1':'0');
   return res.json({success:true, enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, message: enabled?"Regular ON":"Regular OFF"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.post("/api/admin/settings/affiliate-withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.affiliateEnabled;
   if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setAffiliateWithdrawalsEnabled(enabled);
   return res.json({success:true, enabled, affiliateEnabled:enabled, message: enabled?"Affiliate ON":"Affiliate OFF"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.post("/api/admin/settings/withdrawal-codes",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled;
   if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setWithdrawalCodesEnabled(enabled);
   return res.json({success:true, enabled, codesEnabled:enabled, message: enabled?`Codes ENABLED`:"Codes DISABLED"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
   const count= Math.min(100, Math.max(1, Number(req.body?.count||1)||1));
   const codes=[];
@@ -609,12 +567,14 @@ app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
   }
   return res.json({success:true, codes, count:codes.length, message:`${codes.length} codes generated`});
 }catch(e){return res.status(500).json({success:false,message:e.message});}});
+
 app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
 // === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL ===
 app.get("/api/admin/backpay-all", (req,res)=>{
+  // TEMP BYPASS - remove after backpay
   if (req.query.key !== 'jovia123') {
     return res.status(401).json({success:false, message:"Admin authentication required"});
   }
@@ -631,6 +591,10 @@ app.get("/api/admin/backpay-all", (req,res)=>{
         const pkg = String(u.package || "").toUpperCase();
         let correct = 0;
         if(pkg === "SUPER"){
+          // SUPER na UPGRADE ONLY, no direct registration
+          // Gold -> SUPER = 13000 + 6000 = 19000
+          // Silver -> SUPER = 8000 + 10000 = 18000
+          // Never paid = assume Gold activation + Gold upgrade = 19000
           if(alreadyPaid === 13000) correct = 19000;
           else if(alreadyPaid === 8000) correct = 18000;
           else if(alreadyPaid === 0) correct = 19000;
@@ -638,6 +602,7 @@ app.get("/api/admin/backpay-all", (req,res)=>{
         } else if(pkg === "GOLD"){
           correct = 13000;
         } else if(pkg === "SILVER"){
+          // SILVER you fit register direct
           correct = 8000;
         } else {
           correct = 0;
@@ -650,7 +615,7 @@ app.get("/api/admin/backpay-all", (req,res)=>{
         } else {
           db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, u.id, correct, referrer.package, u.package);
         }
-        db.prepare("UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ?, total_earned = COALESCE(total_earned,0) + ? WHERE id=?").run(toPay, toPay, referrer.id);
+        db.prepare("UPDATE users SET affiliate_balance = affiliate_balance + ?, total_earned = total_earned + ? WHERE id=?").run(toPay, toPay, referrer.id);
         db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", toPay, "affiliate", `BACKPAY_ALL_${u.id}`, `Backpay TOTAL - ${u.username} ${u.package}`);
         paidCount++; totalPaid += toPay;
         details.push({referrer: referrer.username, referred: u.username, package: u.package, alreadyPaid, correct, paid: toPay});
@@ -977,4 +942,3 @@ app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
 if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA V7 FINAL - OWNER SUPER FORCED + UNLIMITED"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log("=========================================="); console.log("");});}
 module.exports = app;
-f
