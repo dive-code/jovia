@@ -158,29 +158,118 @@ function paymentResultForUser(p){if(!p)return null;return{id:p.id,userId:p.user_
 function withdrawalResult(r){if(!r)return null;return{id:r.id,user_id:r.user_id,userId:r.user_id,amount:r.amount,type:r.type,withdrawal_type:r.type,status:r.status,bank_name:r.bank_name,bankName:r.bank_name,account_name:r.account_name,accountName:r.account_name,account_number:r.account_number,accountNumber:r.account_number,note:r.note,gateway:r.gateway,username:r.username,full_name:r.full_name,email:r.email,created_at:r.created_at,createdAt:r.created_at,approved_by:r.approved_by,rejected_by:r.rejected_by};}
 function requireUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});req.user=u;next();}
 function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Account not active yet"});req.user=u;next();}
-function requireAdmin(req,res,next){const a=getAdminSession(req);if(!a)return res.status(401).json({success:false,message:"Admin authentication required"});req.admin=a;next();}
+
+// ===== FIXED: requireAdmin - accept cookie + Bearer token, no more cut off =====
+function requireAdmin(req,res,next){
+  let a=null;
+  try{ a=getAdminSession(req); }catch(e){ a=null; }
+  // Fallback: Bearer token header (for frontend wey no dey send cookie)
+  if(!a){
+    const hdr=String(req.headers["authorization"]||"");
+    const tok=hdr.startsWith("Bearer ") ? hdr.slice(7).trim() : "";
+    if(tok && typeof adminSessions!=="undefined"){
+      const s=adminSessions.get(tok);
+      if(s && s.expiresAt>Date.now()) a=s;
+    }
+  }
+  if(!a) return res.status(401).json({success:false,message:"Admin authentication required"});
+  req.admin=a; next();
+}
 function updateUserBalance(id,col,amt){if(col!=="wallet_balance"&&col!=="affiliate_balance")throw new Error("Invalid column");db.prepare(`UPDATE users SET ${col}=${col}+? WHERE id=?`).run(amt,id);}
 function recordWalletTransaction(uid,type,amt,btype,ref,desc){try{db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}catch(e){}}
+
+// ===== FIXED: getReferralReward - SILVER + GOLD = 8000, no more 0 =====
 function getReferralReward(referrerPackage, referredPackage, oldPackage){
   const a = String(referrerPackage||'').trim().toUpperCase();
   const b = String(referredPackage||'').trim().toUpperCase();
   const old = String(oldPackage||'').trim().toUpperCase();
   if(b==="SUPER"){
-    if(old==="SILVER") return 10000; // Silver -> SUPER = 10k
-    if(old==="GOLD") return 6000; // Gold -> SUPER = 6k
+    if(old==="SILVER") return 10000;
+    if(old==="GOLD") return 6000;
     if(old==="SUPER") return 0;
     return 6000;
   }
   if(a==="GOLD" && b==="GOLD") return 13000;
   if(a==="GOLD" && b==="SILVER") return 8000;
   if(a==="SILVER" && b==="SILVER") return 8000;
-  if(a==="SILVER" && b==="GOLD") return 0;
+  if(a==="SILVER" && b==="GOLD") return 8000; // FIXED: was 0 before
   if(b==="GOLD") return 13000;
   if(b==="SILVER") return 8000;
   return 0;
 }
-function activateUserAndRewardsInternal(uid,paymentPackage,oldPackageFromPayment){const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u)throw new Error("User not found");const oldPkg=String(oldPackageFromPayment||u.package||'').trim().toUpperCase();const newPkg=String(paymentPackage||u.package||'').trim().toUpperCase();db.prepare(`UPDATE users SET account_status='active', package=? WHERE id=?`).run(newPkg,uid);const f=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(f.welcome_bonus>0){const ex=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='welcome_bonus' LIMIT 1`).get(uid);if(!ex){updateUserBalance(uid,"wallet_balance",f.welcome_bonus);db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(f.welcome_bonus,uid);recordWalletTransaction(uid,"welcome_bonus",f.welcome_bonus,"wallet",`WELCOME_BONUS_${uid}`,"Package welcome bonus");}}if(!f.referrer_id)return;const ref=db.prepare("SELECT * FROM users WHERE id=?").get(f.referrer_id);if(!ref)return;const isUpgrade=(newPkg==="SUPER"&&(oldPkg==="SILVER"||oldPkg==="GOLD"));const rew=getReferralReward(ref.package,newPkg,oldPkg);if(isUpgrade){const upgradeEx=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND reference=? LIMIT 1`).get(ref.id,`REFERRAL_UPGRADE_${f.id}`);const upgradeRewardEx=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND referred_package='SUPER' LIMIT 1`).get(uid);if(upgradeEx||upgradeRewardEx)return;if(rew>0){db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,newPkg);updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_UPGRADE_${f.id}`,`Super upgrade reward for ${f.username} (${oldPkg} -> SUPER)`);}return;}const ex2=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND referred_package != 'SUPER' LIMIT 1`).get(uid);if(ex2)return;db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,newPkg);if(rew>0){updateUserBalance(ref.id,"affiliate_balance",rew);db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${newPkg})`);}else{db.prepare(`UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(ref.id);}}
+
+// ===== FIXED: activateUserAndRewardsInternal - no 0-row block, sets both status columns =====
+function activateUserAndRewardsInternal(uid,paymentPackage,oldPackageFromPayment){
+  const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
+  if(!u) throw new Error("User not found");
+  const oldPkg=String(oldPackageFromPayment||u.package||'').trim().toUpperCase();
+  const newPkg=String(paymentPackage||u.package||'').trim().toUpperCase();
+  // FIXED: set account_status + status together
+  try{ db.prepare(`UPDATE users SET account_status='active', status='active', package=? WHERE id=?`).run(newPkg,uid); }
+  catch(e){ db.prepare(`UPDATE users SET account_status='active', package=? WHERE id=?`).run(newPkg,uid); }
+  const f=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
+  if(f.welcome_bonus>0){
+    const ex=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='welcome_bonus' LIMIT 1`).get(uid);
+    if(!ex){
+      updateUserBalance(uid,"wallet_balance",f.welcome_bonus);
+      db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(f.welcome_bonus,uid);
+      recordWalletTransaction(uid,"welcome_bonus",f.welcome_bonus,"wallet",`WELCOME_BONUS_${uid}`,"Package welcome bonus");
+    }
+  }
+  if(!f.referrer_id) return;
+  // No self-referral
+  if(Number(f.referrer_id)===Number(f.id)) return;
+  const ref=db.prepare("SELECT * FROM users WHERE id=?").get(f.referrer_id);
+  if(!ref) return;
+  const isUpgrade=(newPkg==="SUPER"&&(oldPkg==="SILVER"||oldPkg==="GOLD"));
+  const rew=getReferralReward(ref.package,newPkg,oldPkg);
+  if(isUpgrade){
+    const upgradeEx=db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND reference=? LIMIT 1`).get(ref.id,`REFERRAL_UPGRADE_${f.id}`);
+    const upgradeRewardEx=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND referred_package='SUPER' AND amount>0 LIMIT 1`).get(uid);
+    if(upgradeEx||upgradeRewardEx) return;
+    if(rew>0){
+      db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,newPkg);
+      updateUserBalance(ref.id,"affiliate_balance",rew);
+      db.prepare(`UPDATE users SET total_earned=total_earned+? WHERE id=?`).run(rew,ref.id);
+      recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_UPGRADE_${f.id}`,`Super upgrade reward for ${f.username} (${oldPkg} -> SUPER)`);
+    }
+    return;
+  }
+  // FIXED: only block if real money (>0) don already pay. 0 row no go block again
+  const ex2=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND referred_package != 'SUPER' AND amount>0 LIMIT 1`).get(uid);
+  if(ex2) return;
+  // Delete old 0-amount blocking row if e dey
+  try{ db.prepare(`DELETE FROM referral_rewards WHERE referred_user_id=? AND amount=0 AND referred_package != 'SUPER'`).run(uid); }catch(e){}
+  if(rew<=0){
+    // Don't insert 0 row, just count referral
+    db.prepare(`UPDATE users SET referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(ref.id);
+    return;
+  }
+  db.prepare(`INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)`).run(ref.id,f.id,rew,ref.package,newPkg);
+  updateUserBalance(ref.id,"affiliate_balance",rew);
+  db.prepare(`UPDATE users SET total_earned=total_earned+?, referrals=COALESCE(referrals,0)+1 WHERE id=?`).run(rew,ref.id);
+  recordWalletTransaction(ref.id,"referral_reward",rew,"affiliate",`REFERRAL_${f.id}`,`Referral reward for ${f.username} (${newPkg})`);
+}
 function activateUserAndRewards(uid){return db.transaction(()=>activateUserAndRewardsInternal(uid))();}
+
+// ===== NEW: Repair missing rewards for people already Active like waziriabbaisa =====
+function repairMissingReferralRewards(){
+  let fixed=0, skipped=0;
+  const users=db.prepare(`SELECT * FROM users WHERE account_status IN ('active','approved') AND referrer_id IS NOT NULL`).all();
+  for(const u of users){
+    try{
+      const hasPaid=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND amount>0 LIMIT 1`).get(u.id);
+      if(hasPaid){ skipped++; continue; }
+      // Use same logic, but don't change package
+      const before=db.prepare(`SELECT affiliate_balance FROM users WHERE id=?`).get(u.referrer_id);
+      activateUserAndRewardsInternal(u.id, u.package, u.package);
+      const after=db.prepare(`SELECT affiliate_balance FROM users WHERE id=?`).get(u.referrer_id);
+      if(after && before && Number(after.affiliate_balance)>Number(before.affiliate_balance)) fixed++;
+      else skipped++;
+    }catch(e){ skipped++; }
+  }
+  return {fixed, skipped, total: users.length};
+}
 function monnifyConfigured(){return Boolean(MONNIFY_API_KEY&&MONNIFY_SECRET_KEY&&MONNIFY_CONTRACT_CODE);}
 function monnifyRequest(method,requestPath,body,bearerToken,extraHeaders){return new Promise((resolve,reject)=>{const url=new URL(MONNIFY_BASE_URL+requestPath);const payload=body==null?null:Buffer.from(JSON.stringify(body));const headers=Object.assign({},extraHeaders||{});if(payload){headers["Content-Type"]="application/json";headers["Content-Length"]=payload.length;}if(bearerToken)headers.Authorization=`Bearer ${bearerToken}`;const request=https.request({protocol:url.protocol,hostname:url.hostname,port:url.port||443,path:url.pathname+url.search,method,headers,timeout:30000},(response)=>{const chunks=[];response.on("data",(chunk)=>{chunks.push(chunk);});response.on("end",()=>{const raw=Buffer.concat(chunks).toString("utf8");let parsed;try{parsed=raw?JSON.parse(raw):{};}catch(_){parsed={raw};}resolve({statusCode:response.statusCode,body:parsed,raw});});});request.on("timeout",()=>{request.destroy(new Error("Monnify request timed out."));});request.on("error",reject);if(payload)request.write(payload);request.end();});}
 async function getMonnifyToken(){const auth=Buffer.from(MONNIFY_API_KEY+":"+MONNIFY_SECRET_KEY).toString("base64");const response=await monnifyRequest("POST","/api/v1/auth/login",null,null,{Authorization:"Basic "+auth});if(response.statusCode<200||response.statusCode>=300||!response.body.requestSuccessful)throw new Error(response.body?.responseMessage||"Unable to authenticate with Monnify.");const token=response.body.responseBody?.accessToken;if(!token)throw new Error("Monnify did not return an access token.");return token;}
@@ -188,7 +277,19 @@ async function initializeMonnifyPayment(payment){const token=await getMonnifyTok
 async function verifyMonnifyPayment(paymentReference){const token=await getMonnifyToken();const response=await monnifyRequest("GET","/api/v2/merchant/transactions/query?paymentReference="+encodeURIComponent(paymentReference),null,token);if(response.statusCode<200||response.statusCode>=300||!response.body.requestSuccessful)throw new Error(response.body?.responseMessage||"Unable to verify the Monnify transaction.");return(response.body.responseBody||{});}
 function addWithdrawalEvent(withdrawalId,action,actor,details){try{db.prepare(`INSERT INTO withdrawal_events (withdrawal_id,action,actor,details) VALUES (?,?,?,?)`).run(withdrawalId,action,actor||"",safeJson(details||{}));}catch(error){console.error("WITHDRAWAL EVENT ERROR:",error);}}
 function refundWithdrawalIfNeeded(withdrawalId,reason,actor){return db.transaction(()=>{const row=db.prepare("SELECT * FROM withdrawals WHERE id =?").get(withdrawalId);if(!row)throw new Error("Withdrawal not found.");if(row.refund_processed)return row;const balanceColumn=row.type==="affiliate"?"affiliate_balance":"wallet_balance";updateUserBalance(row.user_id,balanceColumn,row.amount);recordWalletTransaction(row.user_id,"withdrawal_refund",row.amount,row.type==="affiliate"?"affiliate":"wallet",`WITHDRAWAL_REFUND_${row.id}`,reason||"Withdrawal refunded");db.prepare(`UPDATE withdrawals SET status='rejected',refund_processed=1,note=?,rejected_by=?,rejected_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(reason||"Withdrawal refunded",actor||"system",row.id);addWithdrawalEvent(row.id,"rejected_refunded",actor||"system",{reason:reason||"Withdrawal refunded"});return db.prepare("SELECT * FROM withdrawals WHERE id =?").get(row.id);})();}
-function processSuccessfulPayment(paymentReference,verificationData){return db.transaction(()=>{const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference =? LIMIT 1`).get(paymentReference);if(!payment)throw new Error("Payment record not found.");if(payment.payment_status==="PAID")return{paid:true,duplicate:true,payment};const paidAmount=Number(verificationData?.amountPaid!=null?verificationData.amountPaid:verificationData?.amount);const expectedAmount=Number(payment.amount);const paymentStatus=String(verificationData?.paymentStatus||"").toUpperCase();if(paymentStatus!=="PAID"){db.prepare(`UPDATE payments SET gateway_status=?,payment_status=?,gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(paymentStatus||"UNKNOWN",paymentStatus||"UNKNOWN",safeJson(verificationData),payment.id);return{paid:false,duplicate:false,payment:db.prepare("SELECT * FROM payments WHERE id =?").get(payment.id)};}if(!Number.isFinite(paidAmount)||Math.round(paidAmount)!==expectedAmount){db.prepare(`UPDATE payments SET gateway_status=?,payment_status='AMOUNT_MISMATCH',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(paymentStatus,safeJson(verificationData),payment.id);throw new Error("Payment amount does not match the expected package amount.");}const transactionReference=verificationData?.transactionReference||verificationData?.transactionReferenceNumber||payment.transaction_reference||"";db.prepare(`UPDATE payments SET transaction_reference=?,gateway_status='PAID',payment_status='PAID',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(transactionReference,safeJson(verificationData),payment.id);const userBefore=db.prepare(`SELECT package FROM users WHERE id=?`).get(payment.user_id);const oldPackage=userBefore?userBefore.package:null;activateUserAndRewardsInternal(payment.user_id,payment.package,oldPackage);return{paid:true,duplicate:false,payment:db.prepare("SELECT * FROM payments WHERE id =?").get(payment.id)};})();}
+
+// ===== FIXED: processSuccessfulPayment - if PAID but no reward, still pay reward (self-heal) =====
+function processSuccessfulPayment(paymentReference,verificationData){return db.transaction(()=>{const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference =? LIMIT 1`).get(paymentReference);if(!payment)throw new Error("Payment record not found.");if(payment.payment_status==="PAID"){
+  // FIXED: PAID before no mean reward don pay. Try repair am.
+  try{
+    const hasReward=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND amount>0 LIMIT 1`).get(payment.user_id);
+    if(!hasReward){
+      const ub=db.prepare(`SELECT package FROM users WHERE id=?`).get(payment.user_id);
+      activateUserAndRewardsInternal(payment.user_id, payment.package, ub?ub.package:null);
+    }
+  }catch(e){ console.error("PAID-REPAIR ERROR:",e); }
+  return{paid:true,duplicate:true,payment};
+}const paidAmount=Number(verificationData?.amountPaid!=null?verificationData.amountPaid:verificationData?.amount);const expectedAmount=Number(payment.amount);const paymentStatus=String(verificationData?.paymentStatus||"").toUpperCase();if(paymentStatus!=="PAID"){db.prepare(`UPDATE payments SET gateway_status=?,payment_status=?,gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(paymentStatus||"UNKNOWN",paymentStatus||"UNKNOWN",safeJson(verificationData),payment.id);return{paid:false,duplicate:false,payment:db.prepare("SELECT * FROM payments WHERE id =?").get(payment.id)};}if(!Number.isFinite(paidAmount)||Math.round(paidAmount)!==expectedAmount){db.prepare(`UPDATE payments SET gateway_status=?,payment_status='AMOUNT_MISMATCH',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(paymentStatus,safeJson(verificationData),payment.id);throw new Error("Payment amount does not match the expected package amount.");}const transactionReference=verificationData?.transactionReference||verificationData?.transactionReferenceNumber||payment.transaction_reference||"";db.prepare(`UPDATE payments SET transaction_reference=?,gateway_status='PAID',payment_status='PAID',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(transactionReference,safeJson(verificationData),payment.id);const userBefore=db.prepare(`SELECT package FROM users WHERE id=?`).get(payment.user_id);const oldPackage=userBefore?userBefore.package:null;activateUserAndRewardsInternal(payment.user_id,payment.package,oldPackage);return{paid:true,duplicate:false,payment:db.prepare("SELECT * FROM payments WHERE id =?").get(payment.id)};})();}
 function getSettingValue(key, defVal){try{const row=db.prepare("SELECT value FROM settings WHERE key=? LIMIT 1").get(key); if(!row) return defVal; return row.value;}catch{return defVal;}}
 function setSettingValue(key, value){db.prepare("INSERT INTO settings (key, value, updated_at) VALUES (?,?, CURRENT_TIMESTAMP) ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP").run(String(key), String(value));}
 function isWithdrawalsEnabled(){try{const v=getSettingValue('withdrawals_enabled','1'); return v==='1' || String(v).toLowerCase()==='true';}catch{return true;}}
@@ -234,16 +335,18 @@ app.get("/api/me",(req,res)=>{
   const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(user.id);
   return res.json({success:true,user:publicUser(fresh||user)});
 });
-app.post("/api/logout",(req,res)=>{const token=getSessionToken(req,"jovia_session"); if(token) sessions.delete(token); const adminToken=getSessionToken(req,"jovia_admin_session"); if(adminToken) adminSessions.delete(adminToken); clearSessionCookie(res,"jovia_session"); clearSessionCookie(res,"jovia_admin_session"); return res.json({success:true});});
+app.post("/api/logout",(req,res)=>{const token=getSessionToken(req,"jovia_session"); if(token) sessions.delete(token); const adminToken=getSessionToken(req,"jovia_admin_session"); if(adminToken) adminSessions.delete(adminToken); clearSessionCookie(res,"jovia_admin_session"); clearSessionCookie(res,"jovia_admin_session"); return res.json({success:true});});
 app.post("/api/payments/initialize",requireUser,async(req,res)=>{try{if(!monnifyConfigured())return res.status(503).json({success:false,message:"Monnify is not configured"});const requestedPackage=packageFromInput(req.body?.package??req.body?.plan);if(!requestedPackage)return res.status(400).json({success:false,message:"Please select Silver or Gold"});if(["active","approved"].includes(req.user.account_status))return res.status(400).json({success:false,message:"Your account is already active"});if(requestedPackage!==req.user.package)return res.status(400).json({success:false,message:"The selected package does not match your registered package."});const expectedAmount=PACKAGES[req.user.package];let payment=db.prepare(`SELECT * FROM payments WHERE user_id=? AND amount=? AND payment_status IN ('PENDING','INITIATED') ORDER BY id DESC LIMIT 1`).get(req.user.id,expectedAmount);if(!payment){const reference=createReference("JOVIA_PAY");const result=db.prepare(`INSERT INTO payments (user_id,amount,package,payment_reference,gateway,payment_status) VALUES (?,?,?,?, 'monnify', 'INITIATED')`).run(req.user.id,expectedAmount,req.user.package,reference);payment=db.prepare("SELECT * FROM payments WHERE id =?").get(result.lastInsertRowid);}const redirectUrl=MONNIFY_REDIRECT_URL||`${req.protocol}://${req.get("host")}/payment-success.html`;const checkout=await initializeMonnifyPayment({amount:payment.amount,package:payment.package,customerName:req.user.full_name,customerEmail:req.user.email,paymentReference:payment.payment_reference,redirectUrl});db.prepare(`UPDATE payments SET transaction_reference=?,gateway_status='INITIATED',payment_status='PENDING',gateway_response=?,updated_at=CURRENT_TIMESTAMP WHERE id=?`).run(checkout.transactionReference||"",safeJson(checkout),payment.id);return res.json({success:true,authorization_url:checkout.checkoutUrl,checkoutUrl:checkout.checkoutUrl,paymentReference:payment.payment_reference,transactionReference:checkout.transactionReference||"",amount:payment.amount,package:payment.package});}catch(error){console.error("PAYMENT INITIALIZE ERROR:",error);return res.status(502).json({success:false,message:error.message||"Unable to initialize payment."});}});
-app.post("/api/payments/verify",requireUser,async(req,res)=>{try{const paymentReference=cleanString(req.body?.paymentReference??req.body?.payment_reference,150);if(!paymentReference)return res.status(400).json({success:false,message:"Payment reference is required."});const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference=? AND user_id=? LIMIT 1`).get(paymentReference,req.user.id);if(!payment)return res.status(404).json({success:false,message:"Payment record not found."});if(payment.payment_status!=="PAID"){const verified=await verifyMonnifyPayment(paymentReference);processSuccessfulPayment(paymentReference,verified);}const updatedPayment=db.prepare(`SELECT * FROM payments WHERE payment_reference=? LIMIT 1`).get(paymentReference);const updatedUser=db.prepare("SELECT * FROM users WHERE id =?").get(req.user.id);return res.json({success:true,paid:updatedPayment.payment_status==="PAID",message:updatedPayment.payment_status==="PAID"?"Payment confirmed and account activated.":"Payment has not been confirmed yet.",payment:paymentResultForUser(updatedPayment),user:publicUser(updatedUser)});}catch(error){console.error("PAYMENT VERIFY ERROR:",error);return res.status(502).json({success:false,message:error.message||"Unable to verify payment."});}});
+app.post("/api/payments/verify",requireUser,async(req,res)=>{try{const paymentReference=cleanString(req.body?.paymentReference??req.body?.payment_reference,150);if(!paymentReference)return res.status(400).json({success:false,message:"Payment reference is required."});const payment=db.prepare(`SELECT * FROM payments WHERE payment_reference=? AND user_id=? LIMIT 1`).get(paymentReference,req.user.id);if(!payment)return res.status(404).json({success:false,message:"Payment record not found."});if(payment.payment_status!=="PAID"){const verified=await verifyMonnifyPayment(paymentReference);processSuccessfulPayment(paymentReference,verified);}else{
+  // FIXED: already PAID but reward fit still miss - repair am
+  try{ const hasReward=db.prepare(`SELECT id FROM referral_rewards WHERE referred_user_id=? AND amount>0 LIMIT 1`).get(req.user.id); if(!hasReward) activateUserAndRewardsInternal(req.user.id, payment.package, payment.package); }catch(e){}
+}const updatedPayment=db.prepare(`SELECT * FROM payments WHERE payment_reference=? LIMIT 1`).get(paymentReference);const updatedUser=db.prepare("SELECT * FROM users WHERE id =?").get(req.user.id);return res.json({success:true,paid:updatedPayment.payment_status==="PAID",message:updatedPayment.payment_status==="PAID"?"Payment confirmed and account activated.":"Payment has not been confirmed yet.",payment:paymentResultForUser(updatedPayment),user:publicUser(updatedUser)});}catch(error){console.error("PAYMENT VERIFY ERROR:",error);return res.status(502).json({success:false,message:error.message||"Unable to verify payment."});}});
 app.get("/api/payments",requireUser,(req,res)=>{const rows=db.prepare(`SELECT * FROM payments WHERE user_id=? ORDER BY id DESC`).all(req.user.id);return res.json({success:true,payments:rows.map(paymentResultForUser)});});
 function saveWebhookEvent(eventKey,eventType,payload){try{db.prepare(`INSERT INTO webhook_events (event_key,event_type,payload) VALUES (?,?,?)`).run(eventKey,eventType,safeJson(payload));return true;}catch(error){if(String(error.message).includes("UNIQUE constraint failed"))return false;throw error;}}
 function webhookSignatureValid(req){const signature=req.headers["monnify-signature"];if(signature&&MONNIFY_SECRET_KEY&&req.rawBody){const expected=crypto.createHmac("sha512",MONNIFY_SECRET_KEY).update(req.rawBody).digest("hex");const a=Buffer.from(expected.toLowerCase());const b=Buffer.from(String(signature).toLowerCase());return(a.length===b.length&&crypto.timingSafeEqual(a,b));}const isSandbox=String(process.env.MONNIFY_ENV||"sandbox").toLowerCase()!=="live";return(isSandbox&&MONNIFY_ALLOW_UNSIGNED_SANDBOX_WEBHOOKS);}
 app.post("/api/webhooks/monnify",async(req,res)=>{try{if(!webhookSignatureValid(req))return res.status(401).json({success:false,message:"Invalid webhook signature."});const payload=req.body||{};const eventType=String(payload.eventType||payload.event||"").toUpperCase();const eventKey=payload.eventId||payload.eventID||payload.id||crypto.createHash("sha256").update(req.rawBody||Buffer.from(safeJson(payload))).digest("hex");if(!saveWebhookEvent(String(eventKey),eventType,payload))return res.status(200).json({success:true,duplicate:true});const eventData=payload.eventData||{};if(eventType==="SUCCESSFUL_TRANSACTION"){const paymentReference=eventData.paymentReference||eventData.payment_reference;if(paymentReference){try{const verified=await verifyMonnifyPayment(paymentReference);processSuccessfulPayment(paymentReference,verified);}catch(error){console.error("WEBHOOK PAYMENT ERROR:",error);}}}return res.status(200).json({success:true,received:true});}catch(error){console.error("WEBHOOK ERROR:",error);return res.status(500).json({success:false,message:"Webhook processing failed."});}});
 app.get("/api/jobs", requireActiveUser, (req,res)=>{try{let jobs; try{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' AND (j.deleted_at IS NULL OR j.deleted_at='') ORDER BY j.id DESC`).all(req.user.id, req.user.id);}catch{jobs = db.prepare(`SELECT j.*, COALESCE(uj.status,'pending') AS user_status, CASE WHEN ulo.id IS NOT NULL THEN 1 ELSE 0 END AS link_opened FROM jobs j LEFT JOIN user_jobs uj ON uj.job_id=j.id AND uj.user_id=? LEFT JOIN user_job_link_opens ulo ON ulo.job_id=j.id AND ulo.user_id=? WHERE j.status='active' ORDER BY j.id DESC`).all(req.user.id, req.user.id);} return res.json({success:true, jobs:jobs.map((job)=>({id:job.id, title:job.title, description:job.description||"", category:job.category||"General", slot:job.slot||"General", reward:Number(job.reward||0), link:job.link||"", url:job.link||"", duration:job.duration||"Flexible", status:job.status, user_status:job.user_status, link_opened:job.link_opened, linkOpened:Boolean(job.link_opened), completed:job.user_status==="completed", started:job.user_status==="started"}))});}catch(err){return res.status(500).json({success:false, message:"Unable to load jobs"});}});
 app.post("/api/jobs/:id/open", requireActiveUser, function(req, res){try{const jobId = toPositiveInteger(req.params.id); if(!jobId) return res.status(400).json({success:false, message:"Invalid job."}); let job; try{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active' AND (deleted_at IS NULL OR deleted_at='')").get(jobId); }catch{ job = db.prepare("SELECT * FROM jobs WHERE id=? AND status='active'").get(jobId); } if(!job) return res.status(404).json({success:false, message:"Job not found"}); db.prepare("INSERT OR IGNORE INTO user_job_link_opens (user_id,job_id) VALUES (?,?)").run(req.user.id, jobId); const existing = db.prepare("SELECT * FROM user_jobs WHERE user_id=? AND job_id=?").get(req.user.id, jobId); if(!existing){db.prepare("INSERT INTO user_jobs (user_id,job_id,status) VALUES (?,?, 'started')").run(req.user.id, jobId);} else if(existing.status === "pending"){db.prepare("UPDATE user_jobs SET status='started' WHERE user_id=? AND job_id=?").run(req.user.id, jobId);} return res.json({success:true, linkOpened:true, url:job.link||"", link:job.link||"", title:job.title, message:"Task opened - now claim"});}catch(e){return res.status(400).json({success:false, message:e.message});}});
-
 app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
   try{
     const jobId = toPositiveInteger(req.params.id);
@@ -261,8 +364,8 @@ app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
         try{ db.prepare("INSERT INTO wallet_transactions (user_id, amount, type, description, reference, balance_type) VALUES (?,?,?,?,?,?)").run(req.user.id, reward, 'job_reward', 'Job SUPER: ' + (job?job.title:jobId), 'JOB_'+jobId+'_'+Date.now(), 'wallet'); }catch{}
         const updatedUser = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id); return updatedUser? updatedUser.wallet_balance : 0;
       })();
-      console.log(`👑 SUPER JOB ${jobId} reward ${reward} user ${req.user.email} NewBal ${newBalance}`);
-      return res.json({ success:true, message:`Claimed ₦${reward} as SUPER - Unlimited!`, reward:reward, walletBalance:newBalance, wallet_balance:newBalance, balance:newBalance, isSuper:true });
+      console.log(`SUPER JOB ${jobId} reward ${reward} user ${req.user.email} NewBal ${newBalance}`);
+      return res.json({ success:true, message:`Claimed N${reward} as SUPER - Unlimited!`, reward:reward, walletBalance:newBalance, wallet_balance:newBalance, balance:newBalance, isSuper:true });
     }
     const userPlan = String(req.user.package||"Silver").toLowerCase().includes("gold")? "Gold" : "Silver";
     const limits = userPlan==="Gold"? {maxJobs:10, perTask:700, maxDaily:7000} : {maxJobs:5, perTask:500, maxDaily:2500};
@@ -294,9 +397,7 @@ app.post("/api/jobs/:id/complete", requireActiveUser, function(req, res){
     return res.json({ success:true, message:`N${reward} credited! ${today.totalCount+1}/${limits.maxJobs} today.`, reward:reward, walletBalance:newBalance, wallet_balance:newBalance, plan: userPlan, completedToday: today.totalCount+1, maxJobs: limits.maxJobs, maxDaily: limits.maxDaily });
   }catch(e){ return res.status(400).json({success:false, message:e.message}); }
 });
-
 app.get("/api/wallet",requireUser,(req,res)=>{try{const user=db.prepare(`SELECT id,wallet_balance,affiliate_balance,total_earned FROM users WHERE id=?`).get(req.user.id);if(!user)return res.status(404).json({success:false,message:"User not found."});const transactions=db.prepare(`SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC`).all(req.user.id);return res.json({success:true,walletBalance:Number(user.wallet_balance||0),affiliateBalance:Number(user.affiliate_balance||0),totalEarned:Number(user.total_earned||0),transactions:transactions.map((item)=>({id:item.id,type:item.type,amount:Number(item.amount||0),balanceType:item.balance_type,reference:item.reference,description:item.description,createdAt:item.created_at}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load wallet."});}});
-
 app.post("/api/withdrawals/verify-code",requireUser,(req,res)=>{
  try{
  if(!isWithdrawalCodesEnabled()) return res.json({success:true,valid:true,message:"Codes disabled - free withdrawal"});
@@ -304,25 +405,24 @@ app.post("/api/withdrawals/verify-code",requireUser,(req,res)=>{
  const reqType = String(req.body?.type||"regular").toLowerCase();
  if(reqType==="affiliate") return res.json({success:true,valid:true,message:"Affiliate FREE - no code needed"});
  if(!raw) return res.json({success:false,valid:false,message:"Enter code"});
- if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"❌ INVALID FORMAT"});
+ if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"INVALID FORMAT"});
  const row=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(raw);
- if(!row) return res.json({success:false,valid:false,message:"❌ Invalid code - NOT FOUND"});
- if(row.used) return res.json({success:false,valid:false,used:true,message:`❌ CODE ALREADY USED by ${row.used_by}`});
- return res.json({success:true,valid:true,message:"✅ Valid code",code:row.code});
+ if(!row) return res.json({success:false,valid:false,message:"Invalid code - NOT FOUND"});
+ if(row.used) return res.json({success:false,valid:false,used:true,message:`CODE ALREADY USED by ${row.used_by}`});
+ return res.json({success:true,valid:true,message:"Valid code",code:row.code});
  }catch(e){return res.status(500).json({success:false,valid:false,message:e.message});}
 });
 app.post("/api/withdrawal-codes/verify",requireUser,(req,res)=>{
  try{
  const raw=cleanString(req.body?.code??req.body?.withdrawalCode,50).toUpperCase().trim();
  if(!raw) return res.json({success:false,valid:false,message:"Enter code"});
- if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"❌ Must be JOVIA-XXXXXXXX"});
+ if(!raw.startsWith("JOVIA-")) return res.json({success:false,valid:false,message:"Must be JOVIA-XXXXXXXX"});
  const row=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(raw);
- if(!row) return res.json({success:false,valid:false,message:"❌ Not in DB"});
+ if(!row) return res.json({success:false,valid:false,message:"Not in DB"});
  if(row.used) return res.json({success:false,valid:false,used:true,message:`USED by ${row.used_by}`});
  return res.json({success:true,valid:true,message:"Valid Admin code"});
  }catch(e){return res.status(500).json({success:false});}
 });
-
 app.post("/api/withdrawals",requireActiveUser,(req,res)=>{try{
  const body=req.body||{};
  const type=String(body.type||body.withdrawalType||"regular").toLowerCase()==="affiliate"?"affiliate":"regular";
@@ -346,7 +446,7 @@ app.post("/api/withdrawals",requireActiveUser,(req,res)=>{try{
  if(type==="regular" && isWithdrawalCodesEnabled()){
  if(!codeRaw) return res.status(400).json({success:false,message:`CODE required - Min N${minimum.toLocaleString()}`});
  const codeRow=db.prepare("SELECT * FROM withdrawal_codes WHERE code=? LIMIT 1").get(codeRaw);
- if(!codeRow) return res.status(400).json({success:false,message:"❌ NOT FOUND"});
+ if(!codeRow) return res.status(400).json({success:false,message:"NOT FOUND"});
  if(codeRow.used) return res.status(400).json({success:false,message:`ALREADY USED by ${codeRow.used_by}`});
  }
  const withdrawal=db.transaction(()=>{
@@ -368,15 +468,66 @@ app.post("/api/withdrawals",requireActiveUser,(req,res)=>{try{
 }catch(error){return res.status(400).json({success:false,message:error.message});}});
 app.get("/api/withdrawals",requireUser,(req,res)=>{try{const rows=db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC LIMIT 100").all(req.user.id);return res.json({success:true,withdrawals:rows.map(withdrawalResult)});}catch(e){return res.status(500).json({success:false});}});
 app.get("/api/referrals/link", requireUser, (req,res)=>{ try{ const username = req.user.username; const frontend = process.env.FRONTEND_URL || "https://jovianetworkcom.vercel.app"; const link = `${frontend}/register.html?ref=${encodeURIComponent(username)}`; return res.json({success:true, link, referralLink: link, url: link}); }catch(e){ return res.status(500).json({success:false, message:e.message}); } });
-app.get("/api/referrals", requireUser, (req,res)=>{ try{ const refs = db.prepare("SELECT u.id, u.full_name, u.username, u.package, u.account_status, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id); const rewards = db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=? ORDER BY id DESC").all(req.user.id); const rewardMap = new Map(); for(const r of rewards){ rewardMap.set(r.referred_user_id, r); } const mapped = refs.map(u=>{ const rew = rewardMap.get(u.id); return { id: u.id, full_name: u.full_name, name: u.full_name, fullName: u.full_name, username: u.username, package: u.package, plan: u.package, package_name: u.package, status: (u.account_status==='active' || u.account_status==='approved')? 'approved' : 'pending', commission: rew? rew.amount : 0, amount: rew? rew.amount : 0, earning: rew? rew.amount : 0, created_at: u.created_at, createdAt: u.created_at, joined_at: u.created_at, }; }); const total = mapped.length; const successful = mapped.filter(r=>r.status==='approved').length; const pending = total - successful; const totalEarnings = mapped.reduce((s,r)=>s+Number(r.commission||0),0); return res.json({ success:true, referrals: mapped, data: mapped, users: mapped, rewards, total, totalReferrals: total, successfulReferrals: successful, approvedReferrals: successful, pendingReferrals: pending, totalEarnings, referralEarnings: totalEarnings, }); }catch(e){ return res.json({success:true, referrals:[], rewards:[], totalReferrals:0, successfulReferrals:0, pendingReferrals:0, totalEarnings:0}); } });
-app.get("/api/referrals/my", requireUser, (req,res)=>{ try{ const refs = db.prepare("SELECT u.id, u.username, u.full_name, u.package, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id); const rewards = db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=?").all(req.user.id); const totalEarnings = rewards.reduce((s,r)=>s+Number(r.amount||0),0); return res.json({success:true, total: refs.length, active: refs.length, totalEarnings, referrals: refs.map(r=>({username:r.username, package:r.package, bonusEarned:0, bonusGiven:0}))}); }catch(e){ return res.json({success:true, total:0, active:0, totalEarnings:0, referrals:[]}); } });
+app.get("/api/referrals", requireUser, (req,res)=>{ try{ const refs = db.prepare("SELECT u.id, u.full_name, u.username, u.package, u.account_status, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id); const rewards = db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=? ORDER BY id DESC").all(req.user.id); const rewardMap = new Map(); for(const r of rewards){ if(!rewardMap.has(r.referred_user_id)) rewardMap.set(r.referred_user_id, r); } const mapped = refs.map(u=>{ const rew = rewardMap.get(u.id); return { id: u.id, full_name: u.full_name, name: u.full_name, fullName: u.full_name, username: u.username, package: u.package, plan: u.package, package_name: u.package, status: (u.account_status==='active' || u.account_status==='approved')? 'approved' : 'pending', commission: rew? rew.amount : 0, amount: rew? rew.amount : 0, earning: rew? rew.amount : 0, created_at: u.created_at, createdAt: u.created_at, joined_at: u.created_at, }; }); const total = mapped.length; const successful = mapped.filter(r=>r.status==='approved').length; const pending = total - successful; const totalEarnings = mapped.reduce((s,r)=>s+Number(r.commission||0),0); return res.json({ success:true, referrals: mapped, data: mapped, users: mapped, rewards, total, totalReferrals: total, successfulReferrals: successful, approvedReferrals: successful, pendingReferrals: pending, totalEarnings, referralEarnings: totalEarnings, }); }catch(e){ return res.json({success:true, referrals:[], rewards:[], totalReferrals:0, successfulReferrals:0, pendingReferrals:0, totalEarnings:0}); } });
+app.get("/api/referrals/my", requireUser, (req,res)=>{ try{ const refs = db.prepare("SELECT u.id, u.username, u.full_name, u.package, u.created_at FROM users u WHERE u.referrer_id=? ORDER BY u.id DESC").all(req.user.id); const rewards = db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=?").all(req.user.id); const totalEarnings = rewards.reduce((s,r)=>s+Number(r.amount||0),0); const rMap=new Map(); for(const r of rewards){ if(!rMap.has(r.referred_user_id)) rMap.set(r.referred_user_id, r.amount); } return res.json({success:true, total: refs.length, active: refs.length, totalEarnings, referrals: refs.map(r=>({username:r.username, package:r.package, bonusEarned:Number(rMap.get(r.id)||0), bonusGiven:Number(rMap.get(r.id)||0)}))}); }catch(e){ return res.json({success:true, total:0, active:0, totalEarnings:0, referrals:[]}); } });
 async function verifyAdminPassword(password){const configured=String(ADMIN_PASSWORD||"");if(!configured)return false;if(configured.startsWith("$2a$")||configured.startsWith("$2b$")||configured.startsWith("$2y$")){return bcrypt.compare(password,configured);}return password===configured;}
-app.post("/api/admin/login",async(req,res)=>{try{const username=cleanString(req.body?.username??req.body?.login,100);const password=String(req.body?.password||"");if(!username||!password)return res.status(400).json({success:false,message:"Username and password are required."});const validUsername=username.toLowerCase()===String(ADMIN_USERNAME||"").toLowerCase();if(!validUsername)return res.status(401).json({success:false,message:"Invalid admin credentials."});const validPassword=await verifyAdminPassword(password);if(!validPassword)return res.status(401).json({success:false,message:"Invalid admin credentials."});const token=crypto.randomBytes(32).toString("hex");const maxAge=8*60*60*1000;adminSessions.set(token,{username:ADMIN_USERNAME,expiresAt:Date.now()+maxAge});setSessionCookie(res,"jovia_admin_session",token,maxAge);return res.json({success:true,username:ADMIN_USERNAME,admin:{username:ADMIN_USERNAME}});}catch(error){return res.status(500).json({success:false,message:"Unable to sign in as admin."});}});
-app.post("/api/admin/logout",(req,res)=>{const token=getSessionToken(req,"jovia_admin_session"); if(token) adminSessions.delete(token); const userToken=getSessionToken(req,"jovia_session"); if(userToken) sessions.delete(userToken); clearSessionCookie(res,"jovia_admin_session"); clearSessionCookie(res,"jovia_session"); return res.json({success:true});});
+app.post("/api/admin/login",async(req,res)=>{try{const username=cleanString(req.body?.username??req.body?.login,100);const password=String(req.body?.password||"");if(!username||!password)return res.status(400).json({success:false,message:"Username and password are required."});const validUsername=username.toLowerCase()===String(ADMIN_USERNAME||"").toLowerCase();if(!validUsername)return res.status(401).json({success:false,message:"Invalid admin credentials."});const validPassword=await verifyAdminPassword(password);if(!validPassword)return res.status(401).json({success:false,message:"Invalid admin credentials."});const token=crypto.randomBytes(32).toString("hex");const maxAge=8*60*60*1000;adminSessions.set(token,{username:ADMIN_USERNAME,expiresAt:Date.now()+maxAge});setSessionCookie(res,"jovia_admin_session",token,maxAge);return res.json({success:true,username:ADMIN_USERNAME,admin:{username:ADMIN_USERNAME},token});}catch(error){return res.status(500).json({success:false,message:"Unable to sign in as admin."});}});
+app.post("/api/admin/logout",(req,res)=>{const token=getSessionToken(req,"jovia_admin_session"); if(token) adminSessions.delete(token); const userToken=getSessionToken(req,"jovia_session"); if(userToken) sessions.delete(userToken); clearSessionCookie(res,"jovia_admin_session"); clearSessionCookie(res,"jovia_admin_session"); return res.json({success:true});});
 app.get("/api/admin/me",requireAdmin,(req,res)=>{return res.json({success:true,admin:{username:req.admin.username}});});
 app.get("/api/admin/dashboard",requireAdmin,(req,res)=>{try{const users=db.prepare(`SELECT COUNT(*) AS count FROM users`).get().count;const activeUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status IN ('active','approved')`).get().count;const pendingUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status='pending'`).get().count;const pendingWithdrawals=db.prepare(`SELECT COUNT(*) AS count FROM withdrawals WHERE status='pending'`).get().count;const totalVideos=db.prepare(`SELECT COUNT(*) AS count FROM videos`).get().count;return res.json({success:true,users,activeUsers,pendingUsers,videos:totalVideos,withdrawals:{pending:pendingWithdrawals},withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),withdrawals_enabled:isWithdrawalsEnabled()? '1':'0'});}catch(error){return res.status(500).json({success:false,message:"Unable to load dashboard."});}});
 app.get("/api/admin/users",requireAdmin,(req,res)=>{try{const rows=db.prepare(`SELECT id,full_name,username,email,phone,package,package_amount,wallet_balance,affiliate_balance,total_earned,account_status,created_at,referral_code,referrer_id,referrals,plan,is_super FROM users ORDER BY id DESC`).all();return res.json({success:true,users:rows.map((user)=>({id:user.id,fullName:user.full_name,full_name:user.full_name,username:user.username,email:user.email,phone:user.phone,package:user.package,plan:user.plan,packageAmount:Number(user.package_amount||0),walletBalance:Number(user.wallet_balance||0),wallet_balance:user.wallet_balance,affiliateBalance:Number(user.affiliate_balance||0),affiliate_balance:user.affiliate_balance,totalEarned:Number(user.total_earned||0),total_earned:user.total_earned,accountStatus:user.account_status,account_status:user.account_status,createdAt:user.created_at,created_at:user.created_at,referral_code:user.referral_code,referrer_id:user.referrer_id,referrals:user.referrals,is_super:user.is_super}))});}catch(error){return res.status(500).json({success:false,message:"Unable to load users."});}});
-app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{try{const id=req.params.id;const s=String(req.body?.status||"").toLowerCase();const ns=(s==="suspended"||s==="banned"||s==="blocked")?"suspended":"active";const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u)return res.status(404).json({success:false,message:"User not found"});db.prepare("UPDATE users SET account_status=?, status=? WHERE id=?").run(ns,ns,id);return res.json({success:true,message:`User ${ns} successfully`});}catch(e){return res.status(500).json({success:false,message:"Failed to update status"});}});
+
+// ===== FIXED: Admin status - suspend + activate both work, activate pays bonus =====
+app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
+  try{
+    const id=req.params.id;
+    const raw=String(req.body?.status||req.body?.account_status||req.body?.action||"").toLowerCase().trim();
+    // FIXED: accept ALL forms frontend fit send
+    let ns;
+    if(["suspend","suspended","ban","banned","blocked","block","disable","disabled"].includes(raw)) ns="suspended";
+    else if(["pending","pend","waiting"].includes(raw)) ns="pending";
+    else if(["active","approve","approved","activate","activated","enable","enabled","unblock","unban"].includes(raw)) ns="active";
+    else ns="active"; // default no be suspend again
+    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    // SUSPEND path
+    if(ns==="suspended"){
+      try{ db.prepare("UPDATE users SET account_status='suspended', status='suspended' WHERE id=?").run(id); }
+      catch(e){ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); }
+      return res.json({success:true,message:`User suspended successfully`, status:"suspended", account_status:"suspended"});
+    }
+    // PENDING path
+    if(ns==="pending"){
+      try{ db.prepare("UPDATE users SET account_status='pending', status='pending' WHERE id=?").run(id); }
+      catch(e){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); }
+      return res.json({success:true,message:`User set to pending`, status:"pending", account_status:"pending"});
+    }
+    // ACTIVE path - MUST pay bonus
+    const result=db.transaction(()=>{
+      activateUserAndRewardsInternal(u.id, u.package, u.package);
+      try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(u.id); }catch(e){}
+      return db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
+    })();
+    return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
+  }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
+});
+
+// ===== NEW: Fix missing rewards in one click =====
+app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
+  try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
+  catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+app.post("/api/admin/repair-referral/:id",requireAdmin,(req,res)=>{
+  try{
+    const id=req.params.id;
+    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    try{ db.prepare(`DELETE FROM referral_rewards WHERE referred_user_id=? AND amount=0`).run(id); }catch(e){}
+    activateUserAndRewardsInternal(u.id, u.package, u.package);
+    const after=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    return res.json({success:true,message:"Referral repaired", user:after});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
 app.get("/api/admin/settings",requireAdmin,(req,res)=>{try{const allSettings = db.prepare("SELECT key, value, updated_at FROM settings").all(); const obj = {}; for(const s of allSettings){ obj[s.key] = s.value; } return res.json({success:true, settings: obj, withdrawalsEnabled: isWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codesEnabled:isWithdrawalCodesEnabled(), minimums:WITHDRAWAL_MINIMUMS, codeFee:WITHDRAWAL_CODE_FEE, withdrawals_enabled: isWithdrawalsEnabled()? '1' : '0'});}catch(e){ return res.status(500).json({success:false,message:e.message}); }});
 app.post("/api/admin/settings/withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.regularEnabled?? req.body?.withdrawalsEnabled;
@@ -387,20 +538,26 @@ app.post("/api/admin/settings/withdrawals",requireAdmin,(req,res)=>{try{
   return res.json({success:true, message: enabled? "Regular ENABLED" : "Regular DISABLED", enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, type:'regular'});
 }catch(e){ return res.status(400).json({success:false,message:e.message}); }});
 app.post("/api/admin/settings/regular-withdrawals",requireAdmin,(req,res)=>{try{
-  let enabled = req.body?.enabled?? req.body?.regularEnabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
+    let enabled = req.body?.enabled?? req.body?.regularEnabled;
+  if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setRegularWithdrawalsEnabled(enabled); setSettingValue('withdrawals_enabled', enabled?'1':'0');
-  return res.json({success:true, enabled, regularEnabled:enabled, message: enabled?"Regular ON":"Regular OFF"});
+  return res.json({success:true, enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, message: enabled?"Regular ON":"Regular OFF"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.post("/api/admin/settings/affiliate-withdrawals",requireAdmin,(req,res)=>{try{
-  let enabled = req.body?.enabled?? req.body?.affiliateEnabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
+  let enabled = req.body?.enabled?? req.body?.affiliateEnabled;
+  if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setAffiliateWithdrawalsEnabled(enabled);
   return res.json({success:true, enabled, affiliateEnabled:enabled, message: enabled?"Affiliate ON":"Affiliate OFF"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.post("/api/admin/settings/withdrawal-codes",requireAdmin,(req,res)=>{try{
-  let enabled = req.body?.enabled; if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'; else enabled=Boolean(enabled);
+  let enabled = req.body?.enabled;
+  if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setWithdrawalCodesEnabled(enabled);
   return res.json({success:true, enabled, codesEnabled:enabled, message: enabled?`Codes ENABLED`:"Codes DISABLED"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
+
 app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
   const count= Math.min(100, Math.max(1, Number(req.body?.count||1)||1));
   const codes=[];
@@ -410,6 +567,7 @@ app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
   }
   return res.json({success:true, codes, count:codes.length, message:`${codes.length} codes generated`});
 }catch(e){return res.status(500).json({success:false,message:e.message});}});
+
 app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
