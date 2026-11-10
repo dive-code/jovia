@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JOVIA Wallet | Fund Wallet</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--purple:#2a0f3d;--purple2:#4b1d6b;--purple3:#7c2ae8;--gold:#ffc400;--gold2:#ffe06b;--bg:#faf8fc;--text:#241532;--muted:#8a8196;--border:#eee8f2}
+body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text)}
+.app{width:100%;max-width:760px;min-height:100vh;margin:auto;padding-bottom:110px}
+.topbar{position:sticky;top:0;z-index:90;display:flex;align-items:center;gap:12px;padding:13px 17px;background:#fff;border-bottom:1px solid var(--border)}
+.back{width:41px;height:41px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:21px;font-weight:800;display:grid;place-items:center;cursor:pointer}
+.brand{font-size:17px;font-weight:900;color:var(--purple)}.brand span{color:#d6a400}
+.top-pill{margin-left:auto;font-size:9px;font-weight:800;padding:7px 12px;border-radius:30px;background:#f4eafa;color:var(--purple2);border:1px solid #eadcf3}
+.content{padding:17px}
+.hero{background:linear-gradient(130deg,#241035,#452064 55%,#7130a0);border-radius:22px;padding:21px;color:#fff;margin-bottom:20px;box-shadow:0 12px 30px rgba(42,15,61,.17)}
+.game-label{font-size:9px;opacity:.7;letter-spacing:1.4px;font-weight:700}
+.game-money{font-size:25px;font-weight:900;margin-top:5px}
+.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 8px 28px rgba(42,15,61,.05);margin-bottom:14px}
+.card h3{font-size:14px;color:var(--purple);font-weight:800;margin-bottom:6px}
+.card p{font-size:11px;color:var(--muted);line-height:1.7}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11px;font-weight:700;margin-bottom:6px}
+.field input{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none}
+.field input:focus{border-color:var(--purple)}
+.btn{width:100%;padding:14px;border-radius:12px;border:0;font-size:12px;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#ffc400,#ffe06b);color:#241500}
+.btn2{width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:800;cursor:pointer;margin-top:10px}
+.note{padding:12px;border-radius:12px;background:#f5f3ff;border:1px solid #e9e2ef;font-size:11px;color:#4c1d95;line-height:1.7}
+.bottom-nav{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:510px;background:#fff;border:1px solid var(--border);border-radius:19px;padding:8px 6px;display:grid;grid-template-columns:repeat(4,1fr);z-index:100}
+.nav-item{color:#9990a4;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9px;font-weight:700;padding:7px 0;border-radius:12px;text-decoration:none}
+.nav-item.active{color:var(--purple);background:#f4edf9}
+.nav-icon{font-size:18px}
+</style>
+</head><body>
+<div class="app">
+<header class="topbar"><button class="back" onclick="location.href='games.html'">‹</button><div class="brand">JOVIA <span>WALLET</span></div><div class="top-pill">FUND WALLET</div></header>
+<main class="content">
+<section class="hero"><div class="game-label">GAME WALLET BALANCE</div><div class="game-money">₦0.00</div><p style="margin-top:10px;font-size:10px;line-height:1.7;color:#dfd2e8">Your wallet balance will show here when connected to your account.</p></section>
+
+<section class="game-panel" id="depositPanel"><div class="panel-head"><h3>＋ Fund Game Wallet</h3><button class="close-panel" data-close-panel>Close</button></div><div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #22c55e;padding:14px;border-radius:12px;margin-bottom:16px"><div style="font-size:10px;font-weight:800;color:#15803d;margin-bottom:8px">BANK TRANSFER DETAILS</div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Bank</span><b style="font-size:12px">Kredi Money MFB</b></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Account No</span><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px;color:#111">1850772192</b><button type="button" onclick="navigator.clipboard.writeText('1850772192');this.innerText='Copied!';setTimeout(()=>this.innerText='Copy',2000)" style="padding:4px 10px;border-radius:20px;border:none;background:#0f172a;color:#fff;font-size:10px;font-weight:800">Copy</button></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#64748b">Name</span><b style="font-size:12px">Raenest / Divine</b></div></div><form id="depositForm"><div class="field"><label>Amount Sent (₦) - Min ₦100</label><input id="depositAmount" type="number" min="100" placeholder="e.g 2000" required></div><div class="field"><label>Sender Reference</label><input id="depositRef" type="text" placeholder="e.g Your name" required></div><div class="field"><label>Upload Payment Proof *</label><input id="depositProof" type="file" accept="image/*" required style="padding:10px;background:#faf8fb"><img id="proofPreview" style="display:none;width:100%;max-height:200px;object-fit:contain;margin-top:10px;border-radius:10px;border:1px solid #e2e8f0"></div><button class="primary-btn" id="depositSubmit" type="submit" style="background:var(--purple);color:#fff">Submit for Verification →</button></form><div class="game-result" id="depositResult"></div></section>
+<section class="card">
+<h3>How funding works</h3>
+<p>1. Enter amount &amp; reference<br>2. Complete payment with your provider<br>3. Your balance updates after confirmation</p>
+</section>
+
+<button class="btn2" onclick="location.href='games.html'">← Back to Games</button>
+</main>
+</div>
+<nav class="bottom-nav"><a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a><a class="nav-item" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a><a class="nav-item active" href="games.html"><span class="nav-icon">🎮</span><span>Games</span></a><a class="nav-item" href="profile.html"><span class="nav-icon">👤</span><span>Profile</span></a></nav>
+<script>
+function showMsg(){
+  const a=document.getElementById('amount').value;
+  const m=document.getElementById('msg');
+  if(!a || Number(a)<100){m.style.display='block';m.textContent='Enter minimum ₦100 to continue.';return;}
+  m.style.display='block';
+  m.textContent='Payment provider is not connected yet. Connect your verified payment provider in server.js before going live.';
+}
+</script>
+</body></html>
