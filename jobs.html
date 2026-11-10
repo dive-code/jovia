@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -506,7 +505,6 @@ font-weight:900;
 margin-top:16px;
 font-size:11px;
 }
-/* MOTIVATIONAL LOCK STYLES */
 .locked-card{
 background:linear-gradient(135deg,#fffaf0,#fffbeb);
 border:1px dashed #f59e0b !important;
@@ -701,6 +699,7 @@ let taskTimerInterval = null;
 const watchedVideos = new Map();
 const taskTimers = new Map();
 const youtubeTimers = new Map();
+// FIX 3: Use localStorage not sessionStorage, so timer survives close / refresh
 const TASK_TIMER_STORAGE_KEY = "jovia_task_waits_v1";
 const PLAN_CONFIG = {
   Silver:{maxDaily:2500,taskCount:5},
@@ -759,7 +758,7 @@ function buildPlayerHTML(video){
           allowfullscreen loading="lazy"></iframe>
         <button type="button" id="playbtn-${escapeHTML(id)}"
           style="position:absolute;inset:0;background:rgba(0,0,0,.25);border:0;color:#fff;font-size:13px;font-weight:900;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px">
-          <span style="width:56px;height:56px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px">▶</span>
+          <span style="width:56px;height:56px;border-radius:50%;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-size:22px">▶️</span>
           <span>Tap to watch ${MIN_WATCH_SECONDS}s</span>
         </button>
       </div>
@@ -848,13 +847,14 @@ function wouldExceedLimit(reward){
 function getUpgradeMessage(){
   const s=getDailyStats();
   const totalRemaining=availableJobs.reduce((a,b)=>a+Number(b.reward||0),0);
-  return `🔒 You don reach daily limit but ${formatNaira(totalRemaining)} jobs dey wait! Upgrade to unlock`;
+  return `🔒 You don reach daily limit but ${formatNaira(totalRemaining)} jobs dey wait! Upgrade to SUPER to unlock`;
 }
+// FIX 3: Restore from localStorage, NO 60s expiry. Timer must survive close.
 function restoreTaskTimers(){
   try{
-    const saved=JSON.parse(sessionStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");
+    const saved=JSON.parse(localStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");
     Object.entries(saved).forEach(([id,ts])=>{
-      if(Number(ts)>Date.now()-60000)taskTimers.set(String(id),{claimAvailableAt:Number(ts)});
+      if(Number(ts)>0)taskTimers.set(String(id),{claimAvailableAt:Number(ts)});
     });
   }catch{}
 }
@@ -862,7 +862,7 @@ function saveTaskTimers(){
   try{
     const o={};
     taskTimers.forEach((s,id)=>{o[id]=s.claimAvailableAt;});
-    sessionStorage.setItem(TASK_TIMER_STORAGE_KEY,JSON.stringify(o));
+    localStorage.setItem(TASK_TIMER_STORAGE_KEY,JSON.stringify(o));
   }catch{}
 }
 function startTaskTimer(id){
@@ -941,7 +941,6 @@ function renderJobs(jobs){
   document.getElementById("sectionTitle").textContent=currentFilter==="completed"?"Completed Jobs":"Available Jobs";
   document.getElementById("superActiveBadge").style.display=stats.isSuper?"inline-flex":"none";
   document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${stats.isSuper?"∞":formatNaira(stats.limits.maxDaily)}`;
-  // MOTIVATIONAL DAILY LIMIT LOGIC
   if(currentFilter==="available"&&isDailyLimitReached()){
     const totalRemaining=availableJobs.reduce((sum,j)=>sum+Number(j.reward||0),0);
     const countRemaining=availableJobs.length;
@@ -954,7 +953,7 @@ function renderJobs(jobs){
           <div style="font-size:11px;color:#92400e">But you still get <b>${countRemaining} premium tasks worth ${formatNaira(totalRemaining)}</b> dey wait for you now!</div>
           <div style="margin-top:6px;font-size:10px;color:#756d7c">Upgrade now, no need wait till tomorrow</div>
         </div>
-        <a href="upgrade-pay.html" class="gold-upgrade-btn">Upgrade to Gold to Unlock & Earn ${formatNaira(totalRemaining)} Today 🚀</a>
+        <a href="upgrade-pay.html" class="gold-upgrade-btn">Upgrade to SUPER to Unlock & Earn ${formatNaira(totalRemaining)} Today 🚀</a>
         <div style="margin-top:10px;font-size:9px;color:#9b939f">👇 See wetin you dey miss below</div>
       </div>
     `;
@@ -969,7 +968,7 @@ function renderJobs(jobs){
           <div class="job-description">${escapeHTML(getJobDescription(job))}</div>
           <div class="locked-overlay-new">
             <div>🔒 This task worth <b>${formatNaira(reward)}</b> dey wait for you</div>
-            <div style="font-size:9px;margin-top:4px;opacity:.8">Upgrade to unlock this + ${countRemaining-1} more jobs</div>
+            <div style="font-size:9px;margin-top:4px;opacity:.8">Upgrade to SUPER to unlock this + ${countRemaining-1} more jobs</div>
           </div>
         </div>
       `;
@@ -1011,27 +1010,27 @@ function renderJobs(jobs){
       html+=`
         <div class="task-box upgrade-box">
           <div class="task-label">🔒 PREMIUM TASK</div>
-          <div class="task-info">This <b>${formatNaira(reward)}</b> task dey wait but your ${stats.plan} limit don full. Upgrade to unlock am now!</div>
+          <div class="task-info">This <b>${formatNaira(reward)}</b> task dey wait but your ${stats.plan} limit don full. Upgrade to SUPER to unlock am now!</div>
         </div>
         <a href="upgrade-pay.html" class="upgrade-btn">Unlock ${formatNaira(reward)} Task →</a>`;
     }else if(timerExists&&!opened){
       html+=`
         <div class="task-box wait-box">
           <div class="task-label">⏳ ${sec}s remaining</div>
-          <div class="task-info">Your task timer is running.</div>
+          <div class="task-info">Your task timer is running. You fit close site, come back and claim.</div>
         </div>
         <button class="complete-btn" disabled>Wait ${sec}s</button>`;
     }else if(opened){
       html+=`
         <div class="task-box success-box">
           <div class="task-label">READY ✓</div>
-          <div class="task-info">Your task is ready for reward verification.</div>
+          <div class="task-info">Your task is ready for reward verification. Even if you close site, you fit claim am.</div>
         </div>
         <button class="complete-btn" data-action="complete" data-job-id="${escapeHTML(id)}">
           Claim ${formatNaira(reward)} →
         </button>`;
     }else{
-      html+=`<button class="task-open-btn" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗</button>`;
+      html+=`<button class="task-open-btn" data-action="open" data-job-id="${escapeHTML(id)}">Open Task ↗️</button>`;
     }
     item.innerHTML=html;
     list.appendChild(item);
@@ -1114,12 +1113,13 @@ async function openTask(jobId,btn){
     }
     startTaskTimer(jobId);
     showMessage(`Task opened. Return after ${TASK_WAIT_SECONDS} seconds to claim your reward.`,"success");
-    window.location.assign(destination);
+    // FIX 3: Open in new tab, do NOT replace JOVIA page. User fit come back freely.
+    window.open(destination, "_blank", "noopener");
   }catch(e){
     showMessage(e.message||"Unable to open this task.");
     if(btn){
       btn.disabled=false;
-      btn.textContent="Open Task ↗";
+      btn.textContent="Open Task ↗️";
     }
   }
 }
