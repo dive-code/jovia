@@ -131,17 +131,17 @@ function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)retur
 function requireAdmin(req,res,next){
   let a=null;
   try{ a=getAdminSession(req); }catch(e){ a=null; }
-  // Fallback: Bearer token header (for frontend wey no dey send cookie)
   if(!a){
-    const hdr=String(req.headers["authorization"]||"");
-    const tok=hdr.startsWith("Bearer ") ? hdr.slice(7).trim() : "";
+    const hdr=String(req.headers?.authorization||req.headers?.Authorization||"");
+    const tok=hdr.toLowerCase().startsWith("bearer ") ? hdr.slice(7).trim() : "";
     if(tok && typeof adminSessions!=="undefined"){
       const s=adminSessions.get(tok);
       if(s && s.expiresAt>Date.now()) a=s;
     }
   }
   if(!a) return res.status(401).json({success:false,message:"Admin authentication required"});
-  req.admin=a; next();
+  req.admin={username:a.username||ADMIN_USERNAME};
+  return next();
 }
 function updateUserBalance(id,col,amt){if(col!=="wallet_balance"&&col!=="affiliate_balance")throw new Error("Invalid column");db.prepare(`UPDATE users SET ${col}=${col}+? WHERE id=?`).run(amt,id);}
 function recordWalletTransaction(uid,type,amt,btype,ref,desc){try{db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}catch(e){}}
@@ -165,7 +165,6 @@ function getReferralReward(referrerPackage, referredPackage, oldPackage){
   if(b==="SILVER") return 8000;
   return 0;
 }
-
 // ===== FIXED: activateUserAndRewardsInternal - no 0-row block, sets both status columns =====
 function activateUserAndRewardsInternal(uid,paymentPackage,oldPackageFromPayment){
   const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
