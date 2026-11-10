@@ -503,6 +503,15 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
 
+// ===== ADMIN STATUS / SUSPEND / ACTIVATE - RESTORED LIKE FIRST SERVER =====
+app.post("/api/admin/users/:id/status", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const statusRaw=String(req.body?.status||"").toLowerCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); if(statusRaw==="approved"||statusRaw==="active"||statusRaw==="1"){ activateUserAndRewardsInternal(id, u.package, u.package); } else if(statusRaw==="suspended"){ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); } else if(statusRaw==="pending"){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); } return res.json({success:true,message:"Status updated"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
+app.post("/api/admin/users/:id/suspend", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true,message:"User suspended"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
+app.post("/api/admin/users/:id/unsuspend", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); activateUserAndRewardsInternal(id, u.package, u.package); return res.json({success:true,message:"User unsuspended"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
+app.get("/api/admin/users/:id/status:statusValue", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); const raw=String(req.params.statusValue||"").replace(":","").toLowerCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); if(raw==="1"||raw==="approved"||raw==="active") activateUserAndRewardsInternal(id, u.package, u.package); else db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
+app.get("/api/admin/users/:id/status/:statusValue", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); const raw=String(req.params.statusValue||"").toLowerCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); if(raw==="1"||raw==="approved"||raw==="active") activateUserAndRewardsInternal(id, u.package, u.package); else db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
+app.post("/api/admin/users/:id/activate", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user."}); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); activateUserAndRewardsInternal(id, u.package, u.package); const updated=db.prepare(`SELECT * FROM users WHERE id=?`).get(id); return res.json({success:true,user:publicUser(updated)}); }catch(error){ return res.status(500).json({success:false,message:error.message||"Unable to activate user."}); } });
+app.post("/api/admin/users/:id/reset-password", requireAdmin, async(req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const h=await bcrypt.hash(String(req.body?.newPassword||"password123"),12); db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(h,id); return res.json({success:true,message:"Password reset"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
+
 // ===== FIXED: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
   try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
@@ -582,10 +591,7 @@ app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
 // === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL ===
-app.get("/api/admin/backpay-all", (req,res)=>{
-  if (req.query.key !== 'jovia123') {
-    return res.status(401).json({success:false, message:"Admin authentication required"});
-  }
+app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
   try{
     const result = db.transaction(()=>{
       let paidCount = 0, totalPaid = 0, details = [];
@@ -627,6 +633,10 @@ app.get("/api/admin/backpay-all", (req,res)=>{
     })();
     return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+app.get("/api/admin/backpay-all-key", (req,res)=>{
+  if (req.query.key !== 'jovia123') return res.status(401).json({success:false, message:"Admin authentication required"});
+  return res.redirect("/api/admin/backpay-all");
 });
 app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
   try{
