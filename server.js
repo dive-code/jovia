@@ -500,7 +500,6 @@ app.get("/api/notifications",requireUser,(req,res)=>{try{const u=req.user;if(u.a
     return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
-
 // ===== FIXED: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
   try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
