@@ -502,11 +502,11 @@ app.get("/api/notifications",requireUser,(req,res)=>{try{const u=req.user;if(u.a
 });
 
 // ===== FIXED: Fix missing rewards in one click =====
-app.post("/api/admin/fix-missing-rewards",requireAdminFixed,(req,res)=>{
+app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
   try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
   catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
-app.post("/api/admin/repair-referral/:id",requireAdminFixed,(req,res)=>{
+app.post("/api/admin/repair-referral/:id",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
     const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
@@ -539,8 +539,8 @@ app.post("/api/admin/repair-referral/:id",requireAdminFixed,(req,res)=>{
     return res.json({success:true,message:"Referral repaired", user:after});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
-app.get("/api/admin/settings",requireAdminFixed,(req,res)=>{try{const allSettings = db.prepare("SELECT key, value, updated_at FROM settings").all(); const obj = {}; for(const s of allSettings){ obj[s.key] = s.value; } return res.json({success:true, settings: obj, withdrawalsEnabled: isWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codesEnabled:isWithdrawalCodesEnabled(), minimums:WITHDRAWAL_MINIMUMS, codeFee:WITHDRAWAL_CODE_FEE, withdrawals_enabled: isWithdrawalsEnabled()? '1' : '0'});}catch(e){ return res.status(500).json({success:false,message:e.message}); }});
-app.post("/api/admin/settings/withdrawals",requireAdminFixed,(req,res)=>{try{
+app.get("/api/admin/settings",requireAdmin,(req,res)=>{try{const allSettings = db.prepare("SELECT key, value, updated_at FROM settings").all(); const obj = {}; for(const s of allSettings){ obj[s.key] = s.value; } return res.json({success:true, settings: obj, withdrawalsEnabled: isWithdrawalsEnabled(), regularEnabled:isRegularWithdrawalsEnabled(), affiliateEnabled:isAffiliateWithdrawalsEnabled(), codesEnabled:isWithdrawalCodesEnabled(), minimums:WITHDRAWAL_MINIMUMS, codeFee:WITHDRAWAL_CODE_FEE, withdrawals_enabled: isWithdrawalsEnabled()? '1' : '0'});}catch(e){ return res.status(500).json({success:false,message:e.message}); }});
+app.post("/api/admin/settings/withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.regularEnabled?? req.body?.withdrawalsEnabled;
   let type = String(req.body?.type||"regular").toLowerCase();
   if(typeof enabled === 'string'){ enabled = enabled === '1' || enabled.toLowerCase() === 'true' || enabled.toLowerCase() === 'on'; } else { enabled = Boolean(enabled); }
@@ -548,25 +548,25 @@ app.post("/api/admin/settings/withdrawals",requireAdminFixed,(req,res)=>{try{
   setRegularWithdrawalsEnabled(enabled); setSettingValue('withdrawals_enabled', enabled?'1':'0');
   return res.json({success:true, message: enabled? "Regular ENABLED" : "Regular DISABLED", enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, type:'regular'});
 }catch(e){ return res.status(400).json({success:false,message:e.message}); }});
-app.post("/api/admin/settings/regular-withdrawals",requireAdminFixed,(req,res)=>{try{
+app.post("/api/admin/settings/regular-withdrawals",requireAdmin,(req,res)=>{try{
     let enabled = req.body?.enabled?? req.body?.regularEnabled;
   if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setRegularWithdrawalsEnabled(enabled); setSettingValue('withdrawals_enabled', enabled?'1':'0');
   return res.json({success:true, enabled, regularEnabled:enabled, withdrawalsEnabled:enabled, message: enabled?"Regular ON":"Regular OFF"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.post("/api/admin/settings/affiliate-withdrawals",requireAdminFixed,(req,res)=>{try{
+app.post("/api/admin/settings/affiliate-withdrawals",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled?? req.body?.affiliateEnabled;
   if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setAffiliateWithdrawalsEnabled(enabled);
   return res.json({success:true, enabled, affiliateEnabled:enabled, message: enabled?"Affiliate ON":"Affiliate OFF"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.post("/api/admin/settings/withdrawal-codes",requireAdminFixed,(req,res)=>{try{
+app.post("/api/admin/settings/withdrawal-codes",requireAdmin,(req,res)=>{try{
   let enabled = req.body?.enabled;
   if(typeof enabled==='string') enabled = enabled==='1'||enabled.toLowerCase()==='true'||enabled.toLowerCase()==='on'; else enabled=Boolean(enabled);
   setWithdrawalCodesEnabled(enabled);
   return res.json({success:true, enabled, codesEnabled:enabled, message: enabled?`Codes ENABLED`:"Codes DISABLED"});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
-app.post("/api/admin/withdrawal-codes/generate",requireAdminFixed,(req,res)=>{try{
+app.post("/api/admin/withdrawal-codes/generate",requireAdmin,(req,res)=>{try{
   const count= Math.min(100, Math.max(1, Number(req.body?.count||1)||1));
   const codes=[];
   for(let i=0;i<count;i++){
@@ -575,7 +575,7 @@ app.post("/api/admin/withdrawal-codes/generate",requireAdminFixed,(req,res)=>{tr
   }
   return res.json({success:true, codes, count:codes.length, message:`${codes.length} codes generated`});
 }catch(e){return res.status(500).json({success:false,message:e.message});}});
-app.get("/api/admin/withdrawal-codes",requireAdminFixed,(req,res)=>{try{
+app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
@@ -626,7 +626,7 @@ app.get("/api/admin/backpay-all", (req,res)=>{
     return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
-app.get("/api/admin/private-messages",requireAdminFixed,(req,res)=>{
+app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
   try{
     const rows = db.prepare("SELECT * FROM private_messages ORDER BY id DESC LIMIT 200").all();
     const mapped = rows.map(r=>{
@@ -654,78 +654,6 @@ app.get("/api/user/private-messages",requireUser,(req,res)=>{
     return res.json({success:true, messages:unread, count:unread.length});
   }catch(e){return res.json({success:true, messages:unread, count:unread.length});}
 });
-app.post("/api/admin/private-messages",requireAdminFixed,(req,res)=>{
-  try{
-    const {recipientIds, title, message, type} = req.body||{};
-    if(!Array.isArray(recipientIds) || recipientIds.length===0) return res.status(400).json({success:false,message:"Select at least one recipient"});
-    const cleanTitle = cleanString(title,150);
-    const cleanMessage = cleanString(message,5000);
-    if(!cleanTitle) return res.status(400).json({success:false,message:"Title required"});
-    if(!cleanMessage) return res.status(400).json({success:false,message:"Message required"});
-    const validIds = recipientIds.map(n=>Number(n)).filter(n=>Number.isInteger(n)&&n>0);
-    if(!validIds.length) return res.status(400).json({success:false,message:"No valid recipient IDs"});
-    let summary = "";
-    if(validIds.length===1){
-      const u = db.prepare("SELECT full_name, username, email FROM users WHERE id=?").get(validIds[0]);
-      summary = u? `${u.full_name} (${u.username}) - ONE user` : `User ID ${validIds[0]} - ONE`;
-    } else {
-      summary = `${validIds.length} users - ALL/POP`;
-    }
-    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", req.admin.username||"admin");
-    return res.json({success:true, message:`Pop sent to ${validIds.length} user(s)`, id:result.lastInsertRowid, recipientCount:validIds.length, recipients:summary});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
-});
-app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
-  try{
-    const id = toPositiveInteger(req.body?.id || req.body?.message_id);
-    if(!id) return res.status(400).json({success:false,message:"Invalid id"});
-    db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
-    return res.json({success:true, message:"Marked as read"});
-  }catch(e){return res.status(400).json({success:false,message:e.message});}
-});
-app.post("/api/admin/email/send",requireAdminFixed,async(req,res)=>{
-  try{
-    const {recipients, subject, message} = req.body||{};
-    if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients"});
-    const cleanSub = cleanString(subject,200);
-    const cleanMsg = cleanString(message,10000);
-    if(!cleanSub) return res.status(400).json({success:false,message:"Subject required"});
-    if(!cleanMsg) return res.status(400).json({success:false,message:"Message required"});
-    const unique = [...new Set(recipients.map(e=>normalizeEmail(e)).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))];
-    if(!unique.length) return res.status(400).json({success:false,message:"No valid emails"});
-    if(!BREVO_API_KEY) return res.status(400).json({success:false,message:"BREVO_API_KEY not set"});
-    let sent=0, failed=0;
-    const errors=[];
-    for(const email of unique){
-      try{ await sendBrevoEmail(email, cleanSub, cleanMsg); sent++; }catch(err){ failed++; errors.push(`${email}: ${err.message}`); }
-    }
-    return res.json({success:true, sent, failed, total:unique.length, message:`Email campaign: Sent ${sent}, Failed ${failed} of ${unique.length}`, errors:errors.slice(0,5)});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
-});
-app.get("/api/announcement",(req,res)=>{
-  try{
-    const row = db.prepare("SELECT * FROM announcements ORDER BY id DESC LIMIT 1").get();
-    if(!row) return res.json({success:true, enabled:false, title:"", message:"", channelUrl:"https://t.me/jovianetwerk", channelText:"Join Channel"});
-    return res.json({success:true, enabled:Boolean(row.enabled), title:row.title, message:row.message, channelUrl:row.channel_url, channelText:row.channel_text, updatedAt:row.updated_at});
-  }catch(e){return res.json({success:true, enabled:false, title:"Join Official Channel", message:"Join our channel", channelUrl:"https://t.me/jovianetwerk", channelText:"Join Official Channel"});}
-});
-// === NOTIFICATIONS FOR BELL - ACTIVE ONLY, HISTORY STAYS ===
-app.get("/api/notifications", requireUser, (req,res)=>{
-  try{
-    const u = req.user;
-    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
-      return res.json({success:true, notifications:[]});
-    }
-    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
-    const out = [];
-    for(const m of all){
-      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
-      if(!ids.includes(u.id)) continue;
-      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
-      out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read: read?1:0, read: !!read});
-    }
-    return res.json({success:true, notifications:out});
-  }catch(e){ return res.json({success:true, notifications:[]}); }
     // ACTIVE path - FORCE PAY LIKE BACKPAY
     const result=db.transaction(()=>{
       const fresh=db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
