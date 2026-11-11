@@ -209,6 +209,67 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
     <div class="table-wrap"><table><thead><tr><th>Date</th><th>Title</th><th>Recipients</th><th>Status</th></tr></thead><tbody id="privateMessageHistory"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody></table></div>
   </div>
 </section>
+<script>
+// FIX: make Active / Non-Active / Suspended / All respect Package + Status dropdown + Search
+function getPrivateFilteredForSelect(){
+  const q=(document.getElementById('privateRecipientSearch')?.value||'').toLowerCase().trim();
+  const st=document.getElementById('privateStatusFilter')?.value||'all';
+  const pk=(document.getElementById('privatePackageFilter')?.value||'all').toLowerCase();
+  const all=window.allUsers||window.users||window.privateUsers||[];
+  return all.filter(u=>{
+    const status=(u.status||u.accountStatus||u.account_status||'active').toLowerCase();
+    const pack=(u.package||u.plan||u.packageName||'').toLowerCase();
+    const hay=((u.name||'')+' '+(u.username||'')+' '+(u.email||'')).toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(st!=='all' && status!==st) return false;
+    if(pk!=='all' && pack!==pk) return false;
+    return true;
+  });
+}
+function selectPrivateGroup(group){
+  const base=getPrivateFilteredForSelect();
+  const filtered=base.filter(u=>{
+    if(group==='all') return true;
+    const s=(u.status||u.accountStatus||'active').toLowerCase();
+    if(group==='active') return s==='active';
+    if(group==='inactive') return s==='inactive'||s==='non-active'||s==='nonactive';
+    if(group==='suspended') return s==='suspended';
+    return true;
+  });
+  // keep your existing selected set if you use it, else rebuild it
+  window.selectedPrivateRecipients=new Set(filtered.map(u=>u.id||u.email));
+  if(window.selectedRecipients) window.selectedRecipients=new Set(filtered.map(u=>u.id||u.email));
+  // tick checkboxes for visible list
+  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>{
+    cb.checked=filtered.some(u=>(u.id||u.email)==cb.value);
+  });
+  const c=document.getElementById('privateSelectedCount');
+  if(c) c.textContent=filtered.length+' selected';
+  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
+  // re-apply count after render (render may reset it)
+  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent=filtered.length+' selected';},50);
+}
+function selectVisiblePrivateRecipients(){
+  const filtered=getPrivateFilteredForSelect();
+  window.selectedPrivateRecipients=new Set(filtered.map(u=>u.id||u.email));
+  if(window.selectedRecipients) window.selectedRecipients=new Set(filtered.map(u=>u.id||u.email));
+  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=true);
+  const c=document.getElementById('privateSelectedCount');
+  if(c) c.textContent=filtered.length+' selected';
+  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
+  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent=filtered.length+' selected';},50);
+}
+function clearPrivateSelection(){
+  window.selectedPrivateRecipients=new Set();
+  if(window.selectedRecipients) window.selectedRecipients=new Set();
+  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=false);
+  const c=document.getElementById('privateSelectedCount');
+  if(c) c.textContent='0 selected';
+  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
+  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent='0 selected';},50);
+}
+function applyPrivateRecipientFilter(){ if(typeof renderPrivateRecipients==='function') renderPrivateRecipients(); }
+</script>
 <section class="users-box" id="users">
   <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
   <div class="filter-row">
