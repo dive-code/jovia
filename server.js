@@ -442,7 +442,7 @@ app.post("/api/withdrawals",requireActiveUser,(req,res)=>{try{
  addWithdrawalEvent(withdrawalId,"withdrawal_requested",req.user.username,{amount,type,codeUsed:codeRaw||"FREE-AFFILIATE"});
  return db.prepare(`SELECT * FROM withdrawals WHERE id=? LIMIT 1`).get(withdrawalId);
  })();
-return res.status(201).json({success:true,message:`Withdrawal N${amount.toLocaleString()} submitted`,withdrawal:withdrawalResult(withdrawal),received:amount});
+ return res.status(201).json({success:true,message:`Withdrawal N${amount.toLocaleString()} submitted`,withdrawal:withdrawalResult(withdrawal),received:amount});
 }catch(error){return res.status(400).json({success:false,message:error.message});}});
 app.get("/api/withdrawals",requireUser,(req,res)=>{try{const rows=db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC LIMIT 100").all(req.user.id);return res.json({success:true,withdrawals:rows.map(withdrawalResult)});}catch(e){return res.status(500).json({success:false});}});
 app.get("/api/referrals/link", requireUser, (req,res)=>{ try{ const username = req.user.username; const frontend = process.env.FRONTEND_URL || "https://jovianetworkcom.vercel.app"; const link = `${frontend}/register.html?ref=${encodeURIComponent(username)}`; return res.json({success:true, link, referralLink: link, url: link}); }catch(e){ return res.status(500).json({success:false, message:e.message}); } });
@@ -455,7 +455,8 @@ app.get("/api/admin/me",requireAdmin,(req,res)=>{return res.json({success:true,a
 app.get("/api/admin/dashboard",requireAdmin,(req,res)=>{try{const users=db.prepare(`SELECT COUNT(*) AS count FROM users`).get().count;const activeUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status IN ('active','approved')`).get().count;const pendingUsers=db.prepare(`SELECT COUNT(*) AS count FROM users WHERE account_status='pending'`).get().count;const pendingWithdrawals=db.prepare(`SELECT COUNT(*) AS count FROM withdrawals WHERE status='pending'`).get().count;let totalVideos=0; try{ totalVideos=db.prepare(`SELECT COUNT(*) AS count FROM videos`).get().count; }catch{} return res.json({success:true,users,activeUsers,pendingUsers,videos:totalVideos,withdrawals:{pending:pendingWithdrawals},withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled(),withdrawals_enabled:isWithdrawalsEnabled()? '1':'0'});}catch(error){return res.status(500).json({success:false,message:"Unable to load dashboard: "+error.message});}});
 // ===== FIXED ADMIN USERS - SELECT * so e no go fail if plan/is_super column no dey - this na wetin cause "Unable to load users" =====
 app.get("/api/admin/users",requireAdmin,(req,res)=>{try{const rows=db.prepare(`SELECT * FROM users ORDER BY id DESC`).all();return res.json({success:true,users:rows.map((user)=>({id:user.id,fullName:user.full_name,full_name:user.full_name,username:user.username,email:user.email,phone:user.phone,package:user.package,plan:user.plan||user.package,packageAmount:Number(user.package_amount||0),walletBalance:Number(user.wallet_balance||0),wallet_balance:user.wallet_balance,affiliateBalance:Number(user.affiliate_balance||0),affiliate_balance:user.affiliate_balance,totalEarned:Number(user.total_earned||0),total_earned:user.total_earned,accountStatus:user.account_status,account_status:user.account_status,createdAt:user.created_at,created_at:user.created_at,referral_code:user.referral_code,referrer_id:user.referrer_id,referrals:user.referrals||0,is_super:user.is_super||0}))});}catch(error){console.error("ADMIN USERS ERROR:",error);return res.status(500).json({success:false,message:"Unable to load users: "+error.message});}});
-// ===== NEW / FIXED: Approve / Suspend / Pending =====
+
+// ===== NEW / FIXED: Approve / Suspend / Pending - END OF FILE, NOTHING AFTER THIS =====
 function handleAdminUserStatus(req,res,forcedStatus){
   try{
     const id=req.params.id;
@@ -492,71 +493,28 @@ app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>handleAdminUserS
 app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
 app.post("/api/admin/users/:id/suspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"suspended"));
 app.post("/api/admin/users/:id/pending",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"pending"));
-app.post("/api/admin/users/:id/unsuspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
-app.post("/api/admin/users/:id/reset-password",requireAdmin,(req,res)=>{
+// ===== FIXED: Admin status - suspend + activate both work, activate FORCES bonus like backpay =====
+app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
-    const pw=String(req.body?.newPassword||req.body?.password||req.body?.new_password||"");
-    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
+    const raw=String(req.body?.status||req.body?.account_status||req.body?.action||"").toLowerCase().trim();
+    let ns;
+    if(["suspend","suspended","ban","banned","blocked","block","disable","disabled"].includes(raw)) ns="suspended";
+    else if(["pending","pend","waiting"].includes(raw)) ns="pending";
+    else if(["active","approve","approved","activate","activated","enable","enabled","unblock","unban"].includes(raw)) ns="active";
+    else ns="active";
     const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
     if(!u) return res.status(404).json({success:false,message:"User not found"});
-    const hash=bcrypt.hashSync(pw,10);
-    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
-    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:"Password reset failed: "+e.message}); }
-});
-app.post("/api/admin/users/:id/password",requireAdmin,(req,res)=>{
-  try{
-    const id=req.params.id;
-    const pw=String(req.body?.newPassword||req.body?.password||"");
-    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
-    const hash=bcrypt.hashSync(pw,10);
-    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
-    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-app.post("/api/admin/user/reset-password",requireAdmin,(req,res)=>{
-  try{
-    const id=req.body?.userId||req.body?.id;
-    const pw=String(req.body?.newPassword||req.body?.password||"");
-    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
-    const hash=bcrypt.hashSync(pw,10);
-    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
-    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-app.post("/api/admin/user/suspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id; db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
-app.post("/api/admin/user/unsuspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id; db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
-// ===== RESTORED: Reset Password + Old suspend/unsuspend - DO NOT REMOVE, frontend dey use am =====
-async function handleAdminResetPassword(req,res){
-  try{
-    const id=req.params.id || req.body?.userId || req.body?.id;
-    const pw=String(req.body?.newPassword || req.body?.password || req.body?.new_password || "");
-    if(!id) return res.status(400).json({success:false,message:"User id required"});
-    if(!pw || pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
-    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
-    if(!u) return res.status(404).json({success:false,message:"User not found"});
-    let hash=pw;
-    try{ hash=await bcrypt.hash(pw,10); }catch{}
-    let done=false;
-    const cols=["password_hash","password","pass","user_password"];
-    for(const c of cols){
-      try{ db.prepare(`UPDATE users SET ${c}=? WHERE id=?`).run(hash,id); done=true; break; }catch{}
+    if(ns==="suspended"){
+      try{ db.prepare("UPDATE users SET account_status='suspended', status='suspended' WHERE id=?").run(id); }
+      catch(e){ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); }
+      return res.json({success:true,message:`User suspended successfully`, status:"suspended", account_status:"suspended"});
     }
-    if(!done) return res.status(500).json({success:false,message:"No password column found"});
-    try{ for(const [k,v] of sessions){ if(v&&Number(v.userId)===Number(id)) sessions.delete(k); } }catch{}
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:"Password reset failed: "+e.message}); }
-}
-app.post("/api/admin/users/:id/reset-password",requireAdmin,(req,res)=>handleAdminResetPassword(req,res));
-app.post("/api/admin/users/:id/password",requireAdmin,(req,res)=>handleAdminResetPassword(req,res));
-app.post("/api/admin/user/reset-password",requireAdmin,(req,res)=>handleAdminResetPassword(req,res));
-app.post("/api/admin/user/suspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id||req.params.id; req.params.id=id; return handleAdminUserStatus(req,res,"suspended"); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
-app.post("/api/admin/user/unsuspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id||req.params.id; req.params.id=id; return handleAdminUserStatus(req,res,"active"); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
-app.post("/api/admin/users/:id/unsuspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
+    if(ns==="pending"){
+      try{ db.prepare("UPDATE users SET account_status='pending', status='pending' WHERE id=?").run(id); }
+      catch(e){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); }
+      return res.json({success:true,message:`User set to pending`, status:"pending", account_status:"pending"});
+    }
     // ACTIVE path - FORCE PAY LIKE BACKPAY
     const result=db.transaction(()=>{
       const fresh=db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
