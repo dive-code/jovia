@@ -216,114 +216,75 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
   </div>
 </section>
 <script>
-// FINAL FIX + Super / Gold / Silver buttons
-function _pmUpdateCount(){
-  const checked=document.querySelectorAll('#privateRecipientsList input[type="checkbox"]:checked');
-  const c=document.getElementById('privateSelectedCount');
-  if(c) c.textContent=checked.length+' selected';
-  const ids=[...checked].map(cb=>cb.value);
-  window.selectedPrivateRecipients=new Set(ids);
-  window.selectedRecipients=new Set(ids);
-  window.privateSelected=ids;
-  return ids;
-}
-function selectPrivateGroup(group){
-  const boxes=document.querySelectorAll('#privateRecipientsList input[type="checkbox"]');
-  boxes.forEach(cb=>{
-    const label=(cb.closest('label')?.innerText||cb.parentElement?.innerText||'').toLowerCase();
-    let keep=false;
-    if(group==='all') keep=true;
-    if(group==='active') keep=label.includes('active') && !label.includes('non-active') && !label.includes('nonactive');
-    if(group==='inactive') keep=label.includes('non-active') || label.includes('nonactive') || label.includes('inactive');
-    if(group==='suspended') keep=label.includes('suspended');
-    // PACKAGE GROUPS - new
-    if(group==='gold') keep=label.includes('gold');
-    if(group==='silver') keep=label.includes('silver');
-    if(group==='super') keep=label.includes('super');
-    if(group==='other') keep=!label.includes('gold') && !label.includes('silver') && !label.includes('super');
-    cb.checked=keep;
-  });
-  _pmUpdateCount();
-}
-function selectVisiblePrivateRecipients(){
-  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=true);
-  _pmUpdateCount();
-}
-function clearPrivateSelection(){
-  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=false);
-  _pmUpdateCount();
-}
-function applyPrivateRecipientFilter(){
-  window.selectedPrivateRecipients=new Set();
-  window.selectedRecipients=new Set();
-  const c=document.getElementById('privateSelectedCount');
-  if(c) c.textContent='0 selected';
-  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
-  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent='0 selected';},100);
-}
-document.addEventListener('change',(e)=>{
-  if(e.target.matches('#privateRecipientsList input[type="checkbox"]')) _pmUpdateCount();
-});
-</script>
-// FIX: make Active / Non-Active / Suspended / All respect Package + Status dropdown + Search
-function getPrivateFilteredForSelect(){
-  const q=(document.getElementById('privateRecipientSearch')?.value||'').toLowerCase().trim();
-  const st=document.getElementById('privateStatusFilter')?.value||'all';
-  const pk=(document.getElementById('privatePackageFilter')?.value||'all').toLowerCase();
-  const all=window.allUsers||window.users||window.privateUsers||[];
-  return all.filter(u=>{
-    const status=(u.status||u.accountStatus||u.account_status||'active').toLowerCase();
-    const pack=(u.package||u.plan||u.packageName||'').toLowerCase();
-    const hay=((u.name||'')+' '+(u.username||'')+' '+(u.email||'')).toLowerCase();
-    if(q && !hay.includes(q)) return false;
-    if(st!=='all' && status!==st) return false;
-    if(pk!=='all' && pack!==pk) return false;
-    return true;
-  });
-}
-function selectPrivateGroup(group){
-  const base=getPrivateFilteredForSelect();
-  const filtered=base.filter(u=>{
-    if(group==='all') return true;
-    const s=(u.status||u.accountStatus||'active').toLowerCase();
-    if(group==='active') return s==='active';
-    if(group==='inactive') return s==='inactive'||s==='non-active'||s==='nonactive';
-    if(group==='suspended') return s==='suspended';
-    return true;
-  });
-  // keep your existing selected set if you use it, else rebuild it
-  window.selectedPrivateRecipients=new Set(filtered.map(u=>u.id||u.email));
-  if(window.selectedRecipients) window.selectedRecipients=new Set(filtered.map(u=>u.id||u.email));
-  // tick checkboxes for visible list
-  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>{
-    cb.checked=filtered.some(u=>(u.id||u.email)==cb.value);
-  });
-  const c=document.getElementById('privateSelectedCount');
-  if(c) c.textContent=filtered.length+' selected';
-  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
-  // re-apply count after render (render may reset it)
-  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent=filtered.length+' selected';},50);
-}
-function selectVisiblePrivateRecipients(){
-  const filtered=getPrivateFilteredForSelect();
-  window.selectedPrivateRecipients=new Set(filtered.map(u=>u.id||u.email));
-  if(window.selectedRecipients) window.selectedRecipients=new Set(filtered.map(u=>u.id||u.email));
-  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=true);
-  const c=document.getElementById('privateSelectedCount');
-  if(c) c.textContent=filtered.length+' selected';
-  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
-  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent=filtered.length+' selected';},50);
-}
-function clearPrivateSelection(){
-  window.selectedPrivateRecipients=new Set();
-  if(window.selectedRecipients) window.selectedRecipients=new Set();
-  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=false);
-  const c=document.getElementById('privateSelectedCount');
-  if(c) c.textContent='0 selected';
-  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
-  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent='0 selected';},50);
-}
-function applyPrivateRecipientFilter(){ if(typeof renderPrivateRecipients==='function') renderPrivateRecipients(); }
+// ONLY ONE FIX - CLEAN, NO DUPLICATE, NO STRAY CODE
+(function(){
+  let mySelected = new Set();
+  function getItems(){
+    return [...document.querySelectorAll('#privateRecipientsList > *, #privateRecipientsList label, #privateRecipientsList div')].filter(el=>el.innerText && el.innerText.includes('@'));
+  }
+  function getEmail(row){
+    const m=row.innerText.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i);
+    return m?m[0].toLowerCase():'';
+  }
+  function syncUI(){
+    getItems().forEach(row=>{
+      const email=getEmail(row);
+      const cb=row.querySelector('input[type="checkbox"]');
+      if(cb) cb.checked=mySelected.has(email);
+      row.style.background=mySelected.has(email)?'#ede9fe':'';
+    });
+    const c=document.getElementById('privateSelectedCount');
+    if(c) c.textContent=mySelected.size+' selected';
+    window.selectedPrivateRecipients=new Set(mySelected);
+    window.selectedRecipients=new Set(mySelected);
+    window.privateSelected=[...mySelected];
+    window.privateRecipients=[...mySelected];
+  }
+  function doSelect(group){
+    mySelected=new Set();
+    getItems().forEach(row=>{
+      const txt=row.innerText.toLowerCase(); const email=getEmail(row); if(!email) return;
+      let keep=false;
+      if(group==='all') keep=true;
+      if(group==='active') keep=txt.includes('active') && !txt.includes('non-active') && !txt.includes('nonactive');
+      if(group==='inactive') keep=txt.includes('non-active')||txt.includes('nonactive')||txt.includes('inactive');
+      if(group==='suspended') keep=txt.includes('suspended');
+      if(group==='gold') keep=txt.includes('gold');
+      if(group==='silver') keep=txt.includes('silver');
+      if(group==='super') keep=txt.includes('super');
+      if(group==='other') keep=!txt.includes('gold')&&!txt.includes('silver')&&!txt.includes('super');
+      if(keep) mySelected.add(email);
+    });
+    syncUI();
+  }
+  function doClear(){ mySelected=new Set(); syncUI(); }
+  function doVisible(){ mySelected=new Set(getItems().map(getEmail).filter(Boolean)); syncUI(); }
+  document.addEventListener('click',function(e){
+    const btn=e.target.closest('button'); if(!btn) return;
+    const oc=btn.getAttribute('onclick')||'';
+    if(oc.includes('selectPrivateGroup')){
+      e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation();
+      const m=oc.match(/'([^']+)'/); doSelect(m?m[1]:'all'); return false;
+    }
+    if(oc.includes('selectVisiblePrivateRecipients')){ e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation(); doVisible(); return false; }
+    if(oc.includes('clearPrivateSelection')){ e.stopPropagation(); e.preventDefault(); e.stopImmediatePropagation(); doClear(); return false; }
+  },true);
+  document.addEventListener('change',function(e){
+    if(e.target.id==='privateStatusFilter'||e.target.id==='privatePackageFilter'){
+      mySelected=new Set(); syncUI(); setTimeout(syncUI,200); setTimeout(syncUI,600);
+    }
+    if(e.target.matches('#privateRecipientsList input[type="checkbox"]')){
+      const row=e.target.closest('label')||e.target.parentElement; const email=getEmail(row);
+      if(e.target.checked) mySelected.add(email); else mySelected.delete(email); syncUI();
+    }
+  },true);
+  const list=document.getElementById('privateRecipientsList');
+  if(list) new MutationObserver(()=>syncUI()).observe(list,{childList:true,subtree:true});
+  window.selectPrivateGroup=doSelect;
+  window.selectVisiblePrivateRecipients=doVisible;
+  window.clearPrivateSelection=doClear;
+  setTimeout(()=>{ mySelected=new Set(); syncUI(); },500);
+})();
 </script>
 <section class="users-box" id="users">
   <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
