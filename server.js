@@ -131,17 +131,17 @@ function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)retur
 function requireAdmin(req,res,next){
   let a=null;
   try{ a=getAdminSession(req); }catch(e){ a=null; }
+  // Fallback: Bearer token header (for frontend wey no dey send cookie)
   if(!a){
-    const hdr=String(req.headers?.authorization||req.headers?.Authorization||"");
-    const tok=hdr.toLowerCase().startsWith("bearer ") ? hdr.slice(7).trim() : "";
+    const hdr=String(req.headers["authorization"]||"");
+    const tok=hdr.startsWith("Bearer ") ? hdr.slice(7).trim() : "";
     if(tok && typeof adminSessions!=="undefined"){
       const s=adminSessions.get(tok);
       if(s && s.expiresAt>Date.now()) a=s;
     }
   }
   if(!a) return res.status(401).json({success:false,message:"Admin authentication required"});
-  req.admin={username:a.username||ADMIN_USERNAME};
-  return next();
+  req.admin=a; next();
 }
 function updateUserBalance(id,col,amt){if(col!=="wallet_balance"&&col!=="affiliate_balance")throw new Error("Invalid column");db.prepare(`UPDATE users SET ${col}=${col}+? WHERE id=?`).run(amt,id);}
 function recordWalletTransaction(uid,type,amt,btype,ref,desc){try{db.prepare(`INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description) VALUES (?,?,?,?,?,?)`).run(uid,type,amt,btype,ref,desc);}catch(e){}}
@@ -165,6 +165,7 @@ function getReferralReward(referrerPackage, referredPackage, oldPackage){
   if(b==="SILVER") return 8000;
   return 0;
 }
+
 // ===== FIXED: activateUserAndRewardsInternal - no 0-row block, sets both status columns =====
 function activateUserAndRewardsInternal(uid,paymentPackage,oldPackageFromPayment){
   const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
@@ -503,15 +504,6 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
 
-// ===== ADMIN STATUS / SUSPEND / ACTIVATE - RESTORED LIKE FIRST SERVER =====
-app.post("/api/admin/users/:id/status", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const statusRaw=String(req.body?.status||"").toLowerCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); if(statusRaw==="approved"||statusRaw==="active"||statusRaw==="1"){ activateUserAndRewardsInternal(id, u.package, u.package); } else if(statusRaw==="suspended"){ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); } else if(statusRaw==="pending"){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); } return res.json({success:true,message:"Status updated"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
-app.post("/api/admin/users/:id/suspend", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true,message:"User suspended"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
-app.post("/api/admin/users/:id/unsuspend", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); activateUserAndRewardsInternal(id, u.package, u.package); return res.json({success:true,message:"User unsuspended"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
-app.get("/api/admin/users/:id/status:statusValue", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); const raw=String(req.params.statusValue||"").replace(":","").toLowerCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); if(raw==="1"||raw==="approved"||raw==="active") activateUserAndRewardsInternal(id, u.package, u.package); else db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
-app.get("/api/admin/users/:id/status/:statusValue", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); const raw=String(req.params.statusValue||"").toLowerCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); if(raw==="1"||raw==="approved"||raw==="active") activateUserAndRewardsInternal(id, u.package, u.package); else db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
-app.post("/api/admin/users/:id/activate", requireAdmin, (req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user."}); const u=db.prepare("SELECT * FROM users WHERE id=?").get(id); if(!u) return res.status(404).json({success:false,message:"User not found"}); activateUserAndRewardsInternal(id, u.package, u.package); const updated=db.prepare(`SELECT * FROM users WHERE id=?`).get(id); return res.json({success:true,user:publicUser(updated)}); }catch(error){ return res.status(500).json({success:false,message:error.message||"Unable to activate user."}); } });
-app.post("/api/admin/users/:id/reset-password", requireAdmin, async(req,res)=>{ try{ const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid user"}); const h=await bcrypt.hash(String(req.body?.newPassword||"password123"),12); db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(h,id); return res.json({success:true,message:"Password reset"}); }catch(e){ return res.status(400).json({success:false,message:e.message}); } });
-
 // ===== FIXED: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
   try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
@@ -591,7 +583,10 @@ app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
 // === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL ===
-app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
+app.get("/api/admin/backpay-all", (req,res)=>{
+  if (req.query.key !== 'jovia123') {
+    return res.status(401).json({success:false, message:"Admin authentication required"});
+  }
   try{
     const result = db.transaction(()=>{
       let paidCount = 0, totalPaid = 0, details = [];
@@ -633,10 +628,6 @@ app.get("/api/admin/backpay-all", requireAdmin, (req,res)=>{
     })();
     return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-});
-app.get("/api/admin/backpay-all-key", (req,res)=>{
-  if (req.query.key !== 'jovia123') return res.status(401).json({success:false, message:"Admin authentication required"});
-  return res.redirect("/api/admin/backpay-all");
 });
 app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
   try{
@@ -897,10 +888,10 @@ app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{try{
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
 
 app.get("/api/history", requireUser, (req,res)=>{try{const tx = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC").all(req.user.id); const wd = db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC").all(req.user.id); return res.json({success:true, history: tx, transactions: tx, withdrawals: wd, wallet:{transactions: tx}});}catch(e){ return res.json({success:true, history:[], transactions:[], withdrawals:[], wallet:{transactions:[]}});}});
-app.post("/api/selar/activate", async (req, res) => { try { const email = normalizeEmail(req.body?.email || req.body?.customer_email || req.body?.buyer_email || req.query?.email || req.body?.data?.email); let plan = packageFromInput(req.body?.plan) || null; const amountStr = String(req.body?.amount || req.body?.price || ""); const planStr = String(req.body?.plan || "").toLowerCase(); if (!plan) { if (amountStr.includes("15000") || planStr.includes("gold")) plan = "Gold"; else plan = "Silver"; } if (!email) return res.status(400).json({ success: false, message: "Email required" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if (!user) { return res.status(404).json({ success: false, message: "User not found for email " + email + ". Register first." }); } if (user.account_status === "active" || user.account_status === "approved") { return res.json({ success: true, alreadyActive: true, message: "Already ACTIVE", user: publicUser(user) }); } const oldPkg = user.package; if (plan) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewardsInternal(user.id, plan, oldPkg); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); return res.json({ success: true, message: "Account activated - admin now ACTIVE", user: publicUser(updated) }); } catch (e) { return res.status(500).json({ success: false, message: e.message }); } });
-app.post("/api/webhooks/selar", async (req, res) => { try { const data = req.body || {}; const email = normalizeEmail(data.email || data.customer_email || data.buyer_email || data?.data?.email || data?.customer?.email || req.query?.email); if (!email) return res.status(200).json({ success: true, message: "No email" }); let plan = "Silver"; const amountStr = String(data.amount || data.total || data.price || ""); if(amountStr.includes("15000") || String(data.plan || "").toLowerCase().includes("gold")) plan = "Gold"; let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if(user && user.account_status!== 'active' && user.account_status!== 'approved'){ const oldPkg = user.package; if (plan) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewardsInternal(user.id, plan, oldPkg); } return res.json({ success: true }); } catch (e) { return res.json({ success: false }); } });
-app.get("/api/activate", async (req, res) => { try { const email = normalizeEmail(req.query?.email || req.query?.customer_email || req.body?.email || ""); const username = cleanString(req.query?.username || "", 50); let plan = packageFromInput(req.query?.plan || req.query?.package) || "Silver"; let targetEmail = email; if (!targetEmail && username) { const byUser = db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (byUser) targetEmail = byUser.email; } if (!targetEmail) return res.status(400).json({ success: false, message: "Email required for activation" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if (!user && username) user = db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (!user) return res.status(404).json({ success: false, message: "User not found: " + targetEmail }); if (user.account_status === "active" || user.account_status === "approved") return res.json({ success: true, alreadyActive: true, user: publicUser(user) }); const oldPkg = user.package; if (plan) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); activateUserAndRewardsInternal(user.id, plan, oldPkg); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); console.log(`AUTO-ACTIVATED via /api/activate: ${updated.email} -> ${plan}`); return res.json({ success: true, message: "Account activated", user: publicUser(updated) }); } catch (e) { console.error("ACTIVATE ERROR", e); return res.status(500).json({ success: false, message: e.message }); } });
-app.post("/api/activate", async (req,res)=>{ try{ const email = normalizeEmail(req.body?.email || req.query?.email || ""); const username = cleanString(req.body?.username || req.query?.username || "",50); let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver"; let targetEmail = email; if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; } if(!targetEmail) return res.status(400).json({success:false}); let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(!user) return res.status(404).json({success:false}); if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true}); const oldPkg = user.package; if(plan) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); activateUserAndRewardsInternal(user.id, plan, oldPkg); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false}); } });
+app.post("/api/selar/activate", async (req, res) => { try { const email = normalizeEmail(req.body?.email || req.body?.customer_email || req.body?.buyer_email || req.query?.email || req.body?.data?.email); let plan = packageFromInput(req.body?.plan) || null; const amountStr = String(req.body?.amount || req.body?.price || ""); const planStr = String(req.body?.plan || "").toLowerCase(); if (!plan) { if (amountStr.includes("15000") || planStr.includes("gold")) plan = "Gold"; else plan = "Silver"; } if (!email) return res.status(400).json({ success: false, message: "Email required" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if (!user) { return res.status(404).json({ success: false, message: "User not found for email " + email + ". Register first." }); } if (user.account_status === "active" || user.account_status === "approved") { return res.json({ success: true, alreadyActive: true, message: "Already ACTIVE", user: publicUser(user) }); } if (plan && plan!== user.package) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewards(user.id); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); return res.json({ success: true, message: "Account activated - admin now ACTIVE", user: publicUser(updated) }); } catch (e) { return res.status(500).json({ success: false, message: e.message }); } });
+app.post("/api/webhooks/selar", async (req, res) => { try { const data = req.body || {}; const email = normalizeEmail(data.email || data.customer_email || data.buyer_email || data?.data?.email || data?.customer?.email || req.query?.email); if (!email) return res.status(200).json({ success: true, message: "No email" }); let plan = "Silver"; const amountStr = String(data.amount || data.total || data.price || ""); if(amountStr.includes("15000") || String(data.plan || "").toLowerCase().includes("gold")) plan = "Gold"; let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if(user && user.account_status!== 'active' && user.account_status!== 'approved'){ if (plan!== user.package) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewards(user.id); } return res.json({ success: true }); } catch (e) { return res.json({ success: false }); } });
+app.get("/api/activate", async (req, res) => { try { const email = normalizeEmail(req.query?.email || req.query?.customer_email || req.body?.email || ""); const username = cleanString(req.query?.username || "", 50); let plan = packageFromInput(req.query?.plan || req.query?.package) || "Silver"; let targetEmail = email; if (!targetEmail && username) { const byUser = db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (byUser) targetEmail = byUser.email; } if (!targetEmail) return res.status(400).json({ success: false, message: "Email required for activation" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if (!user && username) user = db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (!user) return res.status(404).json({ success: false, message: "User not found: " + targetEmail }); if (user.account_status === "active" || user.account_status === "approved") return res.json({ success: true, alreadyActive: true, user: publicUser(user) }); if (plan && plan!== user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); activateUserAndRewards(user.id); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); console.log(`AUTO-ACTIVATED via /api/activate: ${updated.email} -> ${plan}`); return res.json({ success: true, message: "Account activated", user: publicUser(updated) }); } catch (e) { console.error("ACTIVATE ERROR", e); return res.status(500).json({ success: false, message: e.message }); } });
+app.post("/api/activate", async (req,res)=>{ try{ const email = normalizeEmail(req.body?.email || req.query?.email || ""); const username = cleanString(req.body?.username || req.query?.username || "",50); let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver"; let targetEmail = email; if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; } if(!targetEmail) return res.status(400).json({success:false}); let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(!user) return res.status(404).json({success:false}); if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true}); if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); activateUserAndRewards(user.id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false}); } });
 // === EMERGENCY FIX - PERMANENT ===
 app.get("/api/emergency/make-me-super-now", (req,res)=>{
   try{
@@ -910,6 +901,7 @@ app.get("/api/emergency/make-me-super-now", (req,res)=>{
     return res.json({success:true, message:"YOU ARE NOW SUPER", user});
   }catch(e){ return res.json({success:false, error:e.message}); }
 });
+
 app.post("/api/debug/emergency-super", (req,res)=>{
   try{
     let email = String(req.body?.email||req.query?.email||"").toLowerCase().trim();
@@ -921,6 +913,7 @@ app.post("/api/debug/emergency-super", (req,res)=>{
     return res.json({success:true, message:`✅ ${fresh.email} is now SUPER - unlimited`, user:publicUser(fresh)});
   }catch(e){ return res.json({success:false, error:e.message}); }
 });
+
 app.post("/api/debug/emergency-add-money", (req,res)=>{
   try{
     let email = String(req.body?.email||"").toLowerCase().trim();
@@ -936,6 +929,7 @@ app.post("/api/debug/emergency-add-money", (req,res)=>{
     return res.json({success:true, message:`Added ₦${amount}`, newBal:fresh.wallet_balance, user:fresh});
   }catch(e){ return res.json({success:false, error:e.message}); }
 });
+
 try{
   const pluginPath1 = path.join(__dirname, "jovia-codes-plugin.js");
   const pluginPath2 = path.join(__dirname, "jovia_codes_plugin.js");
@@ -947,6 +941,7 @@ try{
     console.log("⚠️ Jovia Codes plugin file not found - skipping");
   }
 }catch(e){ console.error("Plugin load error:", e.message); }
+
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
 if (require.main === module) {app.listen(PORT, HOST, () => {console.log(""); console.log("=========================================="); console.log(" JOVIA V7 FINAL - OWNER SUPER FORCED + UNLIMITED"); console.log(` Server: http://${HOST}:${PORT}`); console.log(` DB: ${DB_PATH}`); console.log("=========================================="); console.log("");});}
