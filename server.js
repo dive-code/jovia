@@ -488,12 +488,6 @@ function handleAdminUserStatus(req,res,forcedStatus){
     return res.json({success:true,message:"User activated successfully + welcome + referral bonus paid",status:"active",account_status:"active",user:result});
   }catch(e){ return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 }
-app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>handleAdminUserStatus(req,res));
-app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
-app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
-app.post("/api/admin/users/:id/suspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"suspended"));
-app.post("/api/admin/users/:id/pending",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"pending"));
-// ===== FIXED: Admin status - suspend + activate both work, activate FORCES bonus like backpay =====
 app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
@@ -555,6 +549,50 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
     return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
+// ===== FIXED: Only ONE status route now - approve/activate/suspend/pending all use am =====
+app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
+app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
+app.post("/api/admin/users/:id/suspend",requireAdmin,(req,res)=>{ req.body.status="suspended"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
+app.post("/api/admin/users/:id/pending",requireAdmin,(req,res)=>{ req.body.status="pending"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
+app.post("/api/admin/users/:id/unsuspend",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
+// ===== RESTORED: Reset Password + Old suspend/unsuspend =====
+app.post("/api/admin/users/:id/reset-password",requireAdmin,(req,res)=>{
+  try{
+    const id=req.params.id;
+    const pw=String(req.body?.newPassword||req.body?.password||req.body?.new_password||"");
+    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
+    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    const hash=bcrypt.hashSync(pw,10);
+    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
+    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
+    return res.json({success:true,message:"Password reset"});
+  }catch(e){ return res.status(500).json({success:false,message:"Password reset failed: "+e.message}); }
+});
+app.post("/api/admin/users/:id/password",requireAdmin,(req,res)=>{
+  try{
+    const id=req.params.id;
+    const pw=String(req.body?.newPassword||req.body?.password||"");
+    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
+    const hash=bcrypt.hashSync(pw,10);
+    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
+    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
+    return res.json({success:true,message:"Password reset"});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+app.post("/api/admin/user/reset-password",requireAdmin,(req,res)=>{
+  try{
+    const id=req.body?.userId||req.body?.id;
+    const pw=String(req.body?.newPassword||req.body?.password||"");
+    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
+    const hash=bcrypt.hashSync(pw,10);
+    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
+    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
+    return res.json({success:true,message:"Password reset"});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+app.post("/api/admin/user/suspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id; db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
+app.post("/api/admin/user/unsuspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id; db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
 
 // ===== FIXED: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
