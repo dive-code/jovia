@@ -194,6 +194,12 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
           <button type="button" class="refresh" onclick="selectVisiblePrivateRecipients(true)">Select Visible</button>
           <button type="button" class="refresh" onclick="clearPrivateSelection()" style="background:#fee2e2;color:#b91c1c">Clear</button>
         </div>
+        <div class="recipient-buttons" style="margin-top:8px">
+          <button type="button" class="refresh" onclick="selectPrivateGroup('gold')" style="background:#f59e0b;color:white">🥇 Gold</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('silver')" style="background:#94a3b8;color:white">🥈 Silver</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('super')" style="background:#dc2626;color:white">👑 Super</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('other')">📦 Other</button>
+        </div>
         <div id="privateSelectedCount" style="font-size:12px;color:#5b21b6;font-weight:800;margin:12px 0">0 selected</div>
         <div id="privateRecipientsList" class="recipient-list"><p class="empty">Loading members...</p></div>
       </div>
@@ -210,6 +216,55 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
   </div>
 </section>
 <script>
+// FINAL FIX + Super / Gold / Silver buttons
+function _pmUpdateCount(){
+  const checked=document.querySelectorAll('#privateRecipientsList input[type="checkbox"]:checked');
+  const c=document.getElementById('privateSelectedCount');
+  if(c) c.textContent=checked.length+' selected';
+  const ids=[...checked].map(cb=>cb.value);
+  window.selectedPrivateRecipients=new Set(ids);
+  window.selectedRecipients=new Set(ids);
+  window.privateSelected=ids;
+  return ids;
+}
+function selectPrivateGroup(group){
+  const boxes=document.querySelectorAll('#privateRecipientsList input[type="checkbox"]');
+  boxes.forEach(cb=>{
+    const label=(cb.closest('label')?.innerText||cb.parentElement?.innerText||'').toLowerCase();
+    let keep=false;
+    if(group==='all') keep=true;
+    if(group==='active') keep=label.includes('active') && !label.includes('non-active') && !label.includes('nonactive');
+    if(group==='inactive') keep=label.includes('non-active') || label.includes('nonactive') || label.includes('inactive');
+    if(group==='suspended') keep=label.includes('suspended');
+    // PACKAGE GROUPS - new
+    if(group==='gold') keep=label.includes('gold');
+    if(group==='silver') keep=label.includes('silver');
+    if(group==='super') keep=label.includes('super');
+    if(group==='other') keep=!label.includes('gold') && !label.includes('silver') && !label.includes('super');
+    cb.checked=keep;
+  });
+  _pmUpdateCount();
+}
+function selectVisiblePrivateRecipients(){
+  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=true);
+  _pmUpdateCount();
+}
+function clearPrivateSelection(){
+  document.querySelectorAll('#privateRecipientsList input[type="checkbox"]').forEach(cb=>cb.checked=false);
+  _pmUpdateCount();
+}
+function applyPrivateRecipientFilter(){
+  window.selectedPrivateRecipients=new Set();
+  window.selectedRecipients=new Set();
+  const c=document.getElementById('privateSelectedCount');
+  if(c) c.textContent='0 selected';
+  if(typeof renderPrivateRecipients==='function') renderPrivateRecipients();
+  setTimeout(()=>{const cc=document.getElementById('privateSelectedCount'); if(cc) cc.textContent='0 selected';},100);
+}
+document.addEventListener('change',(e)=>{
+  if(e.target.matches('#privateRecipientsList input[type="checkbox"]')) _pmUpdateCount();
+});
+</script>
 // FIX: make Active / Non-Active / Suspended / All respect Package + Status dropdown + Search
 function getPrivateFilteredForSelect(){
   const q=(document.getElementById('privateRecipientSearch')?.value||'').toLowerCase().trim();
