@@ -153,14 +153,14 @@ function getReferralReward(referrerPackage, referredPackage, oldPackage){
   const old = String(oldPackage||'').trim().toUpperCase();
   if(b==="SUPER"){
     if(old==="SILVER") return 10000;
-    if(old==="GOLD") return 6000;
+    if(old==="GOLD") return 8000;
     if(old==="SUPER") return 0;
     return 6000;
   }
   if(a==="GOLD" && b==="GOLD") return 13000;
   if(a==="GOLD" && b==="SILVER") return 8000;
   if(a==="SILVER" && b==="SILVER") return 8000;
-  if(a==="SILVER" && b==="GOLD") return 8000; // FIXED: was 0 before
+  if(a==="SILVER" && b==="GOLD") return 0; // FIXED: was 0 before
   if(b==="GOLD") return 13000;
   if(b==="SILVER") return 8000;
   return 0;
