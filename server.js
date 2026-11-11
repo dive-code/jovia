@@ -515,6 +515,39 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
       catch(e){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); }
       return res.json({success:true,message:`User set to pending`, status:"pending", account_status:"pending"});
     }
+    try{ db.prepare("UPDATE users SET account_status='active', status='active' WHERE id=?").run(id); }
+    catch(e){ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id); }
+    return res.json({success:true,message:`User activated successfully`, status:"active", account_status:"active"});
+  }catch(e){ return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
+});
+
+// ===== RESTORED: Reset Password + Old suspend/unsuspend - DO NOT REMOVE, frontend dey use am =====
+async function handleAdminResetPassword(req,res){
+  try{
+    const id=req.params.id || req.body?.userId || req.body?.id;
+    const pw=String(req.body?.newPassword || req.body?.password || req.body?.new_password || "");
+    if(!id) return res.status(400).json({success:false,message:"User id required"});
+    if(!pw || pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
+    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    let hash=pw;
+    try{ hash=await bcrypt.hash(pw,10); }catch{}
+    let done=false;
+    const cols=["password_hash","password","pass","user_password"];
+    for(const c of cols){
+      try{ db.prepare(`UPDATE users SET ${c}=? WHERE id=?`).run(hash,id); done=true; break; }catch{}
+    }
+    if(!done) return res.status(500).json({success:false,message:"No password column found"});
+    try{ for(const [k,v] of sessions){ if(v&&Number(v.userId)===Number(id)) sessions.delete(k); } }catch{}
+    return res.json({success:true,message:"Password reset"});
+  }catch(e){ return res.status(500).json({success:false,message:"Password reset failed: "+e.message}); }
+}
+app.post("/api/admin/users/:id/reset-password",requireAdmin,(req,res)=>handleAdminResetPassword(req,res));
+app.post("/api/admin/users/:id/password",requireAdmin,(req,res)=>handleAdminResetPassword(req,res));
+app.post("/api/admin/user/reset-password",requireAdmin,(req,res)=>handleAdminResetPassword(req,res));
+app.post("/api/admin/user/suspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id||req.params.id; req.params.id=id; return handleAdminUserStatus(req,res,"suspended"); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
+app.post("/api/admin/user/unsuspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id||req.params.id; req.params.id=id; return handleAdminUserStatus(req,res,"active"); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
+app.post("/api/admin/users/:id/unsuspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
     // ACTIVE path - FORCE PAY LIKE BACKPAY
     const result=db.transaction(()=>{
       const fresh=db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
