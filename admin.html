@@ -194,6 +194,12 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
           <button type="button" class="refresh" onclick="selectVisiblePrivateRecipients(true)">Select Visible</button>
           <button type="button" class="refresh" onclick="clearPrivateSelection()" style="background:#fee2e2;color:#b91c1c">Clear</button>
         </div>
+        <div class="recipient-buttons" style="margin-top:8px">
+          <button type="button" class="refresh" onclick="selectPrivateGroup('gold')" style="background:#f59e0b;color:white">🥇 Gold</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('silver')" style="background:#94a3b8;color:white">🥈 Silver</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('super')" style="background:#dc2626;color:white">👑 Super</button>
+          <button type="button" class="refresh" onclick="selectPrivateGroup('other')">📦 Other</button>
+        </div>
         <div id="privateSelectedCount" style="font-size:12px;color:#5b21b6;font-weight:800;margin:12px 0">0 selected</div>
         <div id="privateRecipientsList" class="recipient-list"><p class="empty">Loading members...</p></div>
       </div>
@@ -209,6 +215,7 @@ th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform
     <div class="table-wrap"><table><thead><tr><th>Date</th><th>Title</th><th>Recipients</th><th>Status</th></tr></thead><tbody id="privateMessageHistory"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody></table></div>
   </div>
 </section>
+<!-- ✅ BAD SCRIPT DELETED - No script here again. Main admin script will handle selection by ID and count ALL -->
 <section class="users-box" id="users">
   <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
   <div class="filter-row">
