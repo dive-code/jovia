@@ -31,6 +31,19 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     used_by_email TEXT DEFAULT '', used_by_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP, used_at TEXT
   );`);
+  // ✅ NEW - UPGRADE REQUESTS TABLE - Gold->Silver 8000, Gold->Super 13000, Silver->Super BLOCKED
+  db.exec(`CREATE TABLE IF NOT EXISTS jovia_upgrades (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    from_package TEXT DEFAULT '',
+    to_package TEXT DEFAULT '',
+    price INTEGER DEFAULT 0,
+    upline_id INTEGER DEFAULT NULL,
+    upline_name TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    confirmed_at TEXT
+  );`);
   db.exec(`CREATE TABLE IF NOT EXISTS jovia_game_accounts (
     id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER UNIQUE NOT NULL,
     game_balance INTEGER DEFAULT 0, points INTEGER DEFAULT 0,
@@ -113,11 +126,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY - DB TRIGGER =====
   try{
-    // Create index for fast check
     db.exec(`CREATE INDEX IF NOT EXISTS idx_wallet_job_dup ON wallet_transactions(user_id, description, type, created_at)`);
-    // Drop old trigger if exists
     db.exec(`DROP TRIGGER IF EXISTS no_dup_job_reward`);
-    // Create trigger that blocks same job same day
     db.exec(`
       CREATE TRIGGER no_dup_job_reward 
       BEFORE INSERT ON wallet_transactions 
@@ -189,6 +199,46 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
+
+  // ===== ✅ WIN RATE - CHANGE ONLY HERE: 35% WIN / 65% LOSE =====
+  const WIN_RATE = 35;
+
+  // ===== ✅ UPGRADE PRICES - CHANGE ONLY HERE IF YOU WANT CHANGE PRICE =====
+  const UPGRADE_PRICES = {
+    "gold->silver": 8000,
+    "gold->super": 13000,
+    "silver->gold": 8000,
+    // silver->super is BLOCKED on purpose - no price here
+  };
+  const getUpgradePrice = (fromPkg, toPkg) => {
+    const key = String(fromPkg||"").toLowerCase().trim() + "->" + String(toPkg||"").toLowerCase().trim();
+    return UPGRADE_PRICES[key] ?? null;
+  };
+  const getUpline = (user) => {
+    try{
+      if(!user) return null;
+      const cols = userColumns();
+      const possibleCols = ["referred_by","referrer_id","upline_id","invited_by","sponsor_id","referral_id","parent_id"];
+      for(const col of possibleCols){
+        if(!cols.includes(col)) continue;
+        const val = user[col];
+        if(!val) continue;
+        let upline = null;
+        if(/^\d+$/.test(String(val))) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance FROM users WHERE id=?`).get(Number(val));
+        if(!upline) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance FROM users WHERE username=? OR email=? OR id=? LIMIT 1`).get(String(val), String(val), Number(val)||-1);
+        if(upline) return upline;
+      }
+      return null;
+    }catch{ return null; }
+  };
+  const creditUpline = (uplineId, amount, fromUserId, label) => {
+    try{
+      if(!uplineId || !amount) return false;
+      db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id=?`).run(amount, uplineId);
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'upgrade_bonus', ?, ?, datetime('now'))`).run(uplineId, amount, `Upgrade bonus from user ${fromUserId} - ${label}`); }catch{}
+      return true;
+    }catch{ return false; }
+  };
 
   const isSuspendedStatus = (status) => {
     const s = String(status||"").toLowerCase().trim();
@@ -385,7 +435,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       let totalCleaned = 0;
       let totalReversed = 0;
       let affected = new Set();
-      
       try{
         const userFilter = req.query.userId ? ` AND user_id=${Number(req.query.userId)}` : "";
         const txs = db.prepare(`SELECT id, user_id, amount, description, created_at FROM wallet_transactions WHERE type='job_reward' ${userFilter} ORDER BY id DESC LIMIT 5000`).all();
@@ -413,14 +462,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
           }
         }
       }catch(e){ console.log("wallet fix error", e.message, e.stack); }
-
       return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate SUPER jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users - PREVENTION ACTIVE`, totalCleaned, totalReversed, affectedUsers: affected.size, prevention: "ON - No same job same day"});
     }catch(e){ return res.status(500).json({success:false, message:e.message, stack:e.stack}); }
   };
   safeAdd("get","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
   safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
 
-  // ===== EXTRA GUARD FOR MAIN JOB ENDPOINT - IF MAIN SERVER CALLS SECOND SERVER =====
   const jobGuardMiddleware = (req,res,next)=>{
     try{
       const userId = req.user?.id || req.body?.userId;
@@ -434,7 +481,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch{}
     next();
   };
-  // Try to add guard to possible job routes if they don't exist in main server
   safeAdd("post","/api/jobs/complete-guard", adminGuard, jobGuardMiddleware, (req,res)=>{ res.json({success:true, message:"Guard active"}); });
 
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
@@ -480,10 +526,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("post","/api/admin/codes/generate",adminGuard,(req,res)=>{
     try{
       const t=String(req.body?.type||"").toLowerCase();
-      const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":null;
+      const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":t==="gold-silver"?"gold-silver":t==="silver-gold"?"silver-gold":null;
       if(!type) return res.status(400).json({success:false,message:"Invalid type."});
       const count=Number(req.body?.count??1);
-      const price=type==="super-gold"?12000:type==="super-silver"?16000:10000;
+      const price=type==="super-gold"?13000:type==="super-silver"?16000:type==="gold-silver"?8000:type==="silver-gold"?8000:10000;
       const prefix=type==="withdraw"?"JOVIA-":"SUPER-"; const len=type==="withdraw"?6:8;
       const tx=db.transaction(()=>{ const arr=[]; while(arr.length<count){ const c=randomCode(len,prefix); const r=db.prepare(`INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,0,datetime('now'))`).run(c,type,price); if(r.changes===1) arr.push({code:c,type,price}); } return arr; });
       return res.json({success:true,codes:tx(),total:getTotalCodes()});
@@ -491,6 +537,79 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   safeAdd("get","/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
+
+  // ===== ✅ NEW - UPGRADE OPTIONS =====
+  safeAdd("get","/api/upgrade/options",userGuard,(req,res)=>{
+    try{
+      const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+      const current = String(user.package||user.plan||"Silver").toLowerCase();
+      let options=[];
+      if(current.includes("gold")){
+        options=[
+          {from:"Gold", to:"Silver", price:8000, label:"Gold → Silver - ₦8,000"},
+          {from:"Gold", to:"Super", price:13000, label:"Gold → Super - ₦13,000"}
+        ];
+      } else if(current.includes("silver")){
+        options=[
+          {from:"Silver", to:"Gold", price:8000, label:"Silver → Gold - ₦8,000"}
+        ];
+      } else if(current.includes("super")){
+        options=[];
+      }
+      const upline = getUpline(user);
+      return res.json({success:true, current: current, currentPackage: user.package||user.plan, options, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null, blockedMessage: current.includes("silver") ? "Silver cannot jump direct to Super. Upgrade Silver → Gold first, then Gold → Super." : null});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  // ===== ✅ NEW - UPGRADE REQUEST =====
+  safeAdd("post","/api/upgrade/request",userGuard,(req,res)=>{
+    try{
+      const toPkg = String(req.body?.to||req.body?.toPackage||req.body?.target||"").toLowerCase().trim();
+      if(!["silver","gold","super"].includes(toPkg)) return res.status(400).json({success:false,message:"Choose Silver, Gold or Super"});
+      const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+      if(isSuspendedStatus(user.account_status||user.status)) return res.status(403).json({success:false,message:"⛔ SUSPENDED - Contact Admin"});
+      const fromPkg = String(user.package||user.plan||"Silver").toLowerCase();
+      if(fromPkg.includes(toPkg)) return res.status(400).json({success:false,message:`You already dey ${toPkg.toUpperCase()} - No fit upgrade to same package`});
+      if(fromPkg.includes("silver") && toPkg==="super") return res.status(400).json({success:false,message:"Silver cannot jump direct to Super. Upgrade Silver → Gold first, then Gold → Super."});
+      if(fromPkg.includes("super")) return res.status(400).json({success:false,message:"You already dey Super - No higher package"});
+      const price = getUpgradePrice(fromPkg, toPkg);
+      if(price===null) return res.status(400).json({success:false,message:`Upgrade ${fromPkg} → ${toPkg} not allowed`});
+      const upline = getUpline(user);
+      const existing = db.prepare(`SELECT * FROM jovia_upgrades WHERE user_id=? AND status='pending' LIMIT 1`).get(req.user.id);
+      if(existing) return res.status(409).json({success:false,message:"You already get pending upgrade - Wait for confirm", upgrade: existing});
+      const info = db.prepare(`INSERT INTO jovia_upgrades (user_id, from_package, to_package, price, upline_id, upline_name, status) VALUES (?,?,?,?,?,?, 'pending')`).run(req.user.id, fromPkg, toPkg, price, upline?.id||null, upline?(upline.full_name||upline.username||""):"");
+      const upgrade = db.prepare(`SELECT * FROM jovia_upgrades WHERE id=?`).get(info.lastInsertRowid);
+      return res.json({success:true, message:`Upgrade request created: ${fromPkg} → ${toPkg} - ₦${price} - Pay to your upline`, upgrade, price, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
+  // ===== ✅ NEW - UPGRADE CONFIRM =====
+  safeAdd("post","/api/upgrade/confirm",adminGuard,(req,res)=>{
+    try{
+      const upgradeId = Number(req.body?.upgradeId||req.body?.id);
+      if(!upgradeId) return res.status(400).json({success:false,message:"upgradeId required"});
+      const up = db.prepare(`SELECT * FROM jovia_upgrades WHERE id=?`).get(upgradeId);
+      if(!up) return res.status(404).json({success:false,message:"Upgrade not found"});
+      if(up.status!=="pending") return res.status(409).json({success:false,message:"Already processed: "+up.status});
+      const user = db.prepare(`SELECT * FROM users WHERE id=?`).get(up.user_id);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      const toUpper = String(up.to_package||"").toUpperCase();
+      db.transaction(()=>{
+        const sets=["package=?"]; const vals=[toUpper];
+        if(hasColumn("plan")){ sets.push("plan=?"); vals.push(toUpper); }
+        if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
+        if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
+        if(toUpper==="SUPER" && hasColumn("is_super")){ sets.push("is_super=?"); vals.push(1); }
+        if(toUpper!=="SUPER" && hasColumn("is_super")){ sets.push("is_super=?"); vals.push(0); }
+        vals.push(user.id);
+        db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
+        db.prepare(`UPDATE jovia_upgrades SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(upgradeId);
+        if(up.upline_id) creditUpline(up.upline_id, up.price, user.id, `${up.from_package} -> ${up.to_package}`);
+      })();
+      return res.json({success:true, message:`Upgrade confirmed: ${up.from_package} → ${up.to_package} - ₦${up.price} credited to upline ${up.upline_id||"none"}`});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   safeAdd("post","/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
@@ -503,18 +622,29 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         const currentPackage = String(user.package||user.plan||"Silver").toLowerCase();
         const isSilver = currentPackage.includes("silver");
         const isGold = currentPackage.includes("gold");
+        const isSuper = currentPackage.includes("super");
         const codeType = String(code.type||"").toLowerCase();
-        if(isSilver && codeType !== "super-silver"){ throw new Error(`SILVER plan requires SUPER-SILVER code (₦16000). You used ${codeType.toUpperCase()} (₦${code.price}).`); }
-        if(isGold && codeType !== "super-gold"){ throw new Error(`GOLD plan requires SUPER-GOLD code (₦12000). You used ${codeType.toUpperCase()} (₦${code.price}).`); }
-        if(!["super-silver","super-gold"].includes(codeType)){ throw new Error("INVALID CODE TYPE FOR UPGRADE TO SUPER"); }
+        if(isSuper) throw new Error("You already dey SUPER - No higher package");
+        if(isSilver && codeType==="super-silver") throw new Error("Silver cannot jump direct to Super. Upgrade Silver → Gold first, then Gold → Super.");
+        if(isSilver && codeType!=="silver-gold") throw new Error(`SILVER plan requires SILVER-GOLD code (₦8000) to go to Gold. You used ${codeType.toUpperCase()} (₦${code.price}). Silver cannot jump to Super direct.`);
+        if(isGold && codeType==="super-silver") throw new Error("This code na for Silver users. Gold users need GOLD-SILVER (₦8000) or SUPER-GOLD (₦13000).");
+        if(isGold && !["super-gold","gold-silver"].includes(codeType)) throw new Error(`GOLD plan requires GOLD-SILVER code (₦8000) or SUPER-GOLD code (₦13000). You used ${codeType.toUpperCase()} (₦${code.price}).`);
+        if(!["super-silver","super-gold","gold-silver","silver-gold"].includes(codeType)){ throw new Error("INVALID CODE TYPE FOR UPGRADE"); }
+        let target = "SUPER";
+        if(codeType==="gold-silver") target="SILVER";
+        if(codeType==="silver-gold") target="GOLD";
+        if(codeType==="super-gold") target="SUPER";
+        if(currentPackage.includes(target.toLowerCase())) throw new Error(`You already dey ${target} - No fit upgrade to same package`);
         const sure=getSureUser(user);
-        const sets=["package=?","is_super=?"]; const vals=["SUPER",1];
-        if(hasColumn("plan")){ sets.push("plan=?"); vals.push("SUPER"); }
+        const upline = getUpline(user);
+        const sets=["package=?","is_super=?"]; const vals=[target, target==="SUPER"?1:0];
+        if(hasColumn("plan")){ sets.push("plan=?"); vals.push(target); }
         if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
         if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
         vals.push(user.id);
         db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
         db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,raw);
+        if(upline && code.price) creditUpline(upline.id, Number(code.price)||0, user.id, `${currentPackage} -> ${target.toLowerCase()}`);
         return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
       });
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
@@ -673,23 +803,26 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(acc.game_balance < bet) return res.status(400).json({success:false,message:`Insufficient balance. Available: ₦${acc.game_balance}`});
       let isWin = false; let mult = 0; let segmentLabel = "LOSE"; let finalSide = null;
       const houseRoll = crypto.randomInt(0,100);
+      // ✅ 35% WIN / 65% LOSE - WIN_RATE = 35
       if(gameType === "spin_wheel"){
-        if(houseRoll < 40){ mult = 0; segmentLabel="LOSE"; isWin=false; }
-        else if(houseRoll < 55){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
-        else if(houseRoll < 70){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
-        else if(houseRoll < 85){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
+        // LOSE = 0-64 = 65%
+        if(houseRoll < 35){ mult = 0; segmentLabel="LOSE"; isWin=false; }
+        else if(houseRoll < 50){ mult = 0.5; segmentLabel="0.5x"; isWin=false; }
+        else if(houseRoll < 65){ mult = 0.8; segmentLabel="0.8x"; isWin=false; }
+        // WIN = 65-99 = 35%
+        else if(houseRoll < 82){ mult = 1.2; segmentLabel="1.2x"; isWin=true; }
         else if(houseRoll < 93){ mult = 1.5; segmentLabel="1.5x"; isWin=true; }
         else { mult = 2; segmentLabel="2x"; isWin=true; }
       } else if(gameType === "spin_bottle" || gameType === "up_down"){
         const pick = String(req.body?.prediction||"up").toLowerCase().trim();
         const pickNorm = pick === "down" ? "down" : "up";
-        isWin = houseRoll < 30;
+        isWin = houseRoll < WIN_RATE; // ✅ 35
         finalSide = isWin ? pickNorm : (pickNorm === "up" ? "down" : "up");
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide.toUpperCase();
         if(gameType === "up_down") segmentLabel = finalSide === "up" ? "GREEN" : "RED";
       } else {
-        isWin = houseRoll < 30;
+        isWin = houseRoll < WIN_RATE; // ✅ 35
         mult = isWin ? 1.8 : 0;
         segmentLabel = isWin ? "WIN" : "LOSE";
       }
