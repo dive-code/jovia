@@ -457,34 +457,40 @@ function applyPrivateRecipientFilter(){renderPrivateRecipients()}
 function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isSuspendedUser(u)?"⛔ Suspended":isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 function selectPrivateGroup(type){
-  privateRecipientIds.clear();
+  // 1. Only change ONE side, keep the other side as e be
+  // Gold/Silver/Super/Other = change Package only, keep Status
+  // Active/Inactive/Suspended = change Status only, keep Package
+  // All = reset both to All
   try{
-    const sf=$("privateStatusFilter"); const pf=$("privatePackageFilter");
+    const sf=$("privateStatusFilter");
+    const pf=$("privatePackageFilter");
     $("privateRecipientSearch").value="";
-    if(type==="gold"){ pf.value="gold"; sf.value="all"; }
-    else if(type==="silver"){ pf.value="silver"; sf.value="all"; }
-    else if(type==="super"){ pf.value="super"; sf.value="all"; }
-    else if(type==="other"){ pf.value="other"; sf.value="all"; }
-    else if(type==="active"){ sf.value="active"; pf.value="all"; }
-    else if(type==="inactive"){ sf.value="inactive"; pf.value="all"; }
-    else if(type==="suspended"){ sf.value="suspended"; pf.value="all"; }
+    if(type==="gold"){ pf.value="gold"; }
+    else if(type==="silver"){ pf.value="silver"; }
+    else if(type==="super"){ pf.value="super"; }
+    else if(type==="other"){ pf.value="other"; }
+    else if(type==="active"){ sf.value="active"; }
+    else if(type==="inactive"){ sf.value="inactive"; }
+    else if(type==="suspended"){ sf.value="suspended"; }
     else { sf.value="all"; pf.value="all"; }
   }catch(e){}
+
+  // 2. Select by BOTH filters together - Status AND Package
+  privateRecipientIds.clear();
   rawUsers.forEach(function(u){
-    let ok=false;
-    if(type==="all") ok=true;
-    if(type==="active") ok=isActiveUser(u);
-    if(type==="inactive") ok=!isActiveUser(u)&&!isSuspendedUser(u);
-    if(type==="suspended") ok=isSuspendedUser(u);
-    if(type==="gold") ok=packageMatches(u,"gold");
-    if(type==="silver") ok=packageMatches(u,"silver");
-    if(type==="super") ok=packageMatches(u,"super");
-    if(type==="other") ok=packageMatches(u,"other");
-    if(ok) privateRecipientIds.add(Number(u.id));
+    if(privateUserMatches(u)) privateRecipientIds.add(Number(u.id));
   });
   renderPrivateRecipients();
 }
-function applyPrivateRecipientFilter(){ privateRecipientIds.clear(); renderPrivateRecipients(); }
+
+function applyPrivateRecipientFilter(){
+  // When you change dropdown manually, select the combination too, no clear am to 0
+  privateRecipientIds.clear();
+  rawUsers.forEach(function(u){
+    if(privateUserMatches(u)) privateRecipientIds.add(Number(u.id));
+  });
+  renderPrivateRecipients();
+}
 function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
 function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
 function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
