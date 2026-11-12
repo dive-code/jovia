@@ -487,6 +487,12 @@ function handleAdminUserStatus(req,res,forcedStatus){
     return res.json({success:true,message:"User activated successfully + welcome + referral bonus paid",status:"active",account_status:"active",user:result});
   }catch(e){ return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 }
+app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>handleAdminUserStatus(req,res));
+app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
+app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
+app.post("/api/admin/users/:id/suspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"suspended"));
+app.post("/api/admin/users/:id/pending",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"pending"));
+// ===== FIXED: Admin status - suspend + activate both work, activate FORCES bonus like backpay =====
 app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
