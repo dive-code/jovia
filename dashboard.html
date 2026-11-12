@@ -170,14 +170,13 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <section class="referral-card"><div class="referral-heading"><h2>Invite & Earn</h2></div><div class="referral-box"><div class="referral-label">YOUR PERSONAL LINK</div><div class="referral-url" id="referralLink">Loading...</div></div><div class="referral-actions"><button class="copy" id="copyReferralButton" type="button" onclick="copyReferral()">Copy Link</button><div class="ref-count"><strong id="memberCount">0</strong> joined</div></div></section>
 <section class="upgrade-card" id="upgradeCard">
 <div id="upgradeDefault">
-<div class="upgrade-head"><div class="upgrade-title" id="upgradeTitle">🚀 Upgrade Account</div><div class="upgrade-badge" id="upgradeBadge">CHOOSE BELOW</div></div>
+<div class="upgrade-head"><div class="upgrade-title" id="upgradeTitle">🚀 Upgrade Account</div><div class="upgrade-badge" id="upgradeBadge">UPGRADE</div></div>
 <div class="upgrade-desc" id="upgradeDesc">Choose wetin you wan upgrade to, then paste your code.</div>
-<!-- ✅ NEW: User go choose upgrade target first, no be only SUPER again -->
 <label style="font-size:11px;font-weight:800;color:var(--purple);display:block;margin-bottom:6px">1️⃣ CHOOSE UPGRADE:</label>
 <select id="upgradeTarget" onchange="onUpgradeTargetChange()" style="width:100%;padding:14px;border:1.5px solid #ece6f1;border-radius:12px;font-size:13px;font-weight:800;color:var(--purple);margin-bottom:12px;outline:none;background:#fff">
-<option value="silver-gold">Silver → Gold - ₦3,000</option>
-<option value="silver-super">Silver → Super - ₦13,000</option>
-<option value="gold-super">Gold → Super - ₦8,000</option>
+<option value="silver-gold">Silver → Gold</option>
+<option value="silver-super">Silver → Super</option>
+<option value="gold-super">Gold → Super</option>
 </select>
 <label style="font-size:11px;font-weight:800;color:var(--purple);display:block;margin-bottom:6px">2️⃣ PASTE YOUR CODE:</label>
 <div class="upgrade-input-row"><input id="upgradeCodeInput" class="upgrade-input" placeholder="SUPER-XXXXXXXX" maxlength="14"><button id="upgradeBtn" class="upgrade-btn" type="button" onclick="applySuperUpgrade()">UPGRADE →</button></div>
@@ -530,7 +529,7 @@ function startNotifPolling(){
     if(document.visibilityState==="visible" && currentUser && isActiveAccount(currentUser)) loadNotifications(true);
   },15000);
 }
-// ✅ NEW: Update badge/desc when user change dropdown
+// ✅ NO PRICE FOR DASHBOARD - Name only
 function onUpgradeTargetChange(){
   const sel=document.getElementById("upgradeTarget");
   const badge=document.getElementById("upgradeBadge");
@@ -540,9 +539,10 @@ function onUpgradeTargetChange(){
   if(!sel||!badge) return;
   if(msg) msg.textContent="";
   const v=sel.value;
-  if(v==="silver-gold"){ badge.textContent="₦3,000 CODE"; title.textContent="🚀 Silver → Gold"; desc.innerHTML="As <b>Silver</b> you pay <b>₦3,000</b> to become <b>Gold</b>. Paste your SILVER → GOLD code."; }
-  else if(v==="silver-super"){ badge.textContent="₦13,000 CODE"; title.textContent="🚀 Silver → SUPER"; desc.innerHTML="As <b>Silver</b> you pay <b>₦13,000</b> to jump direct to <b>SUPER</b> + Unlock Music 👑"; }
-  else if(v==="gold-super"){ badge.textContent="₦8,000 CODE"; title.textContent="🚀 Gold → SUPER"; desc.innerHTML="As <b>Gold</b> you pay <b>₦8,000</b> to become <b>SUPER</b> + Unlock Music 👑"; }
+  badge.textContent="UPGRADE";
+  if(v==="silver-gold"){ title.textContent="🚀 Silver → Gold"; desc.innerHTML="Paste your <b>Silver → Gold</b> code to upgrade."; }
+  else if(v==="silver-super"){ title.textContent="🚀 Silver → Super"; desc.innerHTML="Paste your <b>Silver → Super</b> code to upgrade + Unlock Music 👑"; }
+  else if(v==="gold-super"){ title.textContent="🚀 Gold → Super"; desc.innerHTML="Paste your <b>Gold → Super</b> code to upgrade + Unlock Music 👑"; }
 }
 function displayUser(user,apiData={}){
  if(!user) return;
@@ -604,15 +604,13 @@ function displayUser(user,apiData={}){
  else if(packageName==="Super"){ upgradeCard.classList.add("show"); upgradeDefault.style.display="none"; upgradeSuccess.classList.add("show"); }
  else if(packageName==="Silver"){
    upgradeCard.classList.add("show"); upgradeDefault.style.display="block"; upgradeSuccess.classList.remove("show");
-   // ✅ Silver see both options, default to Silver->Gold 3000 (cheapest)
-   if(upgradeSelect){ upgradeSelect.innerHTML='<option value="silver-gold">Silver → Gold - ₦3,000</option><option value="silver-super">Silver → Super - ₦13,000</option>'; upgradeSelect.value="silver-gold"; }
-   upgradeTitle.textContent="🚀 Silver → Gold / Super"; upgradeBadge.textContent="₦3,000 CODE"; upgradeDesc.innerHTML="As <b>Silver</b> choose: <b>Gold ₦3,000</b> or jump direct to <b>SUPER ₦13,000</b> + Music 👑";
+   if(upgradeSelect){ upgradeSelect.innerHTML='<option value="silver-gold">Silver → Gold</option><option value="silver-super">Silver → Super</option>'; upgradeSelect.value="silver-gold"; }
+   upgradeTitle.textContent="🚀 Silver → Gold / Super"; upgradeBadge.textContent="UPGRADE"; upgradeDesc.innerHTML="Choose <b>Silver → Gold</b> or <b>Silver → Super</b>, then paste your code.";
  }
  else if(packageName==="Gold"){
    upgradeCard.classList.add("show"); upgradeDefault.style.display="block"; upgradeSuccess.classList.remove("show");
-   // ✅ Gold see only Gold->Super 8000, NO Gold->Silver
-   if(upgradeSelect){ upgradeSelect.innerHTML='<option value="gold-super">Gold → Super - ₦8,000</option>'; upgradeSelect.value="gold-super"; }
-   upgradeTitle.textContent="🚀 Gold → SUPER"; upgradeBadge.textContent="₦8,000 CODE"; upgradeDesc.innerHTML="As <b>Gold</b> you pay <b>₦8,000</b> to become <b>SUPER</b> + Unlock Music 👑";
+   if(upgradeSelect){ upgradeSelect.innerHTML='<option value="gold-super">Gold → Super</option>'; upgradeSelect.value="gold-super"; }
+   upgradeTitle.textContent="🚀 Gold → Super"; upgradeBadge.textContent="UPGRADE"; upgradeDesc.innerHTML="Paste your <b>Gold → Super</b> code to upgrade + Unlock Music 👑";
  }
  const referralCode=String(user.referralCode||user.username||"").replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
  if(referralCode){const url=new URL("register.html",window.location.href); url.searchParams.set("ref",referralCode); document.getElementById("referralLink").textContent=url.href;}
@@ -683,8 +681,7 @@ async function applySuperUpgrade(){
   const target=document.getElementById("upgradeTarget")?.value || "";
   const r=await fetch("/api/upgrade/apply",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({code,superCode:code,upgradeTarget:target,email:currentUser.email,username:currentUser.username})});
   const d=await r.json().catch(()=>({})); if(!r.ok||!d.success) throw new Error(d?.message||"Invalid code");
-  msg.innerHTML="✅ <b>"+(d.message||"Upgraded!")+"</b>"; msg.style.color="#15803d"; btn.textContent="SUCCESS ✓"; input.disabled=true; input.value=code+" ✓ USED";
-  // ✅ If na Silver->Gold, no show SUPER success, just reload to show new Gold package
+  msg.innerHTML="✅ <b>Upgraded!</b>"; msg.style.color="#15803d"; btn.textContent="SUCCESS ✓"; input.disabled=true; input.value=code+" ✓ USED";
   if(target==="silver-gold"){ setTimeout(async()=>{try{await loadUser();}catch(e){}},1200); upgradeBusy=false; return; }
   showSuperSuccessInstant(); if(currentUser){currentUser.package="SUPER";} setTimeout(async()=>{try{await loadUser();}catch(e){} showSuperSuccessInstant();},1500);
  }catch(e){msg.textContent="❌ "+(e.message||"Failed"); msg.style.color="#ef4444"; btn.disabled=false; btn.textContent="UPGRADE →"; upgradeBusy=false;}
