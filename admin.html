@@ -666,7 +666,25 @@ function privateUserMatches(u){const query=$("privateRecipientSearch").value.tri
 function applyPrivateRecipientFilter(){renderPrivateRecipients()}
 function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isSuspendedUser(u)?"⛔ Suspended":isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function selectPrivateGroup(type){privateRecipientIds.clear();rawUsers.filter(u=>{if(type==="active")return isActiveUser(u);if(type==="inactive")return !isActiveUser(u)&&!isSuspendedUser(u);if(type==="suspended")return isSuspendedUser(u);return true}).forEach(u=>privateRecipientIds.add(Number(u.id)));renderPrivateRecipients()}
+// ✅ FIXED BY ME - COUNT ALL: ignores dropdown, counts ALL users for the button you press
+function selectPrivateGroup(type){
+  privateRecipientIds.clear();
+  rawUsers.forEach(function(u){
+    let ok = false;
+    if(type==="all") ok = true;
+    if(type==="active") ok = isActiveUser(u);
+    if(type==="inactive") ok = !isActiveUser(u) && !isSuspendedUser(u);
+    if(type==="suspended") ok = isSuspendedUser(u);
+    if(type==="gold") ok = packageMatches(u,"gold");
+    if(type==="silver") ok = packageMatches(u,"silver");
+    if(type==="super") ok = packageMatches(u,"super");
+    if(type==="other") ok = packageMatches(u,"other");
+    if(ok) privateRecipientIds.add(Number(u.id));
+  });
+  // Reset dropdowns to All so render shows all selected, not just 26 filtered
+  try{ $("privateStatusFilter").value="all"; $("privatePackageFilter").value="all"; $("privateRecipientSearch").value=""; }catch(e){}
+  renderPrivateRecipients();
+}
 function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
 function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
 function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
