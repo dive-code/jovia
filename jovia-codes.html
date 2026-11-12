@@ -83,8 +83,8 @@ textarea{resize:vertical;min-height:80px}
 <div class="card" id="cardSuper" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">👑 Generate SUPER Upgrade Code</h3>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<button class="btn btn-gold" id="btnGold" onclick="generate('super-gold')">GOLD → SUPER<br><span style="font-size:12px">N12,000</span></button>
-<button class="btn btn-silver" id="btnSilver" onclick="generate('super-silver')">SILVER → SUPER<br><span style="font-size:12px">N16,000</span></button>
+<button class="btn btn-gold" id="btnGold" onclick="generate('super-gold')">GOLD → SUPER<br><span style="font-size:12px">₦8,000</span></button>
+<button class="btn btn-silver" id="btnSilver" onclick="generate('super-silver')">SILVER → SUPER<br><span style="font-size:12px">₦13,000</span></button>
 </div>
 <div id="resultSuper" class="code-box" style="border:1.5px solid #fbbf24">
 <div style="color:#fbbf24;font-size:10px;font-weight:800" id="superTypeLabel">SUPER CODE</div>
@@ -93,6 +93,27 @@ textarea{resize:vertical;min-height:80px}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
 <button class="btn btn-light" onclick="copyCode('super')">📋 Copy</button>
 <button class="btn btn-light" onclick="shareCode('super')">💬 WhatsApp</button>
+</div>
+</div>
+</div>
+
+<!-- ✅ NEW BLOCK ONLY - UPGRADE CODES - Separate, always visible, no touch old panel -->
+<div class="card" id="cardUpgradeCodes">
+<h3 style="font-size:14px;margin-bottom:8px">🆙 NEW - Generate UPGRADE Code</h3>
+<p style="font-size:11px;color:#64748b;margin-bottom:10px">Separate block. Old SUPER panel still dey for up.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button class="btn btn-gold" id="btnUpGold" onclick="generateUpgrade('super-gold')">GOLD → SUPER<br><span style="font-size:12px">₦8,000</span></button>
+<button class="btn btn-silver" id="btnUpSilver" onclick="generateUpgrade('super-silver')">SILVER → SUPER<br><span style="font-size:12px">₦13,000</span></button>
+</div>
+<button class="btn btn-light" id="btnUpSilverGold" onclick="generateUpgrade('silver-gold')" style="margin-top:8px;border:1.5px solid #94a3b8">SILVER → GOLD<br><span style="font-size:12px">₦3,000</span></button>
+<div style="font-size:11px;color:#64748b;margin-top:8px;text-align:center">❌ No Gold → Silver again. E don comot.</div>
+<div id="resultUpgrade" class="code-box" style="border:1.5px solid #fbbf24">
+<div style="color:#fbbf24;font-size:10px;font-weight:800" id="upgradeTypeLabel">UPGRADE CODE</div>
+<div id="codeTextUpgrade" class="code super"></div>
+<div style="color:#fff;font-size:11px;margin-top:8px;line-height:1.5" id="upgradePriceLabel"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+<button class="btn btn-light" onclick="copyCode('upgrade')">📋 Copy</button>
+<button class="btn btn-light" onclick="shareCode('upgrade')">💬 WhatsApp</button>
 </div>
 </div>
 </div>
@@ -155,6 +176,7 @@ Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
 <script>
 let currentTab='withdraw';
 let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
+let lastUpgrade=""; let lastUpgradePrice=0; let lastUpgradeType="";
 let allServerCodes = [];
 let rawMusic = [];
 let editingMusicId = null;
@@ -215,7 +237,7 @@ function setTab(t){
   filterList();
 }
 async function generate(type){
-  const btnId = type==='withdraw' ? 'btnWithdraw' : type==='super-gold' ? 'btnGold' : 'btnSilver';
+  const btnId = type==='withdraw' ? 'btnWithdraw' : type==='super-gold' ? 'btnGold' : type==='super-silver' ? 'btnSilver' : 'btnSilver';
   const btn = document.getElementById(btnId);
   const oldText = btn.innerHTML;
   btn.innerHTML = "⏳ Generating..."; btn.disabled = true;
@@ -229,17 +251,44 @@ async function generate(type){
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     const newCode = data.codes[0].code;
+    const serverPrice = data.codes[0].price || (type==='super-gold'?8000:type==='super-silver'?13000:type==='silver-gold'?3000:10000);
     if(type==='withdraw'){
       lastWithdraw=newCode;
       document.getElementById('resultWithdraw').style.display='block';
       document.getElementById('codeTextWithdraw').innerText=newCode;
     } else {
-      lastSuper=newCode; lastSuperPrice=type==='super-gold'?12000:16000; lastSuperType=type==='super-gold'?'GOLD → SUPER':'SILVER → SUPER';
+      lastSuper=newCode; lastSuperPrice=serverPrice; lastSuperType=type==='super-gold'?'GOLD → SUPER':type==='super-silver'?'SILVER → SUPER':'SILVER → GOLD';
       document.getElementById('resultSuper').style.display='block';
       document.getElementById('codeTextSuper').innerText=newCode;
       document.getElementById('superTypeLabel').innerText=lastSuperType+' - DAILY RESET';
-      document.getElementById('superPriceLabel').innerHTML='Price: <b>N'+lastSuperPrice.toLocaleString()+'</b> - One per day';
+      document.getElementById('superPriceLabel').innerHTML='Price: <b>₦'+lastSuperPrice.toLocaleString()+'</b> - One per day';
     }
+    await loadFromServer();
+  } catch(e){ alert('❌ '+e.message); }
+  btn.innerHTML = oldText; btn.disabled = false;
+}
+// ✅ NEW - Separate function for NEW block only, e no touch old generate()
+async function generateUpgrade(type){
+  const btnId = type==='super-gold' ? 'btnUpGold' : type==='super-silver' ? 'btnUpSilver' : 'btnUpSilverGold';
+  const btn = document.getElementById(btnId);
+  const oldText = btn.innerHTML;
+  btn.innerHTML = "⏳ Generating..."; btn.disabled = true;
+  try {
+    const res = await fetch('/api/admin/codes/generate', {
+      method: 'POST',
+      headers: getHeaders(),
+      credentials:'include',
+      body: JSON.stringify({ type: type, count: 1 })
+    });
+    const data = await res.json();
+    if(!data.success) throw new Error(data.message);
+    const newCode = data.codes[0].code;
+    const serverPrice = data.codes[0].price || (type==='super-gold'?8000:type==='super-silver'?13000:3000);
+    lastUpgrade=newCode; lastUpgradePrice=serverPrice; lastUpgradeType=type==='super-gold'?'GOLD → SUPER':type==='super-silver'?'SILVER → SUPER':'SILVER → GOLD';
+    document.getElementById('resultUpgrade').style.display='block';
+    document.getElementById('codeTextUpgrade').innerText=newCode;
+    document.getElementById('upgradeTypeLabel').innerText=lastUpgradeType+' - UPGRADE CODE';
+    document.getElementById('upgradePriceLabel').innerHTML='Price: <b>₦'+serverPrice.toLocaleString()+'</b>';
     await loadFromServer();
   } catch(e){ alert('❌ '+e.message); }
   btn.innerHTML = oldText; btn.disabled = false;
@@ -257,7 +306,7 @@ async function loadFromServer(){
 }
 function filterList(){
   const q = (document.getElementById('searchInput').value||'').toUpperCase().trim();
-  let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : currentTab==='super' ? allServerCodes.filter(c=>c.type&&c.type.startsWith('super')) : allServerCodes;
+  let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : currentTab==='super' ? allServerCodes.filter(c=>c.type&&(c.type.startsWith('super')||c.type==='silver-gold')) : allServerCodes;
   if(q) filtered = filtered.filter(c=> c.code.toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q) || (c.used_by_email||'').toUpperCase().includes(q));
   renderServer(filtered, allServerCodes.length);
 }
@@ -269,11 +318,11 @@ function renderServer(filtered, totalAll){
   }
   document.getElementById('list').innerHTML = filtered.map((c)=>{
     const used = !!c.used;
-    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ${used?'USED by '+(c.used_by_name||c.used_by_email||c.used_by):'ACTIVE'}<br>${c.used_at||''}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
+    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ₦${Number(c.price||0).toLocaleString()} - ${used?'USED by '+(c.used_by_name||c.used_by_email||c.used_by):'ACTIVE'}<br>${c.used_at||''}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
   }).join('');
 }
-function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
-function shareCode(tab){ const code=tab==='withdraw'?lastWithdraw:lastSuper; if(!code) return alert('Generate first'); window.open('https://wa.me/?text='+encodeURIComponent('Your code: '+code),'_blank'); }
+function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:tab==='upgrade'?lastUpgrade:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
+function shareCode(tab){ const code=tab==='withdraw'?lastWithdraw:tab==='upgrade'?lastUpgrade:lastSuper; if(!code) return alert('Generate first'); window.open('https://wa.me/?text='+encodeURIComponent('Your code: '+code),'_blank'); }
 async function validate(){
   const code=document.getElementById('checkCode').value.trim().toUpperCase();
   const r=document.getElementById('checkResult');
@@ -284,7 +333,7 @@ async function validate(){
     const data = await res.json();
     if(!data.exists){ r.innerHTML='<span style="color:#ef4444">❌ Invalid</span>'; return; }
     if(data.used){ r.innerHTML=`<span style="color:#ef4444">❌ Already USED by ${data.used_by||data.used_by_name||'user'}</span>`; return; }
-    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active - ${data.type}</span>`;
+    r.innerHTML=`<span style="color:#16a34a">✅ Valid & Active - ${data.type} - ₦${Number(data.price||0).toLocaleString()}</span>`;
   } catch(e){ r.innerHTML='<span style="color:red">❌ '+e.message+'</span>'; }
 }
 
