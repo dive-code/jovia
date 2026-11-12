@@ -3,581 +3,700 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="description" content="Jovia Network administrator dashboard">
-<meta name="theme-color" content="#171124">
-<title>Jovia Network | Admin Dashboard - Secure No Logout</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#2a0f3d">
+<title>Jovia Network | Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--primary:#5b21b6;--primary-light:#ede9fe;--green:#16a34a;--green-light:#dcfce7;--red:#dc2626;--red-light:#fee2e2;--blue:#2563eb;--orange:#f59e0b;--orange-light:#fef3c7;--bg:#f5f7fb;--border:#e7eaf0;--text:#172033;--muted:#7b8494;--sidebar:#171124;--sidebar-hover:#251a3c;--shadow:0 8px 30px rgba(15,23,42,.06);--radius:16px;--gold:#f5c542}
-html{scroll-behavior:smooth;scroll-padding-top:80px;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
-body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-button,input,textarea,select{font-family:inherit;-webkit-appearance:none}
-button{border:0} button:disabled{opacity:.55;cursor:not-allowed}
-a{overflow-wrap:anywhere} button{padding:10px 14px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;transition:.18s}
-button:not(:disabled):active{transform:scale(.97)}
-#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at top left,rgba(91,33,182,.10),transparent 35%),#f6f7fb}
-.login-box{width:100%;max-width:430px;background:#fff;padding:38px 34px;border:1px solid var(--border);border-radius:22px;box-shadow:0 25px 70px rgba(15,23,42,.10)}
-.login-badge{width:58px;height:58px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;border-radius:17px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:white;font-size:25px}
-.login-logo{font-family:Poppins,sans-serif;font-size:29px;font-weight:800;text-align:center} .login-logo span{color:var(--primary)}
-.login-subtitle{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 30px}
-.login-group{margin-bottom:18px} .login-group label{display:block;margin-bottom:7px;color:#596579;font-size:12px;font-weight:700}
-.login-group input{width:100%;padding:13px 14px;border:1px solid #dce2ea;border-radius:10px;outline:none;font-size:16px}
-.login-button{width:100%;padding:14px;margin-top:4px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#7c3aed);color:#fff;font-size:14px;font-weight:800}
-.login-error{display:none;margin-bottom:17px;padding:11px 12px;border-radius:9px;background:var(--red-light);color:#b91c1c;font-size:12px}
-.login-loading{display:none;margin-top:14px;text-align:center;color:var(--muted);font-size:12px}
-#dashboardScreen{display:none}
-.sidebar{position:fixed;z-index:1000;top:0;left:0;width:260px;height:100dvh;padding:24px 16px;overflow-y:auto;background:linear-gradient(180deg,#171124,#120d1d);color:white;border-right:1px solid rgba(255,255,255,.04);transition:transform .32s cubic-bezier(.4,0,.2,1)}
-.logo{padding:4px 12px 28px;font-family:Poppins,sans-serif;font-size:24px;font-weight:800} .logo span{color:#a78bfa}
-.sidebar-label{padding:0 12px 9px;color:#766e85;font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
-.nav{display:flex;flex-direction:column;gap:5px}
-.nav a{display:flex;align-items:center;gap:10px;padding:13px 14px;border-radius:12px;color:#aaa3b9;text-decoration:none;font-size:13px;font-weight:600}
-.nav a:hover{background:var(--sidebar-hover);color:#fff} .nav a.active{background:linear-gradient(90deg,rgba(124,58,237,.28),rgba(124,58,237,.12));color:#fff;border:1px solid rgba(167,139,250,.18)}
-.nav-divider{height:1px;margin:15px 8px;background:rgba(255,255,255,.07)}
-.sidebar-footer{margin-top:30px;padding:14px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;color:#8e879b;font-size:10px;line-height:1.6}
-.main{margin-left:260px;padding:30px;min-height:100vh;padding-bottom:90px}
-.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-30px -30px 25px -30px;padding:16px 30px;background:rgba(245,247,251,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
-.topbar h1{font-family:Poppins,sans-serif;font-size:26px;font-weight:800} .topbar p{margin-top:3px;color:var(--muted);font-size:12px}
-.admin{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:var(--shadow);font-size:12px;font-weight:700}
-.admin-avatar{width:29px;height:29px;display:flex;align-items:center;justify-content:center;border-radius:9px;background:var(--primary-light);color:var(--primary)}
-.hamburger{display:none;width:46px;height:46px;border-radius:12px;background:#fff;border:1px solid var(--border);font-size:20px;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--shadow)}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;backdrop-filter:blur(3px)} .overlay.show{display:block}
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:24px}
-.card{position:relative;min-height:110px;padding:18px;overflow:hidden;border:1px solid var(--border);border-radius:15px;background:#fff;box-shadow:var(--shadow)}
-.card p{margin-bottom:10px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase}
-.card h2{font-family:Poppins,sans-serif;font-size:26px;font-weight:800;overflow-wrap:anywhere}
-.card-icon{position:absolute;right:14px;top:14px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--primary-light);font-size:14px}
-.section-box,.users-box,.videos-box,.withdrawals-box,.music-box{margin-bottom:22px;padding:22px;border:1px solid var(--border);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow);min-width:0}
-.section-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.section-header h2{font-family:Poppins,sans-serif;font-size:17px;font-weight:800}
-.info-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:16px;color:var(--muted);font-size:10px}
-.live-status{display:flex;align-items:center;gap:6px} .live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e}
-.refresh{background:#eef2ff;color:#4338ca} .approve,.restore,.activate{background:var(--green);color:white}
-.reset,.edit{background:var(--blue);color:white} .suspend,.delete,.reject{background:var(--red);color:white}
-.pause{background:var(--orange);color:white} .action{margin-right:4px;margin-bottom:6px;padding:8px 11px;border-radius:8px;font-size:10px}
-.search-bar{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:14px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:#fafbfc}
-.search-bar input{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--text);font-size:14px}
-.table-wrap{overflow-x:auto;overflow-y:hidden;border:1px solid var(--border);border-radius:12px;max-width:100%;-webkit-overflow-scrolling:touch}
-table{width:100%;min-width:900px;border-collapse:collapse} th,td{padding:12px 10px;text-align:left;vertical-align:top;border-bottom:1px solid #edf0f4;font-size:11px}
-th{color:#687386;background:#fafbfc;font-size:9px;font-weight:800;text-transform:uppercase;white-space:nowrap} tbody tr:hover{background:#fafcff}
-.empty{padding:30px!important;text-align:center!important;color:var(--muted)}
-.status{display:inline-flex;align-items:center;padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800;text-transform:capitalize;white-space:nowrap}
-.pending{background:var(--orange-light);color:#9a6700} .approved,.active,.available,.paid{background:var(--green-light);color:#15803d}
-.suspended,.paused,.inactive,.closed,.rejected{background:var(--red-light);color:#b91c1c} .completed{background:#e0e7ff;color:#4338ca}
-.form-box{margin-bottom:18px;padding:18px;border:1px solid var(--border);border-radius:13px;background:#f8fafc}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-.form-group{display:flex;flex-direction:column;gap:6px;min-width:0} .form-group.full{grid-column:1/-1}
-.form-group label{color:#596579;font-size:10px;font-weight:800}
-.form-group input,.form-group textarea,.form-group select{width:100%;min-width:0;padding:11px 12px;border:1px solid #dce2ea;border-radius:10px;outline:none;background:#fff;color:var(--text);font-size:14px}
-.form-group textarea{resize:vertical;min-height:80px} .create{margin-top:14px;background:var(--green);color:white} .cancel{display:none;margin-top:14px;margin-left:7px;background:#64748b;color:white}
-.recipient-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px} .recipient-list{max-height:300px;overflow:auto;background:#fff;border:1px solid var(--border);border-radius:12px;padding:8px}
-.recipient-item{display:flex;gap:10px;align-items:center;padding:11px;border-bottom:1px solid #edf0f4;font-size:11px} .recipient-item:last-child{border-bottom:0} .recipient-item input{flex-shrink:0;width:18px;height:18px} .recipient-item small{display:block;color:var(--muted);margin-top:3px}
-.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px} .filter-row select{padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--text);font-size:12px;max-width:100%}
-.withdrawal-control{margin:0 0 14px;padding:16px;border:1px solid var(--border);border-radius:13px;background:#faf9ff}
-.control-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap} .control-top strong{display:block;font-size:12px} .control-top small{display:block;margin-top:4px;color:var(--muted);font-size:10px}
-.switch{position:relative;width:48px;height:27px;flex-shrink:0} .switch input{position:absolute;opacity:0} .switch-slider{position:absolute;inset:0;border-radius:30px;background:#cbd5e1;cursor:pointer} .switch-slider:before{content:"";position:absolute;width:19px;height:19px;left:4px;top:4px;border-radius:50%;background:#fff;transition:transform .2s}
-.switch input:checked+.switch-slider{background:var(--green)} .switch input:checked+.switch-slider:before{transform:translateX(21px)}
-.withdrawal-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 14px} .withdrawal-tab{padding:10px 15px;background:#f1f5f9;color:#475569;border:1px solid var(--border)} .withdrawal-tab.active-tab{background:var(--primary);color:#fff;border-color:var(--primary)}
-.tab-count{display:inline-block;margin-left:5px;padding:2px 6px;border-radius:20px;background:rgba(255,255,255,.22)}
-#adminToast{position:fixed;right:16px;left:16px;bottom:84px;z-index:99999;max-width:400px;margin:auto;padding:14px 16px;border-radius:14px;color:white;font-size:12px;font-weight:700;box-shadow:0 12px 35px rgba(15,23,42,.18);text-align:center}
-.mobile-bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:998;background:rgba(23,17,36,.97);backdrop-filter:blur(18px);border-top:1px solid rgba(255,255,255,.08);padding:6px 4px calc(6px + env(safe-area-inset-bottom));grid-template-columns:repeat(6,1fr);gap:2px}
-.mbn-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:8px 2px;border-radius:12px;color:#8e86a3;text-decoration:none;font-size:8px;font-weight:700;background:transparent;border:0}
-.mbn-item span.icon{font-size:18px;line-height:1} .mbn-item.active{color:#fff;background:rgba(124,58,237,.22)} .mbn-item.active span.icon{filter:brightness(1.4)}
-@media(max-width:900px){
-  .sidebar{transform:translateX(-105%);width:280px;box-shadow:20px 0 50px rgba(0,0,0,.3)}
-  .sidebar.open{transform:translateX(0)}
-  .main{margin-left:0;padding:16px;padding-bottom:88px}
-  .topbar{margin:-16px -16px 18px -16px;padding:14px 16px;gap:10px}
-  .topbar h1{font-size:20px} .topbar p{font-size:11px}
-  .hamburger{display:flex}
-  .admin{padding:8px 10px;font-size:11px}
-  .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .card{min-height:100px;padding:14px} .card h2{font-size:22px}
-  .section-box,.users-box,.videos-box,.withdrawals-box,.music-box{padding:16px;border-radius:14px}
-  .form-grid{grid-template-columns:1fr}
-  .mobile-bottom-nav{display:grid}
-  #adminToast{bottom:92px}
-  table{min-width:800px}
-  .search-bar input{font-size:16px}
-  .form-group input,.form-group textarea,.form-group select{font-size:16px}
-}
-@media(max-width:420px){
-  .cards{grid-template-columns:1fr 1fr}
-  .card h2{font-size:20px}
-  .section-header h2{font-size:15px}
-  .topbar h1{font-size:18px}
-}
+:root{--purple:#2a0f3d;--purple2:#4b1d6b;--purple-light:#f6f0fa;--gold:#f5b700;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1}
+body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+button{font-family:inherit} button:disabled{cursor:not-allowed!important}
+.app{width:100%;max-width:680px;min-height:100vh;margin:auto;padding:20px 18px 130px}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:18px;padding:14px 16px;position:sticky;top:12px;z-index:90}
+.logo-area{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:white}
+.logo-name{font-size:16px;font-weight:800;color:var(--purple)} .logo-sub{display:block;font-size:9px;letter-spacing:2.5px;color:var(--muted);font-weight:700;margin-top:1px}
+.menu-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:grid;place-items:center}
+.notif-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--purple);font-size:20px;cursor:pointer;display:none;place-items:center;position:relative}
+.notif-btn.show{ display:grid !important; }
+.notif-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:20px;background:#ef4444;color:#fff;font-size:11px;font-weight:900;display:grid;place-items:center;border:2px solid #fff}
+#notifPanel{position:absolute;top:52px;right:0;width:320px;max-width:85vw;background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:0 20px 50px rgba(42,15,61,.20);z-index:9999;display:none;overflow:hidden}
+#notifPanel.show{display:block}
+.notif-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+.notif-head b{font-size:13px;color:var(--purple)}
+.notif-head button{border:0;background:none;color:#7c3aed;font-size:11px;font-weight:800;cursor:pointer}
+#notifList{max-height:380px;overflow-y:auto}
+.notif-item{padding:14px 16px;border-bottom:1px solid #f3eef8;cursor:pointer;text-align:left}
+.notif-item.unread{background:#fcf9ff}
+.notif-item b{font-size:13px;color:var(--purple);display:block}
+.notif-item p{font-size:12px;color:#5f5170;line-height:1.6;margin-top:4px;white-space:pre-line}
+.notif-item small{font-size:10px;color:var(--muted)}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:#7c3aed;display:inline-block;margin-right:6px}
+.notif-empty{padding:22px;text-align:center;font-size:12px;color:var(--muted)}
+#notifToast{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-20px);width:calc(100% - 32px);max-width:420px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px;box-shadow:0 20px 50px rgba(0,0,0,.25);z-index:100001;display:none;cursor:pointer}
+#notifToast.show{display:block;transform:translateX(-50%) translateY(0)}
+#drawerOverlay{position:fixed;inset:0;background:rgba(18,6,32,.55);backdrop-filter:blur(4px);z-index:9997;display:none;opacity:0;transition:.3s}
+#drawerOverlay.show{display:block;opacity:1}
+#topDrawer{position:fixed;top:0;left:-100%;width:300px;max-width:85vw;height:100vh;background:#fff;border-right:1px solid var(--border);z-index:9998;transition:left .35s cubic-bezier(.4,0,.2,1);box-shadow:20px 0 60px rgba(42,15,61,.18);display:flex;flex-direction:column}
+#topDrawer.show{left:0}
+.drawer-head{padding:20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.drawer-head h3{font-size:15px;font-weight:800;color:var(--purple)}
+.drawer-close{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--purple-light);color:var(--purple);font-size:16px;font-weight:800;cursor:pointer}
+.drawer-user{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.drawer-avatar{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--purple),var(--purple2));display:grid;place-items:center;color:#fff;font-weight:900}
+.drawer-user-name{font-size:13px;font-weight:700;color:var(--purple)} .drawer-user-plan{font-size:10px;color:var(--muted);margin-top:2px}
+.drawer-list{flex:1;overflow-y:auto;padding:12px}
+.drawer-item{width:100%;display:flex;align-items:center;gap:14px;padding:14px 14px;border-radius:14px;border:0;background:none;text-align:left;cursor:pointer;font-size:13px;font-weight:600;color:var(--text);transition:.2s;position:relative}
+.drawer-item:hover{background:var(--purple-light);color:var(--purple)}
+.drawer-item.active{background:var(--purple-light);color:var(--purple);font-weight:800}
+.drawer-item .d-icon{width:40px;height:40px;border-radius:11px;background:#f6f0ff;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.drawer-item.super-item .d-icon{background:linear-gradient(135deg,#fff8d6,#ffe88a)}
+.drawer-divider{height:1px;background:var(--border);margin:10px 0}
+.drawer-logout{width:100%;margin-top:auto;padding:14px;border-radius:12px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-weight:800;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.welcome{margin-bottom:20px;padding:0 4px}
+.welcome-label{font-size:10px;font-weight:800;letter-spacing:1.6px;color:var(--muted);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.welcome-label:before{content:"";width:22px;height:2px;background:var(--gold);border-radius:2px}
+.welcome h1{font-size:28px;line-height:1.3;color:var(--purple);font-weight:800;overflow-wrap:anywhere}
+.welcome h1 span{background:linear-gradient(135deg,#8a5c00,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.account-card{position:relative;overflow:hidden;background:linear-gradient(145deg,#2f1347 0%,#4a1f6e 50%,#5e2a85 100%);border-radius:26px;color:white;box-shadow:0 20px 50px rgba(42,15,61,.25);margin-bottom:22px;border:1px solid rgba(255,255,255,.08);touch-action:pan-y}
+.swipe-wrapper{display:flex;transition:transform .35s cubic-bezier(.4,0,.2,1)}
+.swipe-slide{flex:0 0 100%;min-width:100%;padding:26px;position:relative;z-index:2}
+.swipe-dots{display:flex;justify-content:center;gap:6px;padding:0 0 14px}
+.dot{width:22px;height:4px;border-radius:10px;background:rgba(255,255,255,.25);transition:.3s} .dot.active{background:var(--gold);width:28px}
+.account-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.account-label{font-size:10px;letter-spacing:1.5px;opacity:.7;font-weight:700}
+.account-balance{font-size:clamp(25px,7vw,40px);font-weight:900;margin-top:8px;letter-spacing:-1.5px;line-height:1.2}
+.plan-badge{padding:8px 14px;border-radius:30px;background:linear-gradient(135deg,var(--gold),#ffe88a);color:#2a1a00;font-size:11px;font-weight:900;white-space:nowrap}
+.plan-badge.super{background:linear-gradient(135deg,#ff9a00,#ffcf33);color:#000;animation:glow 2s infinite}
+@keyframes glow{0%{box-shadow:0 4px 15px rgba(255,154,0,.35)}50%{box-shadow:0 4px 25px rgba(255,154,0,.6)}100%{box-shadow:0 4px 15px rgba(255,154,0,.35)}}
+.account-info{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12);display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.info-box small{display:block;color:rgba(255,255,255,.6);font-size:10px;margin-bottom:5px;font-weight:600}
+.info-box strong{font-size:14px;font-weight:700}
+.account-button{width:100%;border:0;margin-top:20px;padding:15px;border-radius:14px;background:linear-gradient(135deg,#ffc400,#ffe06b);color:#2a1a00;font-size:14px;font-weight:800;cursor:pointer}
+.quick-title{font-size:15px;font-weight:800;color:var(--purple);margin:26px 0 14px;display:flex;align-items:center;gap:10px}
+.quick-title:after{content:"";flex:1;height:1px;background:var(--border)}
+.quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.quick{min-width:0;background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;align-items:center;gap:13px;cursor:pointer;text-align:left;position:relative;overflow:hidden}
+.quick.locked{opacity:.65} .quick.locked::after{content:"🔒";position:absolute;top:8px;right:10px;font-size:12px}
+.quick.super-lock::after{content:"👑";position:absolute;top:8px;right:10px;font-size:12px}
+.quick-icon{width:46px;height:46px;flex-shrink:0;border-radius:13px;background:linear-gradient(135deg,#fff8d6,#fff0a8);display:flex;align-items:center;justify-content:center;font-size:18px;color:#8a5c00}
+.quick strong{display:block;color:var(--purple);font-size:13px;margin-bottom:2px}
+.quick small{color:var(--muted);font-size:11px}
+.hot-badge{position:absolute;top:8px;right:8px;z-index:5;background:linear-gradient(135deg,#ff2d20,#ff6a00);color:#fff;font-size:9px;font-weight:900;letter-spacing:.5px;padding:4px 8px;border-radius:20px;box-shadow:0 4px 12px rgba(255,45,32,.55);display:inline-flex;align-items:center;gap:3px;animation:hotPulse 1.1s infinite}
+.hot-badge-nav{position:absolute;top:-4px;right:6px;z-index:5;background:linear-gradient(135deg,#ff2d20,#ff6a00);color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:20px;box-shadow:0 3px 10px rgba(255,45,32,.5);animation:hotPulse 1.1s infinite}
+.hot-badge-drawer{position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#ff2d20,#ff6a00);color:#fff;font-size:8px;font-weight:900;padding:3px 7px;border-radius:20px;animation:hotPulse 1.1s infinite}
+@keyframes hotPulse{0%{transform:scale(1)}50%{transform:scale(1.14)}100%{transform:scale(1)}}
+.quick.has-hot{overflow:visible}
+.referral-card{background:white;border:1px solid var(--border);border-radius:22px;padding:20px;margin-top:22px}
+.referral-heading h2{color:var(--purple);font-size:16px;font-weight:800}
+.referral-box{border:1.5px dashed #d9cfea;background:linear-gradient(135deg,#fdfbff,#f6f0ff);border-radius:14px;padding:14px;margin-top:12px}
+.referral-label{font-size:9px;color:#9a8da8;letter-spacing:1.2px;font-weight:800;margin-bottom:7px}
+.referral-url{color:var(--purple);font-size:12px;font-weight:700;line-height:1.7;overflow-wrap:anywhere}
+.referral-actions{display:flex;justify-content:space-between;gap:10px;margin-top:14px}
+.copy{border:0;background:var(--purple);color:#fff;padding:12px 18px;border-radius:12px;font-size:12px;font-weight:700;cursor:pointer}
+.ref-count{font-size:11px;color:var(--muted);background:var(--purple-light);padding:7px 12px;border-radius:20px;font-weight:600}
+.upgrade-card{background:linear-gradient(135deg,#fff,#fff8e6);border:1.5px solid #ffe08a;border-radius:22px;padding:20px;margin-top:22px;display:none}
+.upgrade-card.show{display:block}
+.upgrade-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:12px}
+.upgrade-title{font-size:14px;font-weight:900;color:var(--purple)} .upgrade-badge{padding:6px 11px;border-radius:20px;background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;font-size:10px;font-weight:900}
+.upgrade-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.upgrade-input-row{display:flex;gap:8px}
+.upgrade-input{flex:1;padding:14px 12px;border:1.5px solid #ece6f1;border-radius:12px;font-size:14px;font-weight:800;letter-spacing:1px;text-transform:uppercase;outline:none}
+.upgrade-btn{border:0;padding:14px 18px;border-radius:12px;background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;font-size:11px;font-weight:900;cursor:pointer}
+.upgrade-msg{font-size:11px;font-weight:700;margin-top:10px;min-height:16px;word-break:break-word}
+.upgrade-success-box{display:none;padding:18px;border-radius:14px;background:linear-gradient(135deg,#dcfce7,#f0fdf4);border:1px solid #bbf7d0;text-align:center}
+.upgrade-success-box.show{display:block}
+.upgrade-features{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.upgrade-feat{font-size:10px;font-weight:700;color:var(--purple);background:#fff;padding:8px 10px;border-radius:10px;border:1px solid #f3e8ff}
+.activity-section{margin-top:26px}
+.activity-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.activity-head h2{color:var(--purple);font-size:16px;font-weight:800}
+.activity-head button{background:var(--purple-light);border:1px solid var(--border);color:var(--purple);font-size:11px;font-weight:800;cursor:pointer;padding:7px 12px;border-radius:20px}
+.activity-item{background:white;border:1px solid var(--border);border-radius:18px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.activity-left{display:flex;align-items:center;gap:10px;flex:1}
+.activity-icon{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.activity-name{font-size:13px;font-weight:700;color:var(--purple)}
+.activity-date{font-size:11px;color:var(--muted);margin-top:2px}
+.activity-amount{font-size:11px;font-weight:800;padding:8px 14px;border-radius:20px;border:1.5px solid;white-space:nowrap}
+.activity-amount.pending{background:linear-gradient(135deg,#fef3c7,#fde68a);border-color:#f59e0b;color:#92400e}
+.activity-amount.success{background:linear-gradient(135deg,#dcfce7,#bbf7d0);border-color:#22c55e;color:#166534}
+.activity-amount.suspended{background:linear-gradient(135deg,#fee2e2,#fecaca);border-color:#ef4444;color:#991b1b}
+.bottom-nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:580px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;padding:10px 8px;display:grid;grid-template-columns:repeat(6,1fr);gap:2px;z-index:100;box-shadow:0 15px 40px rgba(42,15,61,.12)}
+.nav{border:0;background:none;color:#9a92a6;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:9px;font-weight:700;cursor:pointer;padding:6px 0;border-radius:14px;position:relative}
+.nav-icon{width:36px;height:28px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.nav.active{color:var(--purple);background:var(--purple-light)} .nav.locked{opacity:.5}
+.nav.super-lock{position:relative} .nav.super-lock::after{content:"👑";position:absolute;top:-4px;right:4px;font-size:8px}
+#joviaPopupOverlay,#privatePopOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+#joviaPopupOverlay{z-index:99999;background:rgba(18,6,32,.85);backdrop-filter:blur(10px)} #joviaPopupOverlay.show{display:flex!important}
+#joviaPopupBox{width:100%;max-width:440px;background:white;border-radius:24px;padding:28px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.35);position:relative;text-align:center;border:1px solid #ece5f3;margin:auto}
+#joviaPopupClose{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:#f3eef8;color:#57158a;border:none;font-size:16px;font-weight:800;cursor:pointer}
+.joviaPopupBadge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#f3eef8;border:1px solid #e9e2ef;border-radius:50px;color:#57158a;font-size:9px;font-weight:800;letter-spacing:1px;margin-bottom:14px}
+.joviaPopupTitle{font-size:20px;font-weight:800;color:#1c102b;margin-bottom:10px;line-height:1.4}
+.joviaPopupText{font-size:12.5px;line-height:1.7;color:#5f5170;margin-bottom:18px;text-align:left;background:#fcf9ff;border:1px solid #f0e8f8;border-radius:14px;padding:14px;white-space:pre-line;overflow-wrap:anywhere}
+.joviaBtn{width:100%;min-height:50px;border-radius:12px;border:none;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;padding:12px}
+.joviaBtnChannel{background:linear-gradient(135deg,#229ed9,#1c8ac0);color:white} .joviaBtnClose{background:white;border:1px solid #e9e2ef;color:#57158a}
+#privatePopOverlay{z-index:99998;background:rgba(18,6,32,.86);backdrop-filter:blur(10px)} #privatePopOverlay.show{display:flex!important}
+#privatePopBox{width:100%;max-width:440px;background:white;border-radius:24px;padding:26px 22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.4);position:relative;border:1px solid #ece5f3;margin:auto}
+#toast{position:fixed;left:50%;bottom:95px;transform:translateX(-50%) translateY(20px);background:#1e1430;color:white;padding:12px 18px;border-radius:12px;font-size:12px;font-weight:700;opacity:0;pointer-events:none;transition:.3s;z-index:100000;max-width:90%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
-<div id="loginScreen">
-  <div class="login-box">
-    <div class="login-badge">◆</div>
-    <div class="login-logo">Jovia<span>Network</span></div>
-    <p class="login-subtitle">Secure Administrator Portal - No Auto Logout</p>
-    <div id="loginError" class="login-error"></div>
-    <form id="adminLoginForm" onsubmit="adminLogin(event)">
-      <div class="login-group"><label for="adminUsername">Administrator Username</label><input id="adminUsername" type="text" placeholder="Enter admin username" autocomplete="username" required value="admin"></div>
-      <div class="login-group"><label for="adminPassword">Password</label><input id="adminPassword" type="password" placeholder="Enter password" autocomplete="current-password" required></div>
-      <button type="submit" class="login-button" id="loginButton">Sign in to Dashboard</button>
-      <div id="loginLoading" class="login-loading">Authenticating...</div>
-    </form>
+<div class="app">
+<header class="topbar">
+<div style="display:flex;align-items:center;gap:12px">
+<button class="menu-btn" type="button" id="hamburgerBtn" onclick="toggleDrawer()">☰</button>
+<div class="logo-area"><div class="logo">J</div><div><div class="logo-name">Jovia</div><span class="logo-sub">NETWORK</span></div></div>
+</div>
+<div style="position:relative">
+  <button class="notif-btn" id="notifBell" type="button" onclick="toggleNotifPanel(event)">🔔<span class="notif-badge" id="notifCount" style="display:none">0</span></button>
+  <div id="notifPanel">
+    <div class="notif-head"><b>Notifications</b><button onclick="markAllRead()">Mark all read</button></div>
+    <div id="notifList"><div class="notif-empty">No notifications yet</div></div>
   </div>
 </div>
-<div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-<div id="dashboardScreen">
-<aside class="sidebar" id="sidebar">
-  <div class="logo">Jovia<span>Network</span></div>
-  <div class="sidebar-label">Management</div>
-  <nav class="nav">
-    <a href="#dashboard" class="active" onclick="setActiveNav(this); scrollToSection('dashboard')"><span class="icon">📊</span> <span>Dashboard</span></a>
-    <a href="#announcement" onclick="setActiveNav(this); scrollToSection('announcement')"><span class="icon">📢</span> <span>Announcement</span></a>
-    <a href="#privateMessages" onclick="setActiveNav(this); scrollToSection('privateMessages')"><span class="icon">✉️</span> <span>Private Messages</span></a>
-    <a href="#users" onclick="setActiveNav(this); scrollToSection('users')"><span class="icon">👥</span> <span>Users</span></a>
-    <a href="#jobs" onclick="setActiveNav(this); scrollToSection('jobs')"><span class="icon">💼</span> <span>Jobs</span></a>
-    <a href="#videos" onclick="setActiveNav(this); scrollToSection('videos')"><span class="icon">🎬</span> <span>Videos</span></a>
-    <a href="#music" onclick="setActiveNav(this); scrollToSection('music')"><span class="icon">♫</span> <span>Music - Price Control 👑</span></a>
-    <a href="#games" onclick="setActiveNav(this); scrollToSection('games')"><span class="icon">🎮</span> <span>Games</span></a>
-    <a href="#withdrawals" onclick="setActiveNav(this); scrollToSection('withdrawals')"><span class="icon">💸</span> <span>Withdrawals</span><span id="navPendingCount" style="background:#f59e0b;color:white;padding:2px 7px;border-radius:10px;font-size:9px;margin-left:auto">0</span></a>
-    <div class="nav-divider"></div>
-    <a href="#" onclick="adminLogout(event)"><span class="icon">🚪</span> <span>Logout</span></a>
-  </nav>
-  <div class="sidebar-footer">Secure + No Immediate Logout<br>Music price = Reward user earns<br>No password exposure</div>
-</aside>
-<main class="main">
-<div class="topbar">
-  <div style="display:flex;align-items:center;gap:12px">
-    <button class="hamburger" onclick="openSidebar()" aria-label="Open menu">☰</button>
-    <div><h1>Admin Dashboard - Fixed No Logout</h1><p>Manage users, music price, content and withdrawals - No auto logout</p></div>
-  </div>
-  <div class="admin"><div class="admin-avatar">👤</div><span id="adminName">Administrator</span></div>
+</header>
+<section class="welcome"><div class="welcome-label">MEMBER AREA</div><h1>Hello, <span id="userName">Loading...</span></h1></section>
+<section class="account-card" id="accountCard"><div class="swipe-wrapper" id="swipeWrapper"><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AVAILABLE BALANCE</div><div class="account-balance" id="balance">₦0</div></div><div class="plan-badge" id="planBadge">LOADING</div></div><div class="account-info"><div class="info-box"><small>ACCOUNT STATUS</small><strong id="accountStatus">Loading...</strong></div><div class="info-box"><small>WELCOME BONUS</small><strong id="welcomeBonus">₦0</strong></div></div><button class="account-button" id="paymentButton" type="button" onclick="activate()">Continue to Payment</button></div><div class="swipe-slide"><div class="account-top"><div><div class="account-label">AFFILIATE EARNINGS</div><div class="account-balance" id="affiliateBalance">₦0</div></div><div class="plan-badge" id="planBadge2">LOADING</div></div><div class="account-info"><div class="info-box"><small>REFERRALS</small><strong id="affiliateCountBig">0 Joined</strong></div><div class="info-box"><small>TOTAL EARNED</small><strong id="totalEarned">₦0</strong></div></div><button class="account-button" id="affiliateButton" type="button" disabled style="opacity:.7;cursor:default">Affiliate Balance</button></div></div><div class="swipe-dots"><div class="dot active" id="dot0"></div><div class="dot" id="dot1"></div></div></section>
+<div class="quick-title">Quick access</div>
+<div class="quick-grid">
+<button class="quick" type="button" onclick="openPage('withdraw.html')"><div class="quick-icon">₦</div><div><strong>Withdraw</strong><small>Request payout</small></div></button>
+<button class="quick" type="button" onclick="openPage('jobs.html')"><div class="quick-icon">◈</div><div><strong>Available Jobs</strong><small>View opportunities</small></div></button>
+<button class="quick has-hot" id="gamesQuickBtn" type="button" onclick="openPage('games.html')"><span class="hot-badge">🔥 HOT</span><div class="quick-icon">🎮</div><div><strong>Games</strong><small id="gamesQuickSmall">Play & Win</small></div></button>
+<button class="quick" id="musicQuickBtn" type="button" onclick="openPage('music.html')"><div class="quick-icon">♫</div><div><strong>Music</strong><small id="musicQuickSmall">Super Only 👑</small></div></button>
+<button class="quick" type="button" onclick="openPage('profile.html')"><div class="quick-icon">◍</div><div><strong>My Profile</strong><small>Account settings</small></div></button>
+<button class="quick" type="button" onclick="openPage('history.html')"><div class="quick-icon">◷</div><div><strong>History</strong><small>Transactions</small></div></button>
 </div>
-<section class="cards" id="dashboard">
-  <div class="card"><div class="card-icon">👥</div><p>Total Users</p><h2 id="totalUsers">0</h2></div>
-  <div class="card"><div class="card-icon">⏳</div><p>Non-Active</p><h2 id="pendingUsers">0</h2></div>
-  <div class="card"><div class="card-icon">✓</div><p>Active</p><h2 id="approvedUsers">0</h2></div>
-  <div class="card"><div class="card-icon">◆</div><p>Gold</p><h2 id="goldUsers">0</h2></div>
-  <div class="card"><div class="card-icon">◇</div><p>Silver</p><h2 id="silverUsers">0</h2></div>
-  <div class="card"><div class="card-icon">♫</div><p>Music Tracks</p><h2 id="totalMusicCard">0</h2></div>
-  <div class="card"><div class="card-icon">₦</div><p>Pending WD</p><h2 id="pendingWithdrawalsCard">0</h2></div>
-  <div class="card"><div class="card-icon">👑</div><p>Super Users</p><h2 id="superUsers">0</h2></div>
+<section class="referral-card"><div class="referral-heading"><h2>Invite & Earn</h2></div><div class="referral-box"><div class="referral-label">YOUR PERSONAL LINK</div><div class="referral-url" id="referralLink">Loading...</div></div><div class="referral-actions"><button class="copy" id="copyReferralButton" type="button" onclick="copyReferral()">Copy Link</button><div class="ref-count"><strong id="memberCount">0</strong> joined</div></div></section>
+<section class="upgrade-card" id="upgradeCard">
+<div id="upgradeDefault">
+<div class="upgrade-head"><div class="upgrade-title" id="upgradeTitle">🚀 Upgrade Account</div><div class="upgrade-badge" id="upgradeBadge">UPGRADE</div></div>
+<div class="upgrade-desc" id="upgradeDesc">Choose wetin you wan upgrade to, then paste your code.</div>
+<label style="font-size:11px;font-weight:800;color:var(--purple);display:block;margin-bottom:6px">1️⃣ CHOOSE UPGRADE:</label>
+<select id="upgradeTarget" onchange="onUpgradeTargetChange()" style="width:100%;padding:14px;border:1.5px solid #ece6f1;border-radius:12px;font-size:13px;font-weight:800;color:var(--purple);margin-bottom:12px;outline:none;background:#fff">
+<option value="silver-gold">Silver → Gold</option>
+<option value="silver-super">Silver → Super</option>
+<option value="gold-super">Gold → Super</option>
+</select>
+<label style="font-size:11px;font-weight:800;color:var(--purple);display:block;margin-bottom:6px">2️⃣ PASTE YOUR CODE:</label>
+<div class="upgrade-input-row"><input id="upgradeCodeInput" class="upgrade-input" placeholder="SUPER-XXXXXXXX" maxlength="14"><button id="upgradeBtn" class="upgrade-btn" type="button" onclick="applySuperUpgrade()">UPGRADE →</button></div>
+<div id="upgradeMsg" class="upgrade-msg"></div>
+<div class="upgrade-features"><div class="upgrade-feat">✅ No Daily Limit</div><div class="upgrade-feat">✅ All Jobs Unlocked</div><div class="upgrade-feat">✅ SUPER Music 👑</div><div class="upgrade-feat">✅ Priority Support</div></div>
+</div>
+<div id="upgradeSuccessBox" class="upgrade-success-box"><div style="font-size:32px">👑</div><div style="font-size:18px;font-weight:900;color:#15803d;margin-top:8px">SUPER UNLOCKED ✓</div><div style="font-size:12px;color:#166534;margin-top:8px;line-height:1.7">Full access unlocked.<br>No daily limit + Music unlocked!</div><div style="margin-top:14px;display:inline-flex;padding:8px 16px;border-radius:20px;background:#fff;border:1px solid #bbf7d0;color:#15803d;font-size:11px;font-weight:800">👑 SUPER ACTIVE - UNLIMITED + MUSIC</div><button onclick="openPage('music.html')" style="margin-top:16px;width:100%;padding:14px;border-radius:12px;border:0;background:linear-gradient(135deg,#5b21b6,#8b5cf6);color:#fff;font-weight:800;cursor:pointer;font-size:12px">🎵 Go to SUPER Music →</button></div>
 </section>
-<section class="section-box" id="announcement">
-  <div class="section-header"><h2>📢 Announcement Popup</h2><button class="refresh" onclick="loadAdminPopup()">↻ Refresh</button></div>
-  <div class="form-box">
-    <div class="form-grid">
-      <div class="form-group"><label for="adm_enabled">Enable Popup?</label><select id="adm_enabled"><option value="true">Yes - Every login</option><option value="false">No - Hide</option></select></div>
-      <div class="form-group"><label for="adm_url">Channel URL</label><input id="adm_url" value="https://t.me/jovianetwerk"></div>
-      <div class="form-group full"><label for="adm_title">Title</label><input id="adm_title" value="🚨 Join Official Channel or Miss Your Withdrawal! 📢"></div>
-      <div class="form-group full"><label for="adm_message">Message</label><textarea id="adm_message" rows="5">ATTENTION ALL MEMBERS! All withdrawal codes posted ONLY in official channel.</textarea></div>
-      <div class="form-group"><label for="adm_btnText">Button Text</label><input id="adm_btnText" value="📲 Join Official Channel →"></div>
-    </div>
-    <button class="create" id="adm_saveBtn" onclick="saveAdminPopup()" style="background:#5b21b6;width:100%;padding:16px;font-size:13px">💾 Save Popup</button>
-    <div id="adm_status" style="display:none;margin-top:12px;padding:12px;border-radius:10px;font-size:11px;font-weight:700"></div>
-  </div>
-</section>
-<section class="section-box" id="privateMessages">
-  <div class="section-header"><h2>✉️ Private Messages</h2><button class="refresh" onclick="loadPrivateMessages()">↻ Refresh</button></div>
-  <div class="form-box">
-    <h3 style="font-size:14px;margin-bottom:14px">Compose Private Message</h3>
-    <div class="form-grid">
-      <div class="form-group full"><label for="privateRecipientSearch">Search members</label><input id="privateRecipientSearch" type="search" placeholder="Search name, username or email..." oninput="renderPrivateRecipients()"></div>
-      <div class="form-group"><label for="privateStatusFilter">Account Status</label><select id="privateStatusFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended</option></select></div>
-      <div class="form-group"><label for="privatePackageFilter">Package</label><select id="privatePackageFilter" onchange="applyPrivateRecipientFilter()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super">Super</option><option value="other">Other</option></select></div>
-      <div class="form-group full">
-        <label>Select recipients</label>
-        <div class="recipient-buttons">
-          <button type="button" class="refresh" onclick="selectPrivateGroup('active')" style="background:#5b21b6;color:white">✅ Active</button>
-          <button type="button" class="refresh" onclick="selectPrivateGroup('inactive')">⏳ Non-Active</button>
-          <button type="button" class="refresh" onclick="selectPrivateGroup('suspended')">⛔ Suspended</button>
-          <button type="button" class="refresh" onclick="selectPrivateGroup('all')">👥 All</button>
-          <button type="button" class="refresh" onclick="selectVisiblePrivateRecipients(true)">Select Visible</button>
-          <button type="button" class="refresh" onclick="clearPrivateSelection()" style="background:#fee2e2;color:#b91c1c">Clear</button>
-        </div>
-        <div class="recipient-buttons" style="margin-top:8px">
-          <button type="button" class="refresh" onclick="selectPrivateGroup('gold')" style="background:#f59e0b;color:white">🥇 Gold</button>
-          <button type="button" class="refresh" onclick="selectPrivateGroup('silver')" style="background:#94a3b8;color:white">🥈 Silver</button>
-          <button type="button" class="refresh" onclick="selectPrivateGroup('super')" style="background:#dc2626;color:white">👑 Super</button>
-          <button type="button" class="refresh" onclick="selectPrivateGroup('other')">📦 Other</button>
-        </div>
-        <div id="privateSelectedCount" style="font-size:12px;color:#5b21b6;font-weight:800;margin:12px 0">0 selected</div>
-        <div id="privateRecipientsList" class="recipient-list"><p class="empty">Loading members...</p></div>
-      </div>
-      <div class="form-group full"><label for="privateMessageTitle">Title</label><input id="privateMessageTitle" type="text" maxlength="150" placeholder="Enter popup title"></div>
-      <div class="form-group full"><label for="privateMessageBody">Message</label><textarea id="privateMessageBody" rows="6" maxlength="5000" placeholder="Write your message..."></textarea></div>
-    </div>
-    <button type="button" class="create" id="sendPrivateMessageButton" onclick="sendPrivateMessage()" style="background:#5b21b6;width:100%;padding:16px;font-size:13px">✉️ Send Private Message</button>
-    <div id="privateMessageStatus" style="display:none;margin-top:12px;padding:12px;border-radius:10px;font-size:11px;font-weight:700"></div>
-  </div>
-  <div style="margin-top:20px">
-    <div class="section-header"><h2>📨 Message History</h2></div>
-    <div class="search-bar"><span>⌕</span><input id="privateHistorySearch" type="search" placeholder="Search history..." oninput="renderPrivateHistory()"></div>
-    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Title</th><th>Recipients</th><th>Status</th></tr></thead><tbody id="privateMessageHistory"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody></table></div>
-  </div>
-</section>
-<!-- ✅ BAD SCRIPT DELETED - No script here again. Main admin script will handle selection by ID and count ALL -->
-<section class="users-box" id="users">
-  <div class="section-header"><h2>👥 Registered Users</h2><button class="refresh" onclick="loadUsers()">↻ Refresh</button></div>
-  <div class="filter-row">
-    <select id="userStatusFilter" onchange="filterUsers()"><option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Non-active</option><option value="suspended">Suspended ⛔</option></select>
-    <select id="userPackageFilter" onchange="filterUsers()"><option value="all">All packages</option><option value="gold">Gold</option><option value="silver">Silver</option><option value="super">Super 👑</option><option value="other">Other</option></select>
-  </div>
-  <div class="search-bar"><span>⌕</span><input type="text" id="searchUsers" placeholder="Search name, username, email..." oninput="filterUsers()"></div>
-  <div class="info-row"><div class="live-status"><span class="live-dot"></span><span>Live data</span></div><div>Last updated: <span id="lastUpdated">Waiting...</span></div></div>
-  <div class="table-wrap"><table><thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th>Package</th><th>Amount</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="usersTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
-</section>
-<section class="section-box" id="jobs">
-  <div class="section-header"><h2>💼 Jobs Management</h2><button class="refresh" onclick="loadAdminJobs()">↻ Refresh</button></div>
-  <div class="search-bar"><span>⌕</span><input id="searchJobs" type="search" placeholder="Search jobs..." oninput="filterJobs()"></div>
-  <div class="info-row"><div>Total Jobs: <strong id="totalJobs">0</strong> | <a href="#" onclick="clearDeletedJobs(event)" style="color:#dc2626;font-weight:700">Restore All Hidden</a></div></div>
-  <div class="form-box">
-    <h3 style="font-size:14px;margin-bottom:14px">＋ Create New Job</h3>
-    <form id="createJobForm" onsubmit="createJob(event)">
-      <div class="form-grid">
-        <div class="form-group"><label for="jobSlot">Slot</label><select id="jobSlot" required><option value="1">Job 1</option><option value="2">Job 2</option><option value="3">Job 3</option></select></div>
-        <div class="form-group"><label for="jobTitle">Title</label><input id="jobTitle" required placeholder="Job title"></div>
-        <div class="form-group"><label for="jobCategory">Category</label><input id="jobCategory" value="General" required></div>
-        <div class="form-group"><label for="jobReward">Reward (₦)</label><input id="jobReward" type="number" min="0" required placeholder="500"></div>
-        <div class="form-group full"><label for="jobUrl">Job URL</label><input id="jobUrl" type="url" placeholder="https://example.com" required></div>
-        <div class="form-group full"><label for="jobDescription">Description</label><textarea id="jobDescription" required placeholder="Job description"></textarea></div>
-        <div class="form-group"><label for="jobDuration">Duration</label><input id="jobDuration" value="Flexible" required></div>
-        <div class="form-group"><label for="jobStatus">Status</label><select id="jobStatus"><option value="active">Available</option><option value="inactive">Paused</option></select></div>
-      </div>
-      <button type="submit" class="create" id="createJobButton" style="width:100%;padding:14px">＋ Create Job</button>
-    </form>
-  </div>
-  <div class="table-wrap"><table><thead><tr><th>Slot</th><th>ID</th><th>Title</th><th>Category</th><th>URL</th><th>Reward</th><th>Duration</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="jobsTable"><tr><td colspan="10" class="empty">Loading...</td></tr></tbody></table></div>
-</section>
-<section class="videos-box" id="videos">
-  <div class="section-header"><h2>🎬 Video Management</h2><button class="refresh" onclick="loadAdminVideos()">↻ Refresh</button></div>
-  <div class="search-bar"><span>⌕</span><input id="searchVideos" type="search" placeholder="Search videos..." oninput="filterVideos()"></div>
-  <div class="info-row"><div>Total Videos: <strong id="totalVideos">0</strong></div></div>
-  <div class="form-box" id="videoFormBox">
-    <h3 id="videoFormTitle" style="font-size:14px;margin-bottom:14px">＋ Upload New Video</h3>
-    <form id="videoForm" onsubmit="saveVideo(event)">
-      <div class="form-grid">
-        <div class="form-group"><label for="videoTitle">Video Title *</label><input id="videoTitle" required maxlength="200" placeholder="Title"></div>
-        <div class="form-group"><label for="videoCategory">Video Type *</label><select id="videoCategory" required><option value="General">General</option><option value="Celebrity">Celebrity</option><option value="Entertainment">Entertainment</option><option value="Education">Education</option><option value="Lifestyle">Lifestyle</option><option value="Other">Other</option></select></div>
-        <div class="form-group"><label for="videoReward">Video Reward (₦) *</label><input id="videoReward" type="number" min="0" step="0.01" value="0" required placeholder="0"></div>
-        <div class="form-group full" style="background:white;border:2px dashed #7c3aed;padding:15px;border-radius:12px">
-          <label for="videoFile">📤 Upload Video File</label><input type="file" id="videoFile" accept="video/*" style="margin-top:8px">
-          <div id="uploadProgress" style="display:none;margin-top:10px"><div style="background:#e5e7eb;height:8px;border-radius:10px;overflow:hidden"><div id="progressBar" style="background:#7c3aed;height:8px;width:0%"></div></div><div style="font-size:10px;margin-top:5px">Uploading... <span id="progressText">0%</span></div></div>
-          <div id="uploadedVideoPreview" style="display:none;margin-top:10px"><video id="previewPlayer" controls style="width:100%;max-width:300px;border-radius:8px"></video><div style="font-size:10px;color:#16a34a;margin-top:5px">✓ Video ready</div></div>
-        </div>
-      </div>
-      <button type="submit" class="create" id="saveVideoButton" style="width:100%;padding:14px">＋ Upload & Save</button>
-      <button type="button" class="cancel" id="cancelVideoEditButton" onclick="cancelVideoEdit()">Cancel Edit</button>
-    </form>
-  </div>
-  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Preview</th><th>Title</th><th>Type</th><th>Reward</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="videosTable"><tr><td colspan="8" class="empty">Loading...</td></tr></tbody></table></div>
-</section>
-<section class="music-box" id="music">
-  <div class="section-header"><h2>♫ Music Management - Super Only 👑 - Secure No Logout</h2><button class="refresh" onclick="loadAdminMusic()">↻ Refresh</button></div>
-  <div class="info-row"><div>Total Tracks: <strong id="totalMusic">0</strong> | Secure - No auto logout - Uses session only</div></div>
-  <div class="form-box" id="musicFormBox">
-    <h3 id="musicFormTitle" style="font-size:14px;margin-bottom:14px">＋ Upload New Music Track - Set Price User Will Earn</h3>
-    <form id="musicForm" onsubmit="saveMusic(event)">
-      <div class="form-grid">
-        <div class="form-group"><label for="musicTitle">Music Title *</label><input id="musicTitle" required placeholder="Afro Vibes - Summer"></div>
-        <div class="form-group"><label for="musicArtist">Artist *</label><input id="musicArtist" required value="Jovia Sounds"></div>
-        <div class="form-group full"><label for="musicUrl">MP3 URL * (direct mp3 link)</label><input id="musicUrl" type="url" required placeholder="https://files.catbox.moe/xxxxx.mp3"></div>
-        <div class="form-group"><label for="musicCover">Cover (emoji or image URL)</label><input id="musicCover" placeholder="♫ or https://..."></div>
-        <div class="form-group"><label for="musicReward">Reward Price ₦ * (YOU set - User earns this per 60s)</label><input id="musicReward" type="number" min="10" required value="100" placeholder="100"></div>
-        <div class="form-group"><label for="musicCategory">Category</label><select id="musicCategory"><option>Super Hits</option><option>Afrobeat</option><option>Super Mix</option><option>Super Anthem</option><option>General</option></select></div>
-        <div class="form-group full" style="background:#eef2ff;border:1px dashed #5b21b6;padding:12px;border-radius:10px;font-size:11px"><strong>🔒 Secure + No Logout:</strong> No password in code - Uses session only - If session expired, just logout/login again - No auto logout during use - MP3 must be direct .mp3 like catbox.moe link</div>
-      </div>
-      <button type="submit" class="create" id="saveMusicButton" style="width:100%;padding:14px;background:#5b21b6">＋ Upload Music & Set Price - Secure No Logout</button>
-      <button type="button" class="cancel" id="cancelMusicEditButton" onclick="cancelMusicEdit()">Cancel Edit</button>
-    </form>
-  </div>
-  <div class="search-bar"><span>⌕</span><input id="searchMusic" type="search" placeholder="Search music..." oninput="filterMusic()"></div>
-  <div class="table-wrap"><table><thead><tr><th>ID</th><th>Cover</th><th>Title</th><th>Artist</th><th>Reward</th><th>Plays</th><th>Category</th><th>Created</th><th>Actions</th></tr></thead><tbody id="musicTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
-</section>
-<section class="section-box" id="games">
-  <div class="section-header"><h2>🎮 Games Management</h2><button class="refresh" onclick="loadAdminGames()">↻ Refresh</button></div>
-  <div class="search-bar"><span>⌕</span><input id="searchGames" type="search" placeholder="Search game accounts..." oninput="filterGames()"></div>
-  <div class="table-wrap"><table><thead><tr><th>User</th><th>Balance</th><th>Deposits</th><th>Withdrawals</th><th>Wins</th><th>Status</th></tr></thead><tbody id="gamesTable"><tr><td colspan="6" class="empty">Loading...</td></tr></tbody></table></div>
-</section>
-<section class="withdrawals-box" id="withdrawals">
-  <div class="section-header">
-    <h2>💸 Withdrawal Management</h2>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <label style="font-size:10px;color:#64748b"><input type="checkbox" id="withdrawalAutoRefresh" checked> Auto refresh</label>
-      <button class="refresh" onclick="loadAdminWithdrawals()">↻ Refresh</button>
-    </div>
-  </div>
-  <div class="withdrawal-control">
-    <div class="control-top"><div><strong>💼 Regular Withdrawals</strong><small>Controls regular only.</small></div><label class="switch"><input type="checkbox" id="regularWithdrawalSwitch" checked onchange="toggleRegularWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
-    <div id="regularWithdrawalStatusText" style="font-size:10px;margin-top:10px">Checking...</div>
-  </div>
-  <div class="withdrawal-control" style="background:#f0fdf4">
-    <div class="control-top"><div><strong>👥 Affiliate Withdrawals</strong><small>Controls affiliate only.</small></div><label class="switch"><input type="checkbox" id="affiliateWithdrawalSwitch" checked onchange="toggleAffiliateWithdrawals(this.checked)"><span class="switch-slider"></span></label></div>
-    <div id="affiliateWithdrawalStatusText" style="font-size:10px;margin-top:10px">Checking...</div>
-  </div>
-  <div class="info-row"><div class="live-status"><span class="live-dot"></span>Live</div><div>Total: <strong id="totalWithdrawals">0</strong> · Pending: <strong id="pendingWithdrawalsCount">0</strong> · Paid: <strong id="paidWithdrawalsCount">0</strong></div></div>
-  <div class="withdrawal-tabs">
-    <button type="button" class="withdrawal-tab active-tab" id="pendingTab" onclick="setWithdrawalTab('pending')">⏳ Pending <span class="tab-count" id="pendingTabCount">0</span></button>
-    <button type="button" class="withdrawal-tab" id="paidTab" onclick="setWithdzrawalTab('paid')">✅ Paid <span class="tab-count" id="paidTabCount">0</span></button>
-    <button type="button" class="withdrawal-tab" id="otherTab" onclick="setWithdrawalTab('other')">Other</button>
-  </div>
-  <div class="filter-row">
-    <select id="withdrawalTypeFilter" onchange="filterWithdrawals()"><option value="all">All types</option><option value="regular">Regular</option><option value="affiliate">Affiliate</option></select>
-    <div class="search-bar" style="flex:1;min-width:200px;margin:0"><span>⌕</span><input id="searchWithdrawals" type="search" placeholder="Search username, bank..." oninput="filterWithdrawals()"></div>
-  </div>
-  <div class="info-row"><div>Showing: <strong id="withdrawalListLabel">Pending withdrawals</strong></div><div>Updated: <span id="withdrawalsLastUpdated">Waiting...</span></div></div>
-  <div class="table-wrap"><table><thead><tr><th>Username</th><th>Bank</th><th>Account Name</th><th>Account No</th><th>Amount</th><th>Type</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead><tbody id="withdrawalsTable"><tr><td colspan="9" class="empty">Loading...</td></tr></tbody></table></div>
-</section>
-</main>
-<nav class="mobile-bottom-nav" id="mobileBottomNav">
-  <button class="mbn-item active" onclick="scrollToSection('dashboard', this)"><span class="icon">📊</span>Home</button>
-  <button class="mbn-item" onclick="scrollToSection('users', this)"><span class="icon">👥</span>Users</button>
-  <button class="mbn-item" onclick="scrollToSection('music', this)"><span class="icon">♫</span>Music</button>
-  <button class="mbn-item" onclick="scrollToSection('withdrawals', this)"><span class="icon">💸</span>WD <span id="mbnPending" style="background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;font-size:8px">0</span></button>
-  <button class="mbn-item" onclick="scrollToSection('announcement', this)"><span class="icon">📢</span>Popup</button>
-  <button class="mbn-item" onclick="scrollToSection('games', this)"><span class="icon">🎮</span>Games</button>
+<section class="activity-section"><div class="activity-head"><h2>Latest Activity</h2><button type="button" onclick="openPage('history.html')">View All</button></div><div class="activity-item"><div class="activity-left"><div class="activity-icon" id="activityIconBox" style="background:#f3eef8">✓</div><div><div class="activity-name" id="activityName">Account Created</div><div class="activity-date" id="activityDate" style="font-size:11px;color:#8a8196">Checking account status...</div></div></div><div class="activity-amount pending" id="activityAmount">Pending</div></div></section>
+</div>
+<div id="drawerOverlay" onclick="closeDrawer()"></div>
+<div id="topDrawer">
+<div class="drawer-head"><h3>☰ Menu</h3><button class="drawer-close" onclick="closeDrawer()">✕</button></div>
+<div class="drawer-user"><div class="drawer-avatar" id="drawerAvatar">J</div><div><div class="drawer-user-name" id="drawerName">Loading...</div><div class="drawer-user-plan" id="drawerPlan">Member Area</div></div></div>
+<div class="drawer-list">
+<button class="drawer-item active" onclick="openPage('dashboard.html')"><div class="d-icon">⌂</div><div><strong>Home</strong><br><small style="color:var(--muted);font-size:10px">Dashboard</small></div></button>
+<button class="drawer-item" onclick="openPage('jobs.html')"><div class="d-icon">◈</div><div><strong>Jobs</strong><br><small style="color:var(--muted);font-size:10px">Available opportunities</small></div></button>
+<button class="drawer-item" id="drawerGamesBtn" onclick="openPage('games.html')"><span class="hot-badge-drawer">🔥 HOT</span><div class="d-icon">🎮</div><div><strong>Games</strong><br><small style="color:var(--muted);font-size:10px" id="drawerGamesSmall">Play & Win</small></div></button>
+<button class="drawer-item super-item" id="drawerMusicBtn" onclick="openPage('music.html')"><div class="d-icon">♫</div><div><strong>Music</strong><br><small style="color:var(--muted);font-size:10px" id="drawerMusicSmall">Super Only 👑</small></div></button>
+<button class="drawer-item" onclick="openPage('withdraw.html')"><div class="d-icon">₦</div><div><strong>Withdraw</strong><br><small style="color:var(--muted);font-size:10px">Request payout</small></div></button>
+<button class="drawer-item" onclick="openPage('history.html')"><div class="d-icon">◷</div><div><strong>History</strong><br><small style="color:var(--muted);font-size:10px">Transactions</small></div></button>
+<button class="drawer-item" onclick="openPage('profile.html')"><div class="d-icon">◍</div><div><strong>Profile</strong><br><small style="color:var(--muted);font-size:10px">Account settings</small></div></button>
+<div class="drawer-divider"></div>
+<button class="drawer-item" onclick="copyReferral()"><div class="d-icon">🔗</div><div><strong>Invite & Earn</strong><br><small style="color:var(--muted);font-size:10px">Copy referral link</small></div></button>
+<button class="drawer-item" onclick="window.open('https://t.me/jovianetwerk','_blank')"><div class="d-icon">📢</div><div><strong>Official Channel</strong><br><small style="color:var(--muted);font-size:10px">Join on Telegram</small></div></button>
+<div class="drawer-divider"></div>
+<button class="drawer-logout" onclick="logout()">↪ Logout</button>
+</div>
+</div>
+<nav class="bottom-nav">
+<button class="nav active" type="button" onclick="openPage('dashboard.html')"><div class="nav-icon">⌂</div>Home</button>
+<button class="nav" type="button" onclick="openPage('jobs.html')"><div class="nav-icon">◈</div>Jobs</button>
+<button class="nav" id="gamesNavBtn" type="button" onclick="openPage('games.html')"><span class="hot-badge-nav">🔥 HOT</span><div class="nav-icon">🎮</div>Games</button>
+<button class="nav" id="musicNavBtn" type="button" onclick="openPage('music.html')"><div class="nav-icon">♫</div>Music</button>
+<button class="nav" type="button" onclick="openPage('history.html')"><div class="nav-icon">◷</div>History</button>
+<button class="nav" type="button" onclick="openPage('profile.html')"><div class="nav-icon">◍</div>Profile</button>
 </nav>
-</div>
+<div id="notifToast" onclick="openNotifFromToast()"><div style="font-size:11px;font-weight:900;color:#7c3aed">🔔 NEW MESSAGE FROM ADMIN</div><div id="notifToastTitle" style="font-size:13px;font-weight:800;color:var(--purple);margin-top:4px"></div><div id="notifToastText" style="font-size:12px;color:#5f5170;margin-top:4px;line-height:1.5"></div><div style="font-size:11px;color:#7c3aed;font-weight:800;margin-top:6px">Tap to view →</div></div>
+<div id="toast"></div>
+<div id="joviaPopupOverlay"><div id="joviaPopupBox"><button id="joviaPopupClose" type="button">✕</button><div class="joviaPopupBadge">📢 OFFICIAL ANNOUNCEMENT</div><div class="joviaPopupTitle" id="joviaPopupTitle"></div><div class="joviaPopupText" id="joviaPopupText"></div><div class="joviaPopupBtns"><a id="joviaChannelBtn" href="https://t.me/jovianetwerk" target="_blank" class="joviaBtn joviaBtnChannel">📲 Join Official Channel →</a><button class="joviaBtn joviaBtnClose" id="joviaPopupOk" type="button">Continue to Dashboard →</button></div></div></div>
+<div id="privatePopOverlay"><div id="privatePopBox"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">✉️</div><div><div style="font-size:9px;font-weight:900;letter-spacing:1px;color:#7c3aed;text-transform:uppercase">Private Message</div><div id="privatePopTime" style="font-size:10px;color:#94a3b8;margin-top:2px">Just now</div></div><button id="privatePopCloseIcon" type="button" style="margin-left:auto;width:32px;height:32px;border-radius:50%;border:none;background:#f3f0ff;color:#7c3aed;font-weight:800;cursor:pointer">✕</button></div><h3 id="privatePopTitle" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:10px">Message from Admin</h3><div id="privatePopMessage" style="font-size:13px;line-height:1.7;color:#334155;background:#fcf9ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;white-space:pre-line;max-height:260px;overflow-y:auto"></div><div style="font-size:11px;color:#8a8196;margin-top:10px;text-align:center">This message stays in your 🔔 bell until you read it from there.</div><button id="privatePopOk" type="button" style="width:100%;margin-top:12px;padding:14px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer">OK, I Understand ✓</button></div></div>
 <script>
 "use strict";
-const DELETED_JOBS_KEY="jovia_deleted_jobs";
-let adminAuthenticated=false;
-let userRefreshTimer=null,jobRefreshTimer=null,videoRefreshTimer=null,withdrawalRefreshTimer=null,musicRefreshTimer=null;
-let usersCache=new Map(),jobsCache=new Map(),videosCache=new Map(),withdrawalsCache=new Map(),musicCache=new Map();
-let rawUsers=[],rawJobs=[],rawVideos=[],rawWithdrawals=[],rawMusic=[],rawGames=[],privateHistoryData=[];
-let privateRecipientIds=new Set(),withdrawalTab="pending",editingVideoId=null,editingMusicId=null;
-function $(id){return document.getElementById(id)}
-function escapeHTML(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML}
-function safeUrl(v){try{const u=new URL(String(v||"").trim());return ["http:","https:"].includes(u.protocol)?u.href:"#"}catch{return "#"}}
-function formatNaira(v){return "₦"+Number(v||0).toLocaleString("en-NG")}
-function formatDate(v){if(!v)return "-";let d;const s=String(v);if(s.includes(" ")&&!s.includes("T"))d=new Date(s.replace(" ","T")+"Z");else d=new Date(s);return Number.isNaN(d.getTime())?s:d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"})}
-function isActiveUser(u){const s=String(u.account_status||u.status||"").toLowerCase();return ["active","approved"].includes(s)||String(u.package||u.plan||"").toLowerCase().includes("super")}
-function isSuspendedUser(u){return ["suspended","banned","blocked","disabled"].includes(String(u.account_status||u.status||"").toLowerCase())}
-function getUserPackage(u){return String(u.package||u.plan||"").toLowerCase().replace(/[_ ]/g,"-")}
-function packageMatches(u,filter){const p=getUserPackage(u);if(filter==="all")return true;if(filter==="gold")return p.includes("gold");if(filter==="silver")return p.includes("silver");if(filter==="super"||filter==="super-gold"||filter==="super-silver")return p.includes("super");if(filter==="other")return !p.includes("gold")&&!p.includes("silver")&&!p.includes("super");return true}
-function openSidebar(){$("sidebar").classList.add("open");$("sidebarOverlay").classList.add("show")}
-function closeSidebar(){$("sidebar").classList.remove("open");$("sidebarOverlay").classList.remove("show")}
-function setActiveNav(link){if(!link)return;document.querySelectorAll(".nav a").forEach(a=>a.classList.remove("active"));link.classList.add("active");closeSidebar()}
-function scrollToSection(id, btn){
-  const el=document.getElementById(id);
-  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
-  if(btn){document.querySelectorAll(".mbn-item").forEach(b=>b.classList.remove("active"));btn.classList.add("active");}
-  document.querySelectorAll(".nav a").forEach(a=>{a.classList.remove("active");if(a.getAttribute("href")==="#"+id) a.classList.add("active")});
-  closeSidebar();
+let currentUser=null,currentSlide=0,currentPrivatePopId=null,logoutInProgress=false,upgradeBusy=false;
+let privatePopFromBell=false;
+const wrapper=document.getElementById("swipeWrapper"),card=document.getElementById("accountCard"),privateOverlay=document.getElementById("privatePopOverlay"),globalOverlay=document.getElementById("joviaPopupOverlay");
+const drawer=document.getElementById("topDrawer"),drawerOverlay=document.getElementById("drawerOverlay");
+privateOverlay.classList.remove("show");
+function toggleDrawer(){const isOpen=drawer.classList.contains("show"); if(isOpen) closeDrawer(); else openDrawer();}
+function openDrawer(){drawer.classList.add("show");drawerOverlay.classList.add("show");document.body.style.overflow="hidden";}
+function closeDrawer(){drawer.classList.remove("show");drawerOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show") && !privateOverlay.classList.contains("show")) document.body.style.overflow="";}
+function money(a){const n=Number(a); if(!Number.isFinite(n)) return "₦0"; return "₦"+n.toLocaleString("en-NG",{maximumFractionDigits:2});}
+function setSlide(i){currentSlide=i===1?1:0; wrapper.style.transform=`translateX(-${currentSlide*100}%)`; document.getElementById("dot0").classList.toggle("active",currentSlide===0); document.getElementById("dot1").classList.toggle("active",currentSlide===1);}
+function showToast(msg){const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(window._toastTimer); window._toastTimer=setTimeout(()=>t.classList.remove("show"),3200);}
+let startX=0,lastX=0,isDragging=false;
+card.addEventListener("touchstart",e=>{if(!e.touches?.length)return; startX=e.touches[0].clientX; lastX=startX; isDragging=true; wrapper.style.transition="none";},{passive:true});
+card.addEventListener("touchmove",e=>{if(!isDragging||!e.touches?.length)return; lastX=e.touches[0].clientX; const diff=lastX-startX; const w=card.clientWidth||window.innerWidth; wrapper.style.transform=`translateX(${(-currentSlide*100)+(diff/w*100)}%)`;},{passive:true});
+function finishSwipe(){if(!isDragging)return; isDragging=false; wrapper.style.transition="transform .35s cubic-bezier(.4,0,.2,1)"; const diff=lastX-startX; if(diff<-50&&currentSlide===0)setSlide(1); else if(diff>50&&currentSlide===1)setSlide(0); else setSlide(currentSlide);}
+card.addEventListener("touchend",finishSwipe,{passive:true});
+async function fetchJSON(url,options={}){
+  const r=await fetch(url,{credentials:"include",cache:"no-store",...options,headers:{"Accept":"application/json",...(options.headers||{})}});
+  let d=null; try{d=await r.json();}catch(_){}
+  if(r.status===401||r.status===403){window.location.replace("login.html"); throw new Error("Session expired");}
+  if(!r.ok) throw new Error((d&&(d.message||d.error))||`Failed ${r.status}`);
+  return {data:d};
 }
-function stopTimers(){[userRefreshTimer,jobRefreshTimer,videoRefreshTimer,withdrawalRefreshTimer,musicRefreshTimer].forEach(t=>{if(t)clearInterval(t)});userRefreshTimer=jobRefreshTimer=videoRefreshTimer=withdrawalRefreshTimer=musicRefreshTimer=null}
-function showToast(message,type="success"){let t=$("adminToast");if(!t){t=document.createElement("div");t.id="adminToast";document.body.appendChild(t)}t.style.background=type==="error"?"#dc2626":type==="warning"?"#d97706":"#16a34a";t.textContent=message;t.style.opacity="1";clearTimeout(window.__joviaToastTimer);window.__joviaToastTimer=setTimeout(()=>t.style.opacity="0",3500)}
-function showLogin(message=""){adminAuthenticated=false;stopTimers();$("dashboardScreen").style.display="none";$("loginScreen").style.display="flex";$("mobileBottomNav").style.display="none";if(message){$("loginError").textContent=message;$("loginError").style.display="block";}else{$("loginError").style.display="none";}}
-function showDashboard(admin){
-  adminAuthenticated=true;
-  $("loginScreen").style.display="none";
-  $("dashboardScreen").style.display="block";
-  $("adminName").textContent=admin?.username||localStorage.getItem("jovia_admin_user")||"Administrator";
-  $("mobileBottomNav").style.display="grid";
-  stopTimers();
-  loadDashboardSummary();loadRegularWithdrawalSetting();loadAffiliateWithdrawalSetting();loadAdminPopup();loadUsers();loadPrivateMessages();loadAdminJobs();loadAdminVideos();loadAdminMusic();loadAdminGames();setTimeout(loadAdminWithdrawals,400);
-  userRefreshTimer=setInterval(loadUsers,20000);jobRefreshTimer=setInterval(loadAdminJobs,25000);videoRefreshTimer=setInterval(loadAdminVideos,35000);musicRefreshTimer=setInterval(loadAdminMusic,35000);
-  withdrawalRefreshTimer=setInterval(()=>{if($("withdrawalAutoRefresh").checked)loadAdminWithdrawals()},15000);
+function getUserFromResponse(data){return data?.user||data?.data?.user||data?.member||data;}
+function isSuperUser(u){if(!u)return false;const pkg=String(u.package||u.plan||"").toLowerCase();const flag=Number(u.is_super)===1||String(u.is_super).toLowerCase()==="true";return pkg.includes("super")||flag;}
+function isSuspendedAccount(user){if(!user) return false;const s=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();return ["suspended","banned","blocked","disabled"].includes(s);}
+function isActiveAccount(user){
+  if(!user) return false;
+  if(isSuspendedAccount(user)) return false;
+  const allRaw=[user.accountStatus,user.account_status,user.status,user.activation_status,user.member_status].map(v=>String(v||"").toLowerCase());
+  if(allRaw.some(s=>["pending","inactive","unpaid","not_active","awaiting","processing","unactivated","not_activated"].includes(s))) return false;
+  if(Number(user.is_active)===1||Number(user.is_activated)===1||Number(user.activated)===1||user.isActive===true||user.activated===true||user.isActivated===true) return true;
+  if(String(user.is_active).toLowerCase()==="true"||String(user.is_activated).toLowerCase()==="true") return true;
+  if(String(user.payment_status||"").toLowerCase()==="paid"||String(user.paymentStatus||"").toLowerCase()==="paid"||user.has_paid===true||Number(user.has_paid)===1) return true;
+  if(allRaw.some(s=>["active","approved","activated","verified","paid","success","completed"].includes(s))) return true;
+  if(String(user.package||user.plan||"").toLowerCase().includes("super")) return true;
+  return false;
 }
-async function checkAdminSession(){
-  try{
-    const r=await fetch("/api/admin/me",{cache:"no-store",credentials:"include"});
-    if(!r.ok){
-      const saved=localStorage.getItem("jovia_admin_logged");
-      if(saved==="true"){
-        console.log("Session API missing or 401, but localStorage logged flag found - Keeping dashboard - No immediate logout");
-        showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"});
-        return;
-      }
-      return showLogin();
-    }
-    const d=await r.json();
-    if(!d.success||!d.admin){
-      const saved=localStorage.getItem("jovia_admin_logged");
-      if(saved==="true"){
-        showDashboard({username:localStorage.getItem("jovia_admin_user")||d.admin?.username||"Administrator"});
-        return;
-      }
-      return showLogin();
-    }
-    showDashboard(d.admin);
-  }catch(err){
-    const saved=localStorage.getItem("jovia_admin_logged");
-    if(saved==="true"){
-      console.log("checkAdminSession error, but keeping logged via localStorage");
-      showDashboard({username:localStorage.getItem("jovia_admin_user")||"Administrator"});
-      return;
-    }
-    showLogin();
+function updateBellVisibility(){
+  const bell=document.getElementById("notifBell");
+  const panel=document.getElementById("notifPanel");
+  const toast=document.getElementById("notifToast");
+  if(!bell) return;
+  if(currentUser && isActiveAccount(currentUser)){
+    bell.classList.add("show");
+  } else {
+    bell.classList.remove("show");
+    if(panel) panel.classList.remove("show");
+    if(toast) toast.classList.remove("show");
   }
 }
-async function adminLogin(e){
-  e.preventDefault();
-  const username=$("adminUsername").value.trim(),password=$("adminPassword").value,button=$("loginButton");
-  $("loginError").style.display="none";button.disabled=true;button.textContent="Signing in...";$("loginLoading").style.display="block";
+function getUserStartDate(){
+  let start=localStorage.getItem("jovia_activated_at");
+  if(!start) return 0;
+  return Number(start);
+}
+async function loadUser(){
   try{
-    const r=await fetch("/api/admin/login",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({username,password})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.success)throw new Error(d.message||"Login failed - Check username and password");
-    localStorage.setItem("jovia_admin_logged","true");
-    localStorage.setItem("jovia_admin_user",d.admin?.username||username);
-    $("adminLoginForm").reset();showDashboard(d.admin||{username});
-    showToast("Login success - No auto logout");
-  }catch(err){$("loginError").textContent=err.message||"Unable to sign in";$("loginError").style.display="block"}
-  finally{button.disabled=false;button.textContent="Sign in to Dashboard";$("loginLoading").style.display="none"}
-}
-async function adminLogout(e){
-  if(e)e.preventDefault();
-  if(!confirm("Sign out?"))return;
-  localStorage.removeItem("jovia_admin_logged");localStorage.removeItem("jovia_admin_user");
-  try{await fetch("/api/admin/logout",{method:"POST",credentials:"include"})}catch{}
-  showLogin("Signed out successfully.");
-}
-function handleUnauthorized(){
-  console.log("Unauthorized but NOT logging out immediately - Showing toast only");
-  showToast("Session check failed - If this keeps showing, logout and login again","warning");
-}
-async function loadDashboardSummary(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/dashboard?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)return;const d=await r.json();if(!d.success)return;$("totalUsers").textContent=Number(d.users||rawUsers.length||0);$("pendingUsers").textContent=Number(d.pendingUsers||0);$("approvedUsers").textContent=Number(d.activeUsers||0);$("totalVideos").textContent=Number(d.videos||0);$("pendingWithdrawalsCard").textContent=Number(d.withdrawals?.pending||0)}catch{}}
-async function loadAdminPopup(){try{const r=await fetch("/api/announcement?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();if(d&&d.title){$("adm_enabled").value=String(d.enabled);$("adm_title").value=d.title||"";$("adm_message").value=(d.message||"").replace(/<br\s*\/?>/gi,"\n");$("adm_url").value=d.channelUrl||d.channel_url||"https://t.me/jovianetwerk";$("adm_btnText").value=d.channelText||d.channel_text||"📲 Join Official Channel →"}}catch{}}
-async function saveAdminPopup(){const b=$("adm_saveBtn"),s=$("adm_status");b.disabled=true;b.textContent="Saving...";s.style.display="block";s.style.background="#fff3cd";s.style.color="#92400e";s.textContent="Saving...";const payload={enabled:$("adm_enabled").value==="true",title:$("adm_title").value.trim(),message:$("adm_message").value.trim().replace(/\n/g,"<br>"),channelUrl:$("adm_url").value.trim(),channelText:$("adm_btnText").value.trim(),updatedAt:new Date().toISOString()};try{const r=await fetch("/api/announcement",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not save");s.style.background="#dcfce7";s.style.color="#15803d";s.textContent="✅ Saved";showToast("Popup saved")}catch(e){s.style.background="#fee2e2";s.style.color="#b91c1c";s.textContent=e.message}finally{b.disabled=false;b.textContent="💾 Save Popup"}}
-function updateRegularWithdrawalUI(enabled){$("regularWithdrawalSwitch").checked=Boolean(enabled);$("regularWithdrawalStatusText").textContent=enabled?"✅ Regular ON":"❌ Regular OFF";}
-function updateAffiliateWithdrawalUI(enabled){$("affiliateWithdrawalSwitch").checked=Boolean(enabled);$("affiliateWithdrawalStatusText").textContent=enabled?"✅ Affiliate ON":"❌ Affiliate OFF";}
-async function loadRegularWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();updateRegularWithdrawalUI(d.regularEnabled!==false);return}}catch{}updateRegularWithdrawalUI(localStorage.getItem("jovia_regular_withdrawal")!=="false")}
-async function loadAffiliateWithdrawalSetting(){try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.ok){const d=await r.json();updateAffiliateWithdrawalUI(d.affiliateEnabled!==false);return}}catch{}updateAffiliateWithdrawalUI(localStorage.getItem("jovia_affiliate_withdrawal")!=="false")}
-async function toggleRegularWithdrawals(enabled){const cb=$("regularWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON regular?":"Turn OFF?")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/regular-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_regular_withdrawal",String(enabled));updateRegularWithdrawalUI(enabled);showToast("Regular updated")}catch(e){updateRegularWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
-async function toggleAffiliateWithdrawals(enabled){const cb=$("affiliateWithdrawalSwitch"),previous=!enabled;if(!confirm(enabled?"Turn ON affiliate?":"Turn OFF?")){cb.checked=previous;return}cb.disabled=true;try{const r=await fetch("/api/admin/settings/affiliate-withdrawals",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({enabled:Boolean(enabled)})});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Could not update");localStorage.setItem("jovia_affiliate_withdrawal",String(enabled));updateAffiliateWithdrawalUI(enabled);showToast("Affiliate updated")}catch(e){updateAffiliateWithdrawalUI(previous);showToast(e.message,"error")}finally{cb.disabled=false}}
-async function loadUsers(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/users?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load users");const d=await r.json();rawUsers=d.users||[];usersCache=new Map(rawUsers.map(u=>[Number(u.id),u]));$("totalUsers").textContent=rawUsers.length;$("pendingUsers").textContent=rawUsers.filter(u=>!isActiveUser(u)&&!isSuspendedUser(u)).length;$("approvedUsers").textContent=rawUsers.filter(isActiveUser).length;$("goldUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("gold")).length;$("silverUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("silver")).length;$("superUsers").textContent=rawUsers.filter(u=>getUserPackage(u).includes("super")).length;filterUsers();renderPrivateRecipients();$("lastUpdated").textContent=new Date().toLocaleTimeString("en-NG")}catch(e){$("usersTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`}}
-function filterUsers(){const q=$("searchUsers").value.toLowerCase().trim(),sf=$("userStatusFilter").value,pf=$("userPackageFilter").value;const users=rawUsers.filter(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),suspended=isSuspendedUser(u);let statusOk=true;if(sf==="active") statusOk=active;else if(sf==="inactive") statusOk=!active&&!suspended;else if(sf==="suspended") statusOk=suspended;const text=`${u.full_name||""} ${u.username||""} ${u.email||""} ${u.phone||""}`.toLowerCase();return statusOk&&packageMatches(u,pf)&&text.includes(q)});renderUsersTable(users)}
-function renderUsersTable(users){const table=$("usersTable");if(!users.length){table.innerHTML='<tr><td colspan="9" class="empty">No users found</td></tr>';return}table.innerHTML=users.map(u=>{const s=String(u.account_status||u.status||"pending").toLowerCase();const suspended=isSuspendedUser(u);let buttons="";if(suspended){buttons+=`<button class="action restore" onclick="updateStatus(${Number(u.id)},'approved')">✅ Unsuspend</button>`;}else if(!isActiveUser(u)){buttons+=`<button class="action approve" onclick="updateStatus(${Number(u.id)},'approved')">Approve</button>`;}else{buttons+=`<button class="action suspend" onclick="confirmSuspend(${Number(u.id)})">⛔ Suspend</button>`;}buttons+=`<button class="action reset" onclick="resetPassword(${Number(u.id)})">Reset</button><button class="action" style="background:#5b21b6;color:#fff" onclick="sendPrivateToOneUser(${Number(u.id)})">Message</button>`;return `<tr><td><strong>${escapeHTML(u.full_name||"-")}</strong></td><td>${escapeHTML(u.username||"-")}</td><td>${escapeHTML(u.email||"-")}</td><td>${escapeHTML(u.phone||"-")}</td><td>${escapeHTML(u.package||u.plan||"-")}</td><td>${formatNaira(u.wallet_balance||u.package_amount||0)}</td><td><span class="status ${escapeHTML(s)}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(u.created_at))}</td><td>${buttons}</td></tr>`}).join("")}
-async function resetPassword(id){const user=usersCache.get(Number(id));if(!user)return;const password=prompt(`New password for ${user.username||user.email}: minimum 8 characters`);if(!password||password.length<8)return alert("Password must be at least 8 characters.");if(password!==prompt("Re-enter to confirm:"))return alert("Passwords do not match.");try{const r=await fetch(`/api/admin/users/${Number(id)}/reset-password`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({newPassword:password})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Password reset failed");showToast("Password reset")}catch(e){alert(e.message)}}
-function confirmSuspend(id){if(confirm("⛔ Suspend this user?"))updateStatus(id,"suspended")}
-async function updateStatus(id,status){if(status==="approved"&&!confirm("Approve/Unsuspend?"))return;try{let r;if(status==="suspended"){r=await fetch(`/api/admin/user/suspend`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({userId:Number(id),reason:"Suspended by admin"})});}else{try{r=await fetch(`/api/admin/user/unsuspend`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({userId:Number(id)})});if(!r.ok) throw new Error("try status");}catch{r=await fetch(`/api/admin/users/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});}}const d=await r.json().catch(()=>({})); if(!r.ok||d.success===false)throw new Error(d.message||"Status update failed");await loadUsers(); showToast(status==="suspended"?"User suspended ⛔":"User restored ✅");}catch(e){alert(e.message)}}
-function privateMessageStatus(message,success=false){const b=$("privateMessageStatus");b.style.display="block";b.style.background=success?"#dcfce7":"#fee2e2";b.style.color=success?"#166534":"#991b1b";b.textContent=message}
-function privateUserMatches(u){const query=$("privateRecipientSearch").value.trim().toLowerCase(),sf=$("privateStatusFilter").value,pf=$("privatePackageFilter").value,s=String(u.account_status||u.status||"pending").toLowerCase(),active=isActiveUser(u),suspended=isSuspendedUser(u),name=`${u.full_name||u.name||""} ${u.username||""} ${u.email||""}`.toLowerCase();let statusOk=true;if(sf==="active") statusOk=active;else if(sf==="inactive") statusOk=!active&&!suspended;else if(sf==="suspended") statusOk=suspended;return name.includes(query)&&statusOk&&packageMatches(u,pf)}
-function applyPrivateRecipientFilter(){renderPrivateRecipients()}
-function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isSuspendedUser(u)?"⛔ Suspended":isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function selectPrivateGroup(type){
-  // 1. Only change ONE side, keep the other side as e be
-  // Gold/Silver/Super/Other = change Package only, keep Status
-  // Active/Inactive/Suspended = change Status only, keep Package
-  // All = reset both to All
-  try{
-    const sf=$("privateStatusFilter");
-    const pf=$("privatePackageFilter");
-    $("privateRecipientSearch").value="";
-    if(type==="gold"){ pf.value="gold"; }
-    else if(type==="silver"){ pf.value="silver"; }
-    else if(type==="super"){ pf.value="super"; }
-    else if(type==="other"){ pf.value="other"; }
-    else if(type==="active"){ sf.value="active"; }
-    else if(type==="inactive"){ sf.value="inactive"; }
-    else if(type==="suspended"){ sf.value="suspended"; }
-    else { sf.value="all"; pf.value="all"; }
-  }catch(e){}
-
-  // 2. Select by BOTH filters together - Status AND Package
-  privateRecipientIds.clear();
-  rawUsers.forEach(function(u){
-    if(privateUserMatches(u)) privateRecipientIds.add(Number(u.id));
-  });
-  renderPrivateRecipients();
-}
-
-function applyPrivateRecipientFilter(){
-  // When you change dropdown manually, select the combination too, no clear am to 0
-  privateRecipientIds.clear();
-  rawUsers.forEach(function(u){
-    if(privateUserMatches(u)) privateRecipientIds.add(Number(u.id));
-  });
-  renderPrivateRecipients();
-}
-function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
-function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
-function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
-async function sendPrivateMessage(){const title=$("privateMessageTitle").value.trim(),message=$("privateMessageBody").value.trim();if(!privateRecipientIds.size)return alert("Select at least one recipient.");if(!title||!message)return alert("Enter the title and message.");if(!confirm(`Send to ${privateRecipientIds.size} user(s)?`))return;const b=$("sendPrivateMessageButton");b.disabled=true;b.textContent="Sending...";try{const r=await fetch("/api/admin/private-messages",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({recipientIds:Array.from(privateRecipientIds),title,message})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not send");privateMessageStatus(`Message sent to ${privateRecipientIds.size} recipient(s).`,true);privateRecipientIds.clear();$("privateMessageTitle").value="";$("privateMessageBody").value="";renderPrivateRecipients();await loadPrivateMessages();showToast("Private message sent")}catch(e){privateMessageStatus(e.message,false)}finally{b.disabled=false;b.textContent="✉️ Send Private Message"}}
-async function loadPrivateMessages(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/private-messages?t="+Date.now(),{cache:"no-store",credentials:"include"});if(!r.ok)return;const d=await r.json();privateHistoryData=d.messages||[];renderPrivateHistory()}catch{}}
-function renderPrivateHistory(){const table=$("privateMessageHistory");if(!table)return;const q=$("privateHistorySearch").value.toLowerCase().trim(),items=privateHistoryData.filter(m=>`${m.title||""} ${m.status||""} ${m.recipient_summary||""} ${(m.recipients||[]).join(" ")}`.toLowerCase().includes(q));if(!items.length){table.innerHTML='<tr><td colspan="4" class="empty">No messages found.</td></tr>';return}table.innerHTML=items.map(m=>{const recipients=Array.isArray(m.recipients)?m.recipients.join(", "):m.recipient_summary||"Recipients";return `<tr><td>${escapeHTML(formatDate(m.created_at||m.date))}</td><td><strong>${escapeHTML(m.title||"-")}</strong></td><td>${escapeHTML(String(recipients).slice(0,150))}</td><td><span class="status approved">${escapeHTML(m.status||"sent")}</span></td></tr>`}).join("")}
-function getDeletedJobIds(){try{return JSON.parse(localStorage.getItem(DELETED_JOBS_KEY)||"[]")}catch{return []}}
-function saveDeletedJobIds(ids){localStorage.setItem(DELETED_JOBS_KEY,JSON.stringify(ids))}
-function isJobDeleted(id){return getDeletedJobIds().includes(Number(id))}
-function addDeletedJobId(id){const ids=getDeletedJobIds(),n=Number(id);if(!ids.includes(n)){ids.push(n);saveDeletedJobIds(ids)}}
-function clearDeletedJobs(e){if(e)e.preventDefault();if(!confirm("Restore all hidden jobs?"))return;localStorage.removeItem(DELETED_JOBS_KEY);showToast("Restored");loadAdminJobs()}
-async function createJob(e){e.preventDefault();const payload={slot:Number($("jobSlot").value),title:$("jobTitle").value.trim(),category:$("jobCategory").value.trim(),url:$("jobUrl").value.trim(),description:$("jobDescription").value.trim(),reward:Number($("jobReward").value),duration:$("jobDuration").value.trim()||"Flexible",status:$("jobStatus").value},b=$("createJobButton");b.disabled=true;b.textContent="Creating...";try{const r=await fetch("/api/admin/jobs",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Job creation failed");showToast("Job created");$("createJobForm").reset();$("jobCategory").value="General";$("jobDuration").value="Flexible";await loadAdminJobs()}catch(e){alert(e.message)}finally{b.disabled=false;b.textContent="＋ Create Job"}}
-async function loadAdminJobs(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/jobs?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load jobs");const d=await r.json();rawJobs=d.jobs||[];jobsCache=new Map(rawJobs.map(j=>[Number(j.id),j]));filterJobs()}catch(e){$("jobsTable").innerHTML=`<tr><td colspan="10" class="empty">${escapeHTML(e.message)}</td></tr>`}}
-function filterJobs(){const q=$("searchJobs").value.toLowerCase().trim(),visible=rawJobs.filter(j=>!isJobDeleted(j.id)&&`${j.title||""} ${j.category||""} ${j.url||""}`.toLowerCase().includes(q));$("totalJobs").textContent=visible.length;const t=$("jobsTable");if(!visible.length){t.innerHTML='<tr><td colspan="10" class="empty">No jobs found</td></tr>';return}t.innerHTML=visible.map(j=>{const s=String(j.status||"active").toLowerCase(),active=["active","available"].includes(s),url=j.url||j.job_url||"-",actions=(active?`<button class="action pause" onclick="changeJobStatus(${Number(j.id)},'inactive')">Pause</button>`:`<button class="action activate" onclick="changeJobStatus(${Number(j.id)},'active')">Activate</button>`)+`<button class="action delete" onclick="deleteJob(${Number(j.id)})">Delete</button>`;return `<tr><td>Job ${Number(j.slot||0)}</td><td>#${Number(j.id)}</td><td>${escapeHTML(j.title||"-")}</td><td>${escapeHTML(j.category||"General")}</td><td><a href="${escapeHTML(safeUrl(url))}" target="_blank" rel="noopener noreferrer">Open URL</a></td><td>${formatNaira(j.reward)}</td><td>${escapeHTML(j.duration||"-")}</td><td><span class="status ${active?"active":"paused"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(j.created_at))}</td><td>${actions}</td></tr>`}).join("")}
-async function changeJobStatus(id,status){if(!confirm("Change job status?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminJobs()}catch(e){alert(e.message)}}
-async function deleteJob(id){if(!confirm("Delete this job?"))return;try{const r=await fetch(`/api/admin/jobs/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.message||"Delete failed");addDeletedJobId(id);rawJobs=rawJobs.filter(j=>Number(j.id)!==Number(id));filterJobs();showToast("Job deleted")}catch(e){alert(e.message)}}
-async function saveVideo(event){
-  event.preventDefault();
-  const title=$("videoTitle").value.trim();
-  const category=$("videoCategory").value;
-  const reward=Number($("videoReward").value);
-  const file=$("videoFile").files[0];
-  if(!title)return alert("Enter a video title.");
-  if($("videoReward").value.trim()===""||!Number.isFinite(reward)||reward<0){return alert("Enter a valid reward");}
-  if(!file&&!editingVideoId)return alert("Choose a video file");
-  const b=$("saveVideoButton"); const currentEditingId=editingVideoId; b.disabled=true; b.textContent="Saving...";
-  try{
-    let url="";
-    if(file){
-      $("uploadProgress").style.display="block"; $("progressBar").style.width="0%"; $("progressText").textContent="0%";
-      const fd=new FormData(); fd.append("video",file);
-      const up=await new Promise((resolve,reject)=>{
-        const xhr=new XMLHttpRequest();
-        xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100); $("progressBar").style.width=p+"%"; $("progressText").textContent=p+"%";}};
-        xhr.onload=()=>{let data={}; try{data=JSON.parse(xhr.responseText)}catch{} if(xhr.status>=200&&xhr.status<300){resolve(data);}else{reject(new Error(data.message||"Video upload failed"));}};
-        xhr.onerror=()=>reject(new Error("Video upload failed")); xhr.open("POST","/api/admin/videos/upload"); xhr.withCredentials=true; xhr.send(fd);
-      });
-      url=up.url||up.video_url||""; if(!url)throw new Error("Upload no URL");
-      $("uploadedVideoPreview").style.display="block"; $("previewPlayer").src=safeUrl(url);
-    }else{const old=rawVideos.find(v=>Number(v.id)===Number(currentEditingId)); url=old?.video_url||old?.url||""; if(!url)throw new Error("Existing URL not found");}
-    const payload={title,category,reward,url,video_url:url,status:currentEditingId?(rawVideos.find(v=>Number(v.id)===Number(currentEditingId))?.status||"active"):"active"};
-    const endpoint=currentEditingId?`/api/admin/videos/${Number(currentEditingId)}`:"/api/admin/videos";
-    const r=await fetch(endpoint,{method:currentEditingId?"PUT":"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
-    const d=await r.json().catch(()=>({})); if(!r.ok||!d.success)throw new Error(d.message||"Could not save video");
-    showToast("Video saved "+formatNaira(reward)); cancelVideoEdit(); await loadAdminVideos();
-  }catch(e){alert(e.message||"Could not save video");}finally{b.disabled=false; b.textContent=editingVideoId?"Save Changes":"＋ Upload & Save"; $("uploadProgress").style.display="none";}}
-async function loadAdminVideos(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/videos?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load videos");const d=await r.json();rawVideos=d.videos||[];videosCache=new Map(rawVideos.map(v=>[Number(v.id),v]));filterVideos();}catch(e){$("videosTable").innerHTML=`<tr><td colspan="8" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
-function filterVideos(){const q=$("searchVideos").value.toLowerCase().trim();const items=rawVideos.filter(v=>`${v.title||""} ${v.category||""}`.toLowerCase().includes(q));$("totalVideos").textContent=items.length;const t=$("videosTable");if(!items.length){t.innerHTML='<tr><td colspan="8" class="empty">No videos found</td></tr>';return}t.innerHTML=items.map(v=>{const s=String(v.status||"active").toLowerCase();const active=s==="active";const actions=(active?`<button class="action pause" onclick="changeVideoStatus(${Number(v.id)},'inactive')">Disable</button>`:`<button class="action activate" onclick="changeVideoStatus(${Number(v.id)},'active')">Activate</button>`)+`<button class="action edit" onclick="editVideo(${Number(v.id)})">Edit</button>`+`<button class="action delete" onclick="deleteVideo(${Number(v.id)})">Delete</button>`;const thumb=v.thumbnail_url||v.thumbnail||"";return `<tr><td>#${Number(v.id)}</td><td>${thumb?`<img src="${escapeHTML(safeUrl(thumb))}" alt="" loading="lazy" style="width:70px;height:45px;object-fit:cover;border-radius:6px">`:"🎬"}</td><td>${escapeHTML(v.title||"-")}</td><td>${escapeHTML(v.category||"General")}</td><td>${formatNaira(v.reward)}</td><td><span class="status ${active?"approved":"rejected"}">${escapeHTML(s)}</span></td><td>${escapeHTML(formatDate(v.created_at))}</td><td>${actions}</td></tr>`}).join("");}
-function editVideo(id){const v=rawVideos.find(x=>Number(x.id)===Number(id));if(!v)return;editingVideoId=Number(id);$("videoTitle").value=v.title||"";const category=$("videoCategory");if(![...category.options].some(o=>o.value===v.category)){category.value="Other";}else{category.value=v.category||"General";}$("videoReward").value=Number(v.reward??0);$("videoFile").value="";$("uploadedVideoPreview").style.display="none";$("previewPlayer").removeAttribute("src");$("videoFormTitle").textContent="Edit Video";$("saveVideoButton").textContent="Save Changes";$("cancelVideoEditButton").style.display="inline-block";$("videoFormBox").scrollIntoView({behavior:"smooth"});}
-function cancelVideoEdit(){editingVideoId=null;$("videoForm").reset();$("videoCategory").value="General";$("videoReward").value="0";$("videoFormTitle").textContent="＋ Upload New Video";$("saveVideoButton").textContent="＋ Upload & Save";$("cancelVideoEditButton").style.display="none";$("uploadedVideoPreview").style.display="none";$("previewPlayer").pause();$("previewPlayer").removeAttribute("src");$("previewPlayer").load();$("uploadProgress").style.display="none";$("progressBar").style.width="0%";$("progressText").textContent="0%";}
-async function changeVideoStatus(id,status){if(!confirm("Change video status to "+status+"?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Status update failed");await loadAdminVideos();}catch(e){alert(e.message);}}
-async function deleteVideo(id){if(!confirm("Delete this video?"))return;try{const r=await fetch(`/api/admin/videos/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminVideos();showToast("Video deleted");}catch(e){alert(e.message);}}
-async function loadAdminMusic(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/music/list?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load music");const d=await r.json();rawMusic=d.tracks||d.music||[];musicCache=new Map(rawMusic.map(m=>[Number(m.id),m]));$("totalMusicCard").textContent=rawMusic.length;$("totalMusic").textContent=rawMusic.length;filterMusic();}catch(e){$("musicTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
-function filterMusic(){const q=$("searchMusic").value.toLowerCase().trim();const items=rawMusic.filter(m=>`${m.title||""} ${m.artist||""} ${m.category||""}`.toLowerCase().includes(q));const t=$("musicTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No music - Upload with direct .mp3 link (e.g catbox.moe link) + Set reward price YOU control</td></tr>';return}t.innerHTML=items.map(m=>{return `<tr><td>#${Number(m.id)}</td><td>${escapeHTML(m.cover||"♫")}</td><td><strong>${escapeHTML(m.title)}</strong></td><td>${escapeHTML(m.artist||"Jovia")}</td><td><strong style="color:#5b21b6">${formatNaira(m.reward||100)} 👑</strong><br><small style="color:#7b8494;font-size:9px">YOU set - User earns per 60s</small></td><td>${Number(m.plays||0)}</td><td>${escapeHTML(m.category||"Super Hits")}</td><td>${escapeHTML(formatDate(m.created_at))}</td><td><button class="action edit" onclick="editMusic(${Number(m.id)})">Edit Price</button><button class="action delete" onclick="deleteMusic(${Number(m.id)})">Delete</button></td></tr>`}).join("");}
-async function saveMusic(e){
-  e.preventDefault();
-  const title=$("musicTitle").value.trim(), artist=$("musicArtist").value.trim(), url=$("musicUrl").value.trim(), cover=$("musicCover").value.trim()||"♫", reward=Number($("musicReward").value), category=$("musicCategory").value;
-  if(!title||!url) return alert("Title and MP3 URL required");
-  if(!Number.isFinite(reward)||reward<10) return alert("Reward must be at least ₦10");
-  const b=$("saveMusicButton"); b.disabled=true; b.textContent="Uploading securely...";
-  try{
-    const payload={title,artist,url,cover,reward,category};
-    const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:"/api/admin/music/add";
-    const method=editingMusicId?"PUT":"POST";
-    const r=await fetch(endpoint,{method,headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify(payload)});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.success){
-      if(r.status===401){throw new Error("Session expired - Please logout and login again to refresh session, then try upload");}
-      throw new Error(d.message||"Could not save music - Use direct .mp3 link like catbox.moe link");
+    const localPlan = String(localStorage.getItem("jovia_plan")||"").toLowerCase();
+    const isLocalSuper = localPlan.includes("super");
+    const {data}=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
+    const user=getUserFromResponse(data);if(!user||!(user.id||user.email)) throw new Error("Invalid user");currentUser=user;
+    if(isLocalSuper && !String(user.package||user.plan||"").toLowerCase().includes("super") && !isSuspendedAccount(user)){user.package="SUPER"; user.plan="SUPER";}
+    if(isActiveAccount(user) && !localStorage.getItem("jovia_activated_at")){
+      const raw=user.activated_at||user.created_at||user.createdAt;
+      if(raw){ const t=new Date(raw).getTime(); if(!isNaN(t)) localStorage.setItem("jovia_activated_at",String(t)); }
+      else localStorage.setItem("jovia_activated_at",String(Date.now()));
     }
-    showToast(`✅ Music uploaded - Reward ${formatNaira(reward)} per 60s`); cancelMusicEdit(); await loadAdminMusic();
-  }catch(err){alert(err.message)}finally{b.disabled=false; b.textContent=editingMusicId?"Save Changes - Update Price":"＋ Upload Music & Set Price - Secure No Logout";}
+    displayUser(user,data);
+    updateBellVisibility();
+    await Promise.allSettled([loadWallet(),loadReferrals(),loadPopups()]);
+    await loadNotifications(false);
+  }catch(e){console.error(e); document.getElementById("userName").textContent="Member"; currentUser=null; updateBellVisibility(); await loadNotifications(false);}
 }
-function editMusic(id){const m=rawMusic.find(x=>Number(x.id)===Number(id));if(!m)return;editingMusicId=Number(id);$("musicTitle").value=m.title||"";$("musicArtist").value=m.artist||"";$("musicUrl").value=m.url||"";$("musicCover").value=m.cover||"♫";$("musicReward").value=Number(m.reward||100);$("musicCategory").value=m.category||"Super Hits";$("musicFormTitle").textContent="✏️ Edit Music - Update Reward Price YOU Set";$("saveMusicButton").textContent="Save Changes - Update Price";$("cancelMusicEditButton").style.display="inline-block";$("musicFormBox").scrollIntoView({behavior:"smooth"});}
-function cancelMusicEdit(){editingMusicId=null;$("musicForm").reset();$("musicArtist").value="Jovia Sounds";$("musicReward").value="100";$("musicCategory").value="Super Hits";$("musicFormTitle").textContent="＋ Upload New Music Track - Set Price User Will Earn";$("saveMusicButton").textContent="＋ Upload Music & Set Price - Secure No Logout";$("cancelMusicEditButton").style.display="none";}
-async function deleteMusic(id){if(!confirm(`Delete music #${id}?`))return;try{const r=await fetch(`/api/admin/music/${Number(id)}`,{method:"DELETE",credentials:"include"});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Delete failed");await loadAdminMusic();showToast("Music deleted")}catch(e){alert(e.message)}}
-async function loadAdminGames(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/games/accounts?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load games");const d=await r.json();rawGames=d.accounts||[];filterGames();}catch(e){$("gamesTable").innerHTML=`<tr><td colspan="6" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
-function filterGames(){const q=$("searchGames").value.toLowerCase().trim();const items=rawGames.filter(g=>`${g.email||""} ${g.username||""}`.toLowerCase().includes(q));const t=$("gamesTable");if(!items.length){t.innerHTML='<tr><td colspan="6" class="empty">No game accounts</td></tr>';return}t.innerHTML=items.map(g=>`<tr><td>${escapeHTML(g.email||g.username||"User #"+g.user_id)}</td><td><strong>${formatNaira(g.game_balance||0)}</strong></td><td>${formatNaira(g.total_deposits||0)}</td><td>${formatNaira(g.total_withdrawals||0)}</td><td>${Number(g.total_wins||0)}</td><td><span class="status ${Number(g.game_balance)>0?"active":"pending"}">${Number(g.game_balance)>0?"Active":"Empty"}</span></td></tr>`).join("");}
-async function loadAdminWithdrawals(){if(!adminAuthenticated)return;try{const r=await fetch("/api/admin/withdrawals?t="+Date.now(),{cache:"no-store",credentials:"include"});if(r.status===401)return;if(!r.ok)throw new Error("Unable to load withdrawals");const d=await r.json();rawWithdrawals=d.withdrawals||d.data||[];withdrawalsCache=new Map(rawWithdrawals.map(w=>[Number(w.id),w]));const pending=rawWithdrawals.filter(w=>String(w.status||"").toLowerCase()==="pending").length;const paid=rawWithdrawals.filter(isPaidWithdrawal).length;$("totalWithdrawals").textContent=rawWithdrawals.length;$("pendingWithdrawalsCount").textContent=pending;$("paidWithdrawalsCount").textContent=paid;$("pendingWithdrawalsCard").textContent=pending;$("navPendingCount").textContent=pending;$("pendingTabCount").textContent=pending;$("paidTabCount").textContent=paid;if($("mbnPending")) $("mbnPending").textContent=pending;$("withdrawalsLastUpdated").textContent=new Date().toLocaleTimeString("en-NG");filterWithdrawals();}catch(e){$("withdrawalsTable").innerHTML=`<tr><td colspan="9" class="empty">${escapeHTML(e.message)}</td></tr>`;}}
-function isPaidWithdrawal(w){return ["approved","paid","completed","success","successful"].includes(String(w.status||"").toLowerCase());}
-function setWithdrawalTab(tab){withdrawalTab=tab;["pending","paid","other"].forEach(k=>$(k+"Tab").classList.toggle("active-tab",k===tab));$("withdrawalListLabel").textContent=tab==="pending"?"Pending withdrawals":tab==="paid"?"Paid withdrawals":"Other withdrawal statuses";filterWithdrawals();}
-function filterWithdrawals(){const q=$("searchWithdrawals").value.toLowerCase().trim();const type=$("withdrawalTypeFilter").value;const items=rawWithdrawals.filter(w=>{const status=String(w.status||"pending").toLowerCase();const isPending=status==="pending";const isPaid=isPaidWithdrawal(w);const t=String(w.withdrawal_type||w.type||"regular").toLowerCase();const affiliate=t.includes("affili");const tabOk=withdrawalTab==="pending"?isPending:withdrawalTab==="paid"?isPaid:!isPending&&!isPaid;const typeOk=type==="all"||(type==="affiliate"&&affiliate)||(type==="regular"&&!affiliate);const text=`${w.username||""} ${w.bank_name||""} ${w.account_name||""} ${w.account_number||""} ${t} ${status}`.toLowerCase();return tabOk&&typeOk&&text.includes(q);});renderWithdrawalsTable(items);}
-function renderWithdrawalsTable(items){const t=$("withdrawalsTable");if(!items.length){t.innerHTML='<tr><td colspan="9" class="empty">No withdrawals in this list.</td></tr>';return}t.innerHTML=items.map(w=>{const type=String(w.withdrawal_type||w.type||"Regular");const affiliate=type.toLowerCase().includes("affili");const status=String(w.status||"pending").toLowerCase();let actions;if(status==="pending"){actions=`<button class="action approve" onclick="approveWithdrawal(${Number(w.id)})">✅ Paid</button><button class="action reject" onclick="rejectWithdrawal(${Number(w.id)})">Reject</button>`;}else{actions=`<span style="color:#64748b;font-size:10px">No action</span>`;}return `<tr><td><strong>${escapeHTML(w.username||"-")}</strong></td><td>${escapeHTML(w.bank_name||"-")}</td><td>${escapeHTML(w.account_name||"-")}</td><td>${escapeHTML(w.account_number||"-")}</td><td><strong>${formatNaira(w.amount)}</strong></td><td><span class="status ${affiliate?"approved":"pending"}">${escapeHTML(type)}</span></td><td><span class="status ${isPaidWithdrawal(w)?"paid":status==="pending"?"pending":"rejected"}">${escapeHTML(status)}</span></td><td>${escapeHTML(formatDate(w.created_at))}</td><td>${actions}</td></tr>`}).join("");}
-async function setWithdrawalStatus(id,status){if(!confirm(`${status==="approved"?"Mark as paid":"Reject"} withdrawal #${id}?`))return;try{let r=await fetch(`/api/admin/withdrawals/${Number(id)}/${status==="approved"?"approve":"reject"}`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({})});let d=await r.json().catch(()=>({}));if(!r.ok||!d.success){r=await fetch(`/api/admin/withdrawals/${Number(id)}/status`,{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({status})});d=await r.json().catch(()=>({}));}if(!r.ok||!d.success)throw new Error(d.message||"Withdrawal status update failed");showToast(status==="approved"?"Withdrawal marked paid":"Withdrawal rejected");await loadAdminWithdrawals();}catch(e){alert(e.message);}}
-function approveWithdrawal(id){return setWithdrawalStatus(id,"approved")}
-function rejectWithdrawal(id){return setWithdrawalStatus(id,"rejected")}
-checkAdminSession();
+async function loadWallet(){try{const {data}=await fetchJSON("/api/wallet?t="+Date.now()); if(data?.success){ if(data.walletBalance!==undefined) document.getElementById("balance").textContent=money(data.walletBalance); if(data.affiliateBalance!==undefined) document.getElementById("affiliateBalance").textContent=money(data.affiliateBalance); if(data.totalEarned!==undefined) document.getElementById("totalEarned").textContent=money(data.totalEarned);} }catch(e){}}
+async function loadReferrals(){try{const {data}=await fetchJSON("/api/referrals?t="+Date.now()); if(data?.success){ const c=Number(data.totalReferrals??0); document.getElementById("memberCount").textContent=String(c); document.getElementById("affiliateCountBig").textContent=c+" Joined"; }}catch(e){}}
+async function loadPopups(){ await Promise.allSettled([loadGlobalPopup()]); }
+async function loadGlobalPopup(){
+  const endpoints=["/api/announcement","/api/global-popup","/api/popup","/api/announcements/active"];
+  for(const url of endpoints){
+    try{
+      const r=await fetch(url+"?t="+Date.now(),{credentials:"include",cache:"no-store",headers:{"Accept":"application/json"}});if(!r.ok) continue;
+      const d=await r.json().catch(()=>null); if(!d) continue;
+      const popup=d.popup||d.announcement||d.data||d; if(!popup) continue;
+      const title=popup.title||d.title||""; const text=popup.message||popup.text||d.message||"";
+      const enabled=popup.enabled??popup.show??popup.active??d.enabled??true;
+      if(!enabled||(!title&&!text)) continue;
+      document.getElementById("joviaPopupTitle").textContent=title||"Official Announcement";
+      document.getElementById("joviaPopupText").textContent=String(text).replace(/<br\s*\/?>/gi,"\n");
+      const channelBtn=document.getElementById("joviaChannelBtn");
+      const link=popup.channelUrl||popup.channel_url||d.channelUrl||"https://t.me/jovianetwerk";if(link) channelBtn.href=link;
+      if(popup.channelText||d.channelText) channelBtn.textContent=popup.channelText||d.channelText;
+      globalOverlay.classList.add("show"); document.body.style.overflow="hidden";return;
+    }catch(_){}
+  }
+}
+let notificationsList = [];
+let notifPanelOpen = false;
+let notifFirstLoad = false;
+let notifPolling = false;
+let lastToastId = null;
+function _loadIdSet(key){
+  try{ const a=JSON.parse(localStorage.getItem(key)||"[]"); return new Set(a.map(x=>String(x))); }catch(_){ return new Set(); }
+}
+function _saveIdSet(key,set){
+  try{ localStorage.setItem(key, JSON.stringify(Array.from(set).slice(-200))); }catch(_){}
+}
+let notifSeenIds = _loadIdSet("jovia_seen_notifs");
+let notifToastShownIds = _loadIdSet("jovia_toast_shown_notifs");
+function normalizeNotif(n){
+  if(!n) return null;
+  const id = n.id ?? n._id ?? n.notification_id ?? (n.title+"_"+n.created_at);
+  const title = n.title || n.subject || "Message from Admin";
+  const msg = n.message || n.content || n.text || n.body || "";
+  const created = n.created_at || n.createdAt || n.date || "Just now";
+  const ts = n._ts || n.created_ts || (created ? new Date(created).getTime() : Date.now());
+  const isRead = (n.is_read==1||n.is_read===true||n.read===true||n.status==="read");
+  return { id:String(id), title, message:msg, created_at:created, _ts: isNaN(ts)?Date.now():ts, is_read: isRead?1:0, read: isRead };
+}
+async function fetchNotifsFromServer(){
+  if(!currentUser || !isActiveAccount(currentUser)) return [];
+  const endpoints = ["/api/notifications","/api/notifications/unread","/api/user/notifications","/api/user/private-messages","/api/private-messages"];
+  for(const url of endpoints){
+    try{
+      const r = await fetch(url+"?t="+Date.now(), {credentials:"include", cache:"no-store", headers:{"Accept":"application/json"}});
+      if(!r.ok) continue;
+      const d = await r.json().catch(()=>null); if(!d) continue;
+      let arr = [];
+      if(Array.isArray(d)) arr=d;
+      else if(Array.isArray(d.notifications)) arr=d.notifications;
+      else if(Array.isArray(d.data)) arr=d.data;
+      else if(Array.isArray(d.messages)) arr=d.messages;
+      else if(d.message || d.title) arr=[d];
+      if(arr.length || d.success===true){
+        return arr.map(normalizeNotif).filter(Boolean);
+      }
+    }catch(_){}
+  }
+  return null;
+}
+async function markToastShownOnServer(id){
+  if(!id) return;
+  try{ await fetch("/api/notifications/toast-shown",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})}); }catch(_){}
+  try{ await fetch("/api/notifications/pop-shown",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})}); }catch(_){}
+}
+async function loadNotifications(allowToast=false){
+  if(!currentUser || !isActiveAccount(currentUser)){
+    notificationsList = [];
+    updateBellVisibility();
+    renderNotifications();
+    return;
+  }
+  updateBellVisibility();
+  let serverItems = await fetchNotifsFromServer();
+  let items = [];
+  if(serverItems && serverItems.length){
+    items = serverItems;
+  } else if(serverItems && serverItems.length===0){
+    try{ const cached = JSON.parse(localStorage.getItem("jovia_notifications")||"[]").map(normalizeNotif).filter(Boolean); if(cached.length && !notifFirstLoad) items=cached; else items=[]; }catch(_){ items=[]; }
+  } else {
+    try{ items = JSON.parse(localStorage.getItem("jovia_notifications")||"[]").map(normalizeNotif).filter(Boolean); }catch(_){ items=[]; }
+  }
+  const startDate = getUserStartDate();
+  if(startDate>0){
+    items = items.filter(n=> (n._ts||0) >= startDate);
+  }
+  items.sort((a,b)=>(b._ts||0)-(a._ts||0));
+  const toastCandidates = items.filter(n=> !notifToastShownIds.has(String(n.id)) && !n.is_read && !n.read);
+  items.forEach(n=> notifSeenIds.add(String(n.id)));
+  _saveIdSet("jovia_seen_notifs", notifSeenIds);
+  notificationsList = items;
+  saveNotificationsLocal();
+  renderNotifications();
+  if(allowToast && toastCandidates.length>0){
+    const newest = toastCandidates[0];
+    if(newest && String(newest.id)!==String(lastToastId)){
+      lastToastId = String(newest.id);
+      notifToastShownIds.add(String(newest.id));
+      _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
+      markToastShownOnServer(newest.id);
+      showPrivatePopFromPop(newest);
+    }
+  }
+  notifFirstLoad = true;
+}
+function renderNotifications(){
+  const list = document.getElementById("notifList");
+  const badge = document.getElementById("notifCount");
+  if(!currentUser || !isActiveAccount(currentUser)){
+    if(badge) badge.style.display="none";
+    if(list) list.innerHTML='<div class="notif-empty">🔒 Activate your account to see notifications</div>';
+    return;
+  }
+  const unread = notificationsList.filter(n => !n.is_read && !n.read).length;
+  if(unread > 0){ badge.style.display = "grid"; badge.textContent = unread > 99 ? "99+" : unread; }
+  else { badge.style.display = "none"; }
+  if(!notificationsList.length){
+    list.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+    return;
+  }
+  list.innerHTML = notificationsList.map(n => {
+    const isUnread = !n.is_read && !n.read;
+    const safeMsg = String(n.message||"").replace(/</g,"&lt;");
+    const safeTitle = String(n.title||"Message from Admin").replace(/</g,"&lt;");
+    const nid = String(n.id).replace(/"/g,"");
+    return `<div class="notif-item ${isUnread ? "unread" : ""}" onclick="openNotification('${nid}')">
+      <b>${isUnread ? '<span class="notif-dot"></span>' : ''}${safeTitle}</b>
+      <p>${safeMsg}</p>
+      <small>${n.created_at||""}</small>
+    </div>`;
+  }).join("");
+}
+function toggleNotifPanel(e){
+  if(e) e.stopPropagation();
+  if(!currentUser || !isActiveAccount(currentUser)){
+    showToast("🔒 Activate your account to see notifications");
+    return;
+  }
+  const panel = document.getElementById("notifPanel");
+  notifPanelOpen = !notifPanelOpen;
+  panel.classList.toggle("show", notifPanelOpen);
+  if(notifPanelOpen) loadNotifications(false);
+}
+document.addEventListener("click", (e)=>{
+  const panel = document.getElementById("notifPanel");
+  const bell = document.getElementById("notifBell");
+  if(panel && !panel.contains(e.target) && bell && !bell.contains(e.target)){
+    panel.classList.remove("show"); notifPanelOpen = false;
+  }
+});
+let toastTimer=null;
+let currentToastNotifId=null;
+function showAdminPopup(title, message, notifId){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
+  currentToastNotifId = notifId || null;
+  document.getElementById("notifToastTitle").textContent = title;
+  document.getElementById("notifToastText").textContent = message;
+  const toast = document.getElementById("notifToast");
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=> toast.classList.remove("show"), 6000);
+}
+function showPrivatePopFromPop(item){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
+  privatePopFromBell = false;
+  currentPrivatePopId = item.id;
+  currentToastNotifId = item.id;
+  document.getElementById("privatePopTitle").textContent = item.title || "Message from Admin";
+  document.getElementById("privatePopMessage").textContent = item.message || "";
+  document.getElementById("privatePopTime").textContent = item.created_at || "Just now";
+  privateOverlay.classList.add("show"); document.body.style.overflow="hidden";
+  document.getElementById("notifToast").classList.remove("show");
+}
+function openNotifFromToast(){
+  if(!currentUser || !isActiveAccount(currentUser)){ document.getElementById("notifToast").classList.remove("show"); return; }
+  document.getElementById("notifToast").classList.remove("show");
+  const panel = document.getElementById("notifPanel");
+  panel.classList.add("show"); notifPanelOpen = true;
+  loadNotifications(false);
+}
+async function openNotification(id){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
+  const item = notificationsList.find(n => String(n.id) === String(id));
+  if(!item) return;
+  item.is_read = 1; item.read = true;
+  notifToastShownIds.add(String(id));
+  _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
+  renderNotifications();
+  saveNotificationsLocal();
+  document.getElementById("notifPanel").classList.remove("show"); notifPanelOpen=false;
+  privatePopFromBell = true;
+  currentPrivatePopId = item.id;
+  document.getElementById("privatePopTitle").textContent = item.title || "Message from Admin";
+  document.getElementById("privatePopMessage").textContent = item.message || "";
+  document.getElementById("privatePopTime").textContent = item.created_at || "Just now";
+  privateOverlay.classList.add("show"); document.body.style.overflow="hidden";
+  try{ await fetch("/api/notifications/read", {method:"POST", credentials:"include", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id})}); }catch(_){}
+  try{ await fetch("/api/user/private-messages/read", {method:"POST", credentials:"include", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id})}); }catch(_){}
+}
+async function markAllRead(){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
+  notificationsList.forEach(n => { n.is_read = 1; n.read = true; notifToastShownIds.add(String(n.id)); });
+  _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
+  renderNotifications(); saveNotificationsLocal();
+  try{ await fetch("/api/notifications/read-all", {method:"POST", credentials:"include"}); }catch(_){}
+}
+function saveNotificationsLocal(){
+  try{ localStorage.setItem("jovia_notifications", JSON.stringify(notificationsList)); }catch(_){}
+}
+function onNewAdminMessage(title, message){
+  if(!currentUser || !isActiveAccount(currentUser)) return;
+  const newItem = { id: "local_"+Date.now(), title, message, created_at: "Just now", is_read: 0, read:false, _ts: Date.now() };
+  if(notifToastShownIds.has(String(newItem.id))) return;
+  notifToastShownIds.add(String(newItem.id));
+  _saveIdSet("jovia_toast_shown_notifs", notifToastShownIds);
+  notificationsList.unshift(newItem);
+  notifSeenIds.add(String(newItem.id));
+  _saveIdSet("jovia_seen_notifs", notifSeenIds);
+  saveNotificationsLocal();
+  renderNotifications();
+  showPrivatePopFromPop(newItem);
+}
+window.onNewAdminMessage=onNewAdminMessage;
+function startNotifPolling(){
+  if(notifPolling) return; notifPolling=true;
+  setInterval(()=>{
+    if(document.visibilityState==="visible" && currentUser && isActiveAccount(currentUser)) loadNotifications(true);
+  },15000);
+}
+// ✅ NO PRICE FOR DASHBOARD - Name only
+function onUpgradeTargetChange(){
+  const sel=document.getElementById("upgradeTarget");
+  const badge=document.getElementById("upgradeBadge");
+  const title=document.getElementById("upgradeTitle");
+  const desc=document.getElementById("upgradeDesc");
+  const msg=document.getElementById("upgradeMsg");
+  if(!sel||!badge) return;
+  if(msg) msg.textContent="";
+  const v=sel.value;
+  badge.textContent="UPGRADE";
+  if(v==="silver-gold"){ title.textContent="🚀 Silver → Gold"; desc.innerHTML="Paste your <b>Silver → Gold</b> code to upgrade."; }
+  else if(v==="silver-super"){ title.textContent="🚀 Silver → Super"; desc.innerHTML="Paste your <b>Silver → Super</b> code to upgrade + Unlock Music 👑"; }
+  else if(v==="gold-super"){ title.textContent="🚀 Gold → Super"; desc.innerHTML="Paste your <b>Gold → Super</b> code to upgrade + Unlock Music 👑"; }
+}
+function displayUser(user,apiData={}){
+ if(!user) return;
+ let fullName=user.fullName||user.displayName||user.name||user.username||""; if(!fullName&&user.email) fullName=String(user.email).split("@")[0]; document.getElementById("userName").textContent=fullName||"Member";
+ document.getElementById("drawerName").textContent=fullName||"Member"; document.getElementById("drawerAvatar").textContent=(fullName||"J")[0].toUpperCase();
+ const planValues=[user.package,user.plan,apiData?.plan,localStorage.getItem("jovia_plan")];
+ let packageName="Silver"; for(const v of planValues){ const p=String(v||"").toLowerCase(); if(p.includes("super")){packageName="Super";break;} if(p.includes("gold")){packageName="Gold";break;} if(p.includes("silver")){packageName="Silver";break;} }
+ const active=isActiveAccount(user); const suspended=isSuspendedAccount(user); const superUser=isSuperUser(user);
+ document.getElementById("drawerPlan").textContent=packageName.toUpperCase()+" • "+(suspended?"Suspended":active?"Active":"Pending");
+ const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2"); b1.textContent=packageName.toUpperCase(); b2.textContent=packageName.toUpperCase(); b1.classList.toggle("super",packageName==="Super"); b2.classList.toggle("super",packageName==="Super");
+ const statusEl=document.getElementById("accountStatus"),paymentButton=document.getElementById("paymentButton");
+ const welcomeBonus=packageName==="Gold"?15000:packageName==="Super"?25000:9000;
+ document.getElementById("welcomeBonus").textContent=money(welcomeBonus);
+ if(suspended){
+   statusEl.innerHTML='<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:linear-gradient(135deg,#fee2e2,#fecaca);border:1.5px solid #f87171;color:#991b1b;font-size:11px;font-weight:800">⛔ Suspended</span>';
+   paymentButton.textContent="Account Suspended ⛔"; paymentButton.disabled=true; paymentButton.style.opacity="1"; paymentButton.style.background="linear-gradient(135deg,#fee2e2,#fecaca)"; paymentButton.style.color="#991b1b"; paymentButton.style.border="1px solid #f87171";
+ }else if(active){
+   statusEl.textContent=packageName==="Super"?"Active • SUPER 👑":"Active";
+   paymentButton.textContent=packageName==="Super"?"SUPER Active 👑":"Account Activated ✓"; paymentButton.disabled=true; paymentButton.style.opacity=".7"; paymentButton.style.background=""; paymentButton.style.color=""; paymentButton.style.border="0";
+ }else{
+   statusEl.textContent="Pending";
+   paymentButton.textContent="Continue to Payment"; paymentButton.disabled=false; paymentButton.style.opacity="1"; paymentButton.style.background=""; paymentButton.style.color=""; paymentButton.style.border="0";
+ }
+ const activityName=document.getElementById("activityName"),activityDate=document.getElementById("activityDate"),activityAmount=document.getElementById("activityAmount"),activityIconBox=document.getElementById("activityIconBox");
+ if(suspended){
+   activityName.textContent="Account Suspended";
+   activityDate.textContent="Suspended by Admin - Contact support";
+   activityAmount.textContent="⛔ Suspended";
+   activityAmount.className="activity-amount suspended";
+   activityIconBox.textContent="⛔"; activityIconBox.style.background="#fee2e2"; activityIconBox.style.color="#991b1b";
+ }else if(active){
+   activityName.textContent=packageName+" welcome bonus";
+   activityDate.textContent="Account activated - "+money(welcomeBonus)+" credited";
+   activityAmount.textContent="+"+money(welcomeBonus);
+   activityAmount.className="activity-amount success";
+   activityIconBox.textContent="✓"; activityIconBox.style.background="#dcfce7"; activityIconBox.style.color="#166534";
+ }else{
+   activityName.textContent="Account Created";
+   activityDate.textContent="Pending activation - Awaiting payment";
+   activityAmount.textContent="⏳ Processing "+money(welcomeBonus);
+   activityAmount.className="activity-amount pending";
+   activityIconBox.textContent="⏳"; activityIconBox.style.background="#fef3c7"; activityIconBox.style.color="#92400e";
+ }
+ const gamesQuickBtn=document.getElementById("gamesQuickBtn"), gamesNavBtn=document.getElementById("gamesNavBtn"), gamesSmall=document.getElementById("gamesQuickSmall");
+ const musicQuickBtn=document.getElementById("musicQuickBtn"), musicNavBtn=document.getElementById("musicNavBtn"), musicSmall=document.getElementById("musicQuickSmall");
+ const drawerGamesSmall=document.getElementById("drawerGamesSmall"), drawerMusicSmall=document.getElementById("drawerMusicSmall");
+ if(suspended){
+   gamesQuickBtn.classList.add("locked"); gamesNavBtn.classList.add("locked"); gamesSmall.textContent="Suspended ⛔"; if(drawerGamesSmall) drawerGamesSmall.textContent="Suspended ⛔";
+   musicQuickBtn.classList.add("locked"); musicNavBtn.classList.add("locked"); musicSmall.textContent="Suspended ⛔"; if(drawerMusicSmall) drawerMusicSmall.textContent="Suspended ⛔";
+ }else if(active){ gamesQuickBtn.classList.remove("locked"); gamesNavBtn.classList.remove("locked"); gamesSmall.textContent="Play & Win"; if(drawerGamesSmall) drawerGamesSmall.textContent="Play & Win"; }
+ else{ gamesQuickBtn.classList.add("locked"); gamesNavBtn.classList.add("locked"); gamesSmall.textContent="Active only 🔒"; if(drawerGamesSmall) drawerGamesSmall.textContent="Active only 🔒"; }
+ if(suspended){}
+ else if(superUser){ musicQuickBtn.classList.remove("locked","super-lock"); musicNavBtn.classList.remove("locked","super-lock"); musicSmall.textContent="Super Unlocked 👑"; if(drawerMusicSmall) drawerMusicSmall.textContent="Super Unlocked 👑"; }
+ else if(active){ musicQuickBtn.classList.add("super-lock"); musicQuickBtn.classList.remove("locked"); musicNavBtn.classList.add("super-lock"); musicNavBtn.classList.remove("locked"); musicSmall.textContent="Super Only 👑"; if(drawerMusicSmall) drawerMusicSmall.textContent="Super Only 👑"; }
+ else{ musicQuickBtn.classList.add("locked"); musicQuickBtn.classList.remove("super-lock"); musicNavBtn.classList.add("locked"); musicNavBtn.classList.remove("super-lock"); musicSmall.textContent="Super Only 🔒"; if(drawerMusicSmall) drawerMusicSmall.textContent="Super Only 🔒"; }
+ const upgradeCard=document.getElementById("upgradeCard"), upgradeDefault=document.getElementById("upgradeDefault"), upgradeSuccess=document.getElementById("upgradeSuccessBox"), upgradeTitle=document.getElementById("upgradeTitle"), upgradeBadge=document.getElementById("upgradeBadge"), upgradeDesc=document.getElementById("upgradeDesc");
+ const upgradeSelect=document.getElementById("upgradeTarget");
+ if(suspended || !active){ upgradeCard.classList.remove("show"); }
+ else if(packageName==="Super"){ upgradeCard.classList.add("show"); upgradeDefault.style.display="none"; upgradeSuccess.classList.add("show"); }
+ else if(packageName==="Silver"){
+   upgradeCard.classList.add("show"); upgradeDefault.style.display="block"; upgradeSuccess.classList.remove("show");
+   if(upgradeSelect){ upgradeSelect.innerHTML='<option value="silver-gold">Silver → Gold</option><option value="silver-super">Silver → Super</option>'; upgradeSelect.value="silver-gold"; }
+   upgradeTitle.textContent="🚀 Silver → Gold / Super"; upgradeBadge.textContent="UPGRADE"; upgradeDesc.innerHTML="Choose <b>Silver → Gold</b> or <b>Silver → Super</b>, then paste your code.";
+ }
+ else if(packageName==="Gold"){
+   upgradeCard.classList.add("show"); upgradeDefault.style.display="block"; upgradeSuccess.classList.remove("show");
+   if(upgradeSelect){ upgradeSelect.innerHTML='<option value="gold-super">Gold → Super</option>'; upgradeSelect.value="gold-super"; }
+   upgradeTitle.textContent="🚀 Gold → Super"; upgradeBadge.textContent="UPGRADE"; upgradeDesc.innerHTML="Paste your <b>Gold → Super</b> code to upgrade + Unlock Music 👑";
+ }
+ const referralCode=String(user.referralCode||user.username||"").replace(/[^a-zA-Z0-9_-]/g,"").toUpperCase();
+ if(referralCode){const url=new URL("register.html",window.location.href); url.searchParams.set("ref",referralCode); document.getElementById("referralLink").textContent=url.href;}
+}
+function closeGlobalPopup(){globalOverlay.classList.remove("show"); if(!privateOverlay.classList.contains("show") && !drawer.classList.contains("show")) document.body.style.overflow="";}
+document.getElementById("joviaPopupClose").addEventListener("click",closeGlobalPopup);
+document.getElementById("joviaPopupOk").addEventListener("click",closeGlobalPopup);
+globalOverlay.addEventListener("click",e=>{if(e.target===globalOverlay) closeGlobalPopup();});
+async function closePrivatePop(){
+  if(currentPrivatePopId===null){privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow=""; return;}
+  const id=currentPrivatePopId;
+  const wasFromBell = privatePopFromBell;
+  const btn=document.getElementById("privatePopOk"); btn.disabled=true; btn.textContent="Please wait...";
+  try{
+    if(wasFromBell){
+      for(const u of ["/api/notifications/read","/api/user/private-messages/read","/api/private-messages/read"]){try{ const r=await fetch(u,{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})}); if(r.ok) break; }catch(_){}}
+    }
+    currentPrivatePopId=null; privatePopFromBell=false; privateOverlay.classList.remove("show"); if(!globalOverlay.classList.contains("show")) document.body.style.overflow="";
+  }finally{ btn.disabled=false; btn.textContent="OK, I Understand ✓"; }
+}
+document.getElementById("privatePopOk").addEventListener("click",closePrivatePop);
+document.getElementById("privatePopCloseIcon").addEventListener("click",closePrivatePop);
+async function copyReferral(){
+  const link=document.getElementById("referralLink").textContent.trim();
+  const b=document.getElementById("copyReferralButton"); if(!link.startsWith("http")) return;
+  const o=b.textContent; try{if(navigator.clipboard) await navigator.clipboard.writeText(link); b.textContent="Copied ✓";}catch(_){prompt("Copy:",link);} setTimeout(()=>b.textContent=o,1800);
+}
+function openPage(p){
+  closeDrawer();
+  const allowed=["dashboard.html","jobs.html","games.html","music.html","history.html","profile.html","withdraw.html","payment.html","login.html","upgrade-pay.html"];
+  if(!allowed.includes(p)) return;
+  if(currentUser && isSuspendedAccount(currentUser) && p!=="profile.html" && p!=="history.html" && p!=="dashboard.html"){ showToast("⛔ Account Suspended - Contact Admin!"); return; }
+  if(p==="games.html"){
+    if(!currentUser){ showToast("⏳ Loading your account... wait 2 seconds"); return; }
+    if(!isActiveAccount(currentUser)){ showToast("🔒 Games locked - Activate your account first!"); setTimeout(()=>{ if(confirm("Account not active. Go to payment to unlock Games?")) location.href="payment.html"; },800); return; }
+  }
+  if(p==="music.html"){
+    if(!currentUser){ showToast("⏳ Loading... wait 2 seconds"); return; }
+    if(!isActiveAccount(currentUser)){ showToast("🔒 Music locked - Activate first!"); setTimeout(()=>{ if(confirm("Activate account to access features?")) location.href="payment.html"; },800); return; }
+    if(!isSuperUser(currentUser)){ showToast("👑 Music is SUPER ONLY - Upgrade to SUPER!"); setTimeout(()=>{ if(confirm("Music is for SUPER users only. Upgrade to SUPER now? 👑")) location.href="upgrade-pay.html"; },900); return; }
+  }
+  location.href=p;
+}
+function activate(){if(!currentUser) return; if(isActiveAccount(currentUser) || isSuspendedAccount(currentUser)) return; location.href="payment.html";}
+function showSuperSuccessInstant(){
+  try{
+    const b1=document.getElementById("planBadge"),b2=document.getElementById("planBadge2"), statusEl=document.getElementById("accountStatus"), paymentButton=document.getElementById("paymentButton");
+    if(b1){b1.textContent="SUPER"; b1.classList.add("super");} if(b2){b2.textContent="SUPER"; b2.classList.add("super");}
+    if(statusEl) statusEl.textContent="Active • SUPER 👑"; if(paymentButton){paymentButton.textContent="SUPER Active 👑"; paymentButton.disabled=true;}
+    document.getElementById("upgradeCard").classList.add("show"); document.getElementById("upgradeDefault").style.display="none"; document.getElementById("upgradeSuccessBox").classList.add("show");
+    document.getElementById("gamesQuickBtn").classList.remove("locked"); document.getElementById("gamesNavBtn").classList.remove("locked");
+    document.getElementById("musicQuickBtn").classList.remove("locked","super-lock"); document.getElementById("musicNavBtn").classList.remove("locked","super-lock");
+    document.getElementById("gamesQuickSmall").textContent="Play & Win"; document.getElementById("musicQuickSmall").textContent="Super Unlocked 👑";
+    localStorage.setItem("jovia_plan","SUPER"); localStorage.setItem("jovia_package","SUPER");
+    const amt=document.getElementById("activityAmount"), iconBox=document.getElementById("activityIconBox");
+    if(amt){amt.textContent="+"+money(25000); amt.className="activity-amount success";}
+    if(iconBox){iconBox.textContent="✓"; iconBox.style.background="#dcfce7"; iconBox.style.color="#166534";}
+  }catch(e){}
+}
+async function applySuperUpgrade(){
+ if(upgradeBusy) return;
+ const input=document.getElementById("upgradeCodeInput"),msg=document.getElementById("upgradeMsg"),btn=document.getElementById("upgradeBtn");
+ let code=String(input.value||"").toUpperCase().trim();
+ if(!code.startsWith("SUPER-")||code.length!==14){msg.textContent="❌ Must be SUPER-XXXXXXXX (14 chars)"; msg.style.color="#ef4444"; return;}
+ if(!currentUser){msg.textContent="⏳ Loading..."; await loadUser(); return;}
+ upgradeBusy=true; btn.disabled=true; btn.textContent="Checking..."; msg.textContent="⏳ Verifying..."; msg.style.color="#8a8196";
+ try{
+  const target=document.getElementById("upgradeTarget")?.value || "";
+  const r=await fetch("/api/upgrade/apply",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify({code,superCode:code,upgradeTarget:target,email:currentUser.email,username:currentUser.username})});
+  const d=await r.json().catch(()=>({})); if(!r.ok||!d.success) throw new Error(d?.message||"Invalid code");
+  msg.innerHTML="✅ <b>Upgraded!</b>"; msg.style.color="#15803d"; btn.textContent="SUCCESS ✓"; input.disabled=true; input.value=code+" ✓ USED";
+  if(target==="silver-gold"){ setTimeout(async()=>{try{await loadUser();}catch(e){}},1200); upgradeBusy=false; return; }
+  showSuperSuccessInstant(); if(currentUser){currentUser.package="SUPER";} setTimeout(async()=>{try{await loadUser();}catch(e){} showSuperSuccessInstant();},1500);
+ }catch(e){msg.textContent="❌ "+(e.message||"Failed"); msg.style.color="#ef4444"; btn.disabled=false; btn.textContent="UPGRADE →"; upgradeBusy=false;}
+}
+document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,14); document.getElementById("upgradeMsg").textContent="";});
+async function logout(){if(logoutInProgress) return; logoutInProgress=true; try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");}
+document.addEventListener("DOMContentLoaded",()=>{
+  privateOverlay.classList.remove("show");
+  document.getElementById("notifToast").classList.remove("show");
+  updateBellVisibility();
+  loadUser();
+  startNotifPolling();
+});
+setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups(); loadNotifications(false);}},45000);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
 </script>
 </body>
 </html>
