@@ -239,7 +239,6 @@ function repairMissingReferralRewards(){
   }
   return {fixed, skipped, total: users.length};
 }
-function monnifyConfigured(){return Boolean(MONNIFY_API_KEY&&MONNIFY_SECRET_KEY&&MONNIFY_CONTRACT_CODE);}
 function monnifyRequest(method,requestPath,body,bearerToken,extraHeaders){return new Promise((resolve,reject)=>{const url=new URL(MONNIFY_BASE_URL+requestPath);const payload=body==null?null:Buffer.from(JSON.stringify(body));const headers=Object.assign({},extraHeaders||{});if(payload){headers["Content-Type"]="application/json";headers["Content-Length"]=payload.length;}if(bearerToken)headers.Authorization=`Bearer ${bearerToken}`;const request=https.request({protocol:url.protocol,hostname:url.hostname,port:url.port||443,path:url.pathname+url.search,method,headers,timeout:30000},(response)=>{const chunks=[];response.on("data",(chunk)=>{chunks.push(chunk);});response.on("end",()=>{const raw=Buffer.concat(chunks).toString("utf8");let parsed;try{parsed=raw?JSON.parse(raw):{};}catch(_){parsed={raw};}resolve({statusCode:response.statusCode,body:parsed,raw});});});request.on("timeout",()=>{request.destroy(new Error("Monnify request timed out."));});request.on("error",reject);if(payload)request.write(payload);request.end();});}
 async function getMonnifyToken(){const auth=Buffer.from(MONNIFY_API_KEY+":"+MONNIFY_SECRET_KEY).toString("base64");const response=await monnifyRequest("POST","/api/v1/auth/login",null,null,{Authorization:"Basic "+auth});if(response.statusCode<200||response.statusCode>=300||!response.body.requestSuccessful)throw new Error(response.body?.responseMessage||"Unable to authenticate with Monnify.");const token=response.body.responseBody?.accessToken;if(!token)throw new Error("Monnify did not return an access token.");return token;}
 async function initializeMonnifyPayment(payment){const token=await getMonnifyToken();const response=await monnifyRequest("POST","/api/v1/merchant/transactions/init-transaction",{amount:payment.amount,customerName:payment.customerName,customerEmail:payment.customerEmail,paymentReference:payment.paymentReference,paymentDescription:`Jovia Network ${payment.package} package`,currencyCode:"NGN",contractCode:MONNIFY_CONTRACT_CODE,redirectUrl:payment.redirectUrl,paymentMethods:["CARD","ACCOUNT_TRANSFER","USSD","PHONE_NUMBER"]},token);if(response.statusCode<200||response.statusCode>=300||!response.body.requestSuccessful)throw new Error(response.body?.responseMessage||"Monnify could not initialize the payment.");const data=response.body.responseBody||{};if(!data.checkoutUrl)throw new Error("Monnify returned no checkout URL.");return data;}
@@ -488,6 +487,12 @@ function handleAdminUserStatus(req,res,forcedStatus){
     return res.json({success:true,message:"User activated successfully + welcome + referral bonus paid",status:"active",account_status:"active",user:result});
   }catch(e){ return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 }
+app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>handleAdminUserStatus(req,res));
+app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
+app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"active"));
+app.post("/api/admin/users/:id/suspend",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"suspended"));
+app.post("/api/admin/users/:id/pending",requireAdmin,(req,res)=>handleAdminUserStatus(req,res,"pending"));
+// ===== FIXED: Admin status - suspend + activate both work, activate FORCES bonus like backpay =====
 app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
   try{
     const id=req.params.id;
@@ -549,50 +554,6 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
     return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
 });
-// ===== FIXED: Only ONE status route now - approve/activate/suspend/pending all use am =====
-app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
-app.post("/api/admin/users/:id/activate",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
-app.post("/api/admin/users/:id/suspend",requireAdmin,(req,res)=>{ req.body.status="suspended"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
-app.post("/api/admin/users/:id/pending",requireAdmin,(req,res)=>{ req.body.status="pending"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
-app.post("/api/admin/users/:id/unsuspend",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
-// ===== RESTORED: Reset Password + Old suspend/unsuspend =====
-app.post("/api/admin/users/:id/reset-password",requireAdmin,(req,res)=>{
-  try{
-    const id=req.params.id;
-    const pw=String(req.body?.newPassword||req.body?.password||req.body?.new_password||"");
-    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
-    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
-    if(!u) return res.status(404).json({success:false,message:"User not found"});
-    const hash=bcrypt.hashSync(pw,10);
-    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
-    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:"Password reset failed: "+e.message}); }
-});
-app.post("/api/admin/users/:id/password",requireAdmin,(req,res)=>{
-  try{
-    const id=req.params.id;
-    const pw=String(req.body?.newPassword||req.body?.password||"");
-    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
-    const hash=bcrypt.hashSync(pw,10);
-    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
-    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-app.post("/api/admin/user/reset-password",requireAdmin,(req,res)=>{
-  try{
-    const id=req.body?.userId||req.body?.id;
-    const pw=String(req.body?.newPassword||req.body?.password||"");
-    if(!pw||pw.length<8) return res.status(400).json({success:false,message:"Password must be at least 8 characters."});
-    const hash=bcrypt.hashSync(pw,10);
-    try{ db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash,id); }
-    catch(e){ db.prepare("UPDATE users SET password=? WHERE id=?").run(hash,id); }
-    return res.json({success:true,message:"Password reset"});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-app.post("/api/admin/user/suspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id; db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
-app.post("/api/admin/user/unsuspend",requireAdmin,(req,res)=>{ try{ const id=req.body?.userId||req.body?.id; db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }});
 
 // ===== FIXED: Fix missing rewards in one click =====
 app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
