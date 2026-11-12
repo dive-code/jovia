@@ -508,7 +508,7 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
       catch(e){ db.prepare("UPDATE users SET account_status='pending' WHERE id=?").run(id); }
       return res.json({success:true,message:`User set to pending`, status:"pending", account_status:"pending"});
     }
-    // ACTIVE path - FORCE PAY LIKE BACKPAY
+     // ACTIVE path - FORCE PAY LIKE BACKPAY
     const result=db.transaction(()=>{
       const fresh=db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
       const pkg=String(fresh.package||"").toUpperCase();
@@ -547,6 +547,48 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
     })();
     return res.json({success:true,message:`User activated successfully + referral bonus paid`, status:"active", account_status:"active", user:result});
   }catch(e){ console.error("ADMIN STATUS ERROR:",e); return res.status(500).json({success:false,message:"Failed to update status: "+e.message}); }
+});
+
+// ===== FIXED: Fix missing rewards in one click =====
+app.post("/api/admin/fix-missing-rewards",requireAdmin,(req,res)=>{
+  try{ const r=repairMissingReferralRewards(); return res.json({success:true,message:`Fixed ${r.fixed} users, skipped ${r.skipped}`, ...r}); }
+  catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+app.post("/api/admin/repair-referral/:id",requireAdmin,(req,res)=>{
+  try{
+    const id=req.params.id;
+    const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    const pkg=String(u.package||"").toUpperCase();
+    // WELCOME FIXED HERE TOO
+    const welcomeAmt = pkg==="GOLD" ? 15000 : pkg==="SUPER" ? 21000 : 9000;
+    try{ db.prepare("UPDATE users SET welcome_bonus=? WHERE id=?").run(welcomeAmt, u.id); }catch{}
+    let correct=0;
+    if(pkg==="GOLD") correct=13000;
+    else if(pkg==="SILVER") correct=8000;
+    else if(pkg==="SUPER"){
+      const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
+      const p0=ex0?Number(ex0.amount||0):0;
+      if(p0===13000) correct=19000; else if(p0===8000) correct=18000; else if(p0===0) correct=19000; else correct=p0;
+    }
+    if(u.referrer_id && Number(u.referrer_id)!==Number(u.id) && correct>0){
+      const referrer=db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id);
+      if(referrer){
+        const existing=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
+        const alreadyPaid=existing?Number(existing.amount||0):0;
+        const toPay=correct-alreadyPaid;
+        if(toPay>0){
+          if(existing){ db.prepare("UPDATE referral_rewards SET amount=?, referrer_id=? WHERE referred_user_id=?").run(correct, referrer.id, u.id); }
+          else{ db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, u.id, correct, referrer.package, u.package); }
+          db.prepare("UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ?, total_earned = COALESCE(total_earned,0) + ? WHERE id=?").run(toPay, toPay, referrer.id);
+          db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", toPay, "affiliate", `REFERRAL_${u.id}`, `Referral repair for ${u.username} (${pkg})`);
+        }
+      }
+    }
+    try{ activateUserAndRewardsInternal(u.id, u.package, u.package); }catch(e){}
+    const after=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+    return res.json({success:true,message:"Referral repaired", user:after});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 // ===== FIXED: Only ONE status route now - approve/activate/suspend/pending all use am =====
 app.post("/api/admin/users/:id/approve",requireAdmin,(req,res)=>{ req.body.status="active"; return res.redirect(307, `/api/admin/users/${req.params.id}/status`); });
