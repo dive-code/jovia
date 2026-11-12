@@ -456,8 +456,41 @@ function privateUserMatches(u){const query=$("privateRecipientSearch").value.tri
 function applyPrivateRecipientFilter(){renderPrivateRecipients()}
 function renderPrivateRecipients(){const box=$("privateRecipientsList");if(!box)return;const users=rawUsers.filter(privateUserMatches);if(!users.length){box.innerHTML='<p class="empty">No matching members found.</p>';$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`;return}box.innerHTML=users.map(u=>{const id=Number(u.id);return `<label class="recipient-item"><input type="checkbox" ${privateRecipientIds.has(id)?"checked":""} onchange="togglePrivateRecipient(${id},this.checked)"><span><strong>${escapeHTML(u.full_name||u.username||u.email||"Unnamed member")}</strong><small>${escapeHTML(u.username||"")} · ${escapeHTML(u.email||"")} · ${escapeHTML(u.package||u.plan||"Unspecified")} · ${isSuspendedUser(u)?"⛔ Suspended":isActiveUser(u)?"Active":"Non-active"}</small></span></label>`}).join("");$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
 function togglePrivateRecipient(id,selected){if(selected)privateRecipientIds.add(Number(id));else privateRecipientIds.delete(Number(id));$("privateSelectedCount").textContent=`${privateRecipientIds.size} selected`}
-function selectPrivateGroup(type){privateRecipientIds.clear();rawUsers.filter(u=>{if(type==="active")return isActiveUser(u);if(type==="inactive")return !isActiveUser(u)&&!isSuspendedUser(u);if(type==="suspended")return isSuspendedUser(u);return true}).forEach(u=>privateRecipientIds.add(Number(u.id)));renderPrivateRecipients()}
-function selectVisiblePrivateRecipients(selected){rawUsers.filter(privateUserMatches).forEach(u=>{if(selected)privateRecipientIds.add(Number(u.id));else privateRecipientIds.delete(Number(u.id))});renderPrivateRecipients()}
+function selectPrivateGroup(type){
+  // 1. Only change ONE side, keep the other side as e be
+  // Gold/Silver/Super/Other = change Package only, keep Status
+  // Active/Inactive/Suspended = change Status only, keep Package
+  // All = reset both to All
+  try{
+    const sf=$("privateStatusFilter");
+    const pf=$("privatePackageFilter");
+    $("privateRecipientSearch").value="";
+    if(type==="gold"){ pf.value="gold"; }
+    else if(type==="silver"){ pf.value="silver"; }
+    else if(type==="super"){ pf.value="super"; }
+    else if(type==="other"){ pf.value="other"; }
+    else if(type==="active"){ sf.value="active"; }
+    else if(type==="inactive"){ sf.value="inactive"; }
+    else if(type==="suspended"){ sf.value="suspended"; }
+    else { sf.value="all"; pf.value="all"; }
+  }catch(e){}
+
+  // 2. Select by BOTH filters together - Status AND Package
+  privateRecipientIds.clear();
+  rawUsers.forEach(function(u){
+    if(privateUserMatches(u)) privateRecipientIds.add(Number(u.id));
+  });
+  renderPrivateRecipients();
+}
+
+function applyPrivateRecipientFilter(){
+  // When you change dropdown manually, select the combination too, no clear am to 0
+  privateRecipientIds.clear();
+  rawUsers.forEach(function(u){
+    if(privateUserMatches(u)) privateRecipientIds.add(Number(u.id));
+  });
+  renderPrivateRecipients();
+}
 function clearPrivateSelection(){privateRecipientIds.clear();renderPrivateRecipients()}
 function sendPrivateToOneUser(id){privateRecipientIds.clear();privateRecipientIds.add(Number(id));$("privateMessages").scrollIntoView({behavior:"smooth"});renderPrivateRecipients()}
 async function sendPrivateMessage(){const title=$("privateMessageTitle").value.trim(),message=$("privateMessageBody").value.trim();if(!privateRecipientIds.size)return alert("Select at least one recipient.");if(!title||!message)return alert("Enter the title and message.");if(!confirm(`Send to ${privateRecipientIds.size} user(s)?`))return;const b=$("sendPrivateMessageButton");b.disabled=true;b.textContent="Sending...";try{const r=await fetch("/api/admin/private-messages",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({recipientIds:Array.from(privateRecipientIds),title,message})});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.message||"Could not send");privateMessageStatus(`Message sent to ${privateRecipientIds.size} recipient(s).`,true);privateRecipientIds.clear();$("privateMessageTitle").value="";$("privateMessageBody").value="";renderPrivateRecipients();await loadPrivateMessages();showToast("Private message sent")}catch(e){privateMessageStatus(e.message,false)}finally{b.disabled=false;b.textContent="✉️ Send Private Message"}}
