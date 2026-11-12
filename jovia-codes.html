@@ -43,7 +43,6 @@ textarea{resize:vertical;min-height:80px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px}
 .modal.show{display:flex}
 .modal img{max-width:100%;max-height:90vh;border-radius:12px}
-/* ✅ NEW - Downgrade / Fix Wrong Upgrade - Professional */
 .downgrade-note{background:#fffbeb;border:1px dashed #f59e0b;padding:10px;border-radius:10px;font-size:11px;line-height:1.6;color:#78350f;margin-bottom:12px}
 .downgrade-status{display:none;margin-top:10px;padding:11px;border-radius:10px;font-size:12px;font-weight:800;line-height:1.6}
 .downgrade-status.show{display:block}
@@ -52,6 +51,17 @@ textarea{resize:vertical;min-height:80px}
 .downgrade-status.info{background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
 .user-preview{display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-size:12px;line-height:1.7;margin-bottom:10px}
 .user-preview.show{display:block}
+.codes-list{max-height:520px;overflow-y:auto;padding-right:4px;display:flex;flex-direction:column;gap:8px}
+.codes-list::-webkit-scrollbar{width:6px}
+.codes-list::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px}
+.filter-row{display:flex;gap:6px;margin-bottom:10px}
+.filter-btn{flex:1;padding:9px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:900;cursor:pointer}
+.filter-btn.active{background:#0f172a;color:#fff;border-color:#0f172a}
+.filter-btn.active-green{background:#16a34a;color:#fff;border-color:#16a34a}
+.filter-btn.active-red{background:#ef4444;color:#fff;border-color:#ef4444}
+.code-row{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;background:#fff}
+.code-row.used{background:#fff7f7;opacity:.85}
+.code-type{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
 </style>
 </head>
 <body>
@@ -62,9 +72,7 @@ textarea{resize:vertical;min-height:80px}
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
 </div></div>
-
 <div id="imgModal" class="modal" onclick="this.classList.remove('show')"><img id="modalImg" src=""></div>
-
 <div class="top">
 <div><h3 style="font-size:14px">JOVIA ADMIN - DAILY ONE EARN SAFE</h3><small style="font-size:10px;color:#94a3b8">Dashboard Safe + Music Daily Reset + Must Finish</small></div>
 <span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SAFE</span>
@@ -77,7 +85,6 @@ textarea{resize:vertical;min-height:80px}
 <button class="tab" id="tabG" onclick="setTab('deposits')">🎮 Deposits</button>
 <button class="tab" id="tabWD" onclick="setTab('withdrawals')">💰 Withdraw</button>
 </div>
-
 <div class="card" id="cardWithdraw">
 <h3 style="font-size:14px;margin-bottom:8px">💸 Generate Withdrawal Code</h3>
 <button class="btn btn-black" id="btnWithdraw" onclick="generate('withdraw')">Generate JOVIA Code</button>
@@ -90,7 +97,6 @@ textarea{resize:vertical;min-height:80px}
 </div>
 </div>
 </div>
-
 <div class="card" id="cardSuper" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">👑 Generate SUPER Upgrade Code</h3>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -107,8 +113,6 @@ textarea{resize:vertical;min-height:80px}
 </div>
 </div>
 </div>
-
-<!-- ✅ NEW BLOCK ONLY - UPGRADE CODES - Separate, always visible, no touch old panel -->
 <div class="card" id="cardUpgradeCodes">
 <h3 style="font-size:14px;margin-bottom:8px">🆙 NEW - Generate UPGRADE Code</h3>
 <p style="font-size:11px;color:#64748b;margin-bottom:10px">Separate block. Old SUPER panel still dey for up.</p>
@@ -128,8 +132,6 @@ textarea{resize:vertical;min-height:80px}
 </div>
 </div>
 </div>
-
-<!-- ✅ NEW - FIX WRONG UPGRADE / DOWNGRADE TO SILVER - Professional, separate card -->
 <div class="card" id="cardDowngrade">
 <h3 style="font-size:14px;margin-bottom:8px">⬇️ Fix Wrong Upgrade — Downgrade to Silver</h3>
 <div class="downgrade-note">For user wey use <b>Silver → Gold</b> code but select <b>Silver → Super</b> by mistake and go SUPER. Downgrade am back to <b>Silver</b>, make she re-upgrade to <b>Gold</b> with correct code.<br>Code still na <b>one-time use</b> — e no go reset the used code.</div>
@@ -144,7 +146,6 @@ textarea{resize:vertical;min-height:80px}
 <div id="downgradeMsg" class="downgrade-status"></div>
 <div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">After downgrade, tell user to logout + login again, then select Silver → Gold.</div>
 </div>
-
 <div class="card" id="cardMusic" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">♫ Music Management - ONE PER DAY + MUST FINISH</h3>
 <div style="background:#eef2ff;border:1px dashed #5b21b6;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">🔒 DAILY RESET: One song = One earning per day - Tomorrow same song fit earn again. MUST FINISH: User must play till end.</div>
@@ -163,7 +164,6 @@ textarea{resize:vertical;min-height:80px}
 <button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music - Daily Reset Active</button>
 </div>
 </div>
-
 <div class="card" id="cardDeposits" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Proof Verification</h3>
 <div class="bank-box">
@@ -175,27 +175,29 @@ Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
 <button class="btn btn-black" onclick="loadDeposits()" style="margin-bottom:10px">🔄 Refresh Deposits</button>
 <div id="depositsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
 </div>
-
 <div class="card" id="cardWithdrawals" style="display:none">
 <h3 style="font-size:14px;margin-bottom:8px">💰 Game Withdrawals - Pay Users</h3>
 <div class="bank-box">You will pay from your <b>1850772192 Kredi MFB</b> account to users below. Copy account number and transfer, then click Paid.</div>
 <button class="btn btn-black" onclick="loadWithdrawals()" style="margin-bottom:10px">🔄 Refresh Withdrawals</button>
 <div id="withdrawalsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
 </div>
-
 <div class="card">
 <h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code</h3>
 <input id="checkCode" placeholder="Paste code">
 <button class="btn btn-black" onclick="validate()">Check From Server</button>
 <div id="checkResult" style="text-align:center;font-weight:800;margin-top:12px;font-size:13px;min-height:20px;line-height:1.6"></div>
 </div>
-
 <div class="card">
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
-<h3 style="font-size:14px" id="listTitle">All Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
+<h3 style="font-size:14px" id="listTitle">All Previous Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
 </div>
-<input id="searchInput" class="search" placeholder="🔍 Search code or email..." oninput="filterList()" style="padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;width:100%;margin-bottom:10px">
-<div id="list"></div>
+<div class="filter-row">
+<button class="filter-btn active" id="filterAll" onclick="setCodeFilter('all')">All</button>
+<button class="filter-btn" id="filterActive" onclick="setCodeFilter('active')">✅ Active</button>
+<button class="filter-btn" id="filterUsed" onclick="setCodeFilter('used')">❌ Used</button>
+</div>
+<input id="searchInput" placeholder="🔍 Search code or email..." oninput="filterList()" style="padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;width:100%;margin-bottom:10px">
+<div id="list" class="codes-list"></div>
 <button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
 <button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock - Logout Secure</button>
 </div>
@@ -207,30 +209,22 @@ let lastUpgrade=""; let lastUpgradePrice=0; let lastUpgradeType="";
 let allServerCodes = [];
 let rawMusic = [];
 let editingMusicId = null;
-
-function getHeaders(){ 
+let codeFilter='all';
+function getHeaders(){
   const pass = sessionStorage.getItem('jovia_session_pass') || '';
   const headers = { 'Content-Type':'application/json' };
   if(pass) headers['x-admin-password'] = pass;
-  return headers; 
+  return headers;
 }
-
 if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
-
 function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').classList.add('show'); }
-
 async function unlock(){
   const val = document.getElementById('passInput').value.trim();
   const err = document.getElementById('passError');
   err.style.display='none';
   if(!val){ err.innerText='❌ Enter password'; err.style.display='block'; return; }
   try{
-    const res = await fetch('/api/admin/codes/login',{
-      method:'POST',
-      headers: { 'Content-Type':'application/json' },
-      credentials:'include',
-      body: JSON.stringify({username: "admin", password: val})
-    });
+    const res = await fetch('/api/admin/codes/login',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({username:"admin",password:val})});
     const data = await res.json();
     if(!res.ok || data.success===false) throw new Error(data.message||'Wrong password');
     sessionStorage.setItem('jovia_session_pass', val);
@@ -240,11 +234,11 @@ async function unlock(){
     await loadMusic();
   }catch(e){ err.innerText='❌ '+e.message; err.style.display='block'; }
 }
-async function logoutAdmin(){ 
+async function logoutAdmin(){
   try{ await fetch('/api/admin/logout',{method:'POST',credentials:'include', headers: getHeaders()}); }catch{}
   sessionStorage.removeItem('jovia_session_pass');
-  localStorage.removeItem('jovia_ok'); 
-  location.reload(); 
+  localStorage.removeItem('jovia_ok');
+  location.reload();
 }
 function setTab(t){
   currentTab=t;
@@ -269,12 +263,7 @@ async function generate(type){
   const oldText = btn.innerHTML;
   btn.innerHTML = "⏳ Generating..."; btn.disabled = true;
   try {
-    const res = await fetch('/api/admin/codes/generate', {
-      method: 'POST',
-      headers: getHeaders(),
-      credentials:'include',
-      body: JSON.stringify({ type: type, count: 1 })
-    });
+    const res = await fetch('/api/admin/codes/generate',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({type:type,count:1})});
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     const newCode = data.codes[0].code;
@@ -300,12 +289,7 @@ async function generateUpgrade(type){
   const oldText = btn.innerHTML;
   btn.innerHTML = "⏳ Generating..."; btn.disabled = true;
   try {
-    const res = await fetch('/api/admin/codes/generate', {
-      method: 'POST',
-      headers: getHeaders(),
-      credentials:'include',
-      body: JSON.stringify({ type: type, count: 1 })
-    });
+    const res = await fetch('/api/admin/codes/generate',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({type:type,count:1})});
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     const newCode = data.codes[0].code;
@@ -319,7 +303,6 @@ async function generateUpgrade(type){
   } catch(e){ alert('❌ '+e.message); }
   btn.innerHTML = oldText; btn.disabled = false;
 }
-// ✅ NEW - Downgrade / Fix Wrong Upgrade - Professional
 function setDowngradeMsg(text, kind){
   const el=document.getElementById('downgradeMsg');
   if(!el) return;
@@ -336,10 +319,7 @@ async function checkDowngradeUser(){
   setDowngradeMsg('⏳ Checking user...', 'info');
   hideDowngradePreview();
   try{
-    const isEmail=val.includes('@');
-    const url='/api/admin/user/by-email?email='+encodeURIComponent(val)+'&t='+Date.now();
-    // by-email works with email. For username, fallback to downgrade endpoint check via list is not needed - we still try email endpoint
-    const res=await fetch(url,{headers:getHeaders(),credentials:'include'});
+    const res=await fetch('/api/admin/user/by-email?email='+encodeURIComponent(val)+'&t='+Date.now(),{headers:getHeaders(),credentials:'include'});
     const data=await res.json().catch(()=>({}));
     if(!res.ok||!data.success) throw new Error(data.message||'User not found');
     const u=data.user||{};
@@ -397,21 +377,34 @@ async function loadFromServer(){
     document.getElementById('list').innerHTML = '<p style="color:red;text-align:center;padding:15px">🔒 '+e.message+' - Login again</p>';
   }
 }
+function setCodeFilter(f){
+  codeFilter=f;
+  document.getElementById('filterAll').className=f==='all'?'filter-btn active':'filter-btn';
+  document.getElementById('filterActive').className=f==='active'?'filter-btn active-green':'filter-btn';
+  document.getElementById('filterUsed').className=f==='used'?'filter-btn active-red':'filter-btn';
+  filterList();
+}
 function filterList(){
   const q = (document.getElementById('searchInput').value||'').toUpperCase().trim();
-  let filtered = currentTab==='withdraw' ? allServerCodes.filter(c=>!c.type||c.type==='withdraw') : currentTab==='super' ? allServerCodes.filter(c=>c.type&&(c.type.startsWith('super')||c.type==='silver-gold')) : allServerCodes;
-  if(q) filtered = filtered.filter(c=> c.code.toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q) || (c.used_by_email||'').toUpperCase().includes(q));
+  let filtered = [...allServerCodes];
+  if(codeFilter==='active') filtered = filtered.filter(c=>!c.used);
+  if(codeFilter==='used') filtered = filtered.filter(c=>!!c.used);
+  if(q) filtered = filtered.filter(c=> (c.code||'').toUpperCase().includes(q) || (c.used_by||'').toUpperCase().includes(q) || (c.used_by_email||'').toUpperCase().includes(q) || (c.used_by_name||'').toUpperCase().includes(q));
+  filtered.sort((a,b)=> String(b.created_at||'').localeCompare(String(a.created_at||'')));
   renderServer(filtered, allServerCodes.length);
 }
 function renderServer(filtered, totalAll){
-  document.getElementById('count').innerText = `${filtered.length} / ${totalAll} total`;
+  const activeCount = allServerCodes.filter(c=>!c.used).length;
+  const usedCount = allServerCodes.filter(c=>!!c.used).length;
+  document.getElementById('count').innerText = `${filtered.length} showing • ${activeCount} Active • ${usedCount} Used • ${totalAll} total`;
   if(!filtered.length){
-    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet</p>';
+    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet for this filter<br>Try All or Refresh</p>';
     return;
   }
   document.getElementById('list').innerHTML = filtered.map((c)=>{
     const used = !!c.used;
-    return `<div class="item ${used?'used':''}"><div style="flex:1"><b>${c.code}</b><br><span style="font-size:10px">${c.type} - ₦${Number(c.price||0).toLocaleString()} - ${used?'USED by '+(c.used_by_name||c.used_by_email||c.used_by):'ACTIVE'}<br>${c.used_at||''}</span></div><div><span class="badge" style="background:${used?'#fee2e2':'#dcfce7'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}')" style="margin-top:6px;padding:4px 8px;font-size:10px">Copy</button></div></div>`;
+    const who = c.used_by_name||c.used_by_email||c.used_by||'';
+    return `<div class="code-row ${used?'used':''}"><div style="flex:1;min-width:0"><div class="code-type">${c.type||'withdraw'} • ₦${Number(c.price||0).toLocaleString()}</div><b style="font-size:14px;word-break:break-all">${c.code}</b><br><span style="font-size:11px;color:#334155">${used?'USED by <b>'+who+'</b>':'✅ AVAILABLE - Not used yet'}<br><span style="color:#94a3b8;font-size:10px">${c.used_at||c.created_at||''}</span></span></div><div style="text-align:right;flex-shrink:0"><span class="badge" style="background:${used?'#fee2e2;color:#991b1b':'#dcfce7;color:#166534'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}');alert('Copied: ${c.code}')" style="margin-top:6px;padding:5px 10px;font-size:11px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-weight:800">Copy</button></div></div>`;
   }).join('');
 }
 function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:tab==='upgrade'?lastUpgrade:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
