@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FIXED PRICES + GOLD-SILVER REMOVED + MISMATCH BLOCKED + BONUS TO AFFILIATE");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER + PREVENTION");
 
   const routeExists = (path, method) => {
     try{
@@ -123,7 +123,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN original_amount INTEGER DEFAULT 0`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_percent INTEGER DEFAULT 0`); }catch{}
 
-  // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY =====
+  // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY - DB TRIGGER =====
   try{
     db.exec(`CREATE INDEX IF NOT EXISTS idx_wallet_job_dup ON wallet_transactions(user_id, description, type, created_at)`);
     db.exec(`DROP TRIGGER IF EXISTS no_dup_job_reward`);
@@ -142,7 +142,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       END;
     `);
     console.log("🛡️ PREVENTION TRIGGER ACTIVE - No duplicate SUPER jobs same day");
-  }catch(e){ console.log("Trigger error:", e.message); }
+  }catch(e){ console.log("Trigger error (maybe table not exist yet):", e.message); }
 
   setTimeout(()=>{
     try{
@@ -181,7 +181,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
-  ["package TEXT DEFAULT 'Silver'","plan TEXT DEFAULT 'Silver'","is_super INTEGER DEFAULT 0","account_status TEXT DEFAULT 'active'","status TEXT DEFAULT 'active'","username TEXT","full_name TEXT","activated_at TEXT","wallet_balance INTEGER DEFAULT 0","is_active INTEGER DEFAULT 1","affiliate_balance INTEGER DEFAULT 0","referral_balance INTEGER DEFAULT 0"].forEach(c=>{
+  ["package TEXT DEFAULT 'Silver'","plan TEXT DEFAULT 'Silver'","is_super INTEGER DEFAULT 0","account_status TEXT DEFAULT 'active'","status TEXT DEFAULT 'active'","username TEXT","full_name TEXT","activated_at TEXT","wallet_balance INTEGER DEFAULT 0","is_active INTEGER DEFAULT 1","affiliate_balance INTEGER DEFAULT 0","referral_balance INTEGER DEFAULT 0","available_balance INTEGER DEFAULT 0"].forEach(c=>{
     const [n,...d] = c.split(" "); try{ addUserColumnIfMissing(n, d.join(" ")); }catch{}
   });
   const hasColumn = name => userColumns().includes(name);
@@ -198,12 +198,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
-
   const WIN_RATE = 35;
 
-  // ===== ✅ UPGRADE PRICES - CORRECTED FINAL =====
-  // Silver -> Gold = 3000, Gold -> Super = 8000, Silver -> Super = 13000
-  // Gold -> Silver REMOVED
+  // ===== ✅ FIXED PRICES: Silver->Gold 3000, Gold->Super 8000, Silver->Super 13000. Gold->Silver REMOVED =====
   const UPGRADE_PRICES = {
     "silver->gold": 3000,
     "gold->super": 8000,
@@ -213,18 +210,17 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const key = String(fromPkg||"").toLowerCase().trim() + "->" + String(toPkg||"").toLowerCase().trim();
     return UPGRADE_PRICES[key] ?? null;
   };
-  // Human label for a code type, for BLOCKED message
-  const codeTypeLabel = (codeType) => {
-    if(codeType==="silver-gold") return "Silver → Gold";
-    if(codeType==="super-gold") return "Gold → Super";
-    if(codeType==="super-silver") return "Silver → Super";
-    if(codeType==="gold-silver") return "Gold → Silver";
-    return String(codeType||"").toUpperCase();
+  const codeTypeLabel = (t) => {
+    if(t==="silver-gold") return "Silver → Gold";
+    if(t==="super-gold") return "Gold → Super";
+    if(t==="super-silver") return "Silver → Super";
+    if(t==="gold-silver") return "Gold → Silver";
+    return String(t||"").toUpperCase();
   };
-  const codeTypeToRoute = (codeType) => {
-    if(codeType==="silver-gold") return "silver->gold";
-    if(codeType==="super-gold") return "gold->super";
-    if(codeType==="super-silver") return "silver->super";
+  const codeTypeToRoute = (t) => {
+    if(t==="silver-gold") return "silver->gold";
+    if(t==="super-gold") return "gold->super";
+    if(t==="super-silver") return "silver->super";
     return null;
   };
   const getUpline = (user) => {
@@ -244,24 +240,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return null;
     }catch{ return null; }
   };
-  // ✅ FIXED: Upgrade bonus goes to AFFILIATE balance, NOT available/wallet balance
+  // ✅ UPGRADE BONUS -> AFFILIATE BALANCE ONLY, NOT wallet / available
   const creditUpline = (uplineId, amount, fromUserId, label) => {
     try{
       if(!uplineId || !amount) return false;
-      // Primary: affiliate_balance
-      if(hasColumn("affiliate_balance")){
-        db.prepare(`UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ? WHERE id=?`).run(amount, uplineId);
-      }
-      // Mirror to referral_balance if column exists, so frontend wey read either one go see am
-      if(hasColumn("referral_balance")){
-        try{ db.prepare(`UPDATE users SET referral_balance = COALESCE(referral_balance,0) + ? WHERE id=?`).run(amount, uplineId); }catch{}
-      }
-      // NOTE: wallet_balance deliberately NOT touched - bonus is affiliate only
-      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'upgrade_bonus', ?, ?, datetime('now'))`).run(uplineId, amount, `Upgrade bonus (Affiliate) from user ${fromUserId} - ${label}`); }catch{}
+      if(hasColumn("affiliate_balance")) db.prepare(`UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ? WHERE id=?`).run(amount, uplineId);
+      if(hasColumn("referral_balance")){ try{ db.prepare(`UPDATE users SET referral_balance = COALESCE(referral_balance,0) + ? WHERE id=?`).run(amount, uplineId); }catch{} }
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'upgrade_bonus', ?, ?, datetime('now'))`).run(uplineId, amount, `Upgrade bonus [AFFILIATE] from user ${fromUserId} - ${label}`); }catch{}
       return true;
     }catch{ return false; }
   };
-
   const isSuspendedStatus = (status) => {
     const s = String(status||"").toLowerCase().trim();
     return ["suspended","banned","blocked","disabled","suspend"].includes(s);
@@ -303,21 +291,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const safeCodeRecord = row => {
     const used=Number(row.used)===1; const redeemer=used?getRedeemer(row):null;
-    return {
-      code: row.code, type: row.type, price: row.price, used,
-      status: used?"USED":"UNUSED", used_by: row.used_by||"",
-      used_by_name: redeemer?.name||row.used_by_name||"", used_by_email: redeemer?.email||row.used_by_email||"",
-      used_by_id: redeemer?.id??row.used_by_id??null, used_by_display: redeemer?.display||row.used_by||"",
-      user_details: used?{ name: redeemer.name||"Name not saved", email: redeemer.email||"", user_id: redeemer.id, display: redeemer.display, full_user: redeemer.user }:null,
-      created_at: row.created_at||null, used_at: row.used_at||null
-    };
+    return { code: row.code, type: row.type, price: row.price, used, status: used?"USED":"UNUSED", used_by: row.used_by||"", used_by_name: redeemer?.name||row.used_by_name||"", used_by_email: redeemer?.email||row.used_by_email||"", used_by_id: redeemer?.id??row.used_by_id??null, used_by_display: redeemer?.display||row.used_by||"", user_details: used?{ name: redeemer.name||"Name not saved", email: redeemer.email||"", user_id: redeemer.id, display: redeemer.display, full_user: redeemer.user }:null, created_at: row.created_at||null, used_at: row.used_at||null };
   };
   const getOrCreateGameAccount = (userId) => {
     let acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
-    if(!acc){
-      db.prepare(`INSERT INTO jovia_game_accounts (user_id, game_balance, points) VALUES (?, 0, 0)`).run(userId);
-      acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId);
-    }
+    if(!acc){ db.prepare(`INSERT INTO jovia_game_accounts (user_id, game_balance, points) VALUES (?, 0, 0)`).run(userId); acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id = ?`).get(userId); }
     return acc;
   };
   const activateUserByEmail = (email, plan, orderId) => {
@@ -339,9 +317,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return user;
     }catch(e){ return null; }
   };
-  // ✅ NEW: Downgrade helper - used by both downgrade endpoints
   const downgradeUserToSilver = (userId) => {
-    const sets = ["package=?"]; const vals = ["Silver"];
+    const sets=["package=?"]; const vals=["Silver"];
     if(hasColumn("plan")){ sets.push("plan=?"); vals.push("Silver"); }
     if(hasColumn("is_super")){ sets.push("is_super=?"); vals.push(0); }
     if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
@@ -350,7 +327,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
     return db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE id=?`).get(userId);
   };
-
   const userGuard=(req,res,next)=>{
     if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."});
     return requireUser(req,res,()=>{
@@ -358,9 +334,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       try{
         const u = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
         if(u && isSuspendedStatus(u.account_status||u.status)){
-          if(req.path.includes("/games/")||req.path.includes("/music/")){
-            return res.status(403).json({success:false,message:"⛔ Account Suspended - Contact Admin",suspended:true});
-          }
+          if(req.path.includes("/games/")||req.path.includes("/music/")){ return res.status(403).json({success:false,message:"⛔ Account Suspended - Contact Admin",suspended:true}); }
         }
       }catch{}
       next();
@@ -409,41 +383,94 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const superUsers = db.prepare(`SELECT COUNT(*) as cnt FROM users WHERE package LIKE '%super%' OR plan LIKE '%super%' OR is_super=1`).get().cnt || 0;
       const musicCount = db.prepare(`SELECT COUNT(*) as cnt FROM jovia_music`).get().cnt || 0;
       let pendingWD = 0; try{ pendingWD = db.prepare(`SELECT COUNT(*) as cnt FROM game_withdrawals WHERE status='pending'`).get().cnt || 0; }catch{}
-      return res.json({
-        success: true, users: total, totalUsers: total, activeUsers: active, pendingUsers: pending,
-        goldUsers: gold, silverUsers: silver, superUsers: superUsers,
-        videos: 0, music: musicCount, totalMusic: musicCount,
-        withdrawals: { pending: pendingWD }
-      });
+      return res.json({ success: true, users: total, totalUsers: total, activeUsers: active, pendingUsers: pending, goldUsers: gold, silverUsers: silver, superUsers: superUsers, videos: 0, music: musicCount, totalMusic: musicCount, withdrawals: { pending: pendingWD } });
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
 
-  // ===== ✅ NEW: DOWNGRADE TO SILVER =====
+  // ===== ✅ DOWNGRADE TO SILVER =====
   safeAdd("post","/api/admin/downgrade-to-silver", adminGuard, (req,res)=>{
     try{
       const email = String(req.body?.email||"").trim().toLowerCase();
       const username = String(req.body?.username||"").trim();
-      if(!email && !username) return res.status(400).json({success:false,message:"Email or username required"});
-      let user = null;
-      if(email) user = db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
-      if(!user && username) user = db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1`).get(username, username);
+      const userId = Number(req.body?.userId||req.body?.id||0);
+      let user=null;
+      if(userId) user=db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE id=?`).get(userId);
+      if(!user && email) user=db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user && username) user=db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1`).get(username, username);
       if(!user) return res.status(404).json({success:false,message:"User not found"});
-      const before = String(user.package||user.plan||"");
-      if(before.toLowerCase().includes("silver")) return res.json({success:true,message:`${user.email||username} already dey Silver - No need to downgrade`, user});
-      const updated = downgradeUserToSilver(user.id);
+      const before=String(user.package||user.plan||"");
+      if(before.toLowerCase().includes("silver")) return res.json({success:true,message:`${user.email||username} already dey Silver`, user});
+      const updated=downgradeUserToSilver(user.id);
       return res.json({success:true,message:`✅ Downgraded ${updated.email||username} from ${before} → Silver. Tell user to logout + login again, then select Silver → Gold.`, user: updated, beforePackage: before, afterPackage: "Silver"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/admin/fix-opeyemi", adminGuard, (req,res)=>{
     try{
-      const email = "opeyemi.owaboye@gmail.com";
-      const user = db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      const email="opeyemi.owaboye@gmail.com";
+      const user=db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
       if(!user) return res.status(404).json({success:false,message:"User not found: "+email});
-      const before = String(user.package||user.plan||"");
-      const updated = downgradeUserToSilver(user.id);
+      const before=String(user.package||user.plan||"");
+      const updated=downgradeUserToSilver(user.id);
       return res.json({success:true,message:`✅ Fixed Opeyemi ${email} from ${before} → Silver. Tell her to logout + login again, then select Silver → Gold.`, user: updated, beforePackage: before, afterPackage: "Silver"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
+
+  // ===== ✅ BALANCE ADD / DEDUCT - SAME AS FRONTEND USES =====
+  // Frontend sends: { userId | email | username, amount, reason, balanceType: "wallet" | "affiliate" | "available" | "game", type: "add" | "deduct" }
+  // We register ALL names frontend fit call, so no 404 again.
+  const findUserForBalance = (body) => {
+    const userId = Number(body?.userId||body?.id||body?.user_id||0);
+    const email = String(body?.email||"").trim().toLowerCase();
+    const username = String(body?.username||body?.user||"").trim();
+    let user=null;
+    if(userId) user=db.prepare(`SELECT * FROM users WHERE id=?`).get(userId);
+    if(!user && email) user=db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+    if(!user && username) user=db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1`).get(username, username);
+    return user;
+  };
+  const resolveBalanceColumn = (body) => {
+    const t = String(body?.balanceType||body?.balance||body?.walletType||body?.target||"wallet").toLowerCase();
+    if(t.includes("affiliate")||t.includes("referral")) return "affiliate_balance";
+    if(t.includes("game")) return "game_balance";
+    if(t.includes("available")) return "wallet_balance";
+    return "wallet_balance";
+  };
+  const adjustBalanceHandler = (isAdd) => (req,res) => {
+    try{
+      const body = req.body||{};
+      const amount = Number(body?.amount||body?.value||0);
+      if(!amount || amount<=0) return res.status(400).json({success:false,message:"Enter valid amount"});
+      const user = findUserForBalance(body);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      const reason = String(body?.reason||body?.note||body?.description|| (isAdd?"Admin add balance":"Admin deduct balance")).slice(0,300);
+      const col = resolveBalanceColumn(body);
+      if(col==="game_balance"){
+        const acc=getOrCreateGameAccount(user.id);
+        const before=Number(acc.game_balance||0);
+        const after = isAdd ? before+amount : Math.max(0, before-amount);
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(after, user.id);
+        try{ db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, ?, ?, ?, ?, ?, 'completed')`).run(user.id, isAdd?"admin_add":"admin_deduct", amount, `ADMIN-${isAdd?"ADD":"DEDUCT"}-${Date.now()}`, before, after); }catch{}
+        return res.json({success:true,message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()} - ${before} → ${after}`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
+      }
+      const before = Number(user[col]||user.wallet_balance||0);
+      const after = isAdd ? before+amount : Math.max(0, before-amount);
+      db.prepare(`UPDATE users SET ${col} = ? WHERE id=?`).run(after, user.id);
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [${col}]`); }catch{}
+      const updated = db.prepare(`SELECT id, email, username, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(user.id);
+      return res.json({success:true,message:`✅ ${col==="affiliate_balance"?"Affiliate":"Available"} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()} - ${before} → ${after}`, user:updated, userId:user.id, beforeBalance:before, newBalance:after, balance:after, wallet_balance:updated?.wallet_balance, affiliate_balance:updated?.affiliate_balance});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  };
+  const adjustBalanceGeneric = (req,res) => {
+    const b=req.body||{};
+    const type=String(b?.type||b?.action||b?.mode||"add").toLowerCase();
+    return adjustBalanceHandler(!type.includes("deduct") && !type.includes("subtract") && !type.includes("remove") && type!=="minus")(req,res);
+  };
+  const balanceAddPaths = ["/api/admin/balance/add","/api/admin/user/add-balance","/api/admin/users/add-balance","/api/admin/wallet/add","/api/admin/add-balance","/api/admin/balance/add-balance","/api/admin/users/balance/add"];
+  const balanceDeductPaths = ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance","/api/admin/balance/deduct-balance","/api/admin/users/balance/deduct"];
+  const balanceAdjustPaths = ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust","/api/admin/balance/update"];
+  balanceAddPaths.forEach(p=> safeAdd("post",p, adminGuard, adjustBalanceHandler(true)));
+  balanceDeductPaths.forEach(p=> safeAdd("post",p, adminGuard, adjustBalanceHandler(false)));
+  balanceAdjustPaths.forEach(p=> safeAdd("post",p, adminGuard, adjustBalanceGeneric));
 
   safeAdd("get","/api/admin/fix/kanu", adminGuard, (req,res)=>{
     try{
@@ -488,7 +515,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, user, gameAccount: acc, deposits: deps, withdrawals: withs, bets});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   const fixJobsDupHandler = (req,res)=>{
     try{
       let totalCleaned = 0; let totalReversed = 0; let affected = new Set();
@@ -504,36 +530,29 @@ module.exports = (app, db, requireUser, requireAdmin) => {
             try{
               db.prepare(`DELETE FROM wallet_transactions WHERE id=?`).run(t.id);
               const amt = Number(t.amount||0);
-              if(amt>0){
-                try{ db.prepare(`UPDATE users SET wallet_balance = wallet_balance - ? WHERE id=?`).run(amt, t.user_id); }catch{
-                  try{ db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) - ? WHERE id=?`).run(amt, t.user_id); }catch{}
-                }
-                totalReversed += amt;
-              }
+              if(amt>0){ try{ db.prepare(`UPDATE users SET wallet_balance = wallet_balance - ? WHERE id=?`).run(amt, t.user_id); }catch{ try{ db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) - ? WHERE id=?`).run(amt, t.user_id); }catch{} } totalReversed += amt; }
               totalCleaned++; affected.add(t.user_id);
             }catch(e){}
           }else{ seen.add(keyDay); seen.add(keyMin); }
         }
-      }catch(e){ console.log("wallet fix error", e.message); }
+      }catch(e){ console.log("wallet fix error", e.message, e.stack); }
       return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate SUPER jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users - PREVENTION ACTIVE`, totalCleaned, totalReversed, affectedUsers: affected.size, prevention: "ON - No same job same day"});
     }catch(e){ return res.status(500).json({success:false, message:e.message, stack:e.stack}); }
   };
   safeAdd("get","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
   safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
-
   const jobGuardMiddleware = (req,res,next)=>{
     try{
       const userId = req.user?.id || req.body?.userId;
       const jobTitle = String(req.body?.jobTitle || req.body?.title || req.body?.description || "").slice(0,100);
       if(userId && jobTitle){
         const exists = db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND description LIKE ? AND type='job_reward' AND DATE(created_at)=DATE('now') LIMIT 1`).get(userId, `%${jobTitle.slice(0,20)}%`);
-        if(exists) return res.status(403).json({success:false, message:"⛔ Already claimed this SUPER job today - Come back tomorrow"});
+        if(exists){ return res.status(403).json({success:false, message:"⛔ Already claimed this SUPER job today - Come back tomorrow"}); }
       }
     }catch{}
     next();
   };
   safeAdd("post","/api/jobs/complete-guard", adminGuard, jobGuardMiddleware, (req,res)=>{ res.json({success:true, message:"Guard active"}); });
-
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
   safeAdd("get","/api/admin/me", (req,res)=>{
@@ -546,10 +565,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/activate", (req,res)=>{ const { email, plan, order_id } = req.query; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, order_id); return res.json({success:true, user}); });
   safeAdd("post","/api/selar/activate", (req,res)=>{ const { email, plan, orderId } = req.body||{}; if(!email) return res.status(400).json({success:false}); const user = activateUserByEmail(email, plan, orderId); return res.json({success:true, user}); });
   safeAdd("get","/api/check-status", (req,res)=>{ const email = String(req.query.email||"").trim(); if(!email) return res.json({success:false}); try{ const user = db.prepare(`SELECT id,email,account_status,status,package,plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email.toLowerCase()); return res.json({success:true, user}); }catch(e){ return res.json({success:false}); } });
-  safeAdd("post","/api/admin/logout", (req,res)=>{
-    if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } }
-    return res.json({success:true});
-  });
+  safeAdd("post","/api/admin/logout", (req,res)=>{ if(req.session){ req.session.isAdmin=false; if(req.session.destroy){ req.session.destroy(()=>{}); } } return res.json({success:true}); });
   safeAdd("post","/api/admin/user/suspend", adminGuard, (req,res)=>{
     try{
       const userId = Number(req.body?.userId||req.body?.id);
@@ -577,14 +593,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("post","/api/admin/codes/generate",adminGuard,(req,res)=>{
     try{
       const t=String(req.body?.type||"").toLowerCase();
-      // ✅ Gold -> Silver REMOVED - block am
-      if(t==="gold-silver" || t==="gold->silver" || t==="gold_to_silver"){
-        return res.status(400).json({success:false,message:"Gold → Silver has been REMOVED. Only Silver → Gold (₦3,000), Gold → Super (₦8,000), Silver → Super (₦13,000) allowed."});
-      }
+      if(t==="gold-silver"||t==="gold->silver"||t==="gold_to_silver") return res.status(400).json({success:false,message:"Gold → Silver has been REMOVED. Only Silver → Gold (₦3,000), Gold → Super (₦8,000), Silver → Super (₦13,000)."});
       const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":t==="silver-gold"?"silver-gold":null;
-      if(!type) return res.status(400).json({success:false,message:"Invalid type. Use withdraw, silver-gold, super-gold, super-silver."});
+      if(!type) return res.status(400).json({success:false,message:"Invalid type."});
       const count=Number(req.body?.count??1);
-      // ✅ CORRECTED PRICES
       const price=type==="super-gold"?8000:type==="super-silver"?13000:type==="silver-gold"?3000:10000;
       const prefix=type==="withdraw"?"JOVIA-":"SUPER-"; const len=type==="withdraw"?6:8;
       const tx=db.transaction(()=>{ const arr=[]; while(arr.length<count){ const c=randomCode(len,prefix); const r=db.prepare(`INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,0,datetime('now'))`).run(c,type,price); if(r.changes===1) arr.push({code:c,type,price}); } return arr; });
@@ -593,30 +605,18 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   safeAdd("get","/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
-
-  // ===== ✅ UPGRADE OPTIONS - Gold->Silver REMOVED =====
   safeAdd("get","/api/upgrade/options",userGuard,(req,res)=>{
     try{
       const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
       const current = String(user.package||user.plan||"Silver").toLowerCase();
       let options=[];
-      if(current.includes("gold")){
-        options=[
-          {from:"Gold", to:"Super", price:8000, label:"Gold → Super - ₦8,000"}
-        ];
-      } else if(current.includes("silver")){
-        options=[
-          {from:"Silver", to:"Gold", price:3000, label:"Silver → Gold - ₦3,000"},
-          {from:"Silver", to:"Super", price:13000, label:"Silver → Super - ₦13,000"}
-        ];
-      } else if(current.includes("super")){
-        options=[];
-      }
+      if(current.includes("gold")){ options=[ {from:"Gold", to:"Super", price:8000, label:"Gold → Super - ₦8,000"} ]; }
+      else if(current.includes("silver")){ options=[ {from:"Silver", to:"Gold", price:3000, label:"Silver → Gold - ₦3,000"}, {from:"Silver", to:"Super", price:13000, label:"Silver → Super - ₦13,000"} ]; }
+      else if(current.includes("super")){ options=[]; }
       const upline = getUpline(user);
       return res.json({success:true, current: current, currentPackage: user.package||user.plan, options, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null, blockedMessage: null});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   safeAdd("post","/api/upgrade/request",userGuard,(req,res)=>{
     try{
       const toPkg = String(req.body?.to||req.body?.toPackage||req.body?.target||"").toLowerCase().trim();
@@ -626,10 +626,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const fromPkg = String(user.package||user.plan||"Silver").toLowerCase();
       if(fromPkg.includes(toPkg)) return res.status(400).json({success:false,message:`You already dey ${toPkg.toUpperCase()} - No fit upgrade to same package`});
       if(fromPkg.includes("super")) return res.status(400).json({success:false,message:"You already dey Super - No higher package"});
-      // ✅ Gold -> Silver BLOCKED
-      if(fromPkg.includes("gold") && toPkg==="silver") return res.status(400).json({success:false,message:"BLOCKED: Gold → Silver has been REMOVED. Gold users can only upgrade to Super (₦8,000)."});
+      if(fromPkg.includes("gold") && toPkg==="silver") return res.status(400).json({success:false,message:"BLOCKED: Gold → Silver has been REMOVED. Gold users can only go to Super (₦8,000)."});
       const price = getUpgradePrice(fromPkg, toPkg);
-      if(price===null) return res.status(400).json({success:false,message:`BLOCKED: Upgrade ${fromPkg} → ${toPkg} not allowed`});
+      if(price===null) return res.status(400).json({success:false,message:`Upgrade ${fromPkg} → ${toPkg} not allowed`});
       const upline = getUpline(user);
       const existing = db.prepare(`SELECT * FROM jovia_upgrades WHERE user_id=? AND status='pending' LIMIT 1`).get(req.user.id);
       if(existing) return res.status(409).json({success:false,message:"You already get pending upgrade - Wait for confirm", upgrade: existing});
@@ -638,7 +637,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, message:`Upgrade request created: ${fromPkg} → ${toPkg} - ₦${price} - Pay to your upline`, upgrade, price, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   safeAdd("post","/api/upgrade/confirm",adminGuard,(req,res)=>{
     try{
       const upgradeId = Number(req.body?.upgradeId||req.body?.id);
@@ -646,12 +644,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const up = db.prepare(`SELECT * FROM jovia_upgrades WHERE id=?`).get(upgradeId);
       if(!up) return res.status(404).json({success:false,message:"Upgrade not found"});
       if(up.status!=="pending") return res.status(409).json({success:false,message:"Already processed: "+up.status});
+      if(String(up.from_package||"").toLowerCase().includes("gold") && String(up.to_package||"").toLowerCase()==="silver") return res.status(400).json({success:false,message:"BLOCKED: Gold → Silver has been REMOVED."});
       const user = db.prepare(`SELECT * FROM users WHERE id=?`).get(up.user_id);
       if(!user) return res.status(404).json({success:false,message:"User not found"});
-      // ✅ Block Gold->Silver confirm too
-      if(String(up.from_package||"").toLowerCase().includes("gold") && String(up.to_package||"").toLowerCase()==="silver"){
-        return res.status(400).json({success:false,message:"BLOCKED: Gold → Silver has been REMOVED."});
-      }
       const toUpper = String(up.to_package||"").toUpperCase();
       db.transaction(()=>{
         const sets=["package=?"]; const vals=[toUpper];
@@ -663,78 +658,49 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         vals.push(user.id);
         db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
         db.prepare(`UPDATE jovia_upgrades SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(upgradeId);
-        // ✅ Bonus to AFFILIATE balance
         if(up.upline_id) creditUpline(up.upline_id, up.price, user.id, `${up.from_package} -> ${up.to_package}`);
       })();
-      return res.json({success:true, message:`Upgrade confirmed: ${up.from_package} → ${up.to_package} - ₦${up.price} credited to upline AFFILIATE balance ${up.upline_id||"none"}`});
+      return res.json({success:true, message:`Upgrade confirmed: ${up.from_package} → ${up.to_package} - ₦${up.price} credited to upline AFFILIATE balance`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-
   safeAdd("post","/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
-    // ✅ Selected upgrade from frontend: e.g "silver->super", "silver->gold", "gold->super", or "silver-super"
     const selectedRaw = String(req.body?.selected||req.body?.selectedUpgrade||req.body?.to||req.body?.target||req.body?.upgrade||req.body?.fromTo||"").toLowerCase().trim();
-    const normalizeSelected = (s)=>{
-      s=s.replace(/\s+/g,"").replace(/_/g,"-").replace(/>/g,"->").replace(/→/g,"->");
-      // allow "silversuper", "silver-super"
-      if(s==="silversuper") return "silver->super";
-      if(s==="silvergold") return "silver->gold";
-      if(s==="goldsuper") return "gold->super";
-      if(s==="goldsilver") return "gold->silver";
-      if(s==="super") return "super";
-      if(s==="gold") return "gold";
-      return s;
-    };
+    const normalizeSelected = (s)=>{ s=s.replace(/\s+/g,"").replace(/_/g,"-").replace(/>/g,"->").replace(/→/g,"->"); if(s==="silversuper") return "silver->super"; if(s==="silvergold") return "silver->gold"; if(s==="goldsuper") return "gold->super"; if(s==="goldsilver") return "gold->silver"; return s; };
     const selected = normalizeSelected(selectedRaw);
     try{
       const tx=db.transaction(()=>{
         const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
         if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED - Contact Admin");
         const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-        if(!code) throw new Error("INVALID CODE"); 
+        if(!code) throw new Error("INVALID CODE");
         if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
         const currentPackage = String(user.package||user.plan||"Silver").toLowerCase();
         const isSilver = currentPackage.includes("silver");
         const isGold = currentPackage.includes("gold");
         const isSuper = currentPackage.includes("super");
         const codeType = String(code.type||"").toLowerCase();
-        // ✅ Gold->Silver code REMOVED - block old codes too
         if(codeType==="gold-silver") throw new Error("BLOCKED: Gold → Silver has been REMOVED. Gold users can only upgrade to Super (₦8,000).");
         if(isSuper) throw new Error("You already dey SUPER - No higher package");
         if(isSilver && !["super-silver","silver-gold"].includes(codeType)) throw new Error(`SILVER plan requires SILVER → GOLD code (₦3,000) to go to Gold OR SILVER → SUPER code (₦13,000) to go to Super. You used ${codeTypeLabel(codeType)} (₦${code.price}).`);
         if(isGold && !["super-gold"].includes(codeType)) throw new Error(`GOLD plan requires GOLD → SUPER code (₦8,000) to go to Super. You used ${codeTypeLabel(codeType)} (₦${code.price}).`);
-        if(!["super-silver","super-gold","silver-gold"].includes(codeType)){ throw new Error("INVALID CODE TYPE FOR UPGRADE"); }
+        if(!["super-silver","super-gold","silver-gold"].includes(codeType)) throw new Error("INVALID CODE TYPE FOR UPGRADE");
         let target = "SUPER";
         if(codeType==="silver-gold") target="GOLD";
         if(codeType==="super-gold") target="SUPER";
         if(codeType==="super-silver") target="SUPER";
-        // ✅ MISMATCH BLOCKED: selected vs code must match
-        // If frontend sent selected upgrade, enforce am strictly
         if(selected && selected!=="super" && selected!=="gold"){
-          const codeRoute = codeTypeToRoute(codeType); // e.g "silver->gold"
-          // Expected route from current package + selected target
-          // selected can be "silver->super" or "gold->super" or "silver->gold"
+          const codeRoute = codeTypeToRoute(codeType);
           const expectedFrom = isSilver ? "silver" : isGold ? "gold" : currentPackage;
           const selectedTo = selected.includes("->") ? selected.split("->")[1] : selected;
           const expectedRoute = `${expectedFrom}->${selectedTo}`;
           if(codeRoute && codeRoute !== expectedRoute){
-            // Build nice message like: You selected Silver → Super but this code na for Silver → Gold
             const selectedLabel = expectedRoute.split("->").map(p=>p.charAt(0).toUpperCase()+p.slice(1)).join(" → ");
             throw new Error(`BLOCKED: You selected ${selectedLabel} but this code na for ${codeTypeLabel(codeType)}`);
           }
-          // Also block if selected from-package no match current package
-          if(selected.includes("->")){
-            const selectedFrom = selected.split("->")[0];
-            if(selectedFrom !== expectedFrom){
-              throw new Error(`BLOCKED: You selected ${selectedLabel} but you dey ${currentPackage.toUpperCase()} now. Select the correct upgrade for your package.`);
-            }
-          }
         }
-        // Price must match corrected price - if old code get old price, block am (prevents 8000 Silver->Gold codes)
         const expectedPrice = getUpgradePrice(currentPackage, target.toLowerCase());
-        if(expectedPrice!==null && Number(code.price)!==expectedPrice){
-          throw new Error(`BLOCKED: This code price ₦${Number(code.price).toLocaleString()} no match ${currentPackage.toUpperCase()} → ${target} price ₦${expectedPrice.toLocaleString()}. Use correct code.`);
-        }
+        if(expectedPrice!==null && Number(code.price)!==expectedPrice) throw new Error(`BLOCKED: This code price ₦${Number(code.price).toLocaleString()} no match ${currentPackage.toUpperCase()} → ${target} price ₦${expectedPrice.toLocaleString()}. Use correct code.`);
         if(currentPackage.includes(target.toLowerCase())) throw new Error(`You already dey ${target} - No fit upgrade to same package`);
         const sure=getSureUser(user);
         const upline = getUpline(user);
@@ -745,7 +711,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         vals.push(user.id);
         db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
         db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,raw);
-        // ✅ Bonus to AFFILIATE balance only
         if(upline && code.price) creditUpline(upline.id, Number(code.price)||0, user.id, `${currentPackage} -> ${target.toLowerCase()}`);
         return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
       });
@@ -777,15 +742,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,super:true,tracks,count:tracks.length});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  safeAdd("get","/api/music/list", (req,res)=>{
-    try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length}); }catch(e){ return res.json({success:true,tracks:[],count:0}); }
-  });
-  safeAdd("get","/api/music/all", (req,res)=>{
-    try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length,super:true}); }catch(e){ return res.json({success:true,tracks:[]}); }
-  });
-  safeAdd("get","/api/music/public", (req,res)=>{
-    try{ const tracks = db.prepare(`SELECT id,title,artist,url,cover,reward,category,plays FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks}); }catch(e){ return res.json({success:true,tracks:[]}); }
-  });
+  safeAdd("get","/api/music/list", (req,res)=>{ try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length}); }catch(e){ return res.json({success:true,tracks:[],count:0}); } });
+  safeAdd("get","/api/music/all", (req,res)=>{ try{ const tracks = db.prepare(`SELECT * FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks,count:tracks.length,super:true}); }catch(e){ return res.json({success:true,tracks:[]}); } });
+  safeAdd("get","/api/music/public", (req,res)=>{ try{ const tracks = db.prepare(`SELECT id,title,artist,url,cover,reward,category,plays FROM jovia_music ORDER BY created_at DESC`).all(); return res.json({success:true,tracks}); }catch(e){ return res.json({success:true,tracks:[]}); } });
   safeAdd("get","/api/music/stats", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -847,10 +806,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:"Added"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  safeAdd("get","/api/admin/music/list", adminGuard, (req,res)=>{
-    const rows = db.prepare(`SELECT * FROM jovia_music ORDER BY id DESC`).all();
-    return res.json({success:true,tracks:rows});
-  });
+  safeAdd("get","/api/admin/music/list", adminGuard, (req,res)=>{ const rows = db.prepare(`SELECT * FROM jovia_music ORDER BY id DESC`).all(); return res.json({success:true,tracks:rows}); });
   safeAdd("put","/api/admin/music/:id", adminGuard, (req,res)=>{
     try{
       const {title,artist,url,cover,reward,category} = req.body;
@@ -858,10 +814,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:"Updated"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  safeAdd("delete","/api/admin/music/:id", adminGuard, (req,res)=>{
-    db.prepare(`DELETE FROM jovia_music WHERE id=?`).run(Number(req.params.id));
-    return res.json({success:true});
-  });
+  safeAdd("delete","/api/admin/music/:id", adminGuard, (req,res)=>{ db.prepare(`DELETE FROM jovia_music WHERE id=?`).run(Number(req.params.id)); return res.json({success:true}); });
   safeAdd("get","/api/games/me", userGuard, (req,res)=>{
     try{
       const userRow = db.prepare(`SELECT account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -887,10 +840,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(exists) return res.status(409).json({success:false,message:"This reference already exists"});
       db.prepare(`INSERT INTO game_deposits (user_id, amount, reference, proof_image, status) VALUES (?, ?, ?, ?, 'pending')`).run(req.user.id, amount, reference, proof_image);
       return res.json({success:true,message:`Deposit submitted. Status: Processing`,reference,status:"pending"});
-    }catch(e){
-      if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate submission"});
-      return res.status(500).json({success:false,message:e.message});
-    }
+    }catch(e){ if(String(e.message).includes("UNIQUE")) return res.status(409).json({success:false,message:"Duplicate submission"}); return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/games/play", userGuard, (req,res)=>{
     try{
@@ -920,11 +870,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         mult = isWin ? 1.8 : 0;
         segmentLabel = finalSide.toUpperCase();
         if(gameType === "up_down") segmentLabel = finalSide === "up" ? "GREEN" : "RED";
-      } else {
-        isWin = houseRoll < WIN_RATE;
-        mult = isWin ? 1.8 : 0;
-        segmentLabel = isWin ? "WIN" : "LOSE";
-      }
+      } else { isWin = houseRoll < WIN_RATE; mult = isWin ? 1.8 : 0; segmentLabel = isWin ? "WIN" : "LOSE"; }
       const winAmount = Math.floor(bet*mult);
       const finalWin = (gameType==="spin_wheel") ? winAmount : (isWin ? winAmount : 0);
       const newBal = acc.game_balance - bet + finalWin;
@@ -965,13 +911,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     try{
       const { depositId } = req.body; const dep = db.prepare(`SELECT * FROM game_deposits WHERE id = ?`).get(depositId);
       if(!dep) return res.status(404).json({success:false,message:"Not found"}); if(dep.status === "confirmed") return res.status(409).json({success:false,message:"Already confirmed"});
-      const tx = db.transaction(()=>{
-        const acc = getOrCreateGameAccount(dep.user_id);
-        const newBal = acc.game_balance + dep.amount;
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, dep.amount, dep.user_id);
-        db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId);
-        db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal);
-      }); tx();
+      const tx = db.transaction(()=>{ const acc = getOrCreateGameAccount(dep.user_id); const newBal = acc.game_balance + dep.amount; db.prepare(`UPDATE jovia_game_accounts SET game_balance = ?, total_deposits = total_deposits + ?, updated_at = datetime('now') WHERE user_id = ?`).run(newBal, dep.amount, dep.user_id); db.prepare(`UPDATE game_deposits SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(depositId); db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, 'deposit', ?, ?, ?, ?, 'completed')`).run(dep.user_id, dep.amount, dep.reference, acc.game_balance, newBal); }); tx();
       return res.json({success:true,message:`Deposit confirmed. Status: Successful`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
@@ -996,13 +936,16 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const { withdrawalId } = req.body; const w = db.prepare(`SELECT * FROM game_withdrawals WHERE id = ?`).get(withdrawalId);
       if(!w) return res.status(404).json({success:false}); if(w.status !== "pending") return res.status(409).json({success:false,message:"Already processed"});
       const refundAmount = w.original_amount || w.amount;
-      db.transaction(()=>{
-        db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId);
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(refundAmount, w.user_id);
-      })();
+      db.transaction(()=>{ db.prepare(`UPDATE game_withdrawals SET status='declined', processed_at=datetime('now') WHERE id=?`).run(withdrawalId); db.prepare(`UPDATE jovia_game_accounts SET game_balance = game_balance + ? WHERE user_id=?`).run(refundAmount, w.user_id); })();
       return res.json({success:true,message:`Declined. Status: Failed. Refunded ₦${refundAmount} to wallet`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ FIXED - Prices 3000/8000/13000 - Gold->Silver REMOVED - Mismatch BLOCKED - Bonus to AFFILIATE");
+  // ===== ✅ CONNECT SERVER 3 - AUTO, NO NEED EDIT server.js =====
+  try{
+    require('./jovia-server3')(app, db, requireUser, requireAdmin);
+    console.log("✅ SERVER 3 CONNECTED - Loaded from Second Server");
+  }catch(e){ console.log("⚠️ Server 3 not loaded yet (create jovia-server3.js):", e.message); }
+
+  console.log("✅ FINAL WITH PREVENTION - No duplicate SUPER jobs same day - Prices 3000/8000/13000 - Gold->Silver REMOVED - Bonus to AFFILIATE - Build go succeed");
 };
