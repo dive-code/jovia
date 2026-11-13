@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER + PREVENTION");
+  console.log("🔧 JOVIA SECOND SERVER - FIXED PRICES + GOLD-SILVER REMOVED + MISMATCH BLOCKED + BONUS TO AFFILIATE");
 
   const routeExists = (path, method) => {
     try{
@@ -123,6 +123,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN original_amount INTEGER DEFAULT 0`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_percent INTEGER DEFAULT 0`); }catch{}
 
+  // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY =====
   try{
     db.exec(`CREATE INDEX IF NOT EXISTS idx_wallet_job_dup ON wallet_transactions(user_id, description, type, created_at)`);
     db.exec(`DROP TRIGGER IF EXISTS no_dup_job_reward`);
@@ -141,7 +142,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       END;
     `);
     console.log("🛡️ PREVENTION TRIGGER ACTIVE - No duplicate SUPER jobs same day");
-  }catch(e){ console.log("Trigger error (maybe table not exist yet):", e.message); }
+  }catch(e){ console.log("Trigger error:", e.message); }
 
   setTimeout(()=>{
     try{
@@ -180,7 +181,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
   const addUserColumnIfMissing = (name, def) => { if (!userColumns().includes(name)) db.exec(`ALTER TABLE users ADD COLUMN ${name} ${def}`); };
-  ["package TEXT DEFAULT 'Silver'","plan TEXT DEFAULT 'Silver'","is_super INTEGER DEFAULT 0","account_status TEXT DEFAULT 'active'","status TEXT DEFAULT 'active'","username TEXT","full_name TEXT","activated_at TEXT","wallet_balance INTEGER DEFAULT 0","is_active INTEGER DEFAULT 1"].forEach(c=>{
+  ["package TEXT DEFAULT 'Silver'","plan TEXT DEFAULT 'Silver'","is_super INTEGER DEFAULT 0","account_status TEXT DEFAULT 'active'","status TEXT DEFAULT 'active'","username TEXT","full_name TEXT","activated_at TEXT","wallet_balance INTEGER DEFAULT 0","is_active INTEGER DEFAULT 1","affiliate_balance INTEGER DEFAULT 0","referral_balance INTEGER DEFAULT 0"].forEach(c=>{
     const [n,...d] = c.split(" "); try{ addUserColumnIfMissing(n, d.join(" ")); }catch{}
   });
   const hasColumn = name => userColumns().includes(name);
@@ -197,17 +198,34 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
+
   const WIN_RATE = 35;
 
-  // ✅ FIXED PRICES: Gold->Super 8000, Silver->Super 13000, Silver->Gold 3000, Gold->Silver REMOVED (null)
+  // ===== ✅ UPGRADE PRICES - CORRECTED FINAL =====
+  // Silver -> Gold = 3000, Gold -> Super = 8000, Silver -> Super = 13000
+  // Gold -> Silver REMOVED
   const UPGRADE_PRICES = {
+    "silver->gold": 3000,
     "gold->super": 8000,
     "silver->super": 13000,
-    "silver->gold": 3000,
   };
   const getUpgradePrice = (fromPkg, toPkg) => {
     const key = String(fromPkg||"").toLowerCase().trim() + "->" + String(toPkg||"").toLowerCase().trim();
     return UPGRADE_PRICES[key] ?? null;
+  };
+  // Human label for a code type, for BLOCKED message
+  const codeTypeLabel = (codeType) => {
+    if(codeType==="silver-gold") return "Silver → Gold";
+    if(codeType==="super-gold") return "Gold → Super";
+    if(codeType==="super-silver") return "Silver → Super";
+    if(codeType==="gold-silver") return "Gold → Silver";
+    return String(codeType||"").toUpperCase();
+  };
+  const codeTypeToRoute = (codeType) => {
+    if(codeType==="silver-gold") return "silver->gold";
+    if(codeType==="super-gold") return "gold->super";
+    if(codeType==="super-silver") return "silver->super";
+    return null;
   };
   const getUpline = (user) => {
     try{
@@ -219,21 +237,31 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         const val = user[col];
         if(!val) continue;
         let upline = null;
-        if(/^\d+$/.test(String(val))) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance FROM users WHERE id=?`).get(Number(val));
-        if(!upline) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance FROM users WHERE username=? OR email=? OR id=? LIMIT 1`).get(String(val), String(val), Number(val)||-1);
+        if(/^\d+$/.test(String(val))) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(Number(val));
+        if(!upline) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE username=? OR email=? OR id=? LIMIT 1`).get(String(val), String(val), Number(val)||-1);
         if(upline) return upline;
       }
       return null;
     }catch{ return null; }
   };
+  // ✅ FIXED: Upgrade bonus goes to AFFILIATE balance, NOT available/wallet balance
   const creditUpline = (uplineId, amount, fromUserId, label) => {
     try{
       if(!uplineId || !amount) return false;
-      db.prepare(`UPDATE users SET wallet_balance = COALESCE(wallet_balance,0) + ? WHERE id=?`).run(amount, uplineId);
-      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'upgrade_bonus', ?, ?, datetime('now'))`).run(uplineId, amount, `Upgrade bonus from user ${fromUserId} - ${label}`); }catch{}
+      // Primary: affiliate_balance
+      if(hasColumn("affiliate_balance")){
+        db.prepare(`UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ? WHERE id=?`).run(amount, uplineId);
+      }
+      // Mirror to referral_balance if column exists, so frontend wey read either one go see am
+      if(hasColumn("referral_balance")){
+        try{ db.prepare(`UPDATE users SET referral_balance = COALESCE(referral_balance,0) + ? WHERE id=?`).run(amount, uplineId); }catch{}
+      }
+      // NOTE: wallet_balance deliberately NOT touched - bonus is affiliate only
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'upgrade_bonus', ?, ?, datetime('now'))`).run(uplineId, amount, `Upgrade bonus (Affiliate) from user ${fromUserId} - ${label}`); }catch{}
       return true;
     }catch{ return false; }
   };
+
   const isSuspendedStatus = (status) => {
     const s = String(status||"").toLowerCase().trim();
     return ["suspended","banned","blocked","disabled","suspend"].includes(s);
@@ -311,6 +339,18 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return user;
     }catch(e){ return null; }
   };
+  // ✅ NEW: Downgrade helper - used by both downgrade endpoints
+  const downgradeUserToSilver = (userId) => {
+    const sets = ["package=?"]; const vals = ["Silver"];
+    if(hasColumn("plan")){ sets.push("plan=?"); vals.push("Silver"); }
+    if(hasColumn("is_super")){ sets.push("is_super=?"); vals.push(0); }
+    if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
+    if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
+    vals.push(userId);
+    db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
+    return db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE id=?`).get(userId);
+  };
+
   const userGuard=(req,res,next)=>{
     if(typeof requireUser!=="function") return res.status(503).json({success:false,message:"User auth not configured."});
     return requireUser(req,res,()=>{
@@ -348,6 +388,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }
     return res.json({success:true, admin:{username:"admin"}});
   };
+
   try{
     if(app._router && app._router.stack){
       app._router.stack = app._router.stack.filter(layer => {
@@ -376,6 +417,34 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       });
     }catch(e){ return res.json({success:true, users:0, activeUsers:0, pendingUsers:0, totalMusic:0, withdrawals:{pending:0}}); }
   });
+
+  // ===== ✅ NEW: DOWNGRADE TO SILVER =====
+  safeAdd("post","/api/admin/downgrade-to-silver", adminGuard, (req,res)=>{
+    try{
+      const email = String(req.body?.email||"").trim().toLowerCase();
+      const username = String(req.body?.username||"").trim();
+      if(!email && !username) return res.status(400).json({success:false,message:"Email or username required"});
+      let user = null;
+      if(email) user = db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user && username) user = db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1`).get(username, username);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      const before = String(user.package||user.plan||"");
+      if(before.toLowerCase().includes("silver")) return res.json({success:true,message:`${user.email||username} already dey Silver - No need to downgrade`, user});
+      const updated = downgradeUserToSilver(user.id);
+      return res.json({success:true,message:`✅ Downgraded ${updated.email||username} from ${before} → Silver. Tell user to logout + login again, then select Silver → Gold.`, user: updated, beforePackage: before, afterPackage: "Silver"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  safeAdd("post","/api/admin/fix-opeyemi", adminGuard, (req,res)=>{
+    try{
+      const email = "opeyemi.owaboye@gmail.com";
+      const user = db.prepare(`SELECT id, full_name, username, email, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).json({success:false,message:"User not found: "+email});
+      const before = String(user.package||user.plan||"");
+      const updated = downgradeUserToSilver(user.id);
+      return res.json({success:true,message:`✅ Fixed Opeyemi ${email} from ${before} → Silver. Tell her to logout + login again, then select Silver → Gold.`, user: updated, beforePackage: before, afterPackage: "Silver"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   safeAdd("get","/api/admin/fix/kanu", adminGuard, (req,res)=>{
     try{
       const email = "kanujosephbenson@gmail.com";
@@ -410,7 +479,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     try{
       const email = String(req.query?.email||"").trim().toLowerCase();
       if(!email) return res.status(400).json({success:false,message:"email required"});
-      const user = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, created_at FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      const user = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, affiliate_balance, created_at FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
       if(!user) return res.status(404).json({success:false,message:"User not found"});
       const acc = getOrCreateGameAccount(user.id);
       const deps = db.prepare(`SELECT id,amount,reference,status,created_at FROM game_deposits WHERE user_id=? ORDER BY created_at DESC LIMIT 10`).all(user.id);
@@ -419,47 +488,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, user, gameAccount: acc, deposits: deps, withdrawals: withs, bets});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  // ✅ NEW: DOWNGRADE ONE USER BACK TO SILVER - For Opeyemi abuse fix
-  safeAdd("post","/api/admin/downgrade-to-silver", adminGuard, (req,res)=>{
-    try{
-      const { email, username, userId } = req.body || {};
-      if(!email && !username && !userId) throw new Error("Send email or username or userId");
-      let user = null;
-      if(userId) user = db.prepare(`SELECT * FROM users WHERE id=?`).get(Number(userId));
-      else if(email) user = db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(String(email).trim().toLowerCase());
-      else if(username) user = db.prepare(`SELECT * FROM users WHERE username=? LIMIT 1`).get(String(username).trim());
-      if(!user) throw new Error("User not found");
-      const sets = ["package=?", "is_super=?"];
-      const vals = ["Silver", 0];
-      if(hasColumn("plan")){ sets.push("plan=?"); vals.push("Silver"); }
-      if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
-      if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
-      vals.push(user.id);
-      db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
-      return res.json({success:true, message:`${user.email} don go back to Silver. She fit re-upgrade to Gold now.`, user:{id:user.id, email:user.email, package:"Silver"}});
-    }catch(e){ return res.status(400).json({success:false, message:e.message}); }
-  });
-  // ✅ ONE-CLICK FIX FOR OPEYEMI
-  safeAdd("post","/api/admin/fix-opeyemi", adminGuard, (req,res)=>{
-    try{
-      const email = "opeyemi.owaboye@gmail.com";
-      const user = db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
-      if(!user) return res.status(404).json({success:false,message:"Opeyemi not found"});
-      const sets = ["package=?", "is_super=?"];
-      const vals = ["Silver", 0];
-      if(hasColumn("plan")){ sets.push("plan=?"); vals.push("Silver"); }
-      if(hasColumn("account_status")){ sets.push("account_status=?"); vals.push("active"); }
-      if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
-      vals.push(user.id);
-      db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
-      return res.json({success:true, message:`Opeyemi don go back to Silver. She fit re-upgrade to Gold now.`, user:{id:user.id, email:user.email, package:"Silver"}});
-    }catch(e){ return res.status(400).json({success:false, message:e.message}); }
-  });
+
   const fixJobsDupHandler = (req,res)=>{
     try{
-      let totalCleaned = 0;
-      let totalReversed = 0;
-      let affected = new Set();
+      let totalCleaned = 0; let totalReversed = 0; let affected = new Set();
       try{
         const userFilter = req.query.userId ? ` AND user_id=${Number(req.query.userId)}` : "";
         const txs = db.prepare(`SELECT id, user_id, amount, description, created_at FROM wallet_transactions WHERE type='job_reward' ${userFilter} ORDER BY id DESC LIMIT 5000`).all();
@@ -478,34 +510,30 @@ module.exports = (app, db, requireUser, requireAdmin) => {
                 }
                 totalReversed += amt;
               }
-              totalCleaned++;
-              affected.add(t.user_id);
+              totalCleaned++; affected.add(t.user_id);
             }catch(e){}
-          }else{
-            seen.add(keyDay);
-            seen.add(keyMin);
-          }
+          }else{ seen.add(keyDay); seen.add(keyMin); }
         }
-      }catch(e){ console.log("wallet fix error", e.message, e.stack); }
+      }catch(e){ console.log("wallet fix error", e.message); }
       return res.json({success:true, message:`Cleaned ${totalCleaned} duplicate SUPER jobs, Reversed ₦${totalReversed.toLocaleString()} from ${affected.size} users - PREVENTION ACTIVE`, totalCleaned, totalReversed, affectedUsers: affected.size, prevention: "ON - No same job same day"});
     }catch(e){ return res.status(500).json({success:false, message:e.message, stack:e.stack}); }
   };
   safeAdd("get","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
   safeAdd("post","/api/admin/fix-jobs-duplicates", adminGuard, fixJobsDupHandler);
+
   const jobGuardMiddleware = (req,res,next)=>{
     try{
       const userId = req.user?.id || req.body?.userId;
       const jobTitle = String(req.body?.jobTitle || req.body?.title || req.body?.description || "").slice(0,100);
       if(userId && jobTitle){
         const exists = db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND description LIKE ? AND type='job_reward' AND DATE(created_at)=DATE('now') LIMIT 1`).get(userId, `%${jobTitle.slice(0,20)}%`);
-        if(exists){
-          return res.status(403).json({success:false, message:"⛔ Already claimed this SUPER job today - Come back tomorrow"});
-        }
+        if(exists) return res.status(403).json({success:false, message:"⛔ Already claimed this SUPER job today - Come back tomorrow"});
       }
     }catch{}
     next();
   };
   safeAdd("post","/api/jobs/complete-guard", adminGuard, jobGuardMiddleware, (req,res)=>{ res.json({success:true, message:"Guard active"}); });
+
   safeAdd("post","/api/admin/codes/login",adminLoginHandler);
   safeAdd("post","/api/admin/login",adminLoginHandler);
   safeAdd("get","/api/admin/me", (req,res)=>{
@@ -541,7 +569,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   safeAdd("get","/api/admin/users", adminGuard, (req,res)=>{
     try{
-      const users = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, created_at FROM users ORDER BY id DESC LIMIT 300`).all();
+      const users = db.prepare(`SELECT id, full_name, username, email, package, plan, account_status, status, wallet_balance, affiliate_balance, created_at FROM users ORDER BY id DESC LIMIT 300`).all();
       const withFlag = users.map(u=>({...u, is_suspended: isSuspendedStatus(u.account_status||u.status), is_super: isSuperUserCheck(u)}));
       return res.json({success:true,users:withFlag});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -549,12 +577,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("post","/api/admin/codes/generate",adminGuard,(req,res)=>{
     try{
       const t=String(req.body?.type||"").toLowerCase();
-      // ✅ Gold->Silver REMOVED - block am
-      if(t==="gold-silver"||t==="gold->silver") return res.status(400).json({success:false,message:"Gold → Silver REMOVED - Gold users can only go to Super"});
+      // ✅ Gold -> Silver REMOVED - block am
+      if(t==="gold-silver" || t==="gold->silver" || t==="gold_to_silver"){
+        return res.status(400).json({success:false,message:"Gold → Silver has been REMOVED. Only Silver → Gold (₦3,000), Gold → Super (₦8,000), Silver → Super (₦13,000) allowed."});
+      }
       const type=t==="gold"||t==="super-gold"?"super-gold":t==="silver"||t==="super-silver"?"super-silver":t==="withdraw"?"withdraw":t==="silver-gold"?"silver-gold":null;
-      if(!type) return res.status(400).json({success:false,message:"Invalid type."});
+      if(!type) return res.status(400).json({success:false,message:"Invalid type. Use withdraw, silver-gold, super-gold, super-silver."});
       const count=Number(req.body?.count??1);
-      // ✅ FIXED: super-gold 8000, super-silver 13000, silver-gold 3000
+      // ✅ CORRECTED PRICES
       const price=type==="super-gold"?8000:type==="super-silver"?13000:type==="silver-gold"?3000:10000;
       const prefix=type==="withdraw"?"JOVIA-":"SUPER-"; const len=type==="withdraw"?6:8;
       const tx=db.transaction(()=>{ const arr=[]; while(arr.length<count){ const c=randomCode(len,prefix); const r=db.prepare(`INSERT OR IGNORE INTO jovia_codes (code,type,price,used,created_at) VALUES (?,?,?,0,datetime('now'))`).run(c,type,price); if(r.changes===1) arr.push({code:c,type,price}); } return arr; });
@@ -563,6 +593,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   safeAdd("get","/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
+
+  // ===== ✅ UPGRADE OPTIONS - Gold->Silver REMOVED =====
   safeAdd("get","/api/upgrade/options",userGuard,(req,res)=>{
     try{
       const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
@@ -570,12 +602,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       let options=[];
       if(current.includes("gold")){
         options=[
-          {from:"Gold", to:"Super", price:8000, label:"Gold → Super"}
+          {from:"Gold", to:"Super", price:8000, label:"Gold → Super - ₦8,000"}
         ];
       } else if(current.includes("silver")){
         options=[
-          {from:"Silver", to:"Gold", price:3000, label:"Silver → Gold"},
-          {from:"Silver", to:"Super", price:13000, label:"Silver → Super"}
+          {from:"Silver", to:"Gold", price:3000, label:"Silver → Gold - ₦3,000"},
+          {from:"Silver", to:"Super", price:13000, label:"Silver → Super - ₦13,000"}
         ];
       } else if(current.includes("super")){
         options=[];
@@ -584,6 +616,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, current: current, currentPackage: user.package||user.plan, options, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null, blockedMessage: null});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
+
   safeAdd("post","/api/upgrade/request",userGuard,(req,res)=>{
     try{
       const toPkg = String(req.body?.to||req.body?.toPackage||req.body?.target||"").toLowerCase().trim();
@@ -593,17 +626,19 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const fromPkg = String(user.package||user.plan||"Silver").toLowerCase();
       if(fromPkg.includes(toPkg)) return res.status(400).json({success:false,message:`You already dey ${toPkg.toUpperCase()} - No fit upgrade to same package`});
       if(fromPkg.includes("super")) return res.status(400).json({success:false,message:"You already dey Super - No higher package"});
-      // ✅ Gold->Silver blocked via getUpgradePrice returning null
+      // ✅ Gold -> Silver BLOCKED
+      if(fromPkg.includes("gold") && toPkg==="silver") return res.status(400).json({success:false,message:"BLOCKED: Gold → Silver has been REMOVED. Gold users can only upgrade to Super (₦8,000)."});
       const price = getUpgradePrice(fromPkg, toPkg);
-      if(price===null) return res.status(400).json({success:false,message:`Upgrade ${fromPkg} → ${toPkg} not allowed - Gold → Silver REMOVED`});
+      if(price===null) return res.status(400).json({success:false,message:`BLOCKED: Upgrade ${fromPkg} → ${toPkg} not allowed`});
       const upline = getUpline(user);
       const existing = db.prepare(`SELECT * FROM jovia_upgrades WHERE user_id=? AND status='pending' LIMIT 1`).get(req.user.id);
       if(existing) return res.status(409).json({success:false,message:"You already get pending upgrade - Wait for confirm", upgrade: existing});
       const info = db.prepare(`INSERT INTO jovia_upgrades (user_id, from_package, to_package, price, upline_id, upline_name, status) VALUES (?,?,?,?,?,?, 'pending')`).run(req.user.id, fromPkg, toPkg, price, upline?.id||null, upline?(upline.full_name||upline.username||""):"");
       const upgrade = db.prepare(`SELECT * FROM jovia_upgrades WHERE id=?`).get(info.lastInsertRowid);
-      return res.json({success:true, message:`Upgrade request created: ${fromPkg} → ${toPkg}`, upgrade, price, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null});
+      return res.json({success:true, message:`Upgrade request created: ${fromPkg} → ${toPkg} - ₦${price} - Pay to your upline`, upgrade, price, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
+
   safeAdd("post","/api/upgrade/confirm",adminGuard,(req,res)=>{
     try{
       const upgradeId = Number(req.body?.upgradeId||req.body?.id);
@@ -613,6 +648,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(up.status!=="pending") return res.status(409).json({success:false,message:"Already processed: "+up.status});
       const user = db.prepare(`SELECT * FROM users WHERE id=?`).get(up.user_id);
       if(!user) return res.status(404).json({success:false,message:"User not found"});
+      // ✅ Block Gold->Silver confirm too
+      if(String(up.from_package||"").toLowerCase().includes("gold") && String(up.to_package||"").toLowerCase()==="silver"){
+        return res.status(400).json({success:false,message:"BLOCKED: Gold → Silver has been REMOVED."});
+      }
       const toUpper = String(up.to_package||"").toUpperCase();
       db.transaction(()=>{
         const sets=["package=?"]; const vals=[toUpper];
@@ -624,53 +663,78 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         vals.push(user.id);
         db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
         db.prepare(`UPDATE jovia_upgrades SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(upgradeId);
+        // ✅ Bonus to AFFILIATE balance
         if(up.upline_id) creditUpline(up.upline_id, up.price, user.id, `${up.from_package} -> ${up.to_package}`);
       })();
-      return res.json({success:true, message:`Upgrade confirmed: ${up.from_package} → ${up.to_package} - ₦${up.price} credited to upline ${up.upline_id||"none"}`});
+      return res.json({success:true, message:`Upgrade confirmed: ${up.from_package} → ${up.to_package} - ₦${up.price} credited to upline AFFILIATE balance ${up.upline_id||"none"}`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  // ✅ FIXED UPGRADE APPLY - MISMATCH BLOCKED + ONE-TIME USE KEPT
+
   safeAdd("post","/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
-    const selectedTargetRaw = String(req.body?.upgradeTarget||req.body?.to||req.body?.target||"").toLowerCase().trim();
+    // ✅ Selected upgrade from frontend: e.g "silver->super", "silver->gold", "gold->super", or "silver-super"
+    const selectedRaw = String(req.body?.selected||req.body?.selectedUpgrade||req.body?.to||req.body?.target||req.body?.upgrade||req.body?.fromTo||"").toLowerCase().trim();
+    const normalizeSelected = (s)=>{
+      s=s.replace(/\s+/g,"").replace(/_/g,"-").replace(/>/g,"->").replace(/→/g,"->");
+      // allow "silversuper", "silver-super"
+      if(s==="silversuper") return "silver->super";
+      if(s==="silvergold") return "silver->gold";
+      if(s==="goldsuper") return "gold->super";
+      if(s==="goldsilver") return "gold->silver";
+      if(s==="super") return "super";
+      if(s==="gold") return "gold";
+      return s;
+    };
+    const selected = normalizeSelected(selectedRaw);
     try{
       const tx=db.transaction(()=>{
         const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
         if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED - Contact Admin");
         const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-        if(!code) throw new Error("INVALID CODE");
-        // ✅ ONE-TIME USE: if used, block am - nobody fit reuse
+        if(!code) throw new Error("INVALID CODE"); 
         if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
         const currentPackage = String(user.package||user.plan||"Silver").toLowerCase();
         const isSilver = currentPackage.includes("silver");
         const isGold = currentPackage.includes("gold");
         const isSuper = currentPackage.includes("super");
         const codeType = String(code.type||"").toLowerCase();
+        // ✅ Gold->Silver code REMOVED - block old codes too
+        if(codeType==="gold-silver") throw new Error("BLOCKED: Gold → Silver has been REMOVED. Gold users can only upgrade to Super (₦8,000).");
         if(isSuper) throw new Error("You already dey SUPER - No higher package");
-        if(codeType==="gold-silver") throw new Error("Gold → Silver REMOVED - Gold users can only go to Super");
-        // Map code type -> target user go get
-        const codeAllows = { "silver-gold":"silver-gold", "super-silver":"silver-super", "super-gold":"gold-super" };
-        const codeTarget = codeAllows[codeType];
-        if(!codeTarget) throw new Error("INVALID CODE TYPE FOR UPGRADE");
-        // ✅ BLOCK 1: Selected dropdown MUST match code
-        // Normalize selected: silver-gold, silver-super, gold-super, also accept silver->gold etc
-        let selected = selectedTargetRaw.replace("->","-").replace("_","-").replace(" ","");
-        // Dashboard sends silver-gold / silver-super / gold-super already, also handle super-silver etc
-        if(selected==="super-silver") selected="silver-super";
-        if(selected==="super-gold") selected="gold-super";
-        if(selected){
-          if(selected !== codeTarget){
-            const nice = (v)=> v==="silver-gold"?"Silver → Gold":v==="silver-super"?"Silver → Super":v==="gold-super"?"Gold → Super":v;
-            throw new Error(`⛔ BLOCKED: You selected ${nice(selected)} but this code na for ${nice(codeTarget)}. Go select ${nice(codeTarget)} or buy correct code.`);
-          }
-        }
-        // ✅ BLOCK 2: Code must match CURRENT package
-        if(isSilver && !["super-silver","silver-gold"].includes(codeType)) throw new Error(`SILVER plan requires SILVER-GOLD code to go to Gold OR SUPER-SILVER code to go to Super. You used ${codeType.toUpperCase()}.`);
-        if(isGold && codeType!=="super-gold") throw new Error(`GOLD plan requires SUPER-GOLD code to go to Super. Gold → Silver REMOVED. You used ${codeType.toUpperCase()}.`);
+        if(isSilver && !["super-silver","silver-gold"].includes(codeType)) throw new Error(`SILVER plan requires SILVER → GOLD code (₦3,000) to go to Gold OR SILVER → SUPER code (₦13,000) to go to Super. You used ${codeTypeLabel(codeType)} (₦${code.price}).`);
+        if(isGold && !["super-gold"].includes(codeType)) throw new Error(`GOLD plan requires GOLD → SUPER code (₦8,000) to go to Super. You used ${codeTypeLabel(codeType)} (₦${code.price}).`);
+        if(!["super-silver","super-gold","silver-gold"].includes(codeType)){ throw new Error("INVALID CODE TYPE FOR UPGRADE"); }
         let target = "SUPER";
         if(codeType==="silver-gold") target="GOLD";
         if(codeType==="super-gold") target="SUPER";
         if(codeType==="super-silver") target="SUPER";
+        // ✅ MISMATCH BLOCKED: selected vs code must match
+        // If frontend sent selected upgrade, enforce am strictly
+        if(selected && selected!=="super" && selected!=="gold"){
+          const codeRoute = codeTypeToRoute(codeType); // e.g "silver->gold"
+          // Expected route from current package + selected target
+          // selected can be "silver->super" or "gold->super" or "silver->gold"
+          const expectedFrom = isSilver ? "silver" : isGold ? "gold" : currentPackage;
+          const selectedTo = selected.includes("->") ? selected.split("->")[1] : selected;
+          const expectedRoute = `${expectedFrom}->${selectedTo}`;
+          if(codeRoute && codeRoute !== expectedRoute){
+            // Build nice message like: You selected Silver → Super but this code na for Silver → Gold
+            const selectedLabel = expectedRoute.split("->").map(p=>p.charAt(0).toUpperCase()+p.slice(1)).join(" → ");
+            throw new Error(`BLOCKED: You selected ${selectedLabel} but this code na for ${codeTypeLabel(codeType)}`);
+          }
+          // Also block if selected from-package no match current package
+          if(selected.includes("->")){
+            const selectedFrom = selected.split("->")[0];
+            if(selectedFrom !== expectedFrom){
+              throw new Error(`BLOCKED: You selected ${selectedLabel} but you dey ${currentPackage.toUpperCase()} now. Select the correct upgrade for your package.`);
+            }
+          }
+        }
+        // Price must match corrected price - if old code get old price, block am (prevents 8000 Silver->Gold codes)
+        const expectedPrice = getUpgradePrice(currentPackage, target.toLowerCase());
+        if(expectedPrice!==null && Number(code.price)!==expectedPrice){
+          throw new Error(`BLOCKED: This code price ₦${Number(code.price).toLocaleString()} no match ${currentPackage.toUpperCase()} → ${target} price ₦${expectedPrice.toLocaleString()}. Use correct code.`);
+        }
         if(currentPackage.includes(target.toLowerCase())) throw new Error(`You already dey ${target} - No fit upgrade to same package`);
         const sure=getSureUser(user);
         const upline = getUpline(user);
@@ -680,8 +744,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         if(hasColumn("status")){ sets.push("status=?"); vals.push("active"); }
         vals.push(user.id);
         db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
-        // ✅ Mark used - one-time
         db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,raw);
+        // ✅ Bonus to AFFILIATE balance only
         if(upline && code.price) creditUpline(upline.id, Number(code.price)||0, user.id, `${currentPackage} -> ${target.toLowerCase()}`);
         return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
       });
@@ -939,5 +1003,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true,message:`Declined. Status: Failed. Refunded ₦${refundAmount} to wallet`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
-  console.log("✅ FINAL WITH PREVENTION - No duplicate SUPER jobs same day - Build go succeed");
+
+  console.log("✅ FIXED - Prices 3000/8000/13000 - Gold->Silver REMOVED - Mismatch BLOCKED - Bonus to AFFILIATE");
 };
