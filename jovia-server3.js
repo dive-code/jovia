@@ -38,9 +38,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.status(401).json({success:false,message:"Admin authentication required"});
   };
 
-  // ===== 1. BEGINNING OF SERVER 3 - BALANCE HISTORY (FIX YOUR ERROR) =====
-  // GET /api/admin/balance/history?t=...
-  // Supports: ?userId=123  ?email=xxx  ?type=admin_add  ?limit=100
+  // ===== 1. BEGINNING OF SERVER 3 - BALANCE HISTORY =====
   const balanceHistoryHandler = (req,res) => {
     try{
       const userId = Number(req.query?.userId||req.query?.id||req.query?.user_id||0);
@@ -50,7 +48,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       let user = null;
       if(userId) user = db.prepare(`SELECT id FROM users WHERE id=?`).get(userId);
       if(!user && email) user = db.prepare(`SELECT id FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
-
       if(user){
         let rows;
         if(type){
@@ -61,8 +58,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         const u2 = db.prepare(`SELECT id, email, username, full_name, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(user.id);
         return res.json({success:true, history: rows, transactions: rows, total: rows.length, user: u2});
       }
-
-      // No user = admin list, all users
       let rows;
       if(type){
         rows = db.prepare(`SELECT w.id, w.user_id, w.type, w.amount, w.description, w.created_at, u.email, u.username, u.full_name FROM wallet_transactions w LEFT JOIN users u ON u.id=w.user_id WHERE LOWER(w.type)=? ORDER BY w.id DESC LIMIT ?`).all(type, limit);
@@ -82,6 +77,53 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     "/api/admin/wallet/transactions"
   ];
   balanceHistoryPaths.forEach(p=> safeAdd("get", p, adminGuard, balanceHistoryHandler));
+
+  // ===== 1B. NEW - BALANCE USER (FIX: GET /api/admin/balance/user?email=...) =====
+  const balanceUserHandler = (req,res) => {
+    try{
+      const email = String(req.query?.email||"").trim().toLowerCase();
+      const username = String(req.query?.username||"").trim();
+      const userId = Number(req.query?.userId||req.query?.id||req.query?.user_id||0);
+      let user = null;
+      if(userId) user = db.prepare(`SELECT * FROM users WHERE id=?`).get(userId);
+      if(!user && email) user = db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user && username) user = db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1`).get(username, username);
+      if(!user) return res.status(404).json({success:false, message:"User not found"});
+      let gameAcc = null;
+      try{ gameAcc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(user.id); }catch{}
+      const gameBal = Number(gameAcc?.game_balance||0);
+      const walletBal = Number(user.wallet_balance||0);
+      const affBal = Number(user.affiliate_balance||0);
+      return res.json({
+        success:true,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          full_name: user.full_name,
+          package: user.package || user.plan,
+          plan: user.plan || user.package,
+          wallet_balance: walletBal,
+          available_balance: walletBal,
+          affiliate_balance: affBal,
+          referral_balance: Number(user.referral_balance||0),
+          game_balance: gameBal,
+          account_status: user.account_status,
+          status: user.status
+        },
+        wallet_balance: walletBal,
+        available_balance: walletBal,
+        affiliate_balance: affBal,
+        game_balance: gameBal
+      });
+    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+  };
+  [
+    "/api/admin/balance/user",
+    "/api/admin/balance/user-by-email",
+    "/api/admin/user/balance-detail",
+    "/api/admin/balance/detail"
+  ].forEach(p=> safeAdd("get", p, adminGuard, balanceUserHandler));
 
   // ===== 2. BALANCE ADD / DEDUCT (same as frontend) =====
   const findUserForBalance = (body) => {
@@ -133,7 +175,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=> safeAdd("post",p, adminGuard, adjustHandler(false)));
   ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=> safeAdd("post",p, adminGuard, adjustGeneric));
 
-  // ===== 3. UPGRADE LIST FOR ADMIN (so confirm page no empty) =====
+  // ===== 3. UPGRADE LIST FOR ADMIN =====
   safeAdd("get","/api/admin/upgrades", adminGuard, (req,res)=>{
     try{
       const rows = db.prepare(`SELECT u.*, us.email, us.username, us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200`).all();
@@ -147,5 +189,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ SERVER 3 READY - Balance History at top");
+  console.log("✅ SERVER 3 READY - Balance History + Balance User at top");
 };
