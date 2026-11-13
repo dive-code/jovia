@@ -896,6 +896,54 @@ app.get("/api/announcement",(req,res)=>{
     return res.json({success:true, enabled:Boolean(row.enabled), title:row.title, message:row.message, channelUrl:row.channel_url, channelText:row.channel_text, updatedAt:row.updated_at});
   }catch(e){return res.json({success:true, enabled:false, title:"Join Official Channel", message:"Join our channel", channelUrl:"https://t.me/jovianetwerk", channelText:"Join Official Channel"});}
 });
+// === SUSPEND / UNSUSPEND - SUSPENSION = STOP ===
+function handleSuspendUser(req,res){
+  try{
+    const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
+    if(!userId) return res.status(400).json({success:false, message:"User ID required"});
+    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    if(!user) return res.status(404).json({success:false, message:"User not found"});
+
+    // ✅ STOP = suspended
+    try{ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET status='suspended' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_suspended=1 WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_active=0 WHERE id=?").run(userId); }catch{}
+
+    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    return res.json({success:true, message:`${fresh.username} don suspend - account don STOP`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+}
+
+function handleUnsuspendUser(req,res){
+  try{
+    const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
+    if(!userId) return res.status(400).json({success:false, message:"User ID required"});
+    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    if(!user) return res.status(404).json({success:false, message:"User not found"});
+
+    // ✅ UNSUSPEND = make am active again
+    try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_suspended=0 WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_active=1 WHERE id=?").run(userId); }catch{}
+
+    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    return res.json({success:true, message:`${fresh.username} don unsuspend - account don START again`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+}
+// ✅ Cover all suspend URL wey dashboard fit call - use requireAdminFixed, NOT old requireAdmin
+app.post("/api/admin/suspend", requireAdminFixed, handleSuspendUser);
+app.post("/api/admin/users/suspend", requireAdminFixed, handleSuspendUser);
+app.post("/api/admin/user/suspend", requireAdminFixed, handleSuspendUser);
+app.post("/api/admin/suspend-user", requireAdminFixed, handleSuspendUser);
+app.post("/api/admin/users/block", requireAdminFixed, handleSuspendUser);
+app.get("/api/admin/suspend", requireAdminFixed, handleSuspendUser);
+app.post("/api/admin/unsuspend", requireAdminFixed, handleUnsuspendUser);
+app.post("/api/admin/users/unsuspend", requireAdminFixed, handleUnsuspendUser);
+app.post("/api/admin/user/unsuspend", requireAdminFixed, handleUnsuspendUser);
+app.post("/api/admin/users/unblock", requireAdminFixed, handleUnsuspendUser);
+app.get("/api/admin/unsuspend", requireAdminFixed, handleUnsuspendUser);
 // === NOTIFICATIONS FOR BELL - ACTIVE ONLY, HISTORY STAYS ===
 app.get("/api/notifications", requireUser, (req,res)=>{
   try{
