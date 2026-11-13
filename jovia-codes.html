@@ -7,20 +7,22 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
 body{background:#f1f5f9;padding:12px}
-.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:680px;margin:0 auto 12px}
-.container{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.top{background:#0f172a;color:#fff;padding:16px;border-radius:16px;display:flex;justify-content:space-between;align-items:center;max-width:720px;margin:0 auto 12px}
+.container{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 4px 20px rgba(0,0,0,.04)}
 input,select,textarea{width:100%;padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:10px;outline:none;font-weight:700;font-size:14px}
 textarea{resize:vertical;min-height:80px}
-.btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:800;cursor:pointer;transition:.2s}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-weight:800;cursor:pointer}
 .btn:active{transform:scale(.98)}
 .btn-black{background:#0f172a;color:#22c55e}
 .btn-gold{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000}
 .btn-silver{background:linear-gradient(135deg,#94a3b8,#cbd5e1);color:#000}
 .btn-light{background:#f1f5f9;color:#0f172a}
 .btn-purple{background:#5b21b6;color:#fff}
+.btn-green{background:#16a34a;color:#fff}
+.btn-red{background:#ef4444;color:#fff}
 .btn-danger{background:#fee2e2;color:#991b1b;border:1.5px solid #fecaca}
-.btn-danger:disabled,.btn-black:disabled{opacity:.6;cursor:not-allowed}
+.btn:disabled{opacity:.6;cursor:not-allowed}
 .code-box{background:#0f172a;border-radius:12px;padding:16px;text-align:center;display:none;margin-top:12px}
 .code{color:#22c55e;font-size:22px;font-weight:900;letter-spacing:2px;word-break:break-all;margin-top:6px}
 .code.super{color:#fbbf24}
@@ -29,13 +31,18 @@ textarea{resize:vertical;min-height:80px}
 .badge{font-size:10px;padding:4px 8px;border-radius:20px;font-weight:800;white-space:nowrap}
 .lock{position:fixed;inset:0;background:#0f172a;z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
 .lock-box{background:#fff;width:100%;max-width:340px;border-radius:20px;padding:24px;text-align:center}
-.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-.tab{flex:1;padding:11px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-size:10px;font-weight:900;cursor:pointer;text-align:center;min-width:80px}
-.tab.active{background:#0f172a;color:#fff;border-color:#0f172a}
-.tab.super-active{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;border-color:#ff9a00}
-.tab.game-active{background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-color:#22c55e}
-.tab.with-active{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#ef4444}
-.tab.music-active{background:#5b21b6;color:#fff;border-color:#5b21b6}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px}
+.nav-btn{flex:1;padding:11px 6px;border-radius:12px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:900;cursor:pointer;text-align:center;min-width:78px}
+.nav-btn.active{background:#0f172a;color:#fff}
+.nav-btn.upgrade-active{background:linear-gradient(135deg,#ff9a00,#ffc400);color:#000;border-color:#ff9a00}
+.nav-btn.balance-active{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;border-color:#2563eb}
+.nav-btn.aff-active{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border-color:#7c3aed}
+.page{display:none;flex-direction:column;gap:12px}
+.page.show{display:flex}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;text-align:center}
+.stat b{font-size:20px;display:block}
+.stat span{font-size:11px;color:#64748b;font-weight:800}
 .dep-item{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px;background:#fff}
 .dep-item.pending{background:#fffbeb;border-color:#fbbf24}
 .bank-box{background:#f8fafc;border:1px dashed #94a3b8;padding:10px;border-radius:10px;font-size:12px;line-height:1.6;margin-bottom:10px}
@@ -56,36 +63,78 @@ textarea{resize:vertical;min-height:80px}
 .codes-list::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:20px}
 .filter-row{display:flex;gap:6px;margin-bottom:10px}
 .filter-btn{flex:1;padding:9px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:11px;font-weight:900;cursor:pointer}
-.filter-btn.active{background:#0f172a;color:#fff;border-color:#0f172a}
-.filter-btn.active-green{background:#16a34a;color:#fff;border-color:#16a34a}
-.filter-btn.active-red{background:#ef4444;color:#fff;border-color:#ef4444}
+.filter-btn.active{background:#0f172a;color:#fff}
+.filter-btn.active-green{background:#16a34a;color:#fff}
+.filter-btn.active-red{background:#ef4444;color:#fff}
 .code-row{border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;background:#fff}
 .code-row.used{background:#fff7f7;opacity:.85}
-.code-type{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px}
+.code-type{font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase}
+.balance-preview{background:#eef2ff;border:1px solid #c7d2fe;border-radius:12px;padding:12px;font-size:12px;line-height:1.8;display:none;margin-bottom:10px}
+.balance-preview.show{display:block}
+.balance-history{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
 </style>
 </head>
 <body>
 <div id="lock" class="lock"><div class="lock-box">
 <h2 style="font-size:20px">🔐 Admin Only</h2>
-<p style="font-size:11px;color:#64748b;margin-top:6px">Daily One Earn + Must Finish - SAFE</p>
+<p style="font-size:11px;color:#64748b;margin-top:6px">JOVIA Admin - Multi Page</p>
 <input id="passInput" type="password" placeholder="Password" style="margin-top:14px" autocomplete="off">
 <button class="btn btn-black" onclick="unlock()" style="margin-top:10px">Unlock →</button>
 <p id="passError" style="color:red;font-size:12px;margin-top:8px;display:none"></p>
 </div></div>
 <div id="imgModal" class="modal" onclick="this.classList.remove('show')"><img id="modalImg" src=""></div>
+
 <div class="top">
-<div><h3 style="font-size:14px">JOVIA ADMIN - DAILY ONE EARN SAFE</h3><small style="font-size:10px;color:#94a3b8">Dashboard Safe + Music Daily Reset + Must Finish</small></div>
+<div><h3 style="font-size:14px">JOVIA ADMIN</h3><small style="font-size:10px;color:#94a3b8">Multi Page • Codes • Upgrade • Balance • Affiliate</small></div>
 <span style="font-size:10px;background:#22c55e;color:#000;padding:5px 10px;border-radius:20px;font-weight:800">SAFE</span>
 </div>
+
 <div class="container">
-<div class="tabs">
-<button class="tab active" id="tabW" onclick="setTab('withdraw')">💸 Codes</button>
-<button class="tab" id="tabS" onclick="setTab('super')">👑 SUPER</button>
-<button class="tab" id="tabM" onclick="setTab('music')">♫ Music Daily</button>
-<button class="tab" id="tabG" onclick="setTab('deposits')">🎮 Deposits</button>
-<button class="tab" id="tabWD" onclick="setTab('withdrawals')">💰 Withdraw</button>
+<!-- ===== TOP NAV - MULTIPLE PAGES ===== -->
+<div class="nav">
+<button class="nav-btn active" id="nav-home" onclick="showPage('home')">🏠 Home</button>
+<button class="nav-btn" id="nav-codes" onclick="showPage('codes')">💸 Codes</button>
+<button class="nav-btn" id="nav-upgrade" onclick="showPage('upgrade')">🆙 Upgrade</button>
+<button class="nav-btn" id="nav-music" onclick="showPage('music')">♫ Music</button>
+<button class="nav-btn" id="nav-deposits" onclick="showPage('deposits')">🎮 Deposits</button>
+<button class="nav-btn" id="nav-withdrawals" onclick="showPage('withdrawals')">💰 Withdraw</button>
+<button class="nav-btn" id="nav-balance" onclick="showPage('balance')">💳 Balance</button>
+<button class="nav-btn" id="nav-affiliate" onclick="showPage('affiliate')">👥 Affiliate</button>
 </div>
-<div class="card" id="cardWithdraw">
+
+<!-- ===== PAGE: HOME ===== -->
+<div id="page-home" class="page show">
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:10px">📊 Dashboard</h3>
+<div class="stat-grid">
+<div class="stat"><span>Total Codes</span><b id="statTotal">0</b></div>
+<div class="stat"><span>Active Codes</span><b id="statActive" style="color:#16a34a">0</b></div>
+<div class="stat"><span>Used Codes</span><b id="statUsed" style="color:#ef4444">0</b></div>
+<div class="stat"><span>Music Tracks</span><b id="statMusic">-</b></div>
+</div>
+<button class="btn btn-light" onclick="loadFromServer();loadMusic()" style="margin-top:12px">🔄 Refresh Dashboard</button>
+</div>
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:8px">⚡ Quick Actions</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button class="btn btn-black" onclick="showPage('codes')">💸 Go to Codes</button>
+<button class="btn btn-gold" onclick="showPage('upgrade')">🆙 Go to Upgrade</button>
+<button class="btn btn-green" onclick="showPage('balance')">💳 Add / Deduct Balance</button>
+<button class="btn btn-purple" onclick="showPage('affiliate')">👥 Affiliate</button>
+</div>
+</div>
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code</h3>
+<input id="checkCode" placeholder="Paste code">
+<button class="btn btn-black" onclick="validate()">Check From Server</button>
+<div id="checkResult" style="text-align:center;font-weight:800;margin-top:12px;font-size:13px;min-height:20px;line-height:1.6"></div>
+</div>
+<button class="btn btn-light" onclick="logoutAdmin()" style="color:#ef4444">🚪 Lock - Logout Secure</button>
+</div>
+
+<!-- ===== PAGE: CODES ===== -->
+<div id="page-codes" class="page">
+<div class="card">
 <h3 style="font-size:14px;margin-bottom:8px">💸 Generate Withdrawal Code</h3>
 <button class="btn btn-black" id="btnWithdraw" onclick="generate('withdraw')">Generate JOVIA Code</button>
 <div id="resultWithdraw" class="code-box">
@@ -97,7 +146,24 @@ textarea{resize:vertical;min-height:80px}
 </div>
 </div>
 </div>
-<div class="card" id="cardSuper" style="display:none">
+<div class="card">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
+<h3 style="font-size:14px">All Previous Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
+</div>
+<div class="filter-row">
+<button class="filter-btn active" id="filterAll" onclick="setCodeFilter('all')">All</button>
+<button class="filter-btn" id="filterActive" onclick="setCodeFilter('active')">✅ Active</button>
+<button class="filter-btn" id="filterUsed" onclick="setCodeFilter('used')">❌ Used</button>
+</div>
+<input id="searchInput" placeholder="🔍 Search code or email..." oninput="filterList()" style="margin-bottom:10px">
+<div id="list" class="codes-list"></div>
+<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
+</div>
+</div>
+
+<!-- ===== PAGE: UPGRADE - OWN PAGE ===== -->
+<div id="page-upgrade" class="page">
+<div class="card">
 <h3 style="font-size:14px;margin-bottom:8px">👑 Generate SUPER Upgrade Code</h3>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <button class="btn btn-gold" id="btnGold" onclick="generate('super-gold')">GOLD → SUPER<br><span style="font-size:12px">₦8,000</span></button>
@@ -106,16 +172,15 @@ textarea{resize:vertical;min-height:80px}
 <div id="resultSuper" class="code-box" style="border:1.5px solid #fbbf24">
 <div style="color:#fbbf24;font-size:10px;font-weight:800" id="superTypeLabel">SUPER CODE</div>
 <div id="codeTextSuper" class="code super"></div>
-<div style="color:#fff;font-size:11px;margin-top:8px;line-height:1.5" id="superPriceLabel"></div>
+<div style="color:#fff;font-size:11px;margin-top:8px" id="superPriceLabel"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
 <button class="btn btn-light" onclick="copyCode('super')">📋 Copy</button>
 <button class="btn btn-light" onclick="shareCode('super')">💬 WhatsApp</button>
 </div>
 </div>
 </div>
-<div class="card" id="cardUpgradeCodes">
-<h3 style="font-size:14px;margin-bottom:8px">🆙 NEW - Generate UPGRADE Code</h3>
-<p style="font-size:11px;color:#64748b;margin-bottom:10px">Separate block. Old SUPER panel still dey for up.</p>
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:8px">🆙 Generate UPGRADE Code</h3>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
 <button class="btn btn-gold" id="btnUpGold" onclick="generateUpgrade('super-gold')">GOLD → SUPER<br><span style="font-size:12px">₦8,000</span></button>
 <button class="btn btn-silver" id="btnUpSilver" onclick="generateUpgrade('super-silver')">SILVER → SUPER<br><span style="font-size:12px">₦13,000</span></button>
@@ -125,16 +190,22 @@ textarea{resize:vertical;min-height:80px}
 <div id="resultUpgrade" class="code-box" style="border:1.5px solid #fbbf24">
 <div style="color:#fbbf24;font-size:10px;font-weight:800" id="upgradeTypeLabel">UPGRADE CODE</div>
 <div id="codeTextUpgrade" class="code super"></div>
-<div style="color:#fff;font-size:11px;margin-top:8px;line-height:1.5" id="upgradePriceLabel"></div>
+<div style="color:#fff;font-size:11px;margin-top:8px" id="upgradePriceLabel"></div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
 <button class="btn btn-light" onclick="copyCode('upgrade')">📋 Copy</button>
 <button class="btn btn-light" onclick="shareCode('upgrade')">💬 WhatsApp</button>
 </div>
 </div>
 </div>
-<div class="card" id="cardDowngrade">
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:8px">📋 Pending Upgrade Requests</h3>
+<p style="font-size:11px;color:#64748b;margin-bottom:10px">Users wey request upgrade and dey wait for confirm. Confirm go move dem + credit upline Affiliate.</p>
+<button class="btn btn-black" onclick="loadUpgrades()" style="margin-bottom:10px">🔄 Refresh Upgrades</button>
+<div id="upgradesList"><p style="text-align:center;color:#94a3b8;padding:15px">Click Refresh</p></div>
+</div>
+<div class="card">
 <h3 style="font-size:14px;margin-bottom:8px">⬇️ Fix Wrong Upgrade — Downgrade to Silver</h3>
-<div class="downgrade-note">For user wey use <b>Silver → Gold</b> code but select <b>Silver → Super</b> by mistake and go SUPER. Downgrade am back to <b>Silver</b>, make she re-upgrade to <b>Gold</b> with correct code.<br>Code still na <b>one-time use</b> — e no go reset the used code.</div>
+<div class="downgrade-note">For user wey use <b>Silver → Gold</b> code but select <b>Silver → Super</b> by mistake and go SUPER. Downgrade am back to <b>Silver</b>.</div>
 <label style="font-size:11px;font-weight:800;color:#334155;display:block;margin-bottom:6px">User Email or Username</label>
 <input id="downgradeInput" placeholder="e.g opeyemi.owaboye@gmail.com" autocomplete="off">
 <div id="downgradePreview" class="user-preview"></div>
@@ -142,11 +213,14 @@ textarea{resize:vertical;min-height:80px}
 <button class="btn btn-light" id="btnCheckDowngrade" onclick="checkDowngradeUser()">🔍 Check User</button>
 <button class="btn btn-danger" id="btnDowngrade" onclick="downgradeToSilver()">⬇️ Downgrade to Silver</button>
 </div>
-<button class="btn btn-black" id="btnFixOpeyemi" onclick="fixOpeyemi()" style="margin-top:8px">⚡ One-Click Fix Opeyemi — opeyemi.owaboye@gmail.com → Silver</button>
+<button class="btn btn-black" id="btnFixOpeyemi" onclick="fixOpeyemi()" style="margin-top:8px">⚡ One-Click Fix Opeyemi → Silver</button>
 <div id="downgradeMsg" class="downgrade-status"></div>
-<div style="font-size:10px;color:#94a3b8;margin-top:8px;text-align:center">After downgrade, tell user to logout + login again, then select Silver → Gold.</div>
 </div>
-<div class="card" id="cardMusic" style="display:none">
+</div>
+
+<!-- ===== PAGE: MUSIC ===== -->
+<div id="page-music" class="page">
+<div class="card">
 <h3 style="font-size:14px;margin-bottom:8px">♫ Music Management - ONE PER DAY + MUST FINISH</h3>
 <div style="background:#eef2ff;border:1px dashed #5b21b6;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">🔒 DAILY RESET: One song = One earning per day - Tomorrow same song fit earn again. MUST FINISH: User must play till end.</div>
 <input id="musicTitle" placeholder="Music Title * e.g Afro Vibes">
@@ -161,55 +235,88 @@ textarea{resize:vertical;min-height:80px}
 <div style="margin-top:14px">
 <input id="searchMusic" placeholder="🔍 Search music..." oninput="filterMusic()" style="margin-bottom:10px">
 <div id="musicList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh to load</p></div>
-<button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music - Daily Reset Active</button>
+<button class="btn btn-light" onclick="loadMusic()" style="margin-top:10px">🔄 Refresh Music</button>
 </div>
 </div>
-<div class="card" id="cardDeposits" style="display:none">
+</div>
+
+<!-- ===== PAGE: DEPOSITS ===== -->
+<div id="page-deposits" class="page">
+<div class="card">
 <h3 style="font-size:14px;margin-bottom:8px">🎮 Game Deposits - Proof Verification</h3>
-<div class="bank-box">
-Bank: <b>Kredi Money MFB Ltd</b><br>
-Acc: <b style="color:#d00;font-size:14px">1850772192</b> <button onclick="navigator.clipboard.writeText('1850772192');alert('Copied')" style="padding:2px 8px;font-size:10px">Copy</button><br>
-Name: <b>Raenest/Divine Ogheneovie Abanum</b><br>
-<small>Check Kredi app + proof screenshot before approving</small>
-</div>
+<div class="bank-box">Bank: <b>Kredi Money MFB Ltd</b><br>Acc: <b style="color:#d00;font-size:14px">1850772192</b> <button onclick="navigator.clipboard.writeText('1850772192');alert('Copied')" style="padding:2px 8px;font-size:10px">Copy</button><br>Name: <b>Raenest/Divine Ogheneovie Abanum</b><br><small>Check Kredi app + proof screenshot before approving</small></div>
 <button class="btn btn-black" onclick="loadDeposits()" style="margin-bottom:10px">🔄 Refresh Deposits</button>
 <div id="depositsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
 </div>
-<div class="card" id="cardWithdrawals" style="display:none">
+</div>
+
+<!-- ===== PAGE: WITHDRAWALS ===== -->
+<div id="page-withdrawals" class="page">
+<div class="card">
 <h3 style="font-size:14px;margin-bottom:8px">💰 Game Withdrawals - Pay Users</h3>
 <div class="bank-box">You will pay from your <b>1850772192 Kredi MFB</b> account to users below. Copy account number and transfer, then click Paid.</div>
 <button class="btn btn-black" onclick="loadWithdrawals()" style="margin-bottom:10px">🔄 Refresh Withdrawals</button>
 <div id="withdrawalsList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
 </div>
+</div>
+
+<!-- ===== PAGE: BALANCE - NEW ===== -->
+<div id="page-balance" class="page">
 <div class="card">
-<h3 style="font-size:14px;margin-bottom:10px">🔍 Check Code</h3>
-<input id="checkCode" placeholder="Paste code">
-<button class="btn btn-black" onclick="validate()">Check From Server</button>
-<div id="checkResult" style="text-align:center;font-weight:800;margin-top:12px;font-size:13px;min-height:20px;line-height:1.6"></div>
+<h3 style="font-size:14px;margin-bottom:8px">💳 Add / Deduct User Balance</h3>
+<div style="background:#eef2ff;border:1px dashed #2563eb;padding:10px;border-radius:10px;font-size:11px;margin-bottom:12px">⚠️ This na powerful tool. Every adjustment dey saved for history with reason + admin + before/after. Use am for correction, bonus, or penalty only.</div>
+<label style="font-size:11px;font-weight:800;color:#334155;display:block;margin-bottom:6px">User Email or Username</label>
+<input id="balEmail" placeholder="e.g opeyemi.owaboye@gmail.com">
+<button class="btn btn-black" onclick="checkBalanceUser()">🔍 Check User Balances</button>
+<div id="balPreview" class="balance-preview"></div>
+<label style="font-size:11px;font-weight:800;color:#334155;display:block;margin-bottom:6px">Which Balance?</label>
+<select id="balWalletType">
+<option value="wallet_balance">💰 Wallet Balance (Available)</option>
+<option value="affiliate_balance">👥 Affiliate Balance</option>
+<option value="game_balance">🎮 Game Balance</option>
+</select>
+<label style="font-size:11px;font-weight:800;color:#334155;display:block;margin-bottom:6px">Action</label>
+<select id="balAction">
+<option value="add">➕ Add Balance</option>
+<option value="deduct">➖ Deduct Balance</option>
+</select>
+<label style="font-size:11px;font-weight:800;color:#334155;display:block;margin-bottom:6px">Amount ₦</label>
+<input id="balAmount" type="number" placeholder="e.g 5000">
+<label style="font-size:11px;font-weight:800;color:#334155;display:block;margin-bottom:6px">Reason (must write am)</label>
+<input id="balReason" placeholder="e.g Correction - Wrong debit / Bonus / Penalty">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button class="btn btn-green" onclick="adjustBalance('add')">➕ Add Balance</button>
+<button class="btn btn-red" onclick="adjustBalance('deduct')">➖ Deduct Balance</button>
+</div>
+<div id="balMsg" class="downgrade-status"></div>
 </div>
 <div class="card">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px">
-<h3 style="font-size:14px" id="listTitle">All Previous Codes</h3><span id="count" style="background:#f1f5f9;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:800">0</span>
+<h3 style="font-size:14px;margin-bottom:8px">🧾 Balance History</h3>
+<button class="btn btn-light" onclick="loadBalanceHistory()" style="margin-bottom:10px">🔄 Refresh History</button>
+<div id="balHistory" class="balance-history"><p style="text-align:center;color:#94a3b8;padding:15px">Click Refresh</p></div>
 </div>
-<div class="filter-row">
-<button class="filter-btn active" id="filterAll" onclick="setCodeFilter('all')">All</button>
-<button class="filter-btn" id="filterActive" onclick="setCodeFilter('active')">✅ Active</button>
-<button class="filter-btn" id="filterUsed" onclick="setCodeFilter('used')">❌ Used</button>
 </div>
-<input id="searchInput" placeholder="🔍 Search code or email..." oninput="filterList()" style="padding:13px;border:1.5px solid #e2e8f0;border-radius:10px;width:100%;margin-bottom:10px">
-<div id="list" class="codes-list"></div>
-<button class="btn btn-light" onclick="loadFromServer()" style="margin-top:12px">🔄 Refresh Codes</button>
-<button class="btn btn-light" onclick="logoutAdmin()" style="margin-top:8px;color:#ef4444">🚪 Lock - Logout Secure</button>
+
+<!-- ===== PAGE: AFFILIATE ===== -->
+<div id="page-affiliate" class="page">
+<div class="card">
+<h3 style="font-size:14px;margin-bottom:8px">👥 Affiliate Withdrawals</h3>
+<p style="font-size:11px;color:#64748b;margin-bottom:10px">Users wey request affiliate withdraw. Pay from your account, then click Paid. Deduct don already happen from affiliate_balance when dem request.</p>
+<button class="btn btn-black" onclick="loadAffiliateWithdrawals()" style="margin-bottom:10px">🔄 Refresh Affiliate Withdrawals</button>
+<div id="affiliateList"><p style="text-align:center;color:#94a3b8;padding:20px">Click Refresh</p></div>
 </div>
+</div>
+
 </div>
 <script>
-let currentTab='withdraw';
 let lastWithdraw=""; let lastSuper=""; let lastSuperPrice=0; let lastSuperType="";
 let lastUpgrade=""; let lastUpgradePrice=0; let lastUpgradeType="";
 let allServerCodes = [];
 let rawMusic = [];
 let editingMusicId = null;
 let codeFilter='all';
+let balUser=null;
+
 function getHeaders(){
   const pass = sessionStorage.getItem('jovia_session_pass') || '';
   const headers = { 'Content-Type':'application/json' };
@@ -218,6 +325,31 @@ function getHeaders(){
 }
 if(localStorage.getItem('jovia_ok')==='yes'){ document.getElementById('lock').style.display='none'; }
 function openModal(src){ document.getElementById('modalImg').src=src; document.getElementById('imgModal').classList.add('show'); }
+
+// ===== MULTI PAGE NAV =====
+function showPage(page){
+  const pages=['home','codes','upgrade','music','deposits','withdrawals','balance','affiliate'];
+  pages.forEach(p=>{
+    const el=document.getElementById('page-'+p);
+    if(el) el.classList.toggle('show', p===page);
+    const nav=document.getElementById('nav-'+p);
+    if(nav){
+      nav.className='nav-btn'+(p===page?' active':'');
+      if(p==='upgrade'&&page==='upgrade') nav.className='nav-btn upgrade-active';
+      if(p==='balance'&&page==='balance') nav.className='nav-btn balance-active';
+      if(p==='affiliate'&&page==='affiliate') nav.className='nav-btn aff-active';
+    }
+  });
+  if(page==='codes') filterList();
+  if(page==='upgrade') loadUpgrades();
+  if(page==='music') loadMusic();
+  if(page==='deposits') loadDeposits();
+  if(page==='withdrawals') loadWithdrawals();
+  if(page==='balance') loadBalanceHistory();
+  if(page==='affiliate') loadAffiliateWithdrawals();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 async function unlock(){
   const val = document.getElementById('passInput').value.trim();
   const err = document.getElementById('passError');
@@ -240,23 +372,6 @@ async function logoutAdmin(){
   localStorage.removeItem('jovia_ok');
   location.reload();
 }
-function setTab(t){
-  currentTab=t;
-  document.getElementById('tabW').className=t==='withdraw'?'tab active':'tab';
-  document.getElementById('tabS').className=t==='super'?'tab super-active':'tab';
-  document.getElementById('tabM').className=t==='music'?'tab music-active':'tab';
-  document.getElementById('tabG').className=t==='deposits'?'tab game-active':'tab';
-  document.getElementById('tabWD').className=t==='withdrawals'?'tab with-active':'tab';
-  document.getElementById('cardWithdraw').style.display=t==='withdraw'?'block':'none';
-  document.getElementById('cardSuper').style.display=t==='super'?'block':'none';
-  document.getElementById('cardMusic').style.display=t==='music'?'block':'none';
-  document.getElementById('cardDeposits').style.display=t==='deposits'?'block':'none';
-  document.getElementById('cardWithdrawals').style.display=t==='withdrawals'?'block':'none';
-  if(t==='deposits') loadDeposits();
-  if(t==='withdrawals') loadWithdrawals();
-  if(t==='music') loadMusic();
-  filterList();
-}
 async function generate(type){
   const btnId = type==='withdraw' ? 'btnWithdraw' : type==='super-gold' ? 'btnGold' : type==='super-silver' ? 'btnSilver' : 'btnSilver';
   const btn = document.getElementById(btnId);
@@ -276,8 +391,8 @@ async function generate(type){
       lastSuper=newCode; lastSuperPrice=serverPrice; lastSuperType=type==='super-gold'?'GOLD → SUPER':type==='super-silver'?'SILVER → SUPER':'SILVER → GOLD';
       document.getElementById('resultSuper').style.display='block';
       document.getElementById('codeTextSuper').innerText=newCode;
-      document.getElementById('superTypeLabel').innerText=lastSuperType+' - DAILY RESET';
-      document.getElementById('superPriceLabel').innerHTML='Price: <b>₦'+lastSuperPrice.toLocaleString()+'</b> - One per day';
+      document.getElementById('superTypeLabel').innerText=lastSuperType;
+      document.getElementById('superPriceLabel').innerHTML='Price: <b>₦'+lastSuperPrice.toLocaleString()+'</b>';
     }
     await loadFromServer();
   } catch(e){ alert('❌ '+e.message); }
@@ -303,6 +418,28 @@ async function generateUpgrade(type){
   } catch(e){ alert('❌ '+e.message); }
   btn.innerHTML = oldText; btn.disabled = false;
 }
+// ===== UPGRADE PAGE - Pending list =====
+async function loadUpgrades(){
+  const el=document.getElementById('upgradesList');
+  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading upgrades...</p>';
+  try{
+    const res=await fetch('/api/admin/upgrades/list?t='+Date.now(),{headers:getHeaders(),credentials:'include'});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||'No upgrades endpoint - use Server 3');
+    const list=data.upgrades||[];
+    if(!list.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No pending upgrades</p>'; return; }
+    el.innerHTML=list.map(u=>`<div class="item"><div style="flex:1"><b>${u.email||'User '+u.user_id}</b><br><span style="font-size:11px">${String(u.from_package||'').toUpperCase()} → <b>${String(u.to_package||'').toUpperCase()}</b> • ₦${Number(u.price||0).toLocaleString()} • ${u.status}<br><span style="color:#94a3b8;font-size:10px">${u.created_at||''} • Upline: ${u.upline_name||u.upline_id||'-'}</span></span></div><div>${u.status==='pending'?`<button onclick="confirmUpgrade(${u.id})" style="padding:8px 12px;background:#16a34a;color:#fff;border:none;border-radius:8px;font-weight:800;font-size:11px">✅ Confirm</button>`:''}</div></div>`).join('');
+  }catch(e){ el.innerHTML='<p style="color:red;text-align:center;padding:15px">❌ '+e.message+'</p>'; }
+}
+async function confirmUpgrade(id){
+  if(!confirm('Confirm this upgrade? User go move + upline go get Affiliate bonus.')) return;
+  try{
+    const res=await fetch('/api/upgrade/confirm',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({upgradeId:id})});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message);
+    alert('✅ '+data.message); loadUpgrades();
+  }catch(e){ alert('❌ '+e.message); }
+}
 function setDowngradeMsg(text, kind){
   const el=document.getElementById('downgradeMsg');
   if(!el) return;
@@ -327,14 +464,14 @@ async function checkDowngradeUser(){
     const preview=document.getElementById('downgradePreview');
     preview.innerHTML='<b>'+(u.email||val)+'</b><br>Name: '+(u.full_name||u.username||'-')+'<br>Current Package: <b>'+pkg+'</b><br>Status: '+(u.account_status||u.status||'-');
     preview.classList.add('show');
-    if(pkg==='SILVER'){ setDowngradeMsg('ℹ️ This user already dey Silver. No need to downgrade.', 'info'); }
-    else { setDowngradeMsg('✅ User found: '+pkg+'. Click Downgrade to move am back to Silver.', 'success'); }
+    if(pkg==='SILVER'){ setDowngradeMsg('ℹ️ This user already dey Silver.', 'info'); }
+    else { setDowngradeMsg('✅ User found: '+pkg+'. Click Downgrade.', 'success'); }
   }catch(e){ setDowngradeMsg('❌ '+e.message, 'error'); }
 }
 async function downgradeToSilver(){
   const val=document.getElementById('downgradeInput').value.trim();
-  if(!val){ setDowngradeMsg('❌ Enter email or username first.', 'error'); return; }
-  if(!confirm('Downgrade '+val+' back to Silver?\n\nShe go need to logout + login again, then re-upgrade to Gold with correct code.')) return;
+  if(!val){ setDowngradeMsg('❌ Enter email first.', 'error'); return; }
+  if(!confirm('Downgrade '+val+' back to Silver?')) return;
   const btn=document.getElementById('btnDowngrade');
   const oldText=btn.textContent; btn.disabled=true; btn.textContent='⏳ Downgrading...';
   setDowngradeMsg('⏳ Downgrading '+val+' to Silver...', 'info');
@@ -344,15 +481,14 @@ async function downgradeToSilver(){
     const res=await fetch('/api/admin/downgrade-to-silver',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify(body)});
     const data=await res.json().catch(()=>({}));
     if(!res.ok||!data.success) throw new Error(data.message||'Downgrade failed');
-    setDowngradeMsg('✅ '+data.message+' Tell user to logout + login again, then select Silver → Gold.', 'success');
+    setDowngradeMsg('✅ '+data.message, 'success');
     hideDowngradePreview();
-    await loadFromServer();
   }catch(e){ setDowngradeMsg('❌ '+e.message, 'error'); }
   finally{ btn.disabled=false; btn.textContent=oldText; }
 }
 async function fixOpeyemi(){
   document.getElementById('downgradeInput').value='opeyemi.owaboye@gmail.com';
-  if(!confirm('Fix Opeyemi — opeyemi.owaboye@gmail.com — back to Silver?\n\nShe go need to logout + login again, then re-upgrade to Gold.')) return;
+  if(!confirm('Fix Opeyemi back to Silver?')) return;
   const btn=document.getElementById('btnFixOpeyemi');
   const oldText=btn.textContent; btn.disabled=true; btn.textContent='⏳ Fixing Opeyemi...';
   setDowngradeMsg('⏳ Fixing Opeyemi to Silver...', 'info');
@@ -360,11 +496,88 @@ async function fixOpeyemi(){
     const res=await fetch('/api/admin/fix-opeyemi',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({})});
     const data=await res.json().catch(()=>({}));
     if(!res.ok||!data.success) throw new Error(data.message||'Fix failed');
-    setDowngradeMsg('✅ '+data.message+' Tell her to logout + login again, then select Silver → Gold.', 'success');
-    hideDowngradePreview();
-    await loadFromServer();
+    setDowngradeMsg('✅ '+data.message, 'success');
   }catch(e){ setDowngradeMsg('❌ '+e.message, 'error'); }
   finally{ btn.disabled=false; btn.textContent=oldText; }
+}
+
+// ===== BALANCE - NEW (Server 3) =====
+function setBalMsg(text, kind){
+  const el=document.getElementById('balMsg');
+  el.textContent=text; el.className='downgrade-status show '+(kind||'info');
+}
+async function checkBalanceUser(){
+  const val=document.getElementById('balEmail').value.trim();
+  if(!val){ setBalMsg('❌ Enter email first', 'error'); return; }
+  setBalMsg('⏳ Checking user...', 'info');
+  try{
+    const res=await fetch('/api/admin/balance/user?email='+encodeURIComponent(val)+'&t='+Date.now(),{headers:getHeaders(),credentials:'include'});
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.message||'User not found');
+    balUser=data.user;
+    const p=document.getElementById('balPreview');
+    p.innerHTML=`<b>${balUser.email}</b> • ${balUser.full_name||balUser.username||''} • <b>${String(balUser.package||balUser.plan||'').toUpperCase()}</b><br>💰 Wallet: <b>₦${Number(balUser.wallet_balance||0).toLocaleString()}</b> &nbsp; 👥 Affiliate: <b>₦${Number(balUser.affiliate_balance||0).toLocaleString()}</b><br>🎮 Game: <b>₦${Number(balUser.game_balance||0).toLocaleString()}</b>`;
+    p.classList.add('show');
+    setBalMsg('✅ User found. Select balance + action + amount.', 'success');
+  }catch(e){ setBalMsg('❌ '+e.message, 'error'); }
+}
+async function adjustBalance(forceAction){
+  const email=document.getElementById('balEmail').value.trim();
+  const walletType=document.getElementById('balWalletType').value;
+  const action=forceAction||document.getElementById('balAction').value;
+  const amount=Number(document.getElementById('balAmount').value);
+  const reason=document.getElementById('balReason').value.trim();
+  if(!email) return setBalMsg('❌ Enter email first', 'error');
+  if(!amount||amount<=0) return setBalMsg('❌ Enter valid amount', 'error');
+  if(!reason) return setBalMsg('❌ Enter reason - e go save for history', 'error');
+  const label = walletType==='wallet_balance'?'Wallet':walletType==='affiliate_balance'?'Affiliate':'Game';
+  if(!confirm(`${action==='add'?'ADD':'DEDUCT'} ₦${amount.toLocaleString()} ${action==='add'?'to':'from'} ${email} ${label} Balance?\n\nReason: ${reason}`)) return;
+  setBalMsg('⏳ Processing...', 'info');
+  try{
+    const res=await fetch('/api/admin/balance/adjust',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({email, walletType, action, amount, reason})});
+    const data=await res.json();
+    if(!res.ok||!data.success) throw new Error(data.message||'Failed');
+    setBalMsg('✅ '+data.message, 'success');
+    document.getElementById('balAmount').value='';
+    await checkBalanceUser();
+    await loadBalanceHistory();
+  }catch(e){ setBalMsg('❌ '+e.message, 'error'); }
+}
+async function loadBalanceHistory(){
+  const el=document.getElementById('balHistory');
+  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading...</p>';
+  try{
+    const res=await fetch('/api/admin/balance/history?t='+Date.now(),{headers:getHeaders(),credentials:'include'});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message);
+    const list=data.history||[];
+    if(!list.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:15px">No history yet</p>'; return; }
+    el.innerHTML=list.slice(0,50).map(h=>`<div class="item"><div style="flex:1"><b>${h.email||'User '+h.user_id}</b><br><span style="font-size:11px">${h.action==='add'?'➕ ADD':'➖ DEDUCT'} ₦${Number(h.amount||0).toLocaleString()} • ${h.wallet_type==='wallet_balance'?'Wallet':h.wallet_type==='affiliate_balance'?'Affiliate':'Game'}<br><span style="color:#64748b">${h.reason||''}</span><br><span style="color:#94a3b8;font-size:10px">${h.created_at||''} • ${h.before_balance} → ${h.after_balance}</span></span></div></div>`).join('');
+  }catch(e){ el.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
+}
+async function loadAffiliateWithdrawals(){
+  const el=document.getElementById('affiliateList');
+  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading...</p>';
+  try{
+    const res=await fetch('/api/admin/affiliate/withdrawals?t='+Date.now(),{headers:getHeaders(),credentials:'include'});
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message);
+    const list=data.withdrawals||[];
+    if(!list.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No affiliate withdrawals yet</p>'; return; }
+    el.innerHTML=list.map(w=>`<div class="dep-item ${w.status==='pending'?'pending':''}"><div style="display:flex;justify-content:space-between"><b>₦${Number(w.amount).toLocaleString()}</b> <span class="badge" style="background:${w.status==='pending'?'#fef3c7':'#dcfce7'}">${w.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${w.email||'Unknown'}</b><br>Bank: <b>${w.bank_name||''}</b><br>Acc: <b style="color:#d00">${w.account_number||''}</b><br>Name: <b>${w.account_name||''}</b><br>Date: ${w.requested_at}</div>${w.status==='pending'?`<button onclick="confirmAffiliate(${w.id},${w.amount})" style="margin-top:8px;width:100%;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(w.amount).toLocaleString()}</button><button onclick="declineAffiliate(${w.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund</button>`:''}</div>`).join('');
+  }catch(e){ el.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
+}
+async function confirmAffiliate(id,amount){
+  if(!confirm('You don pay ₦'+amount+'? Confirm Paid?')) return;
+  const res=await fetch('/api/admin/affiliate/withdraw/confirm',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({withdrawalId:id})});
+  const d=await res.json(); if(!d.success) return alert('❌ '+d.message);
+  alert('✅ '+d.message); loadAffiliateWithdrawals();
+}
+async function declineAffiliate(id){
+  if(!confirm('Decline and refund to affiliate balance?')) return;
+  const res=await fetch('/api/admin/affiliate/withdraw/decline',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({withdrawalId:id})});
+  const d=await res.json(); if(!d.success) return alert('❌ '+d.message);
+  alert('✅ '+d.message); loadAffiliateWithdrawals();
 }
 async function loadFromServer(){
   try {
@@ -397,14 +610,17 @@ function renderServer(filtered, totalAll){
   const activeCount = allServerCodes.filter(c=>!c.used).length;
   const usedCount = allServerCodes.filter(c=>!!c.used).length;
   document.getElementById('count').innerText = `${filtered.length} showing • ${activeCount} Active • ${usedCount} Used • ${totalAll} total`;
+  document.getElementById('statTotal').innerText = totalAll;
+  document.getElementById('statActive').innerText = activeCount;
+  document.getElementById('statUsed').innerText = usedCount;
   if(!filtered.length){
-    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet for this filter<br>Try All or Refresh</p>';
+    document.getElementById('list').innerHTML = '<p style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">No codes yet</p>';
     return;
   }
   document.getElementById('list').innerHTML = filtered.map((c)=>{
     const used = !!c.used;
     const who = c.used_by_name||c.used_by_email||c.used_by||'';
-    return `<div class="code-row ${used?'used':''}"><div style="flex:1;min-width:0"><div class="code-type">${c.type||'withdraw'} • ₦${Number(c.price||0).toLocaleString()}</div><b style="font-size:14px;word-break:break-all">${c.code}</b><br><span style="font-size:11px;color:#334155">${used?'USED by <b>'+who+'</b>':'✅ AVAILABLE - Not used yet'}<br><span style="color:#94a3b8;font-size:10px">${c.used_at||c.created_at||''}</span></span></div><div style="text-align:right;flex-shrink:0"><span class="badge" style="background:${used?'#fee2e2;color:#991b1b':'#dcfce7;color:#166534'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}');alert('Copied: ${c.code}')" style="margin-top:6px;padding:5px 10px;font-size:11px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-weight:800">Copy</button></div></div>`;
+    return `<div class="code-row ${used?'used':''}"><div style="flex:1;min-width:0"><div class="code-type">${c.type||'withdraw'} • ₦${Number(c.price||0).toLocaleString()}</div><b style="font-size:14px;word-break:break-all">${c.code}</b><br><span style="font-size:11px;color:#334155">${used?'USED by <b>'+who+'</b>':'✅ AVAILABLE - Not used yet'}<br><span style="color:#94a3b8;font-size:10px">${c.used_at||c.created_at||''}</span></span></div><div style="text-align:right;flex-shrink:0"><span class="badge" style="background:${used?'#fee2e2;color:#991b1b':'#dcfce7;color:#166534'}">${used?'USED':'ACTIVE'}</span><br><button onclick="navigator.clipboard.writeText('${c.code}');alert('Copied')" style="margin-top:6px;padding:5px 10px;font-size:11px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;font-weight:800">Copy</button></div></div>`;
   }).join('');
 }
 function copyCode(tab){ const code=tab==='withdraw'?lastWithdraw:tab==='upgrade'?lastUpgrade:lastSuper; if(!code) return alert('Generate first'); navigator.clipboard.writeText(code); alert('Copied: '+code); }
@@ -424,14 +640,15 @@ async function validate(){
 }
 async function loadMusic(){
   const listDiv = document.getElementById('musicList');
-  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading music - Daily one earn active...</p>';
+  listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading music...</p>';
   try{
     const res = await fetch('/api/admin/music/list?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
-    if(res.status===401){ listDiv.innerHTML='<p style="color:orange;text-align:center">Session expired - Logout and login again</p>'; return; }
-    if(res.status===404){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ API endpoint not found - Use SAFE second server file (without risky auto-align)</p>'; return; }
+    if(res.status===401){ listDiv.innerHTML='<p style="color:orange;text-align:center">Session expired</p>'; return; }
+    if(res.status===404){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ API endpoint not found</p>'; return; }
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     rawMusic = data.tracks || data.music || [];
+    document.getElementById('statMusic').innerText = rawMusic.length;
     filterMusic();
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center">❌ '+e.message+'</p>'; }
 }
@@ -439,9 +656,9 @@ function filterMusic(){
   const q = (document.getElementById('searchMusic').value||'').toLowerCase();
   const filtered = rawMusic.filter(m=> `${m.title||''} ${m.artist||''} ${m.category||''}`.toLowerCase().includes(q));
   const listDiv = document.getElementById('musicList');
-  if(!filtered.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No music - Upload with direct .mp3 link (catbox.moe) - One per day - Must finish</p>'; return; }
+  if(!filtered.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No music yet</p>'; return; }
   listDiv.innerHTML = filtered.map(m=>{
-    return `<div class="item"><div style="flex:1"><b>${m.title}</b> - ${m.artist||'Jovia'}<br><span style="font-size:10px;color:#5b21b6">Reward: ₦${Number(m.reward||0)} 👑 - ONE PER DAY - Must finish</span><br><span style="font-size:9px;color:#94a3b8">${m.category||''} - Plays ${m.plays||0}</span></div><div><button onclick="editMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#2563eb;color:#fff;border:none;border-radius:6px;margin-bottom:4px;width:100%">Edit</button><button onclick="deleteMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;width:100%">Delete</button></div></div>`;
+    return `<div class="item"><div style="flex:1"><b>${m.title}</b> - ${m.artist||'Jovia'}<br><span style="font-size:10px;color:#5b21b6">Reward: ₦${Number(m.reward||0)} - ONE PER DAY - Must finish</span><br><span style="font-size:9px;color:#94a3b8">${m.category||''} - Plays ${m.plays||0}</span></div><div><button onclick="editMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#2563eb;color:#fff;border:none;border-radius:6px;margin-bottom:4px;width:100%">Edit</button><button onclick="deleteMusic(${Number(m.id)})" style="padding:5px 8px;font-size:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;width:100%">Delete</button></div></div>`;
   }).join('');
 }
 function musicStatus(msg, success=false){
@@ -461,23 +678,19 @@ async function saveMusic(){
   if(!title||!url){ return musicStatus('Title and MP3 URL required', false); }
   if(!Number.isFinite(reward)||reward<10){ return musicStatus('Reward must be at least ₦10', false); }
   const btn=document.getElementById('btnMusic');
-  btn.disabled=true; btn.textContent='Uploading - Daily One...';
+  btn.disabled=true; btn.textContent='Uploading...';
   try{
     const payload={title,artist,url,cover,reward,category};
     const endpoint=editingMusicId?`/api/admin/music/${Number(editingMusicId)}`:'/api/admin/music/add';
     const method=editingMusicId?'PUT':'POST';
     const res=await fetch(endpoint,{method,headers:getHeaders(),credentials:'include',body:JSON.stringify(payload)});
     const data=await res.json().catch(()=>({}));
-    if(!res.ok||!data.success){
-      if(res.status===401) throw new Error('Session expired - Logout and login again');
-      if(res.status===404) throw new Error('API endpoint not found - Use SAFE second server file');
-      throw new Error(data.message||'Could not save music');
-    }
-    musicStatus(`✅ Music uploaded - ₦${reward} - One per day - Must finish - SAFE`, true);
+    if(!res.ok||!data.success) throw new Error(data.message||'Could not save music');
+    musicStatus(`✅ Music uploaded - ₦${reward}`, true);
     cancelMusicEdit();
     await loadMusic();
   }catch(e){ musicStatus(e.message, false); }
-  finally{ btn.disabled=false; btn.textContent=editingMusicId?'Save Changes - Daily One':'＋ Upload Music & Set Price - DAILY ONE'; }
+  finally{ btn.disabled=false; btn.textContent='＋ Upload Music & Set Price - DAILY ONE'; }
 }
 function editMusic(id){
   const m=rawMusic.find(x=>Number(x.id)===Number(id));
@@ -489,7 +702,7 @@ function editMusic(id){
   document.getElementById('musicCover').value=m.cover||'♫';
   document.getElementById('musicReward').value=Number(m.reward||100);
   document.getElementById('musicCategory').value=m.category||'Super Hits';
-  document.getElementById('btnMusic').textContent='Save Changes - Daily One';
+  document.getElementById('btnMusic').textContent='Save Changes';
   document.getElementById('cancelMusicEdit').style.display='block';
 }
 function cancelMusicEdit(){
@@ -518,15 +731,15 @@ async function loadDeposits(){
   listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading deposits...</p>';
   try{
     const res = await fetch('/api/admin/games/deposits?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
-    if(res.status===404){ throw new Error('API endpoint not found - Use SAFE second server file'); }
-    if(res.status===401){ throw new Error('Session expired - Logout and login again'); }
+    if(res.status===404){ throw new Error('API endpoint not found'); }
+    if(res.status===401){ throw new Error('Session expired'); }
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     if(!data.deposits.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No deposits yet</p>'; return; }
     listDiv.innerHTML = data.deposits.map(d=>{
       const isPending = d.status==='pending';
       const proof = d.proof_image ? `<img src="${d.proof_image}" class="proof-img" onclick="openModal('${d.proof_image}')"><div style="font-size:10px;color:#22c55e;text-align:center">📸 Payment Proof - Click to enlarge</div>` : '<div style="color:red;font-size:11px;padding:10px;background:#fee2e2;border-radius:8px">❌ No proof uploaded</div>';
-      return `<div class="dep-item ${isPending?'pending':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>Ref: <b>${d.reference}</b><br>Date: ${d.created_at}</div>${proof}${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve & Fund ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineDeposit(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Funded at ${d.confirmed_at||''}</div>`}</div>`;
+      return `<div class="dep-item ${isPending?'pending':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>Ref: <b>${d.reference}</b><br>Date: ${d.created_at}</div>${proof}${isPending?`<button onclick="confirmDeposit(${d.id}, ${d.amount})" style="margin-top:8px;width:100%;padding:12px;background:#16a34a;color:white;border:none;border-radius:10px;font-weight:900">✅ Approve & Fund ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineDeposit(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Funded at ${d.confirmed_at||''}</div>`}</div>`;
     }).join('');
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center;padding:15px">❌ '+e.message+'</p>'; }
 }
@@ -551,14 +764,14 @@ async function loadWithdrawals(){
   listDiv.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading withdrawals...</p>';
   try{
     const res = await fetch('/api/admin/games/withdrawals?t='+Date.now(),{headers: getHeaders(), credentials:'include'});
-    if(res.status===404){ throw new Error('API endpoint not found - Use SAFE second server'); }
-    if(res.status===401){ throw new Error('Session expired - Login again'); }
+    if(res.status===404){ throw new Error('API endpoint not found'); }
+    if(res.status===401){ throw new Error('Session expired'); }
     const data = await res.json();
     if(!data.success) throw new Error(data.message);
     if(!data.withdrawals.length){ listDiv.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No withdrawals yet</p>'; return; }
     listDiv.innerHTML = data.withdrawals.map(d=>{
       const isPending = d.status==='pending';
-      return `<div class="dep-item ${isPending?'pending':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>Bank: <b>${d.bank_name||''}</b><br>Acc: <b style="color:#d00">${d.account_number||''}</b> <button onclick="navigator.clipboard.writeText('${d.account_number||''}');alert('Copied')" style="padding:3px 8px;font-size:10px;background:#0f172a;color:#22c55e;border:none;border-radius:6px">Copy</button><br>Name: <b>${d.account_name||''}</b><br>Date: ${d.requested_at}</div>${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:12px;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Paid at ${d.processed_at||''}</div>`}</div>`;
+      return `<div class="dep-item ${isPending?'pending':''}"><div style="display:flex;justify-content:space-between"><b style="font-size:14px">₦${Number(d.amount).toLocaleString()}</b> <span class="badge" style="background:${isPending?'#fef3c7':'#dcfce7'}">${d.status.toUpperCase()}</span></div><div style="font-size:11px;margin-top:6px">User: <b>${d.email||'Unknown'}</b> (ID ${d.user_id})<br>Bank: <b>${d.bank_name||''}</b><br>Acc: <b style="color:#d00">${d.account_number||''}</b><br>Name: <b>${d.account_name||''}</b><br>Date: ${d.requested_at}</div>${isPending?`<button onclick="confirmWithdrawal(${d.id}, ${d.amount}, '${d.account_number||''}')" style="margin-top:8px;width:100%;padding:12px;background:#16a34a;color:white;border:none;border-radius:10px;font-weight:900">✅ I Have Paid ₦${Number(d.amount).toLocaleString()}</button><button onclick="declineWithdrawal(${d.id})" style="margin-top:6px;width:100%;padding:10px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800">❌ Decline & Refund</button>`:`<div style="margin-top:8px;color:green;font-weight:800;font-size:11px;padding:8px;background:#f0fdf4;border-radius:8px;text-align:center">✅ Paid at ${d.processed_at||''}</div>`}</div>`;
     }).join('');
   }catch(e){ listDiv.innerHTML='<p style="color:red;text-align:center;padding:15px">❌ '+e.message+'</p>'; }
 }
@@ -580,7 +793,7 @@ async function declineWithdrawal(withdrawalId){
 }
 document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') unlock(); });
 loadFromServer();
-setTab('withdraw');
+showPage('home');
 </script>
 </body>
 </html>
