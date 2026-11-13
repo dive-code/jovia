@@ -123,7 +123,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN original_amount INTEGER DEFAULT 0`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN fee_percent INTEGER DEFAULT 0`); }catch{}
 
-  // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY - DB TRIGGER =====
+  // ===== PREVENTION: BLOCK DUPLICATE SUPER JOBS SAME DAY =====
   try{
     db.exec(`CREATE INDEX IF NOT EXISTS idx_wallet_job_dup ON wallet_transactions(user_id, description, type, created_at)`);
     db.exec(`DROP TRIGGER IF EXISTS no_dup_job_reward`);
@@ -200,12 +200,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
   const WIN_RATE = 35;
 
-  // ===== ✅ FIXED PRICES: Silver->Gold 3000, Gold->Super 8000, Silver->Super 13000. Gold->Silver REMOVED =====
-  const UPGRADE_PRICES = {
-    "silver->gold": 3000,
-    "gold->super": 8000,
-    "silver->super": 13000,
-  };
+  // ===== ✅ FIXED PRICES: Silver->Gold 3000, Gold->Super 8000, Silver->Super 13000 =====
+  const UPGRADE_PRICES = { "silver->gold": 3000, "gold->super": 8000, "silver->super": 13000 };
   const getUpgradePrice = (fromPkg, toPkg) => {
     const key = String(fromPkg||"").toLowerCase().trim() + "->" + String(toPkg||"").toLowerCase().trim();
     return UPGRADE_PRICES[key] ?? null;
@@ -223,33 +219,82 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     if(t==="super-silver") return "silver->super";
     return null;
   };
+
+  // ===== ✅ FIXED getUpline - FINDS UPLINE ANYHOW (ALL COLUMN NAMES + referral_code) =====
   const getUpline = (user) => {
     try{
       if(!user) return null;
       const cols = userColumns();
-      const possibleCols = ["referred_by","referrer_id","upline_id","invited_by","sponsor_id","referral_id","parent_id"];
+      const possibleCols = ["referred_by","referrer_id","upline_id","invited_by","sponsor_id","referral_id","parent_id","referrer","referredBy","referral_code","invite_code","invite_by","invitedBy","sponsor","upline","refer_by","referred_by_id","referral_by"];
       for(const col of possibleCols){
         if(!cols.includes(col)) continue;
         const val = user[col];
         if(!val) continue;
         let upline = null;
-        if(/^\d+$/.test(String(val))) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(Number(val));
-        if(!upline) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE username=? OR email=? OR id=? LIMIT 1`).get(String(val), String(val), Number(val)||-1);
-        if(upline) return upline;
+        const v = String(val).trim();
+        if(/^\d+$/.test(v)) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(Number(v));
+        if(!upline) upline = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE username=? OR email=? OR referral_code=? OR invite_code=? LIMIT 1`).get(v, v, v, v);
+        if(upline && upline.id !== user.id) return upline;
       }
+      try{
+        const prev = db.prepare(`SELECT upline_id FROM jovia_upgrades WHERE user_id=? AND upline_id IS NOT NULL ORDER BY id DESC LIMIT 1`).get(user.id);
+        if(prev?.upline_id) {
+          const up2 = db.prepare(`SELECT id, full_name, username, email, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(prev.upline_id);
+          if(up2) return up2;
+        }
+      }catch{}
       return null;
     }catch{ return null; }
   };
-  // ✅ UPGRADE BONUS -> AFFILIATE BALANCE ONLY, NOT wallet / available
+
+  // ===== NOTIFY USER HELPER =====
+  const notifyUser = (userId, title, message) => {
+    try{
+      const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')`).all().map(r=>r.name);
+      if(!tables.length){
+        db.exec(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, message TEXT, type TEXT DEFAULT 'system', is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+        tables.push("notifications");
+      }
+      for(const tbl of tables){
+        try{
+          const cols = db.prepare(`PRAGMA table_info(${tbl})`).all().map(c=>c.name);
+          const has = (n) => cols.includes(n);
+          if(has("user_id") && has("title") && has("message")){
+            const typeCol = has("type") ? ", type" : "";
+            const typeVal = has("type") ? ", 'system'" : "";
+            const readCol = has("is_read") ? ", is_read" : "";
+            const readVal = has("is_read") ? ", 0" : "";
+            const createdCol = has("created_at") ? ", created_at" : "";
+            const createdVal = has("created_at") ? ", datetime('now')" : "";
+            db.prepare(`INSERT INTO ${tbl} (user_id, title, message${typeCol}${readCol}${createdCol}) VALUES (?, ?, ?${typeVal}${readVal}${createdVal})`).run(userId, title, message);
+            return true;
+          }
+          if(has("user_id") && has("message")){
+            db.prepare(`INSERT INTO ${tbl} (user_id, message) VALUES (?, ?)`).run(userId, `${title} - ${message}`);
+            return true;
+          }
+        }catch{}
+      }
+    }catch(e){ console.log("⚠️ notifyUser failed:", e.message); }
+    return false;
+  };
+
+  // ✅ UPGRADE BONUS -> AFFILIATE BALANCE ONLY + NOTIFY UPLINE
   const creditUpline = (uplineId, amount, fromUserId, label) => {
     try{
       if(!uplineId || !amount) return false;
       if(hasColumn("affiliate_balance")) db.prepare(`UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ? WHERE id=?`).run(amount, uplineId);
       if(hasColumn("referral_balance")){ try{ db.prepare(`UPDATE users SET referral_balance = COALESCE(referral_balance,0) + ? WHERE id=?`).run(amount, uplineId); }catch{} }
       try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'upgrade_bonus', ?, ?, datetime('now'))`).run(uplineId, amount, `Upgrade bonus [AFFILIATE] from user ${fromUserId} - ${label}`); }catch{}
+      try{
+        const fromUser = db.prepare(`SELECT full_name, username, email FROM users WHERE id=?`).get(fromUserId);
+        const name = fromUser ? (fromUser.full_name||fromUser.username||fromUser.email||`User ${fromUserId}`) : `User ${fromUserId}`;
+        notifyUser(uplineId, "Upgrade Bonus - System", `Hello, you received ₦${Number(amount).toLocaleString()} upgrade bonus to your Affiliate Balance from ${name} who upgraded (${label}). - Jovia System`);
+      }catch{}
       return true;
     }catch{ return false; }
   };
+
   const isSuspendedStatus = (status) => {
     const s = String(status||"").toLowerCase().trim();
     return ["suspended","banned","blocked","disabled","suspend"].includes(s);
@@ -415,9 +460,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // ===== ✅ BALANCE ADD / DEDUCT - SAME AS FRONTEND USES =====
-  // Frontend sends: { userId | email | username, amount, reason, balanceType: "wallet" | "affiliate" | "available" | "game", type: "add" | "deduct" }
-  // We register ALL names frontend fit call, so no 404 again.
+  // ===== BALANCE ADD / DEDUCT =====
   const findUserForBalance = (body) => {
     const userId = Number(body?.userId||body?.id||body?.user_id||0);
     const email = String(body?.email||"").trim().toLowerCase();
@@ -448,14 +491,18 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         const acc=getOrCreateGameAccount(user.id);
         const before=Number(acc.game_balance||0);
         const after = isAdd ? before+amount : Math.max(0, before-amount);
+        const wasShort = !isAdd && before < amount;
         db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(after, user.id);
         try{ db.prepare(`INSERT INTO game_transactions (user_id, type, amount, reference, balance_before, balance_after, status) VALUES (?, ?, ?, ?, ?, ?, 'completed')`).run(user.id, isAdd?"admin_add":"admin_deduct", amount, `ADMIN-${isAdd?"ADD":"DEDUCT"}-${Date.now()}`, before, after); }catch{}
-        return res.json({success:true,message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()} - ${before} → ${after}`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
+        if(!isAdd) notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your Game Balance by the System. Reason: ${reason}. Previous: ₦${before.toLocaleString()}, New: ₦${after.toLocaleString()}. - Jovia System`);
+        return res.json({success:true,message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()} - ${before} → ${after}${wasShort?" - User only get ₦"+before.toLocaleString(): ""}`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
       }
       const before = Number(user[col]||user.wallet_balance||0);
       const after = isAdd ? before+amount : Math.max(0, before-amount);
+      const wasShort = !isAdd && before < amount;
       db.prepare(`UPDATE users SET ${col} = ? WHERE id=?`).run(after, user.id);
       try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [${col}]`); }catch{}
+      if(!isAdd) notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${col==="affiliate_balance"?"Affiliate":"Available"} Balance by the System. Reason: ${reason}. Previous: ₦${before.toLocaleString()}, New: ₦${after.toLocaleString()}. - Jovia System`);
       const updated = db.prepare(`SELECT id, email, username, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(user.id);
       return res.json({success:true,message:`✅ ${col==="affiliate_balance"?"Affiliate":"Available"} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()} - ${before} → ${after}`, user:updated, userId:user.id, beforeBalance:before, newBalance:after, balance:after, wallet_balance:updated?.wallet_balance, affiliate_balance:updated?.affiliate_balance});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -637,6 +684,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, message:`Upgrade request created: ${fromPkg} → ${toPkg} - ₦${price} - Pay to your upline`, upgrade, price, upline: upline?{id:upline.id, name:upline.full_name||upline.username, email:upline.email}:null});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
+
+  // ===== ✅ FIXED CONFIRM - FALLBACK UPLINE + CREDIT ALL ROUTES =====
   safeAdd("post","/api/upgrade/confirm",adminGuard,(req,res)=>{
     try{
       const upgradeId = Number(req.body?.upgradeId||req.body?.id);
@@ -648,6 +697,17 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const user = db.prepare(`SELECT * FROM users WHERE id=?`).get(up.user_id);
       if(!user) return res.status(404).json({success:false,message:"User not found"});
       const toUpper = String(up.to_package||"").toUpperCase();
+      let finalUplineId = up.upline_id;
+      if(!finalUplineId){
+        const freshUpline = getUpline(user);
+        if(freshUpline) {
+          finalUplineId = freshUpline.id;
+          try{ db.prepare(`UPDATE jovia_upgrades SET upline_id=?, upline_name=? WHERE id=?`).run(freshUpline.id, freshUpline.full_name||freshUpline.username||"", upgradeId); }catch{}
+          console.log(`🔁 Confirm fallback: found upline ${freshUpline.id} for upgrade ${upgradeId}`);
+        } else {
+          console.log(`⚠️ Confirm: NO UPLINE FOUND for user ${user.id} (${user.email}) upgrade ${up.from_package} -> ${up.to_package} - bonus NOT credited`);
+        }
+      }
       db.transaction(()=>{
         const sets=["package=?"]; const vals=[toUpper];
         if(hasColumn("plan")){ sets.push("plan=?"); vals.push(toUpper); }
@@ -658,11 +718,36 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         vals.push(user.id);
         db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(...vals);
         db.prepare(`UPDATE jovia_upgrades SET status='confirmed', confirmed_at=datetime('now') WHERE id=?`).run(upgradeId);
-        if(up.upline_id) creditUpline(up.upline_id, up.price, user.id, `${up.from_package} -> ${up.to_package}`);
+        if(finalUplineId) creditUpline(finalUplineId, up.price, user.id, `${up.from_package} -> ${up.to_package}`);
       })();
       return res.json({success:true, message:`Upgrade confirmed: ${up.from_package} → ${up.to_package} - ₦${up.price} credited to upline AFFILIATE balance`});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
+
+  // ===== ✅ FIX MISSING BONUS - FOR ALREADY-CONFIRMED UPGRADES THAT MISSED BONUS =====
+  safeAdd("post","/api/admin/upgrades/fix-bonus", adminGuard, (req,res)=>{
+    try{
+      const upgradeId = Number(req.body?.upgradeId||req.body?.id||0);
+      if(!upgradeId) return res.status(400).json({success:false,message:"upgradeId required"});
+      const up = db.prepare(`SELECT * FROM jovia_upgrades WHERE id=?`).get(upgradeId);
+      if(!up) return res.status(404).json({success:false,message:"Upgrade not found"});
+      const user = db.prepare(`SELECT * FROM users WHERE id=?`).get(up.user_id);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      let uplineId = up.upline_id;
+      if(!uplineId){
+        const upline = getUpline(user);
+        if(!upline) return res.status(404).json({success:false,message:"No upline found for this user - check referral column"});
+        uplineId = upline.id;
+        db.prepare(`UPDATE jovia_upgrades SET upline_id=?, upline_name=? WHERE id=?`).run(upline.id, upline.full_name||upline.username||"", upgradeId);
+      }
+      const already = db.prepare(`SELECT id FROM wallet_transactions WHERE user_id=? AND type='upgrade_bonus' AND description LIKE ? LIMIT 1`).get(uplineId, `%from user ${user.id}%`);
+      if(already) return res.json({success:false,message:"Bonus already credited before - no double credit"});
+      const ok = creditUpline(uplineId, up.price, user.id, `${up.from_package} -> ${up.to_package} [FIX-BONUS]`);
+      const uplineAfter = db.prepare(`SELECT id, email, username, affiliate_balance FROM users WHERE id=?`).get(uplineId);
+      return res.json({success:true,message:`✅ Fixed! ₦${up.price} credited to upline ${uplineAfter.email} affiliate balance. New balance: ₦${uplineAfter.affiliate_balance}`, upline:uplineAfter, amount:up.price});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   safeAdd("post","/api/upgrade/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     const selectedRaw = String(req.body?.selected||req.body?.selectedUpgrade||req.body?.to||req.body?.target||req.body?.upgrade||req.body?.fromTo||"").toLowerCase().trim();
