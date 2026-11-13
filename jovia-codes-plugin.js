@@ -220,7 +220,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return null;
   };
 
-  // ===== ✅ FIXED getUpline - FINDS UPLINE ANYHOW (ALL COLUMN NAMES + referral_code) =====
+  // ===== ✅ FIXED getUpline - FINDS UPLINE ANYHOW =====
   const getUpline = (user) => {
     try{
       if(!user) return null;
@@ -316,19 +316,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const sureName=username||fullName||(email?email.split("@")[0]:"")||`User${user.id}`;
     return { sureName, sureEmail: email, display: email?`${sureName} (${email})`:`${sureName} (ID ${user.id})`, id: user.id };
   };
+
+  // ===== ✅ FIXED getRedeemer - ONLY TRUST used_by_id, NEVER MATCH BY NAME/EMAIL ALONE =====
+  // Old version matched by name/email and caused false "USED by him" for people with same name.
   const getRedeemer = row => {
     let user=null;
     if(row.used_by_id!=null) user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE id = ?`).get(row.used_by_id)||null;
-    if(!user){
-      const e=String(row.used_by_email||"").trim(); const n=String(row.used_by_name||"").trim();
-      if(e){ try{ user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(e)||null; }catch(_){} }
-      if(!user&&n){
-        const cols=userColumns(); const conds=[];
-        if(cols.includes("username")) conds.push("LOWER(TRIM(username))=LOWER(TRIM(?))");
-        if(cols.includes("full_name")) conds.push("LOWER(TRIM(full_name))=LOWER(TRIM(?))");
-        if(conds.length) try{ user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE ${conds.join(" OR ")} LIMIT 1`).get(...conds.map(()=>n))||null; }catch(_){}
-      }
-    }
     const name=(user?String(user.full_name||user.username||user.email||`User ID ${user.id}`).trim():"")||String(row.used_by_name||"").trim();
     const email=(user?String(user.email||"").trim():"")||String(row.used_by_email||"").trim();
     const id=user?.id??row.used_by_id??null;
@@ -446,7 +439,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const before=String(user.package||user.plan||"");
       if(before.toLowerCase().includes("silver")) return res.json({success:true,message:`${user.email||username} already dey Silver`, user});
       const updated=downgradeUserToSilver(user.id);
-      return res.json({success:true,message:`✅ Downgraded ${updated.email||username} from ${before} → Silver. Tell user to logout + login again, then select Silver → Gold.`, user: updated, beforePackage: before, afterPackage: "Silver"});
+      return res.json({success:true,message:`✅ Downgraded ${updated.email||username} from ${before} → Silver. Tell user to logout + login again, then select Silver → Gold. NOTE: Old code used before will NOT work again - give new code or reset old code.`, user: updated, beforePackage: before, afterPackage: "Silver"});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
   safeAdd("post","/api/admin/fix-opeyemi", adminGuard, (req,res)=>{
@@ -652,6 +645,34 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   });
   safeAdd("get","/api/admin/codes/list",adminGuard,(req,res)=>{ const rows=db.prepare(`SELECT * FROM jovia_codes ORDER BY created_at DESC`).all(); return res.json({success:true,total:rows.length,codes:rows.map(safeCodeRecord)}); });
   safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
+
+  // ===== ✅ NEW: RESET CODE - FOR WISDOM CASE (SUPER-AKZZYL9) =====
+  // Use this after downgrade: old code was USED by same user, reset am so e fit use am again.
+  safeAdd("post","/api/admin/codes/reset", adminGuard, (req,res)=>{
+    try{
+      const code = normalizeCode(req.body?.code||req.body?.codeText||"");
+      if(!code) return res.status(400).json({success:false,message:"code required"});
+      const row = db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(code);
+      if(!row) return res.status(404).json({success:false,message:"Code not found: "+code});
+      db.prepare(`UPDATE jovia_codes SET used=0, used_by='', used_by_name='', used_by_email='', used_by_id=NULL, used_at=NULL WHERE code=?`).run(code);
+      const after = db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(code);
+      return res.json({success:true,message:`✅ Code ${code} reset to UNUSED - user fit try again now. Tell user to logout + login again.`, code: safeCodeRecord(after)});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  safeAdd("post","/api/admin/codes/reset-for-user", adminGuard, (req,res)=>{
+    try{
+      const userId = Number(req.body?.userId||req.body?.id||0);
+      const email = String(req.body?.email||"").trim().toLowerCase();
+      let user=null;
+      if(userId) user=db.prepare(`SELECT * FROM users WHERE id=?`).get(userId);
+      if(!user && email) user=db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(email);
+      if(!user) return res.status(404).json({success:false,message:"User not found"});
+      const rows = db.prepare(`SELECT * FROM jovia_codes WHERE used_by_id=?`).all(user.id);
+      for(const r of rows){ db.prepare(`UPDATE jovia_codes SET used=0, used_by='', used_by_name='', used_by_email='', used_by_id=NULL, used_at=NULL WHERE code=?`).run(r.code); }
+      return res.json({success:true,message:`✅ Reset ${rows.length} code(s) used by ${user.email} - e fit reuse them now`, resetCodes: rows.map(r=>r.code), count: rows.length});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   safeAdd("get","/api/upgrade/options",userGuard,(req,res)=>{
     try{
       const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
@@ -724,7 +745,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  // ===== ✅ FIX MISSING BONUS - FOR ALREADY-CONFIRMED UPGRADES THAT MISSED BONUS =====
+  // ===== ✅ FIX MISSING BONUS =====
   safeAdd("post","/api/admin/upgrades/fix-bonus", adminGuard, (req,res)=>{
     try{
       const upgradeId = Number(req.body?.upgradeId||req.body?.id||0);
@@ -759,7 +780,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED - Contact Admin");
         const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
         if(!code) throw new Error("INVALID CODE");
-        if(Number(code.used)===1) throw new Error(`USED:${getRedeemer(code).display}`);
+        // ✅ Clear message when same user already used it (Wisdom case)
+        if(Number(code.used)===1){
+          if(Number(code.used_by_id)===Number(user.id)) throw new Error(`You already used this code (${raw}) before. Ask admin for a NEW code or to reset it - old code no fit work again.`);
+          throw new Error(`USED:${getRedeemer(code).display}`);
+        }
         const currentPackage = String(user.package||user.plan||"Silver").toLowerCase();
         const isSilver = currentPackage.includes("silver");
         const isGold = currentPackage.includes("gold");
