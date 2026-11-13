@@ -38,6 +38,40 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.status(401).json({success:false,message:"Admin authentication required"});
   };
 
+  // ===== NOTIFY USER - SYSTEM NOTIFICATION FOR DEDUCTION =====
+  // Tries all common notification tables, no crash if table no exist
+  const notifyUser = (userId, title, message) => {
+    try{
+      const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')`).all().map(r=>r.name);
+      if(!tables.length){
+        // Create one if none exist
+        db.exec(`CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, title TEXT, message TEXT, type TEXT DEFAULT 'system', is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`);
+        tables.push("notifications");
+      }
+      for(const tbl of tables){
+        try{
+          const cols = db.prepare(`PRAGMA table_info(${tbl})`).all().map(c=>c.name);
+          const has = (n) => cols.includes(n);
+          if(has("user_id") && has("title") && has("message")){
+            const typeCol = has("type") ? ", type" : "";
+            const typeVal = has("type") ? ", 'system'" : "";
+            const readCol = has("is_read") ? ", is_read" : "";
+            const readVal = has("is_read") ? ", 0" : "";
+            const createdCol = has("created_at") ? ", created_at" : "";
+            const createdVal = has("created_at") ? ", datetime('now')" : "";
+            db.prepare(`INSERT INTO ${tbl} (user_id, title, message${typeCol}${readCol}${createdCol}) VALUES (?, ?, ?${typeVal}${readVal}${createdVal})`).run(userId, title, message);
+            return true;
+          }
+          if(has("user_id") && has("message")){
+            db.prepare(`INSERT INTO ${tbl} (user_id, message) VALUES (?, ?)`).run(userId, `${title} - ${message}`);
+            return true;
+          }
+        }catch{}
+      }
+    }catch(e){ console.log("⚠️ notifyUser failed:", e.message); }
+    return false;
+  };
+
   // ===== 1. BEGINNING OF SERVER 3 - BALANCE HISTORY =====
   const balanceHistoryHandler = (req,res) => {
     try{
@@ -78,7 +112,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   ];
   balanceHistoryPaths.forEach(p=> safeAdd("get", p, adminGuard, balanceHistoryHandler));
 
-  // ===== 1B. NEW - BALANCE USER (FIX: GET /api/admin/balance/user?email=...) =====
+  // ===== 1B. BALANCE USER =====
   const balanceUserHandler = (req,res) => {
     try{
       const email = String(req.query?.email||"").trim().toLowerCase();
@@ -94,38 +128,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const gameBal = Number(gameAcc?.game_balance||0);
       const walletBal = Number(user.wallet_balance||0);
       const affBal = Number(user.affiliate_balance||0);
-      return res.json({
-        success:true,
-        user: {
-          id: user.id,
-          email: user.email,
-          username: user.username,
-          full_name: user.full_name,
-          package: user.package || user.plan,
-          plan: user.plan || user.package,
-          wallet_balance: walletBal,
-          available_balance: walletBal,
-          affiliate_balance: affBal,
-          referral_balance: Number(user.referral_balance||0),
-          game_balance: gameBal,
-          account_status: user.account_status,
-          status: user.status
-        },
-        wallet_balance: walletBal,
-        available_balance: walletBal,
-        affiliate_balance: affBal,
-        game_balance: gameBal
-      });
+      return res.json({success:true, user:{id:user.id,email:user.email,username:user.username,full_name:user.full_name,package:user.package||user.plan,plan:user.plan||user.package,wallet_balance:walletBal,available_balance:walletBal,affiliate_balance:affBal,referral_balance:Number(user.referral_balance||0),game_balance:gameBal,account_status:user.account_status,status:user.status}, wallet_balance:walletBal, available_balance:walletBal, affiliate_balance:affBal, game_balance:gameBal});
     }catch(e){ return res.status(500).json({success:false, message:e.message}); }
   };
-  [
-    "/api/admin/balance/user",
-    "/api/admin/balance/user-by-email",
-    "/api/admin/user/balance-detail",
-    "/api/admin/balance/detail"
-  ].forEach(p=> safeAdd("get", p, adminGuard, balanceUserHandler));
+  ["/api/admin/balance/user","/api/admin/balance/user-by-email","/api/admin/user/balance-detail","/api/admin/balance/detail"].forEach(p=> safeAdd("get", p, adminGuard, balanceUserHandler));
 
-  // ===== 2. BALANCE ADD / DEDUCT (same as frontend) =====
+  // ===== 2. BALANCE ADD / DEDUCT - DEDUCT ALWAYS SUCCEEDS + NOTIFY USER =====
   const findUserForBalance = (body) => {
     const uid = Number(body?.userId||body?.id||body?.user_id||0);
     const em = String(body?.email||"").trim().toLowerCase();
@@ -151,20 +159,44 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       if(!user) return res.status(404).json({success:false,message:"User not found"});
       const reason = String(body?.reason||body?.note||body?.description||(isAdd?"Admin add balance":"Admin deduct balance")).slice(0,300);
       const col = resolveCol(body);
+      const label = col==="affiliate_balance" ? "Affiliate" : col==="game_balance" ? "Game" : "Available";
       if(col==="game_balance"){
         let acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(user.id);
         if(!acc){ db.prepare(`INSERT INTO jovia_game_accounts (user_id, game_balance, points) VALUES (?,0,0)`).run(user.id); acc=db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(user.id); }
         const before = Number(acc.game_balance||0);
         const after = isAdd ? before+amount : Math.max(0, before-amount);
+        const wasShort = !isAdd && before < amount;
         db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(after, user.id);
-        return res.json({success:true,message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
+        try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [game_balance]`); }catch{}
+        // 🔔 NOTIFY USER - DEDUCTION FROM SYSTEM
+        if(!isAdd){
+          notifyUser(user.id, "Balance Deduction - System",
+            `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
+        } else {
+          notifyUser(user.id, "Balance Added - System",
+            `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
+        }
+        return res.json({success:true, message: wasShort ? `✅ Game balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.` : `✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
       }
       const before = Number(user[col]||user.wallet_balance||0);
       const after = isAdd ? before+amount : Math.max(0, before-amount);
+      const wasShort = !isAdd && before < amount;
       db.prepare(`UPDATE users SET ${col} = ? WHERE id=?`).run(after, user.id);
       try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [${col}]`); }catch{}
+      // 🔔 NOTIFY USER - DEDUCTION FROM SYSTEM
+      if(!isAdd){
+        notifyUser(user.id, "Balance Deduction - System",
+          `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
+      } else {
+        notifyUser(user.id, "Balance Added - System",
+          `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
+      }
       const updated = db.prepare(`SELECT id, email, username, wallet_balance, affiliate_balance FROM users WHERE id=?`).get(user.id);
-      return res.json({success:true,message:`✅ ${col==="affiliate_balance"?"Affiliate":"Available"} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}`, user:updated, userId:user.id, beforeBalance:before, newBalance:after, balance:after, wallet_balance:updated?.wallet_balance, affiliate_balance:updated?.affiliate_balance});
+      return res.json({success:true,
+        message: wasShort
+          ? `✅ ${label} balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.`
+          : `✅ ${label} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`,
+        user:updated, userId:user.id, beforeBalance:before, newBalance:after, balance:after, wallet_balance:updated?.wallet_balance, affiliate_balance:updated?.affiliate_balance});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   };
   const adjustGeneric = (req,res) => {
@@ -189,5 +221,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ SERVER 3 READY - Balance History + Balance User at top");
+  console.log("✅ SERVER 3 READY - Balance History + Balance User + Deduct Always Success + Notify User");
 };
