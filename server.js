@@ -686,7 +686,6 @@ app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
     return res.json({success:true, message:"Marked as read"});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
-
 app.post("/api/admin/email/send",requireAdmin,async(req,res)=>{
   try{
     const {recipients, subject, message} = req.body||{};
@@ -713,56 +712,10 @@ app.get("/api/announcement",(req,res)=>{
     return res.json({success:true, enabled:Boolean(row.enabled), title:row.title, message:row.message, channelUrl:row.channel_url, channelText:row.channel_text, updatedAt:row.updated_at});
   }catch(e){return res.json({success:true, enabled:false, title:"Join Official Channel", message:"Join our channel", channelUrl:"https://t.me/jovianetwerk", channelText:"Join Official Channel"});}
 });
-// === SUSPEND / UNSUSPEND - SUSPENSION = STOP ===
-function handleSuspendUser(req,res){
-  try{
-    const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
-    if(!userId) return res.status(400).json({success:false, message:"User ID required"});
-    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
-    if(!user) return res.status(404).json({success:false, message:"User not found"});
-    // ✅ STOP = suspended
-    try{ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(userId); }catch{}
-    try{ db.prepare("UPDATE users SET status='suspended' WHERE id=?").run(userId); }catch{}
-    try{ db.prepare("UPDATE users SET is_suspended=1 WHERE id=?").run(userId); }catch{}
-    try{ db.prepare("UPDATE users SET is_active=0 WHERE id=?").run(userId); }catch{}
-    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
-    return res.json({success:true, message:`${fresh.username} don suspend - account don STOP`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
-  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-}
-
-function handleUnsuspendUser(req,res){
-  try{
-    const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
-    if(!userId) return res.status(400).json({success:false, message:"User ID required"});
-    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
-    if(!user) return res.status(404).json({success:false, message:"User not found"});
-
-    // ✅ UNSUSPEND = make am active again
-    try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
-    try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
-    try{ db.prepare("UPDATE users SET is_suspended=0 WHERE id=?").run(userId); }catch{}
-    try{ db.prepare("UPDATE users SET is_active=1 WHERE id=?").run(userId); }catch{}
-
-    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
-    return res.json({success:true, message:`${fresh.username} don unsuspend - account don START again`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
-  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-}
-app.post("/api/admin/suspend", requireAdminFixed, handleSuspendUser);
-app.post("/api/admin/users/suspend", requireAdminFixed, handleSuspendUser);
-app.post("/api/admin/user/suspend", requireAdminFixed, handleSuspendUser);
-app.post("/api/admin/suspend-user", requireAdminFixed, handleSuspendUser);
-app.post("/api/admin/users/block", requireAdminFixed, handleSuspendUser);
-app.get("/api/admin/suspend", requireAdminFixed, handleSuspendUser);
-app.post("/api/admin/unsuspend", requireAdminFixed, handleUnsuspendUser);
-app.post("/api/admin/users/unsuspend", requireAdminFixed, handleUnsuspendUser);
-app.post("/api/admin/user/unsuspend", requireAdminFixed, handleUnsuspendUser);
-app.post("/api/admin/users/unblock", requireAdminFixed, handleUnsuspendUser);
-app.get("/api/admin/unsuspend", requireAdminFixed, handleUnsuspendUser);
 // === NOTIFICATIONS FOR BELL - ACTIVE ONLY, HISTORY STAYS ===
 app.get("/api/notifications", requireUser, (req,res)=>{
   try{
     const u = req.user;
-    // PENDING = NO NOTIFICATIONS
     if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
       return res.json({success:true, notifications:[]});
     }
@@ -777,7 +730,6 @@ app.get("/api/notifications", requireUser, (req,res)=>{
     return res.json({success:true, notifications:out});
   }catch(e){ return res.json({success:true, notifications:[]}); }
 });
-
 app.get("/api/notifications/unread", requireUser, (req,res)=>{
   try{
     const u = req.user;
@@ -795,7 +747,6 @@ app.get("/api/notifications/unread", requireUser, (req,res)=>{
     return res.json({success:true, notifications:out});
   }catch(e){ return res.json({success:true, notifications:[]}); }
 });
-
 app.get("/api/user/notifications", requireUser, (req,res)=>{
   try{
     const u = req.user;
@@ -825,7 +776,6 @@ app.post("/api/user/private-messages/read", requireUser, (req,res)=>{
   db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
   return res.json({success:true});
 });
-// NEW - aligns with dashboard pop-once: toast don show once, mark am, no pop again, but bell history still dey
 app.post("/api/notifications/toast-shown", requireUser, (req,res)=>{
   const id = Number(req.body?.id || req.body?.message_id);
   if(!id) return res.json({success:false});
@@ -884,7 +834,6 @@ app.post("/api/admin/videos/:id/status",requireAdmin,(req,res)=>{try{const id=to
 app.delete("/api/admin/videos/:id", requireAdmin, (req,res)=>{try{const id=toPositiveInteger(req.params.id); if(!id) return res.status(400).json({success:false,message:"Invalid id"}); const ex=db.prepare("SELECT * FROM videos WHERE id=?").get(id); if(!ex) return res.status(404).json({success:false,message:"Not found"}); try{let filePath = ex.video_url; if(filePath.includes("/uploads/")){const idx = filePath.indexOf("/uploads/"); const rel = filePath.slice(idx); const fp = path.join(UPLOAD_ROOT, rel.replace("/uploads/","")); if(fs.existsSync(fp)) fs.unlinkSync(fp);}}catch{} db.prepare("DELETE FROM videos WHERE id=?").run(id); return res.json({success:true,message:"Video deleted"});}catch(e){return res.status(500).json({success:false,message:e.message});}});
 app.get("/api/videos", requireActiveUser, (req,res)=>{try{const vids=db.prepare(`SELECT v.*, COALESCE(uv.status,'pending') as user_status FROM videos v LEFT JOIN user_videos uv ON uv.video_id=v.id AND uv.user_id=? WHERE v.status='active' ORDER BY v.id DESC`).all(req.user.id); return res.json({success:true, videos: vids.map(v=>({id:v.id,title:v.title,description:v.description,video_url:v.video_url,url:v.video_url,thumbnail_url:v.thumbnail_url, reward:Number(v.reward||0),duration:Number(v.duration||0),status:v.status, user_status:v.user_status,completed:v.user_status==='completed'}))});}catch(e){return res.status(500).json({success:false,message:"Unable to load videos"});}});
 app.post("/api/videos/:id/open", requireActiveUser, (req,res)=>{try{const videoId=toPositiveInteger(req.params.id); if(!videoId) return res.status(400).json({success:false,message:"Invalid video"}); const video=db.prepare("SELECT * FROM videos WHERE id=? AND status='active'").get(videoId); if(!video) return res.status(404).json({success:false,message:"Video not found"}); db.prepare("INSERT INTO user_videos (user_id,video_id,status) VALUES (?,?, 'started') ON CONFLICT(user_id, video_id) DO UPDATE SET status='started' WHERE status='pending'").run(req.user.id, videoId); return res.json({success:true, message:"Video started"});}catch(e){return res.status(400).json({success:false,message:e.message});}});
-
 app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{try{
   const videoId=toPositiveInteger(req.params.id);
   if(!videoId) return res.status(400).json({success:false,message:"Invalid video"});
@@ -932,13 +881,11 @@ app.post("/api/videos/:id/complete", requireActiveUser, (req,res)=>{try{
   const userBal = db.prepare("SELECT wallet_balance FROM users WHERE id=?").get(req.user.id);
   return res.json({success:true, message: result.already? "Already completed" : `N${result.reward} credited`, reward: result.reward, alreadyCompleted: result.already, walletBalance: userBal.wallet_balance});
 }catch(e){return res.status(400).json({success:false,message:e.message});}});
-
 app.get("/api/history", requireUser, (req,res)=>{try{const tx = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC").all(req.user.id); const wd = db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC").all(req.user.id); return res.json({success:true, history: tx, transactions: tx, withdrawals: wd, wallet:{transactions: tx}});}catch(e){ return res.json({success:true, history:[], transactions:[], withdrawals:[], wallet:{transactions:[]}});}});
 app.post("/api/selar/activate", async (req, res) => { try { const email = normalizeEmail(req.body?.email || req.body?.customer_email || req.body?.buyer_email || req.query?.email || req.body?.data?.email); let plan = packageFromInput(req.body?.plan) || null; const amountStr = String(req.body?.amount || req.body?.price || ""); const planStr = String(req.body?.plan || "").toLowerCase(); if (!plan) { if (amountStr.includes("15000") || planStr.includes("gold")) plan = "Gold"; else plan = "Silver"; } if (!email) return res.status(400).json({ success: false, message: "Email required" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if (!user) { return res.status(404).json({ success: false, message: "User not found for email " + email + ". Register first." }); } if (user.account_status === "active" || user.account_status === "approved") { return res.json({ success: true, alreadyActive: true, message: "Already ACTIVE", user: publicUser(user) }); } if (plan && plan!== user.package) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewards(user.id); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); return res.json({ success: true, message: "Account activated - admin now ACTIVE", user: publicUser(updated) }); } catch (e) { return res.status(500).json({ success: false, message: e.message }); } });
 app.post("/api/webhooks/selar", async (req, res) => { try { const data = req.body || {}; const email = normalizeEmail(data.email || data.customer_email || data.buyer_email || data?.data?.email || data?.customer?.email || req.query?.email); if (!email) return res.status(200).json({ success: true, message: "No email" }); let plan = "Silver"; const amountStr = String(data.amount || data.total || data.price || ""); if(amountStr.includes("15000") || String(data.plan || "").toLowerCase().includes("gold")) plan = "Gold"; let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(email); if(user && user.account_status!== 'active' && user.account_status!== 'approved'){ if (plan!== user.package) { db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); } activateUserAndRewards(user.id); } return res.json({ success: true }); } catch (e) { return res.json({ success: false }); } });
 app.get("/api/activate", async (req, res) => { try { const email = normalizeEmail(req.query?.email || req.query?.customer_email || req.body?.email || ""); const username = cleanString(req.query?.username || "", 50); let plan = packageFromInput(req.query?.plan || req.query?.package) || "Silver"; let targetEmail = email; if (!targetEmail && username) { const byUser = db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (byUser) targetEmail = byUser.email; } if (!targetEmail) return res.status(400).json({ success: false, message: "Email required for activation" }); let user = db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if (!user && username) user = db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if (!user) return res.status(404).json({ success: false, message: "User not found: " + targetEmail }); if (user.account_status === "active" || user.account_status === "approved") return res.json({ success: true, alreadyActive: true, user: publicUser(user) }); if (plan && plan!== user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan, PACKAGES[plan], getWelcomeBonus(plan), user.id); activateUserAndRewards(user.id); const updated = db.prepare("SELECT * FROM users WHERE id=?").get(user.id); console.log(`AUTO-ACTIVATED via /api/activate: ${updated.email} -> ${plan}`); return res.json({ success: true, message: "Account activated", user: publicUser(updated) }); } catch (e) { console.error("ACTIVATE ERROR", e); return res.status(500).json({ success: false, message: e.message }); } });
 app.post("/api/activate", async (req,res)=>{ try{ const email = normalizeEmail(req.body?.email || req.query?.email || ""); const username = cleanString(req.body?.username || req.query?.username || "",50); let plan = packageFromInput(req.body?.plan || req.query?.plan) || "Silver"; let targetEmail = email; if(!targetEmail && username){ const u=db.prepare("SELECT email FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(u) targetEmail=u.email; } if(!targetEmail) return res.status(400).json({success:false}); let user=db.prepare("SELECT * FROM users WHERE lower(email)=lower(?) LIMIT 1").get(targetEmail); if(!user && username) user=db.prepare("SELECT * FROM users WHERE lower(username)=lower(?) LIMIT 1").get(username); if(!user) return res.status(404).json({success:false}); if(user.account_status==="active"||user.account_status==="approved") return res.json({success:true}); if(plan && plan!==user.package) db.prepare("UPDATE users SET package=?, package_amount=?, welcome_bonus=? WHERE id=?").run(plan,PACKAGES[plan],getWelcomeBonus(plan),user.id); activateUserAndRewards(user.id); return res.json({success:true}); }catch(e){ return res.status(500).json({success:false}); } });
-// === EMERGENCY FIX - PERMANENT ===
 app.get("/api/emergency/make-me-super-now", (req,res)=>{
   try{
     db.prepare("UPDATE users SET package='SUPER', plan='SUPER', is_super=1, account_status='active', status='active' WHERE id=1").run();
@@ -947,7 +894,6 @@ app.get("/api/emergency/make-me-super-now", (req,res)=>{
     return res.json({success:true, message:"YOU ARE NOW SUPER", user});
   }catch(e){ return res.json({success:false, error:e.message}); }
 });
-
 app.post("/api/debug/emergency-super", (req,res)=>{
   try{
     let email = String(req.body?.email||req.query?.email||"").toLowerCase().trim();
@@ -959,7 +905,6 @@ app.post("/api/debug/emergency-super", (req,res)=>{
     return res.json({success:true, message:`✅ ${fresh.email} is now SUPER - unlimited`, user:publicUser(fresh)});
   }catch(e){ return res.json({success:false, error:e.message}); }
 });
-
 app.post("/api/debug/emergency-add-money", (req,res)=>{
   try{
     let email = String(req.body?.email||"").toLowerCase().trim();
@@ -975,7 +920,6 @@ app.post("/api/debug/emergency-add-money", (req,res)=>{
     return res.json({success:true, message:`Added ₦${amount}`, newBal:fresh.wallet_balance, user:fresh});
   }catch(e){ return res.json({success:false, error:e.message}); }
 });
-
 try{
   const pluginPath1 = path.join(__dirname, "jovia-codes-plugin.js");
   const pluginPath2 = path.join(__dirname, "jovia_codes_plugin.js");
@@ -987,6 +931,50 @@ try{
     console.log("⚠️ Jovia Codes plugin file not found - skipping");
   }
 }catch(e){ console.error("Plugin load error:", e.message); }
+
+// === SUSPEND / UNSUSPEND - ADDED HERE - BEFORE 404 CATCH-ALL, BEFORE app.listen ===
+// Safe guard: if requireAdminFixed no exist for this file, use requireAdmin, if that one sef miss, allow next()
+const suspendGuard = (typeof requireAdminFixed === 'function') ? requireAdminFixed : (typeof requireAdmin === 'function' ? requireAdmin : ((req,res,next)=>next()));
+function handleSuspendUser(req,res){
+  try{
+    const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
+    if(!userId) return res.status(400).json({success:false, message:"User ID required"});
+    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    if(!user) return res.status(404).json({success:false, message:"User not found"});
+    try{ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET status='suspended' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_suspended=1 WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_active=0 WHERE id=?").run(userId); }catch{}
+    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    return res.json({success:true, message:`${fresh.username} don suspend - account don STOP`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+}
+function handleUnsuspendUser(req,res){
+  try{
+    const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
+    if(!userId) return res.status(400).json({success:false, message:"User ID required"});
+    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    if(!user) return res.status(404).json({success:false, message:"User not found"});
+    try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_suspended=0 WHERE id=?").run(userId); }catch{}
+    try{ db.prepare("UPDATE users SET is_active=1 WHERE id=?").run(userId); }catch{}
+    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
+    return res.json({success:true, message:`${fresh.username} don unsuspend - account don START again`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+}
+app.post("/api/admin/suspend", suspendGuard, handleSuspendUser);
+app.post("/api/admin/users/suspend", suspendGuard, handleSuspendUser);
+app.post("/api/admin/user/suspend", suspendGuard, handleSuspendUser);
+app.post("/api/admin/suspend-user", suspendGuard, handleSuspendUser);
+app.post("/api/admin/users/block", suspendGuard, handleSuspendUser);
+app.get("/api/admin/suspend", suspendGuard, handleSuspendUser);
+app.post("/api/admin/unsuspend", suspendGuard, handleUnsuspendUser);
+app.post("/api/admin/users/unsuspend", suspendGuard, handleUnsuspendUser);
+app.post("/api/admin/user/unsuspend", suspendGuard, handleUnsuspendUser);
+app.post("/api/admin/users/unblock", suspendGuard, handleUnsuspendUser);
+app.get("/api/admin/unsuspend", suspendGuard, handleUnsuspendUser);
+// === END SUSPEND ===
 
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
