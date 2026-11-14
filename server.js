@@ -932,9 +932,49 @@ try{
   }
 }catch(e){ console.error("Plugin load error:", e.message); }
 
-// === SUSPEND / UNSUSPEND - ADDED HERE - BEFORE 404 CATCH-ALL, BEFORE app.listen ===
-// Safe guard: if requireAdminFixed no exist for this file, use requireAdmin, if that one sef miss, allow next()
-const suspendGuard = (typeof requireAdminFixed === 'function') ? requireAdminFixed : (typeof requireAdmin === 'function' ? requireAdmin : ((req,res,next)=>next()));
+// === SUSPEND / UNSUSPEND - FIXED AUTH - BEFORE 404 CATCH-ALL ===
+// Try requireAdmin (dashboard login) FIRST, then requireAdminFixed / ?key=jovia123
+// We use a fake res to test each one, so the first one no go send 401 and block the second one
+function tryAuthMiddleware(mw, req){
+  return new Promise((resolve)=>{
+    if(typeof mw !== 'function') return resolve(false);
+    let settled = false;
+    const fakeRes = {
+      statusCode: 200,
+      status(c){ this.statusCode = c; return this; },
+      json(){ if(!settled){ settled = true; resolve(false); } return this; },
+      send(){ if(!settled){ settled = true; resolve(false); } return this; },
+      setHeader(){ return this; },
+      set(){ return this; }
+    };
+    try{
+      const out = mw(req, fakeRes, ()=>{ if(!settled){ settled = true; resolve(true); } });
+      if(out && typeof out.catch === 'function'){ out.catch(()=>{ if(!settled){ settled = true; resolve(false); } }); }
+    }catch(e){ if(!settled){ settled = true; resolve(false); } }
+  });
+}
+async function suspendGuard(req,res,next){
+  try{
+    if(req.query.key === 'jovia123') return next();
+    if(req.headers['x-admin-key'] === 'jovia123') return next();
+    if(req.body && req.body.key === 'jovia123') return next();
+    // 1. Dashboard login (this na the one wey dey work for other admin buttons)
+    if(typeof requireAdmin === 'function'){
+      const ok1 = await tryAuthMiddleware(requireAdmin, req);
+      if(ok1) return next();
+    }
+    // 2. Fixed key / JWT login
+    if(typeof requireAdminFixed === 'function'){
+      const ok2 = await tryAuthMiddleware(requireAdminFixed, req);
+      if(ok2) return next();
+    }
+    // 3. If req.admin don set by any of them, allow
+    if(req.admin) return next();
+    return res.status(401).json({success:false, message:"Admin authentication required - Session expired - Please login again"});
+  }catch(e){
+    return res.status(401).json({success:false, message:"Admin authentication required - Session expired - Please login again"});
+  }
+}
 function handleSuspendUser(req,res){
   try{
     const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
