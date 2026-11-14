@@ -739,7 +739,7 @@ function payReferralForUser(referredUser){
   }catch(e){ return {paid:0, reason:e.message}; }
 }
 
-// === APPROVE USER - REFERRAL GO ADD AUTOMATICALLY HERE ===
+// === APPROVE USER - REFERRAL + WELCOME GO ADD AUTOMATICALLY HERE ===
 function handleApproveUser(req,res){
   try{
     const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
@@ -750,10 +750,10 @@ function handleApproveUser(req,res){
     try{ db.prepare("UPDATE users SET account_status='approved' WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
-    // ✅ NOW PAY REFERRAL - THIS NA THE PART WEY DEY MISS BEFORE
+    // ✅ NOW PAY REFERRAL + WELCOME
     const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
     const bonus = payReferralForUser(fresh);
-    return res.json({success:true, message:`User approved. Referral bonus: ₦${bonus.paid} to ${bonus.referrer||'none'}`, user: {id:fresh.id, username:fresh.username, package:fresh.package, account_status:fresh.account_status}, referralBonus: bonus});
+    return res.json({success:true, message:`User approved. Referral bonus: ₦${bonus.paid} to ${bonus.referrer||'none'} | Welcome bonus: ₦${bonus.welcomePaid||0} to user`, user: {id:fresh.id, username:fresh.username, package:fresh.package, account_status:fresh.account_status}, referralBonus: bonus});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 }
 // ✅ Cover all approve URL wey your dashboard fit call
@@ -764,7 +764,7 @@ app.post("/api/admin/activate", requireAdminFixed, handleApproveUser);
 app.post("/api/admin/users/activate", requireAdminFixed, handleApproveUser);
 app.get("/api/admin/approve", requireAdminFixed, handleApproveUser);
 
-// === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL - MERGED FINAL ===
+// === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL + WELCOME - MERGED FINAL ===
 app.get("/api/admin/backpay-all", (req,res,next)=>{
   if(req.query.key === 'jovia123') return next();
   return requireAdminFixed(req,res,next);
@@ -779,41 +779,42 @@ app.get("/api/admin/backpay-all", (req,res,next)=>{
       referred_package TEXT DEFAULT '',
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );`);
+    db.exec(`CREATE TABLE IF NOT EXISTS welcome_rewards (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE,
+      amount INTEGER DEFAULT 0,
+      package TEXT DEFAULT '',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );`);
     const userCols = db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
-    const referrerCol = ["referrer_id","referred_by","referrer","upline_id","invited_by","sponsor_id","referral_id","parent_id","invite_by"].find(c=>userCols.includes(c));
-    // NOTE: we still use findReferrerForUser inside loop, so referrerCol missing no go block us
     let walletCols = [];
     try{ walletCols = db.prepare("PRAGMA table_info(wallet_transactions)").all().map(c=>c.name); }catch{}
-    const hasBalanceType = walletCols.includes("balance_type");
-    const hasReference = walletCols.includes("reference");
-    const hasCreatedAt = walletCols.includes("created_at");
-    const hasTotalEarned = userCols.includes("total_earned");
-    const hasAffiliate = userCols.includes("affiliate_balance");
     // ✅ Get activated - try account_status, then status
     let allActivated = [];
     try{ allActivated = db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all(); }catch{}
     if(allActivated.length===0){
       try{ allActivated = db.prepare("SELECT * FROM users WHERE status IN ('active','approved') ORDER BY id ASC").all(); }catch{}
     }
-    let paidCount = 0, totalPaid = 0, details = [];
+    let paidCount = 0, totalPaid = 0, welcomeCount = 0, totalWelcome = 0, details = [];
     let skippedNoReferrer = 0, skippedAlreadyCorrect = 0;
     // ✅ No transaction wrapper - one user fail no go rollback all
     for(const u of allActivated){
       try{
         const bonus = payReferralForUser(u);
+        if(bonus.welcomePaid > 0){ welcomeCount++; totalWelcome += bonus.welcomePaid; }
         if(bonus.paid > 0){
           paidCount++; totalPaid += bonus.paid;
-          details.push({referrer: bonus.referrer, referrer_id: bonus.referrer_id, referred: u.username, referred_id: u.id, package: u.package, alreadyPaid: bonus.alreadyPaid||0, correct: bonus.correct, paid: bonus.paid});
+          details.push({referrer: bonus.referrer, referrer_id: bonus.referrer_id, referred: u.username, referred_id: u.id, package: u.package, alreadyPaid: bonus.alreadyPaid||0, correct: bonus.correct, paid: bonus.paid, welcomePaid: bonus.welcomePaid||0});
         } else {
           if(bonus.reason === "no referrer found") skippedNoReferrer++;
           else if(bonus.reason === "already paid") skippedAlreadyCorrect++;
         }
       }catch{}
     }
-    return res.json({success:true, message:`Backpay TOTAL done - ${paidCount} people refunded, total ₦${totalPaid} | Checked ${allActivated.length}, No-referrer: ${skippedNoReferrer}, Already-correct: ${skippedAlreadyCorrect}`, paidCount, totalPaid, details, skippedNoReferrer, skippedAlreadyCorrect, totalActivated: allActivated.length});
+    return res.json({success:true, message:`Backpay TOTAL done - Referral: ${paidCount} people, ₦${totalPaid} | Welcome: ${welcomeCount} people, ₦${totalWelcome} | Checked ${allActivated.length}, No-referrer: ${skippedNoReferrer}, Already-correct: ${skippedAlreadyCorrect}`, paidCount, totalPaid, welcomeCount, totalWelcome, details, skippedNoReferrer, skippedAlreadyCorrect, totalActivated: allActivated.length});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
-app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
+app.get("/api/admin/private-messages",requireAdminFixed,(req,res)=>{
   try{
     const rows = db.prepare("SELECT * FROM private_messages ORDER BY id DESC LIMIT 200").all();
     const mapped = rows.map(r=>{
@@ -841,7 +842,7 @@ app.get("/api/user/private-messages",requireUser,(req,res)=>{
     return res.json({success:true, messages:unread, count:unread.length});
   }catch(e){return res.status(500).json({success:false,message:e.message});}
 });
-app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
+app.post("/api/admin/private-messages",requireAdminFixed,(req,res)=>{
   try{
     const {recipientIds, title, message, type} = req.body||{};
     if(!Array.isArray(recipientIds) || recipientIds.length===0) return res.status(400).json({success:false,message:"Select at least one recipient"});
@@ -858,7 +859,7 @@ app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
     } else {
       summary = `${validIds.length} users - ALL/POP`;
     }
-    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", req.admin.username||"admin");
+    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", (req.admin && req.admin.username) || "admin");
     return res.json({success:true, message:`Pop sent to ${validIds.length} user(s)`, id:result.lastInsertRowid, recipientCount:validIds.length, recipients:summary});
   }catch(e){return res.status(500).json({success:false,message:e.message});}
 });
@@ -870,7 +871,7 @@ app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
     return res.json({success:true, message:"Marked as read"});
   }catch(e){return res.status(400).json({success:false,message:e.message});}
 });
-app.post("/api/admin/email/send",requireAdmin,async(req,res)=>{
+app.post("/api/admin/email/send",requireAdminFixed,async(req,res)=>{
   try{
     const {recipients, subject, message} = req.body||{};
     if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients"});
@@ -903,31 +904,26 @@ function handleSuspendUser(req,res){
     if(!userId) return res.status(400).json({success:false, message:"User ID required"});
     const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
     if(!user) return res.status(404).json({success:false, message:"User not found"});
-
     // ✅ STOP = suspended
     try{ db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET status='suspended' WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET is_suspended=1 WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET is_active=0 WHERE id=?").run(userId); }catch{}
-
     const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
     return res.json({success:true, message:`${fresh.username} don suspend - account don STOP`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 }
-
 function handleUnsuspendUser(req,res){
   try{
     const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
     if(!userId) return res.status(400).json({success:false, message:"User ID required"});
     const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
     if(!user) return res.status(404).json({success:false, message:"User not found"});
-
     // ✅ UNSUSPEND = make am active again
     try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET is_suspended=0 WHERE id=?").run(userId); }catch{}
     try{ db.prepare("UPDATE users SET is_active=1 WHERE id=?").run(userId); }catch{}
-
     const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
     return res.json({success:true, message:`${fresh.username} don unsuspend - account don START again`, user:{id:fresh.id, username:fresh.username, account_status:fresh.account_status, status:fresh.status}});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
