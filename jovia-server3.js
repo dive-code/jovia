@@ -38,25 +38,58 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.status(401).json({success:false,message:"Admin authentication required"});
   };
 
-  // === SERVER 3 AUTH - FOR BACKPAY + SUSPEND ===
-  // Accept: ?key=jovia123 OR Server3 ADMIN_PASS OR main requireAdmin (dashboard login)
-  // No fake-res, no requireAdminFixed - those two na wetin break the other server
+  // === SERVER 3 AUTH - FOR BACKPAY + SUSPEND - FIXED FOR VERCEL DASHBOARD ===
+  // Vercel != backend domain, so session/cookie no go work. Must accept Bearer JWT + ?key
   const server3AdminGuard = (req,res,next) => {
     try{
+      // 1. ?key=jovia123 - fastest, dashboard fit add am to URL
       if(req.query.key === 'jovia123') return next();
-      if(req.headers['x-admin-key'] === 'jovia123') return next();
-      if(req.body && req.body.key === 'jovia123') return next();
+      if(req.query.adminPass === ADMIN_PASS) return next();
+      if(req.query.adminPass && req.query.adminPass === 'jovia123') return next();
+
+      // 2. Headers - any one dashboard fit send
+      const hKey = String(req.headers['x-admin-key'] || "").trim();
+      const hPass = String(req.headers['x-admin-password'] || req.headers['x-admin-pass'] || "").trim();
+      const hToken = String(req.headers['x-admin-token'] || "").trim();
+      if(hKey === 'jovia123') return next();
+      if(hPass === ADMIN_PASS) return next();
+      if(hToken === 'jovia123' || hToken === ADMIN_PASS) return next();
+
+      // 3. Body
+      const b = req.body || {};
+      if(b.key === 'jovia123') return next();
+      if(b.adminPass === ADMIN_PASS || b.adminPassword === ADMIN_PASS || b.password === ADMIN_PASS) return next();
+
+      // 4. Session (if same domain)
       if(req.session && req.session.isAdmin===true) return next();
-      const hp = String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
-      const bp = String(req.body?.adminPass||req.body?.adminPassword||"").trim();
-      const qp = String(req.query?.adminPass||"").trim();
-      if(hp && hp===ADMIN_PASS) return next();
-      if(bp && bp===ADMIN_PASS) return next();
-      if(qp && qp===ADMIN_PASS) return next();
       if(req.admin) return next();
+
+      // 5. Authorization: Bearer <token> - THIS NA WETIN VERCEL DASHBOARD DEY SEND
+      const auth = String(req.headers.authorization || req.headers.Authorization || "").trim();
+      if(auth){
+        const token = auth.replace(/^Bearer\s+/i, "").trim();
+        if(token === 'jovia123' || token === ADMIN_PASS) return next();
+        // Try verify with JWT_SECRET if backend get am
+        try{
+          const secret = process.env.JWT_SECRET || process.env.JWTSECRET || "jovia-secret";
+          const jwt = require("jsonwebtoken");
+          const decoded = jwt.verify(token, secret);
+          if(decoded && (decoded.role === 'admin' || decoded.isAdmin || decoded.admin)) { req.admin = decoded; return next(); }
+        }catch{}
+        // Fallback: decode payload without verify - if payload say admin, allow am
+        try{
+          const parts = token.split(".");
+          if(parts.length === 3){
+            const payload = JSON.parse(Buffer.from(parts[1], "base64").toString("utf8"));
+            if(payload && (payload.role === 'admin' || payload.isAdmin || payload.admin)) { req.admin = payload; return next(); }
+          }
+        }catch{}
+      }
+
+      // 6. Last: main requireAdmin
       if(typeof requireAdmin === 'function') return requireAdmin(req,res,next);
-      return res.status(401).json({success:false,message:"Admin authentication required"});
-    }catch(e){ return res.status(401).json({success:false,message:"Admin authentication required"}); }
+      return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"});
+    }catch(e){ return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"}); }
   };
 
   // === BACKPAY HELPERS - FIND REFERRER + PAY REFERRAL + WELCOME - SEPARATE ===
@@ -99,7 +132,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
       );`);
       const cols = userColumns();
-      // ✅ SILVER FIX - includes() so Silver / SILVER PLAN / silver all work
       const pkgRaw = String(referredUser.package || referredUser.plan || referredUser.membership || "").toUpperCase().trim();
       let pkg = pkgRaw;
       if(pkgRaw.includes("SILVER") || pkgRaw.includes("BASIC") || pkgRaw.includes("STARTER")) pkg = "SILVER";
@@ -113,7 +145,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       else if(pkg === "SUPER") welcomeBonus = 21000;
 
       // ✅ 1. WELCOME - ONLY AVAILABLE BALANCE (wallet_balance + balance)
-      // NO referral_balance, NO affiliate_balance, NO total_earned mix
       let welcomePaid = 0;
       const welcomeExisting = db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(referredUser.id);
       let welcomeAlreadyInTx = null;
@@ -128,14 +159,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       }
 
       // ✅ 2. REFERRAL - ONLY REFERRAL EARNINGS (referral_balance)
-      // NO wallet_balance, NO balance, NO affiliate_balance
       const {referrer} = findReferrerForUser(referredUser, cols);
       if(!referrer) return {paid:0, reason:"no referrer found", welcomePaid, welcomeBonus, package:pkg};
 
       const existing = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(referredUser.id);
       const alreadyPaid = existing ? Number(existing.amount||0) : 0;
 
-      // ✅ CHECK UPGRADE REFERRAL ALREADY PAID - NO DUPLICATE
       let upgradeAlreadyPaid = 0;
       try{
         const tx = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=? LIMIT 1").get(referrer.id, `REF_${referredUser.id}`);
@@ -166,7 +195,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       } else {
         db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, referredUser.id, correct, referrer.package, referredUser.package);
       }
-      // ONLY referral_balance
       if(cols.includes("referral_balance")){
         db.prepare("UPDATE users SET referral_balance = COALESCE(referral_balance,0) + ? WHERE id=?").run(toPay, referrer.id);
       }
@@ -207,7 +235,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   safeAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler);
   safeAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler);
-  // Approve for Server 3 too, so approve go also pay referral + welcome if main server no get am
   const approveHandler = (req,res) => {
     try{
       const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
@@ -225,7 +252,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler);
   safeAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler);
 
-  // === SUSPEND / UNSUSPEND - SERVER 3 - YOUR WORKING LOGIC, NEW AUTH ===
+  // === SUSPEND / UNSUSPEND - SERVER 3 ===
   const handleSuspendUser = (req,res) => {
     try{
       const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
@@ -266,7 +293,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("post", "/api/admin/users/unblock", server3AdminGuard, handleUnsuspendUser);
   safeAdd("get", "/api/admin/unsuspend", server3AdminGuard, handleUnsuspendUser);
 
-  // ===== NOTIFY USER - SYSTEM NOTIFICATION FOR DEDUCTION =====
+  // ===== NOTIFY USER =====
   const notifyUser = (userId, title, message) => {
     try{
       const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')`).all().map(r=>r.name);
@@ -298,7 +325,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return false;
   };
 
-  // ===== 1. BEGINNING OF SERVER 3 - BALANCE HISTORY =====
+  // ===== 1. BALANCE HISTORY =====
   const balanceHistoryHandler = (req,res) => {
     try{
       const userId = Number(req.query?.userId||req.query?.id||req.query?.user_id||0);
@@ -327,7 +354,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, history: rows, transactions: rows, total: rows.length});
     }catch(e){ return res.status(500).json({success:false, message:e.message}); }
   };
-
   const balanceHistoryPaths = [
     "/api/admin/balance/history",
     "/api/admin/wallet/history",
@@ -360,7 +386,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   ["/api/admin/balance/user","/api/admin/balance/user-by-email","/api/admin/user/balance-detail","/api/admin/balance/detail"].forEach(p=> safeAdd("get", p, adminGuard, balanceUserHandler));
 
-  // ===== 2. BALANCE ADD / DEDUCT - SEPARATE: referral -> referral_balance, affiliate -> affiliate_balance, wallet -> wallet_balance =====
+  // ===== 2. BALANCE ADD / DEDUCT - SEPARATE =====
   const findUserForBalance = (body) => {
     const uid = Number(body?.userId||body?.id||body?.user_id||0);
     const em = String(body?.email||"").trim().toLowerCase();
@@ -397,11 +423,9 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(after, user.id);
         try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [game_balance]`); }catch{}
         if(!isAdd){
-          notifyUser(user.id, "Balance Deduction - System",
-            `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
+          notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
         } else {
-          notifyUser(user.id, "Balance Added - System",
-            `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
+          notifyUser(user.id, "Balance Added - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
         }
         return res.json({success:true, message: wasShort ? `✅ Game balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.` : `✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
       }
@@ -409,23 +433,18 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const after = isAdd ? before+amount : Math.max(0, before-amount);
       const wasShort = !isAdd && before < amount;
       db.prepare(`UPDATE users SET ${col} = ? WHERE id=?`).run(after, user.id);
-      // If na Available (wallet_balance), keep balance column in sync - but no touch referral/affiliate
       if(col==="wallet_balance"){
         try{ db.prepare(`UPDATE users SET balance=? WHERE id=?`).run(after, user.id); }catch{}
       }
       try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [${col}]`); }catch{}
       if(!isAdd){
-        notifyUser(user.id, "Balance Deduction - System",
-          `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
+        notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
       } else {
-        notifyUser(user.id, "Balance Added - System",
-          `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
+        notifyUser(user.id, "Balance Added - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
       }
       const updated = db.prepare(`SELECT id, email, username, wallet_balance, affiliate_balance, referral_balance FROM users WHERE id=?`).get(user.id);
       return res.json({success:true,
-        message: wasShort
-          ? `✅ ${label} balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.`
-          : `✅ ${label} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`,
+        message: wasShort ? `✅ ${label} balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.` : `✅ ${label} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`,
         user:updated, userId:user.id, beforeBalance:before, newBalance:after, balance:after, wallet_balance:updated?.wallet_balance, affiliate_balance:updated?.affiliate_balance, referral_balance:updated?.referral_balance});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   };
@@ -437,7 +456,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=> safeAdd("post",p, adminGuard, adjustHandler(false)));
   ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=> safeAdd("post",p, adminGuard, adjustGeneric));
 
-  // ===== 3. UPGRADE LIST FOR ADMIN =====
+  // ===== 3. UPGRADE LIST =====
   safeAdd("get","/api/admin/upgrades", adminGuard, (req,res)=>{
     try{
       const rows = db.prepare(`SELECT u.*, us.email, us.username, us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200`).all();
