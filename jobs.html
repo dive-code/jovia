@@ -505,13 +505,13 @@ font-weight:900;
 margin-top:16px;
 font-size:11px;
 }
+/* ✅ REMOVED OLD LOCKED STYLE - NO MORE BLUR / LOCKED CARD */
 .locked-card{
 background:linear-gradient(135deg,#fffaf0,#fffbeb);
 border:1px dashed #f59e0b !important;
 margin:10px;
 border-radius:14px !important;
 }
-.locked-card .job-top,.locked-card .job-description{filter:blur(.5px);opacity:.8}
 .locked-overlay-new{
 margin-top:12px;
 background:rgba(0,0,0,.85);
@@ -554,6 +554,42 @@ padding:20px;
 margin-bottom:15px;
 text-align:center;
 }
+/* ✅ NEW: UPGRADE CIRCLE FOR ONE EDGE - LIKE GAME OWN */
+#upgradeFab{
+position:fixed;
+right:-22px;
+top:50%;
+transform:translateY(-50%);
+z-index:9999;
+display:none;
+cursor:pointer;
+border:none;
+background:transparent;
+padding:0;
+}
+#upgradeFab .fab-circle{
+width:88px;
+height:88px;
+border-radius:50%;
+background:linear-gradient(135deg,#ff9a00,#ffd83d);
+border:3px solid #fff;
+box-shadow:0 10px 28px rgba(255,154,0,.45), 0 0 0 4px rgba(255,196,0,.18);
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+color:#3a2600;
+animation:joviaFabPulse 1.8s infinite;
+}
+#upgradeFab .fab-emoji{font-size:26px;line-height:1}
+#upgradeFab .fab-text{font-size:9px;font-weight:900;letter-spacing:1px;margin-top:3px}
+#upgradeFab .fab-sub{font-size:7px;font-weight:800;opacity:.7}
+@keyframes joviaFabPulse{
+0%{transform:scale(1)}
+50%{transform:scale(1.07)}
+100%{transform:scale(1)}
+}
+#upgradeFab:active .fab-circle{transform:scale(.96)}
 button:focus-visible,a:focus-visible{
 outline:3px solid rgba(255,196,0,.75);
 outline-offset:3px;
@@ -664,6 +700,16 @@ outline-offset:3px;
 </section>
 </main>
 </div>
+
+<!-- ✅ UPGRADE CIRCLE - ONE EDGE - SILVER & GOLD ONLY -->
+<button type="button" id="upgradeFab" aria-label="Upgrade to SUPER">
+  <span class="fab-circle">
+    <span class="fab-emoji">⬆️</span>
+    <span class="fab-text">UPGRADE</span>
+    <span class="fab-sub">TAP →</span>
+  </span>
+</button>
+
 <nav class="bottom-nav">
   <a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a>
   <a class="nav-item active" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a>
@@ -699,7 +745,6 @@ let taskTimerInterval = null;
 const watchedVideos = new Map();
 const taskTimers = new Map();
 const youtubeTimers = new Map();
-// FIX 3: Use localStorage not sessionStorage, so timer survives close / refresh
 const TASK_TIMER_STORAGE_KEY = "jovia_task_waits_v1";
 const PLAN_CONFIG = {
   Silver:{maxDaily:2500,taskCount:5},
@@ -807,6 +852,18 @@ function isSuspended(u){
 function isActivated(u){
   return !!u&&!isSuspended(u)&&["active","approved","activated"].includes(getAccountStatus(u));
 }
+/* ✅ NEW: SHOW / HIDE UPGRADE CIRCLE - SILVER & GOLD ONLY */
+function updateUpgradeFab(){
+  const fab=document.getElementById("upgradeFab");
+  if(!fab) return;
+  if(!currentUser || !accountActivated){ fab.style.display="none"; return; }
+  const plan=getCurrentPlan();
+  if(plan==="Silver" || plan==="Gold"){
+    fab.style.display="block";
+  } else {
+    fab.style.display="none";
+  }
+}
 function showMessage(m,t="error"){
   const box=document.getElementById("message");
   if(messageTimer)clearTimeout(messageTimer);
@@ -849,7 +906,6 @@ function getUpgradeMessage(){
   const totalRemaining=availableJobs.reduce((a,b)=>a+Number(b.reward||0),0);
   return `🔒 You don reach daily limit but ${formatNaira(totalRemaining)} jobs dey wait! Upgrade to SUPER to unlock`;
 }
-// FIX 3: Restore from localStorage, NO 60s expiry. Timer must survive close.
 function restoreTaskTimers(){
   try{
     const saved=JSON.parse(localStorage.getItem(TASK_TIMER_STORAGE_KEY)||"{}");
@@ -907,12 +963,14 @@ function showJobsState(){
   document.getElementById("errorState").style.display="none";
   document.getElementById("filterRow").style.display="flex";
   closePopup();
+  updateUpgradeFab();
 }
 function showSuspendedState(){
   accountActivated=false;
   hideJobContent();
   document.getElementById("activationState").style.display="none";
   document.getElementById("suspendedState").style.display="block";
+  updateUpgradeFab();
 }
 function showActivationState(){
   accountActivated=false;
@@ -920,6 +978,7 @@ function showActivationState(){
   document.getElementById("suspendedState").style.display="none";
   document.getElementById("activationState").style.display="block";
   document.getElementById("inactivePopup").classList.add("show");
+  updateUpgradeFab();
 }
 function closePopup(){
   document.getElementById("inactivePopup").classList.remove("show");
@@ -929,6 +988,7 @@ function isCompleted(job){
 }
 function renderJobs(jobs){
   if(!accountActivated)return;
+  updateUpgradeFab();
   const list=document.getElementById("jobsList");
   const empty=document.getElementById("emptyState");
   document.getElementById("loadingState").style.display="none";
@@ -941,35 +1001,32 @@ function renderJobs(jobs){
   document.getElementById("sectionTitle").textContent=currentFilter==="completed"?"Completed Jobs":"Available Jobs";
   document.getElementById("superActiveBadge").style.display=stats.isSuper?"inline-flex":"none";
   document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${stats.isSuper?"∞":formatNaira(stats.limits.maxDaily)}`;
+  /* ✅ CHANGED: NO MORE LOCKED CARDS / BLUR - JUST SHOW JOBS + CIRCLE FOR SIDE */
   if(currentFilter==="available"&&isDailyLimitReached()){
     const totalRemaining=availableJobs.reduce((sum,j)=>sum+Number(j.reward||0),0);
     const countRemaining=availableJobs.length;
     let html=`
       <div class="limit-header">
-        <div style="font-size:32px">🔥</div>
-        <h3 style="margin-top:8px;font-size:15px">You are on fire! You don complete your daily tasks</h3>
-        <p style="font-size:11px;color:#756d7c;margin-top:6px">You don reach your ${stats.plan} daily limit for today</p>
-        <div style="margin:14px 0;padding:13px;background:#fff;border-radius:12px;border:1px dashed #f59e0b">
-          <div style="font-size:11px;color:#92400e">But you still get <b>${countRemaining} premium tasks worth ${formatNaira(totalRemaining)}</b> dey wait for you now!</div>
-          <div style="margin-top:6px;font-size:10px;color:#756d7c">Upgrade now, no need wait till tomorrow</div>
-        </div>
-        <a href="upgrade-pay.html" class="gold-upgrade-btn">Upgrade to SUPER to Unlock & Earn ${formatNaira(totalRemaining)} Today 🚀</a>
-        <div style="margin-top:10px;font-size:9px;color:#9b939f">👇 See wetin you dey miss below</div>
+        <div style="font-size:26px">🔥</div>
+        <h3 style="margin-top:8px;font-size:14px">You don complete your daily tasks</h3>
+        <p style="font-size:11px;color:#756d7c;margin-top:6px">You still get <b>${countRemaining} tasks worth ${formatNaira(totalRemaining)}</b> dey wait</p>
+        <p style="margin-top:8px;font-size:11px;font-weight:800;color:#92400e">👉 Tap the gold circle for right edge to Upgrade to SUPER</p>
       </div>
     `;
     availableJobs.forEach(job=>{
       const reward=Number(job.reward||0);
       html+=`
-        <div class="job-card locked-card">
+        <div class="job-card">
           <div class="job-top">
             <div class="job-title">${escapeHTML(getJobTitle(job))}</div>
             <div class="job-reward">${formatNaira(reward)}</div>
           </div>
           <div class="job-description">${escapeHTML(getJobDescription(job))}</div>
-          <div class="locked-overlay-new">
-            <div>🔒 This task worth <b>${formatNaira(reward)}</b> dey wait for you</div>
-            <div style="font-size:9px;margin-top:4px;opacity:.8">Upgrade to SUPER to unlock this + ${countRemaining-1} more jobs</div>
+          <div class="task-box upgrade-box">
+            <div class="task-label">👑 SUPER TASK</div>
+            <div class="task-info">Tap the <b>gold circle for right edge</b> to upgrade and unlock this ${formatNaira(reward)} task.</div>
           </div>
+          <a href="upgrade-pay.html" class="upgrade-btn">Tap Circle → Upgrade to Unlock</a>
         </div>
       `;
     });
@@ -1007,12 +1064,13 @@ function renderJobs(jobs){
         </div>
         <button class="complete-btn completed" disabled>Completed ✓</button>`;
     }else if(!stats.isSuper&&wouldExceedLimit(reward)){
+      /* ✅ CHANGED: NO LOCK - JUST TELL DEM TAP CIRCLE FOR SIDE */
       html+=`
         <div class="task-box upgrade-box">
-          <div class="task-label">🔒 PREMIUM TASK</div>
-          <div class="task-info">This <b>${formatNaira(reward)}</b> task dey wait but your ${stats.plan} limit don full. Upgrade to SUPER to unlock am now!</div>
+          <div class="task-label">👑 PREMIUM TASK</div>
+          <div class="task-info">This <b>${formatNaira(reward)}</b> task dey wait. Tap the <b>gold circle for right edge</b> to upgrade to SUPER.</div>
         </div>
-        <a href="upgrade-pay.html" class="upgrade-btn">Unlock ${formatNaira(reward)} Task →</a>`;
+        <a href="upgrade-pay.html" class="upgrade-btn">Tap Circle → Upgrade</a>`;
     }else if(timerExists&&!opened){
       html+=`
         <div class="task-box wait-box">
@@ -1058,6 +1116,7 @@ async function getCurrentUser(){
   const u=d?.user||d;
   currentUser=u;
   updateWallet(u);
+  updateUpgradeFab();
   return u;
 }
 async function loadAll(){
@@ -1113,7 +1172,6 @@ async function openTask(jobId,btn){
     }
     startTaskTimer(jobId);
     showMessage(`Task opened. Return after ${TASK_WAIT_SECONDS} seconds to claim your reward.`,"success");
-    // FIX 3: Open in new tab, do NOT replace JOVIA page. User fit come back freely.
     window.open(destination, "_blank", "noopener");
   }catch(e){
     showMessage(e.message||"Unable to open this task.");
@@ -1292,6 +1350,10 @@ document.getElementById("inactivePopup").addEventListener("click",e=>{
   if(e.target.id==="inactivePopup")closePopup();
 });
 document.getElementById("retryButton").addEventListener("click",loadAll);
+/* ✅ CIRCLE CLICK -> UPGRADE */
+document.getElementById("upgradeFab").addEventListener("click",()=>{
+  window.location.href="upgrade-pay.html";
+});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closePopup();});
 document.addEventListener("DOMContentLoaded",()=>{
   restoreTaskTimers();
