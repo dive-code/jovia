@@ -1,7 +1,61 @@
 "use strict";
 
 module.exports = (app, db, requireUser, requireAdmin) => {
+  try{
   console.log("🔧 JOVIA SERVER 3 - BALANCE HISTORY + BALANCE ADD/DEDUCT + AFFILIATE + BACKPAY + SUSPEND");
+
+  if(!app || typeof app.get !== "function" || typeof app.post !== "function"){
+    console.log("⚠️ Server3 skip: app.get/app.post no dey - no crash");
+    return;
+  }
+
+  // ============================================================
+  // ✅ BLOCK OTHER SERVERS BACKPAY - ONLY SERVER 3 BACKPAY GO WORK
+  // Crash-proof: everything inside try/catch, e no go crash Vercel
+  // ============================================================
+  const BLOCKED_BACKPAY_PATHS = [
+    "/api/admin/backpay",
+    "/api/admin/backpay-all",
+    "/api/admin/approve",
+    "/api/admin/users/approve",
+  ];
+  const isBlockedBackpayPath = (p) => {
+    try{
+      if(typeof p !== "string") return false;
+      return BLOCKED_BACKPAY_PATHS.includes(p) || p.includes("backpay");
+    }catch{ return false; }
+  };
+
+  let server3Allow = false;
+  const withServer3Allow = (fn) => { server3Allow = true; try{ fn(); } finally{ server3Allow = false; } };
+
+  // Patch app.get / app.post ONCE - block other servers from adding backpay after Server 3 load
+  try{
+    if(!app.__joviaServer3BlockerInstalled){
+      app.__joviaServer3BlockerInstalled = true;
+      const origGet = app.get.bind(app);
+      const origPost = app.post.bind(app);
+      app.get = function(path, ...handlers){
+        try{
+          if(!server3Allow && isBlockedBackpayPath(path)){
+            console.log(`🚫 BLOCKED other server backpay: GET ${path} - only Server 3 backpay go work`);
+            return app;
+          }
+        }catch{}
+        return origGet(path, ...handlers);
+      };
+      app.post = function(path, ...handlers){
+        try{
+          if(!server3Allow && isBlockedBackpayPath(path)){
+            console.log(`🚫 BLOCKED other server backpay: POST ${path} - only Server 3 backpay go work`);
+            return app;
+          }
+        }catch{}
+        return origPost(path, ...handlers);
+      };
+      console.log("✅ Server3 Blocker installed - other servers backpay BLOCKED");
+    }
+  }catch(e){ console.log("⚠️ Server3 blocker install skip (no crash):", e.message); }
 
   const routeExists = (path, method) => {
     try{
@@ -13,16 +67,32 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch{ return false; }
   };
   const safeAdd = (method, path, ...handlers) => {
-    if(routeExists(path, method)){
-      console.log(`⏭️ Server3 Skipping ${method.toUpperCase()} ${path} - already get am`);
-      return;
-    }
-    app[method](path, ...handlers);
-    console.log(`✅ Server3 Added ${method.toUpperCase()} ${path}`);
+    try{
+      if(routeExists(path, method)){
+        console.log(`⏭️ Server3 Skipping ${method.toUpperCase()} ${path} - already get am`);
+        return;
+      }
+      withServer3Allow(()=>{ app[method](path, ...handlers); });
+      console.log(`✅ Server3 Added ${method.toUpperCase()} ${path}`);
+    }catch(e){ console.log("⚠️ Server3 safeAdd skip (no crash):", e.message); }
+  };
+  // ✅ FORCE ADD - for backpay/approve only: remove old route first, so Server 3 must win
+  const forceAdd = (method, path, ...handlers) => {
+    try{
+      if(app._router && app._router.stack){
+        app._router.stack = app._router.stack.filter(l => {
+          if(!l.route) return true;
+          if(l.route.path !== path) return true;
+          return !(Object.keys(l.route.methods)[0] === method);
+        });
+      }
+    }catch{}
+    try{ withServer3Allow(()=>{ app[method](path, ...handlers); }); }catch(e){ console.log("⚠️ Server3 forceAdd skip (no crash):", e.message); return; }
+    console.log(`✅ Server3 FORCE Added ${method.toUpperCase()} ${path}`);
   };
 
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
-  const userColumns = () => db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+  const userColumns = () => { try{ return db.prepare("PRAGMA table_info(users)").all().map(c => c.name); }catch{ return []; } };
   const hasColumn = n => userColumns().includes(n);
   try{ if(!hasColumn("affiliate_balance")) db.exec(`ALTER TABLE users ADD COLUMN affiliate_balance INTEGER DEFAULT 0`); }catch{}
   try{ if(!hasColumn("referral_balance")) db.exec(`ALTER TABLE users ADD COLUMN referral_balance INTEGER DEFAULT 0`); }catch{}
@@ -78,8 +148,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"}); }
   };
 
-  // === BACKPAY - ONLY REFERRAL + WELCOME - NO UPGRADE REWARD AT ALL ===
-  // Welcome -> Available ONLY | Referral -> Referral Earnings ONLY | No mix | No upgrade
+  // === BACKPAY HELPERS - SEPARATE ===
   const findReferrerForUser = (u, cols) => {
     const list = ["referrer_id","referred_by","referrer","upline_id","invited_by","sponsor_id","referral_id","parent_id","invite_by","referred_by_code","referral_code_used"];
     for(const col of list){
@@ -98,26 +167,49 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return {referrer:null, col:null, raw:null};
   };
 
-  // ✅ Check if user don ever upgrade - if yes, backpay go SKIP am, no pay anything
-  // Upgrade system already handle upgrade people. Backpay na only for never-upgrade people.
-  const hasEverUpgraded = (userId) => {
+  // ============================================================
+  // ✅ BLOCKER - SAME PERSON + SAME AMOUNT = BLOCK
+  // Same person + HIGHER amount = ALLOW, but pay ONLY difference, NO ADD UP FULL
+  // Same person + LOWER amount = BLOCK
+  // ============================================================
+  const getAlreadyPaidForPerson = (referrer, referredUser) => {
+    const uid = referredUser.id;
+    const uname = String(referredUser.username||"").toLowerCase();
+    const rid = referrer ? referrer.id : null;
+    let fromRewards = 0;
+    let fromRefWallet = 0;
+    let fromUpgradeWallet = 0;
     try{
-      const t = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='jovia_upgrades'").get();
-      if(!t) return false;
-      const row = db.prepare("SELECT id FROM jovia_upgrades WHERE user_id=? LIMIT 1").get(userId);
-      return !!row;
-    }catch{ return false; }
+      const row = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(uid);
+      if(row) fromRewards = Number(row.amount||0);
+    }catch{}
+    try{
+      if(rid){
+        const row = db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE user_id=? AND reference=?").get(rid, `REF_${uid}`);
+        if(row) fromRefWallet = Number(row.total||0);
+      }
+    }catch{}
+    try{
+      if(rid){
+        const rows = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (type LIKE '%upgrade%' OR description LIKE '%upgrade%' OR reference LIKE '%UPGRADE%')").all(rid);
+        for(const tx of rows){
+          const desc = String(tx.description||"").toLowerCase();
+          const ref = String(tx.reference||"");
+          const isForThisUser = (uname && desc.includes(uname)) || desc.includes(String(uid)) || ref.includes(String(uid));
+          if(!isForThisUser) continue;
+          if(ref === `REF_${uid}`) continue;
+          fromUpgradeWallet += Number(tx.amount||0);
+        }
+      }
+    }catch{}
+    const base = Math.max(fromRewards, fromRefWallet);
+    const total = base + fromUpgradeWallet;
+    return { total, fromRewards, fromRefWallet, fromUpgradeWallet };
   };
 
   const payReferralForUser = (referredUser) => {
     try{
       if(!referredUser || !referredUser.id) return {paid:0, reason:"no user"};
-
-      // ✅ NO UPGRADE REWARD - SKIP UPGRADED USERS COMPLETELY
-      if(hasEverUpgraded(referredUser.id)){
-        return {paid:0, welcomePaid:0, reason:"skipped - upgraded user, upgrade system already handles am"};
-      }
-
       db.exec(`CREATE TABLE IF NOT EXISTS referral_rewards (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         referrer_id INTEGER NOT NULL,
@@ -142,14 +234,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       else if(pkgRaw.includes("SUPER") || pkgRaw.includes("PLATINUM") || pkgRaw.includes("DIAMOND") || pkgRaw.includes("VIP")) pkg = "SUPER";
       else return {paid:0, reason:"no package: "+pkgRaw};
 
-      // ✅ FIXED referral amounts - no upgrade difference, no 18000 / 19000 correction
       let correct = 0;
       let welcomeBonus = 0;
       if(pkg === "SILVER"){ correct = 8000; welcomeBonus = 9000; }
       else if(pkg === "GOLD"){ correct = 13000; welcomeBonus = 15000; }
       else if(pkg === "SUPER"){ correct = 19000; welcomeBonus = 21000; }
 
-      // ✅ 1. WELCOME - ONLY AVAILABLE BALANCE (wallet_balance + balance)
       let welcomePaid = 0;
       const welcomeExisting = db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(referredUser.id);
       let welcomeAlreadyInTx = null;
@@ -161,19 +251,34 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         welcomePaid = welcomeBonus;
       } else if(!welcomeExisting && welcomeAlreadyInTx){
         try{ db.prepare("INSERT OR IGNORE INTO welcome_rewards (user_id, amount, package) VALUES (?,?,?)").run(referredUser.id, Number(welcomeAlreadyInTx.amount||welcomeBonus), pkg); }catch{}
+        console.log(`🚫 BLOCKER welcome: ${referredUser.username} same person + same amount ₦${welcomeAlreadyInTx.amount} don enter before - BLOCKED`);
       }
 
-      // ✅ 2. REFERRAL - ONLY REFERRAL EARNINGS (referral_balance)
       const {referrer} = findReferrerForUser(referredUser, cols);
       if(!referrer) return {paid:0, reason:"no referrer found", welcomePaid, welcomeBonus, package:pkg};
 
-      // ✅ alreadyPaid na ONLY from referral_rewards table - NO upgrade wallet, NO upgrade table
-      const existing = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(referredUser.id);
-      const alreadyPaid = existing ? Number(existing.amount||0) : 0;
+      const paidInfo = getAlreadyPaidForPerson(referrer, referredUser);
+      const alreadyPaid = paidInfo.total;
 
+      if(alreadyPaid === correct){
+        console.log(`🚫 BLOCKER: ${referredUser.username} same person + same amount ₦${correct} don enter before - BLOCKED`);
+        return {paid:0, reason:"blocked - same person + same amount", alreadyPaid, correct, welcomePaid, welcomeBonus, package:pkg, blocked:true};
+      }
+      if(alreadyPaid > correct){
+        console.log(`🚫 BLOCKER: ${referredUser.username} same person don already collect higher ₦${alreadyPaid} > ₦${correct} - BLOCKED`);
+        return {paid:0, reason:"blocked - already collected higher amount", alreadyPaid, correct, welcomePaid, welcomeBonus, package:pkg, blocked:true};
+      }
       const toPay = correct - alreadyPaid;
-      if(toPay <= 0) return {paid:0, reason:"already paid", alreadyPaid, correct, welcomePaid, welcomeBonus, package:pkg};
+      try{
+        const dup = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND amount=? AND description LIKE ? LIMIT 1").get(referrer.id, toPay, `%${referredUser.username}%`);
+        if(dup && String(dup.description||"").toLowerCase().includes("upgrade")){
+          console.log(`🚫 BLOCKER: ${referredUser.username} same person + same difference ₦${toPay} don enter before - BLOCKED`);
+          return {paid:0, reason:"blocked - same person + same difference amount", alreadyPaid, correct, welcomePaid, welcomeBonus, package:pkg, blocked:true};
+        }
+      }catch{}
+      if(toPay <= 0) return {paid:0, reason:"blocked - same person + same amount", alreadyPaid, correct, welcomePaid, welcomeBonus, package:pkg, blocked:true};
 
+      const existing = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(referredUser.id);
       if(existing){
         db.prepare("UPDATE referral_rewards SET amount=? WHERE referred_user_id=?").run(correct, referredUser.id);
       } else {
@@ -191,7 +296,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return {paid:0, reason:e.message}; }
   };
 
-  // === BACKPAY - SERVER 3 - ONLY REFERRAL + WELCOME, NO UPGRADE ===
   const backpayHandler = (req,res) => {
     try{
       let allActivated = [];
@@ -200,7 +304,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         try{ allActivated = db.prepare("SELECT * FROM users WHERE status IN ('active','approved') ORDER BY id ASC").all(); }catch{}
       }
       let paidCount = 0, totalPaid = 0, welcomeCount = 0, totalWelcome = 0, details = [];
-      let skippedNoReferrer = 0, skippedAlreadyCorrect = 0, skippedUpgraded = 0;
+      let skippedNoReferrer = 0, blockedCount = 0;
       for(const u of allActivated){
         try{
           const bonus = payReferralForUser(u);
@@ -210,28 +314,21 @@ module.exports = (app, db, requireUser, requireAdmin) => {
             details.push({referrer: bonus.referrer, referrer_id: bonus.referrer_id, referred: u.username, referred_id: u.id, package: u.package, alreadyPaid: bonus.alreadyPaid||0, correct: bonus.correct, paid: bonus.paid, welcomePaid: bonus.welcomePaid||0});
           } else {
             if(bonus.reason === "no referrer found") skippedNoReferrer++;
-            else if(bonus.reason === "already paid") skippedAlreadyCorrect++;
-            else if(bonus.reason && bonus.reason.includes("upgraded")) skippedUpgraded++;
+            else if(bonus.blocked) blockedCount++;
           }
         }catch{}
       }
-      return res.json({success:true, message:`Backpay done - Referral: ${paidCount} people, ₦${totalPaid} | Welcome: ${welcomeCount} people, ₦${totalWelcome} | Checked ${allActivated.length}, No-referrer: ${skippedNoReferrer}, Already-correct: ${skippedAlreadyCorrect}, Skipped-upgraded: ${skippedUpgraded}`, paidCount, totalPaid, welcomeCount, totalWelcome, details, skippedNoReferrer, skippedAlreadyCorrect, skippedUpgraded, totalActivated: allActivated.length});
+      return res.json({success:true, message:`Backpay done - Referral: ${paidCount} people, ₦${totalPaid} | Welcome: ${welcomeCount} people, ₦${totalWelcome} | Checked ${allActivated.length}, No-referrer: ${skippedNoReferrer}, BLOCKED (same person + same amount): ${blockedCount}`, paidCount, totalPaid, welcomeCount, totalWelcome, details, skippedNoReferrer, blockedCount, totalActivated: allActivated.length});
     }catch(e){ return res.status(500).json({success:false, message:e.message}); }
   };
-  safeAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler);
-  safeAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler);
+  forceAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler);
+  forceAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler);
   const approveHandler = (req,res) => {
     try{
       const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
       if(!userId) return res.status(400).json({success:false, message:"User ID required"});
       const before = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
       if(!before) return res.status(404).json({success:false, message:"User not found"});
-      // Approve na for new activation, no be upgrade - if user don upgrade before, no pay again
-      if(hasEverUpgraded(userId)){
-        try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
-        try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
-        return res.json({success:true, message:"User approved. Skipped - upgraded user, upgrade system already handles referral/welcome", user:{id:before.id, username:before.username, package:before.package}});
-      }
       try{ db.prepare("UPDATE users SET account_status='approved' WHERE id=?").run(userId); }catch{}
       try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(userId); }catch{}
       try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(userId); }catch{}
@@ -240,10 +337,17 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       return res.json({success:true, message:`User approved. Referral bonus: ₦${bonus.paid} to ${bonus.referrer||'none'} | Welcome bonus: ₦${bonus.welcomePaid||0} to user`, user:{id:fresh.id, username:fresh.username, package:fresh.package, account_status:fresh.account_status}, referralBonus: bonus});
     }catch(e){ return res.status(500).json({success:false, message:e.message}); }
   };
-  safeAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler);
-  safeAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler);
+  forceAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler);
+  forceAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler);
 
-  // === SUSPEND / UNSUSPEND ===
+  // ✅ RE-FORCE AFTER ALL SERVERS DON LOAD - Vercel safe, inside try/catch, no crash
+  try{
+    if(typeof setTimeout === "function"){
+      setTimeout(()=>{ try{ forceAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler); forceAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler); forceAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler); forceAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler); console.log("✅ Server3 Re-force done - only Server 3 backpay dey work"); }catch{} }, 1000);
+      setTimeout(()=>{ try{ forceAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler); forceAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler); forceAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler); forceAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler); console.log("✅ Server3 Re-force 2 done - only Server 3 backpay dey work"); }catch{} }, 3000);
+    }
+  }catch{}
+
   const handleSuspendUser = (req,res) => {
     try{
       const userId = Number(req.body?.userId || req.body?.id || req.body?.user_id || req.query.id || req.query.userId || req.params.id);
@@ -284,7 +388,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("post", "/api/admin/users/unblock", server3AdminGuard, handleUnsuspendUser);
   safeAdd("get", "/api/admin/unsuspend", server3AdminGuard, handleUnsuspendUser);
 
-  // ===== NOTIFY USER =====
   const notifyUser = (userId, title, message) => {
     try{
       const tables = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')`).all().map(r=>r.name);
@@ -316,7 +419,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return false;
   };
 
-  // ===== 1. BALANCE HISTORY =====
   const balanceHistoryHandler = (req,res) => {
     try{
       const userId = Number(req.query?.userId||req.query?.id||req.query?.user_id||0);
@@ -355,7 +457,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   ];
   balanceHistoryPaths.forEach(p=> safeAdd("get", p, adminGuard, balanceHistoryHandler));
 
-  // ===== 1B. BALANCE USER =====
   const balanceUserHandler = (req,res) => {
     try{
       const email = String(req.query?.email||"").trim().toLowerCase();
@@ -377,7 +478,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
   ["/api/admin/balance/user","/api/admin/balance/user-by-email","/api/admin/user/balance-detail","/api/admin/balance/detail"].forEach(p=> safeAdd("get", p, adminGuard, balanceUserHandler));
 
-  // ===== 2. BALANCE ADD / DEDUCT - SEPARATE =====
   const findUserForBalance = (body) => {
     const uid = Number(body?.userId||body?.id||body?.user_id||0);
     const em = String(body?.email||"").trim().toLowerCase();
@@ -447,7 +547,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=> safeAdd("post",p, adminGuard, adjustHandler(false)));
   ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=> safeAdd("post",p, adminGuard, adjustGeneric));
 
-  // ===== 3. UPGRADE LIST - LIST ONLY, NO REWARD HERE =====
   safeAdd("get","/api/admin/upgrades", adminGuard, (req,res)=>{
     try{
       const rows = db.prepare(`SELECT u.*, us.email, us.username, us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200`).all();
@@ -461,5 +560,8 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ SERVER 3 READY - Balance History + Balance User + Deduct Always Success + Notify User + Backpay + Suspend");
+  console.log("✅ SERVER 3 READY - Balance History + Balance User + Deduct Always Success + Notify User + Backpay + Suspend + BLOCKER SAME PERSON SAME AMOUNT + BLOCK OTHER SERVERS BACKPAY");
+  }catch(e){
+    console.log("⚠️ Server 3 load error (no crash, backend go still run):", e.message);
+  }
 };
