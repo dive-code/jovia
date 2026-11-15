@@ -107,8 +107,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     return res.status(401).json({success:false,message:"Admin authentication required"});
   };
 
-  // ✅ UPDATED - FIX FOR "Session expired - Please login again" SCREENSHOT
-  // If request come from your own admin site, allow am even if session expire
+  // ✅ UPDATED - FIX FOR "Session expired - Please login again"
   const server3AdminGuard = (req,res,next) => {
     try{
       if(req.query.key === 'jovia123') return next();
@@ -169,7 +168,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
 
   // ============================================================
-  // ✅ FAST RESTORE - RESET PASSWORD - FIX FOR: POST /api/admin/users/:id/reset-password
+  // ✅ FAST RESTORE - RESET PASSWORD
   // ============================================================
   const handleResetPassword = (req,res) => {
     try{
@@ -228,8 +227,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
   // ============================================================
   // ✅ BACKPAY MIND OWN BUSINESS - NO BALANCING, NO TOP-UP, NO DIFFERENCE
-  // If person don already collect ANY referral money before (> ₦0), BLOCK, pay ₦0
-  // Only if alreadyPaid == 0, pay FULL correct amount once.
   // ============================================================
   const getAlreadyPaidForPerson = (referrer, referredUser) => {
     const uid = referredUser.id;
@@ -541,6 +538,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     if(t.includes("game")) return "game_balance";
     return "wallet_balance";
   };
+
+  // ============================================================
+  // ✅ FIXED DEDUCT - FORCE override old buggy server, update ALL columns, debit with -amount
+  // ============================================================
   const adjustHandler = (isAdd) => (req,res) => {
     try{
       const body = req.body||{};
@@ -551,37 +552,48 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const reason = String(body?.reason||body?.note||body?.description||(isAdd?"Admin add balance":"Admin deduct balance")).slice(0,300);
       const col = resolveCol(body);
       const label = col==="referral_balance" ? "Referral Earnings" : col==="affiliate_balance" ? "Affiliate" : col==="game_balance" ? "Game" : "Available";
+
       if(col==="game_balance"){
         let acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(user.id);
         if(!acc){ db.prepare(`INSERT INTO jovia_game_accounts (user_id, game_balance, points) VALUES (?,0,0)`).run(user.id); acc=db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(user.id); }
         const before = Number(acc.game_balance||0);
         const after = isAdd ? before+amount : Math.max(0, before-amount);
-        const wasShort = !isAdd && before < amount;
-        db.prepare(`UPDATE jovia_game_accounts SET game_balance=?, updated_at=datetime('now') WHERE user_id=?`).run(after, user.id);
-        try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [game_balance]`); }catch{}
-        if(!isAdd){
-          notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
-        } else {
-          notifyUser(user.id, "Balance Added - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
-        }
-        return res.json({success:true, message: wasShort ? `✅ Game balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.` : `✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
+        const signed = isAdd ? amount : -amount;
+        db.prepare(`UPDATE jovia_game_accounts SET game_balance=? WHERE user_id=?`).run(after, user.id);
+        try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?,?,?,?,datetime('now'))`).run(user.id, isAdd?"credit":"debit", signed, `${reason} [game_balance]`); }catch{}
+        try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?,?,?,?,datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", signed, `${reason} [game_balance]`); }catch{}
+        if(!isAdd) notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was DEDUCTED from your ${label} Balance. Reason: ${reason}. Before: ₦${before.toLocaleString()}, Now: ₦${after.toLocaleString()}. - Jovia System`);
+        else notifyUser(user.id, "Balance Added - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was ADDED to your ${label} Balance. Reason: ${reason}. Now: ₦${after.toLocaleString()}. - Jovia System`);
+        return res.json({success:true, message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. Before ₦${before.toLocaleString()} -> Now ₦${after.toLocaleString()}`, userId:user.id, beforeBalance:before, newBalance:after, balance:after});
       }
+
       const before = Number(user[col]||0);
       const after = isAdd ? before+amount : Math.max(0, before-amount);
-      const wasShort = !isAdd && before < amount;
+      const signed = isAdd ? amount : -amount;
+
       db.prepare(`UPDATE users SET ${col} = ? WHERE id=?`).run(after, user.id);
       if(col==="wallet_balance"){
         try{ db.prepare(`UPDATE users SET balance=? WHERE id=?`).run(after, user.id); }catch{}
+        try{ db.prepare(`UPDATE users SET available_balance=? WHERE id=?`).run(after, user.id); }catch{}
+        try{ db.prepare(`UPDATE users SET total_balance=? WHERE id=?`).run(after, user.id); }catch{}
+        try{ db.prepare(`UPDATE users SET wallet=? WHERE id=?`).run(after, user.id); }catch{}
       }
-      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, ?, ?, ?, datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", isAdd?amount:-amount, `${reason} [${col}]`); }catch{}
-      if(!isAdd){
-        notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was deducted from your ${label} Balance by the System. Reason: ${reason}. Your previous balance was ₦${before.toLocaleString()} and your new balance is ₦${after.toLocaleString()}. If you have any questions, please contact support. - Jovia System`);
-      } else {
-        notifyUser(user.id, "Balance Added - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was added to your ${label} Balance by the System. Reason: ${reason}. Your new balance is ₦${after.toLocaleString()}. - Jovia System`);
+      if(col==="referral_balance"){
+        try{ db.prepare(`UPDATE users SET referral_earnings=? WHERE id=?`).run(after, user.id); }catch{}
       }
+      if(col==="affiliate_balance"){
+        try{ db.prepare(`UPDATE users SET affiliate_earnings=? WHERE id=?`).run(after, user.id); }catch{}
+      }
+
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?,?,?,?,datetime('now'))`).run(user.id, isAdd?"credit":"debit", signed, `${reason} [${col}]`); }catch{}
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?,?,?,?,datetime('now'))`).run(user.id, isAdd?"admin_add":"admin_deduct", signed, `${reason} [${col}]`); }catch{}
+
+      if(!isAdd) notifyUser(user.id, "Balance Deduction - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was DEDUCTED from your ${label} Balance. Reason: ${reason}. Before: ₦${before.toLocaleString()}, Now: ₦${after.toLocaleString()}. - Jovia System`);
+      else notifyUser(user.id, "Balance Added - System", `Hello ${user.full_name||user.username||""}, ₦${amount.toLocaleString()} was ADDED to your ${label} Balance. Reason: ${reason}. Now: ₦${after.toLocaleString()}. - Jovia System`);
+
       const updated = db.prepare(`SELECT id, email, username, wallet_balance, affiliate_balance, referral_balance FROM users WHERE id=?`).get(user.id);
       return res.json({success:true,
-        message: wasShort ? `✅ ${label} balance deducted: ₦${amount.toLocaleString()} - User only get ₦${before.toLocaleString()}, balance now ₦0. User don get notification.` : `✅ ${label} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. User don get notification.`,
+        message: `✅ ${label} balance ${isAdd?"added":"deducted"}: ₦${amount.toLocaleString()}. Before ₦${before.toLocaleString()} -> Now ₦${after.toLocaleString()}`,
         user:updated, userId:user.id, beforeBalance:before, newBalance:after, balance:after, wallet_balance:updated?.wallet_balance, affiliate_balance:updated?.affiliate_balance, referral_balance:updated?.referral_balance});
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   };
@@ -589,9 +601,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     const t = String(req.body?.type||req.body?.action||"add").toLowerCase();
     return adjustHandler(!(t.includes("deduct")||t.includes("subtract")||t.includes("remove")||t==="minus"))(req,res);
   };
-  ["/api/admin/balance/add","/api/admin/user/add-balance","/api/admin/users/add-balance","/api/admin/wallet/add","/api/admin/add-balance"].forEach(p=> safeAdd("post",p, adminGuard, adjustHandler(true)));
-  ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=> safeAdd("post",p, adminGuard, adjustHandler(false)));
-  ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=> safeAdd("post",p, adminGuard, adjustGeneric));
+  // ✅ FIXED: forceAdd NOT safeAdd - override old buggy deduct
+  ["/api/admin/balance/add","/api/admin/user/add-balance","/api/admin/users/add-balance","/api/admin/wallet/add","/api/admin/add-balance"].forEach(p=> forceAdd("post",p, adminGuard, adjustHandler(true)));
+  ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=> forceAdd("post",p, adminGuard, adjustHandler(false)));
+  ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=> forceAdd("post",p, adminGuard, adjustGeneric));
 
   safeAdd("get","/api/admin/upgrades", adminGuard, (req,res)=>{
     try{
@@ -606,7 +619,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ SERVER 3 READY - Balance History + Balance User + Deduct Always Success + Notify User + Backpay + Suspend + Reset Password + NO BALANCING + FIXED SESSION EXPIRED");
+  console.log("✅ SERVER 3 READY - Balance History + Balance User + FIXED DEDUCT (forceAdd + debit -amount + ALL columns) + Notify User + Backpay + Suspend + Reset Password + NO BALANCING + FIXED SESSION EXPIRED");
   }catch(e){
     console.log("⚠️ Server 3 load error (no crash, backend go still run):", e.message);
   }
