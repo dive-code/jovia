@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--purple:#2a0f3d;--purple2:#4b1d6b;--gold:#ffc400;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1;--success:#16a34a;--danger:#ef4444;--warning:#f59e0b}
+:root{--purple:#2a0f3d;--purple2:#4b1d6b;--gold:#ffc400;--bg:#fbf8ff;--text:#1e1430;--muted:#8a8196;--border:#ece6f1;--success:#16a34a;--danger:#ef4444;--warning:#f59e0b;--blue:#2563eb}
 body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent}
 .app{width:100%;max-width:700px;min-height:100vh;margin:auto;padding:0 0 100px}
 .topbar{position:sticky;top:0;z-index:90;display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
@@ -66,7 +66,7 @@ body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-we
 .wheel-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:60px;height:60px;background:#3b0758;border:3px solid #ffc400;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#ffc400;font-weight:900;z-index:5}
 .coming-soon{padding:50px 20px;text-align:center;background:#f5f3f7;border:2px dashed #d1c7d9;border-radius:16px}
 .section{margin-top:18px} .section-header{display:flex;justify-content:space-between;align-items:center;padding:14px;background:white;border:1px solid var(--border);border-radius:12px;margin-bottom:10px}
-.section-title{font-size:13px;font-weight:800;color:var(--purple)} 
+.section-title{font-size:13px;font-weight:800;color:var(--purple)}
 .history-tabs{display:flex;gap:8px;margin-bottom:10px}
 .tab{padding:8px 14px;border-radius:20px;border:1px solid var(--border);background:#fff;font-size:11px;font-weight:700;cursor:pointer}
 .tab.active{background:var(--purple);color:#fff;border-color:var(--purple)}
@@ -75,9 +75,80 @@ body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-we
 .badge{padding:4px 8px;border-radius:20px;font-size:9px;font-weight:800;text-transform:uppercase}
 .badge-processing{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
 .badge-successful{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.badge-paid{background:#2563eb;color:#fff;border:1px solid #2563eb}
 .badge-failed{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
 .badge-win{background:#dcfce7;color:#166534}
 .badge-loss{background:#fee2e2;color:#991b1b}
+/* --- ANIMAL RUN - YOUR EXACT DESIGN, SCOPED INSIDE games.html --- */
+.animal-arena{--abg:#08150f;--apanel:#10251a;--agreen:#20c77a;--agold:#f5c94c;--amuted:#8da597;background:var(--abg);color:#f4f8f5;border-radius:18px;padding:16px;margin-top:4px}
+.animal-arena .a-intro-label{color:var(--agreen);font-size:10px;font-weight:900;letter-spacing:2px}
+.animal-arena .a-h1{font-size:32px;font-weight:900;letter-spacing:1px;margin:7px 0;line-height:1}
+.animal-arena .a-sub{color:var(--amuted);font-size:12px;line-height:1.7;margin:0}
+.animal-arena .a-head{display:flex;justify-content:space-between;align-items:center;margin:16px 0 10px}
+.animal-arena .a-head h2{font-size:14px;margin:0}
+.animal-arena .a-head span{color:var(--amuted);font-size:11px}
+.animal-arena .a-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.animal-arena .a-tab{background:var(--apanel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px 6px;text-align:center;color:#fff;cursor:pointer}
+.animal-arena .a-tab.active{background:linear-gradient(145deg,#194a30,#123522);border-color:var(--agreen)}
+.animal-arena .a-tab b{display:block;font-size:13px}
+.animal-arena .a-tab small{display:block;color:var(--amuted);margin-top:4px;font-size:10px}
+.animal-arena .a-race-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.animal-arena .a-race-card{background:linear-gradient(145deg,#173624,#10251a);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;position:relative;overflow:hidden;text-align:left}
+.animal-arena .a-race-card.active{border-color:var(--agreen);box-shadow:0 0 0 2px rgba(32,199,122,.25)}
+.animal-arena .a-race-num{font-size:36px;color:rgba(255,255,255,.08);position:absolute;right:12px;top:2px;font-weight:900}
+.animal-arena .a-race-icon{font-size:30px;margin-bottom:8px}
+.animal-arena .a-race-card h3{margin:0 0 6px;font-size:13px}
+.animal-arena .a-race-card p{color:var(--amuted);font-size:10px;line-height:1.6;min-height:32px}
+.animal-arena .a-race-meta{display:flex;justify-content:space-between;margin:12px 0;padding-top:10px;border-top:1px solid rgba(255,255,255,.08);color:var(--amuted);font-size:9px}
+.animal-arena .a-play{width:100%;padding:11px;border:0;border-radius:10px;background:var(--agreen);color:#062214;font-size:11px;font-weight:900}
+.animal-arena .a-track-wrap{background:linear-gradient(145deg,#142d20,#0d2016);border:1px solid rgba(255,255,255,.08);padding:10px;border-radius:16px;overflow:hidden;margin-top:14px}
+.animal-arena .a-track-title{display:flex;justify-content:space-between;padding:4px 4px 10px;font-size:9px;font-weight:800;letter-spacing:1px;color:var(--amuted)}
+.animal-arena #aTrack{position:relative;height:310px;overflow:hidden;border-radius:12px;background:repeating-linear-gradient(0deg,#17633b 0px,#17633b 33px,#1b7143 34px,#1b7143 68px);border:2px solid rgba(255,255,255,.12)}
+.animal-arena .a-lane{position:absolute;left:0;right:0;height:34px;border-bottom:1px dashed rgba(255,255,255,.3)}
+.animal-arena .a-lane-num{position:absolute;left:7px;top:9px;color:rgba(255,255,255,.7);font-size:9px;font-weight:900}
+.animal-arena .a-finish{position:absolute;right:14px;top:0;bottom:0;width:12px;z-index:5;background:repeating-conic-gradient(#fff 0% 25%,#151515 0% 50%) 50%/12px 12px}
+.animal-arena .a-runner{position:absolute;left:36px;z-index:6;height:32px;display:flex;align-items:center;gap:4px;white-space:nowrap;transition:left .12s linear}
+.animal-arena .a-runner .a-icon{font-size:26px;filter:drop-shadow(0 3px 3px rgba(0,0,0,.4))}
+.animal-arena .a-runner small{background:rgba(0,0,0,.65);padding:4px 7px;border-radius:5px;font-size:9px;font-weight:800;color:#fff}
+.animal-arena .a-runner.running .a-icon{animation:aRun .25s infinite alternate}
+@keyframes aRun{to{transform:translateY(-4px) rotate(-5deg)}}
+.animal-arena .a-msg{text-align:center;margin:14px 0}
+.animal-arena .a-msg h2{font-size:28px;letter-spacing:1px;margin:0;color:var(--agold);line-height:1.1}
+.animal-arena .a-msg p{font-size:11px;color:var(--amuted);margin:5px 0}
+.animal-arena .a-animal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.animal-arena .a-animal{position:relative;background:var(--apanel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 6px;text-align:center;color:#fff;cursor:pointer}
+.animal-arena .a-animal.selected{border:2px solid var(--agold);background:#332c13}
+.animal-arena .a-animal .emoji{font-size:32px;display:block;margin-bottom:6px}
+.animal-arena .a-animal b{font-size:12px}
+.animal-arena .a-animal small{display:block;margin-top:4px;color:var(--amuted);font-size:9px}
+.animal-arena .a-animal .sel-tag{position:absolute;top:-8px;right:7px;background:var(--agold);color:#161108;font-size:8px;padding:4px 7px;border-radius:20px;font-weight:900;display:none}
+.animal-arena .a-animal.selected .sel-tag{display:block}
+.animal-arena .a-sel-panel{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;background:var(--apanel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+.animal-arena .a-sel-panel small{display:block;color:var(--amuted);font-size:10px;margin-bottom:4px}
+.animal-arena .a-sel-panel b{font-size:14px}
+.animal-arena .a-confirm{background:var(--agreen);color:#052315;border:0;border-radius:10px;padding:12px 16px;font-weight:900;font-size:11px}
+.animal-arena .a-confirm:disabled{opacity:.5}
+.animal-arena .a-stake{margin-top:12px}
+.animal-arena .a-stake label{display:block;font-size:11px;font-weight:700;margin-bottom:6px;color:#fff}
+.animal-arena .a-stake input{width:100%;padding:12px 14px;border:1.5px solid rgba(255,255,255,.15);border-radius:10px;font-size:13px;outline:none;background:#0d2016;color:#fff}
+.animal-arena #aPodium{display:none;margin:16px 0;padding:18px;text-align:center;background:linear-gradient(145deg,#1b3d29,#10251a);border:1px solid rgba(245,201,76,.3);border-radius:16px}
+.animal-arena #aPodium h2{font-size:26px;color:var(--agold);margin:0 0 12px}
+.animal-arena .a-podium-grid{display:flex;justify-content:center;align-items:flex-end;gap:8px;margin:12px 0}
+.animal-arena .a-pod{width:80px;padding:10px 4px;border-radius:10px 10px 0 0;color:#111;font-size:11px;font-weight:900}
+.animal-arena .a-pod .emoji{font-size:22px;display:block;margin:6px 0}
+.animal-arena .a-p1{height:110px;background:#f5c94c}.a-p2{height:88px;background:#bdc7c0}.a-p3{height:70px;background:#c58c5b}
+.animal-arena #aPodText{color:#dce9df;font-size:12px;line-height:1.7}
+.animal-arena .a-continue{margin-top:12px;background:var(--agreen);color:#052315;border:0;border-radius:10px;padding:11px 22px;font-weight:900}
+.animal-arena .a-bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.animal-arena .a-info{background:var(--apanel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+.animal-arena .a-info h3{font-size:12px;margin:0 0 12px}
+.animal-arena .a-hist{display:flex;flex-wrap:wrap;gap:6px}
+.animal-arena .a-hist span{background:#1b3b29;border:1px solid rgba(255,255,255,.08);padding:6px 8px;border-radius:8px;font-size:10px}
+.animal-arena .a-rec{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:10px}
+.animal-arena .a-rec-name{width:75px}
+.animal-arena .a-rec-track{flex:1;height:7px;background:#263c2e;border-radius:20px;overflow:hidden}
+.animal-arena .a-rec-fill{height:100%;background:var(--agreen);border-radius:20px}
+@media(max-width:480px){.animal-arena .a-race-grid{grid-template-columns:1fr}.animal-arena .a-bottom{grid-template-columns:1fr}.animal-arena .a-h1{font-size:28px}}
 .bottom-nav{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:500px;background:rgba(255,255,255,.96);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:22px;padding:10px 8px;display:grid;grid-template-columns:repeat(4,1fr);z-index:100}
 .nav-item{border:0;background:none;color:#9a92a6;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:700;cursor:pointer;padding:6px 0;border-radius:14px;text-decoration:none}
 .nav-item.active{color:var(--purple);background:#f6f0fa}
@@ -96,6 +167,7 @@ body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-we
 <article class="game-card"><div class="game-emoji">🍾</div><h3>Bottle Spin 360°</h3><p>Bottle spins 4x and lands UP or DOWN. Predict correctly to win.</p><button class="game-open" data-game="bottle">Play →</button></article>
 <article class="game-card"><div class="game-emoji">📈</div><h3>Up / Down Trading</h3><p>GREEN is UP, RED is DOWN. Predict the next candle.</p><button class="game-open" data-game="updown">Play →</button></article>
 <article class="game-card"><div class="game-emoji">🎡</div><h3>Wheel Spin</h3><p>Spin to win up to 2x. Fair play, house balanced.</p><button class="game-open" data-game="wheel">Play →</button></article>
+<article class="game-card"><div class="game-emoji">🐾</div><h3>Animal Run - LIVE</h3><p>Real-time race. Pick your animal. Server decides winner.</p><button class="game-open" data-game="animal">Play →</button></article>
 <article class="game-card" style="border:2px dashed #9ca3af;background:#f9fafb"><div class="game-emoji">🔢</div><h3>Number Guess</h3><p>Coming soon.</p><button class="game-open" data-game="guess" style="background:#9ca3af">Coming Soon</button></article>
 </div>
 <section class="game-panel" id="depositPanel"><div class="panel-head"><h3>＋ Fund Game Wallet</h3><button class="close-panel" data-close-panel>Close</button></div><div style="background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border:1.5px solid #22c55e;padding:14px;border-radius:12px;margin-bottom:16px"><div style="font-size:10px;font-weight:800;color:#15803d;margin-bottom:8px">BANK TRANSFER DETAILS</div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Bank</span><b style="font-size:12px">Kredi Money MFB</b></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:11px;color:#64748b">Account No</span><div style="display:flex;align-items:center;gap:8px"><b style="font-size:16px;color:#111">1850772192</b><button type="button" onclick="navigator.clipboard.writeText('1850772192');this.innerText='Copied!';setTimeout(()=>this.innerText='Copy',2000)" style="padding:4px 10px;border-radius:20px;border:none;background:#0f172a;color:#fff;font-size:10px;font-weight:800">Copy</button></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:#64748b">Name</span><b style="font-size:12px">Raenest / Divine</b></div></div><form id="depositForm"><div class="field"><label>Amount Sent (₦) - Min ₦100</label><input id="depositAmount" type="number" min="100" placeholder="e.g 2000" required></div><div class="field"><label>Sender Reference</label><input id="depositRef" type="text" placeholder="e.g Your name" required></div><div class="field"><label>Upload Payment Proof *</label><input id="depositProof" type="file" accept="image/*" required style="padding:10px;background:#faf8fb"><img id="proofPreview" style="display:none;width:100%;max-height:200px;object-fit:contain;margin-top:10px;border-radius:10px;border:1px solid #e2e8f0"></div><button class="primary-btn" id="depositSubmit" type="submit" style="background:var(--purple);color:#fff">Submit for Verification →</button></form><div class="game-result" id="depositResult"></div></section>
@@ -103,7 +175,36 @@ body{font-family:"Poppins",sans-serif;background:var(--bg);color:var(--text);-we
 <section class="game-panel" id="bottlePanel"><div class="panel-head"><h3>🍾 Bottle Spin</h3><button class="close-panel" data-close-panel>Close</button></div><div class="game-notice">Predict where the bottle lands after 4 full rotations.</div><div class="bottle-stage"><div class="bottle-label up">⬆ UP</div><div class="bottle" id="bottle" style="transform:rotate(0deg)">🍾</div><div class="bottle-label down">⬇ DOWN</div></div><div id="bottleResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick UP or DOWN</div><div class="pred-row"><div class="pred up selected" id="bottlePickUp" onclick="pickBottle('up')"><span>⬆ UP</span><small>UP Wins</small></div><div class="pred down" id="bottlePickDown" onclick="pickBottle('down')"><span>⬇ DOWN</span><small>DOWN Wins</small></div></div><div class="field"><label>Stake (₦) - Min ₦100</label><input id="bottleStake" type="number" min="100" value="100"></div><button class="primary-btn" id="bottlePlayBtn" type="button" onclick="playBottleUpDown()">🍾 SPIN BOTTLE</button><div class="game-result" id="bottleResult"></div></section>
 <section class="game-panel" id="updownPanel"><div class="panel-head"><h3>📈 Up / Down</h3><button class="close-panel" data-close-panel>Close</button></div><div class="game-notice">GREEN candle = UP, RED = DOWN.</div><div class="trading-stage"><canvas id="tradingCanvas"></canvas><div class="price-tag up" id="priceTag">$ 64,245</div><div class="timer-bar" id="timerBar" style="width:100%"></div></div><div id="updownResultText" style="text-align:center;font-weight:900;font-size:18px;margin:14px 0;min-height:26px">Pick GREEN or RED</div><div class="pred-row"><div class="pred up selected" id="upPickUp" onclick="pickUpDown('up')"><span>📈 UP - GREEN</span></div><div class="pred down" id="upPickDown" onclick="pickUpDown('down')"><span>📉 DOWN - RED</span></div></div><div class="field"><label>Stake (₦) - Min ₦100</label><input id="updownStake" type="number" min="100" value="100"></div><button class="primary-btn" id="updownPlayBtn" type="button" onclick="playUpDownTrading()">📈 PLACE ORDER</button><div class="game-result" id="updownResult"></div></section>
 <section class="game-panel" id="wheelPanel"><div class="panel-head"><h3>🎡 Wheel Spin</h3><button class="close-panel" data-close-panel>Close</button></div><div class="game-notice">Fair wheel: LOSE, 0.5x, 0.8x, 1.2x, 1.5x, 2x - Balanced for players.</div><div class="wheel-wrap"><div class="wheel-pointer"></div><canvas id="wheelCanvas" width="600" height="600"></canvas><div class="wheel-center">SPIN</div></div><div id="wheelResultText" style="text-align:center;font-weight:900;font-size:18px;margin:10px 0;min-height:26px">Place your stake and spin</div><div class="field"><label>Stake (₦) - Min ₦100</label><input id="wheelStake" type="number" min="100" value="100"></div><button class="primary-btn" id="wheelPlayBtn" type="button" onclick="playWheel()">🎡 SPIN WHEEL</button><div class="game-result" id="wheelResult"></div></section>
-<section class="game-panel" id="animalPanel"><div class="panel-head"><h3>🐾 Animal Run</h3><button class="close-panel" data-close-panel>Close</button></div><div class="game-notice">Predict the winner. 3, 6 or 9 animals - first to finish wins.</div><div style="background:#f4edf9;border:1px solid #ece6f1;border-radius:14px;padding:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:800;color:#2a0f3d">🏁 LIVE TRACK</span><span style="font-size:11px;font-weight:800;color:#2a0f3d">TIME LEFT <b id="animalCount" style="color:#d6a400">20</b>s</span></div><div id="animalTrack" style="position:relative;height:310px;background:linear-gradient(180deg,#f4edf9,#fff);border:1px solid #ece6f1;border-radius:14px;overflow:hidden;margin-bottom:10px"><div id="animalR0" style="position:absolute;left:10px;top:4px;font-size:26px;transition:left .12s linear">🦁 Lion</div><div id="animalR1" style="position:absolute;left:10px;top:38px;font-size:26px;transition:left .12s linear">🐯 Tiger</div><div id="animalR2" style="position:absolute;left:10px;top:72px;font-size:26px;transition:left .12s linear">🐴 Horse</div><div id="animalR3" style="position:absolute;left:10px;top:106px;font-size:26px;transition:left .12s linear">🐵 Monkey</div><div id="animalR4" style="position:absolute;left:10px;top:140px;font-size:26px;transition:left .12s linear">🐰 Rabbit</div><div id="animalR5" style="position:absolute;left:10px;top:174px;font-size:26px;transition:left .12s linear">🐶 Dog</div><div id="animalR6" style="position:absolute;left:10px;top:208px;font-size:26px;transition:left .12s linear">🐱 Cat</div><div id="animalR7" style="position:absolute;left:10px;top:242px;font-size:26px;transition:left .12s linear">🦅 Eagle</div><div id="animalR8" style="position:absolute;left:10px;top:276px;font-size:26px;transition:left .12s linear">🐻 Bear</div><div style="position:absolute;right:10px;top:0;bottom:0;width:10px;background:repeating-conic-gradient(#2a0f3d 0% 25%,#ffc400 0% 50%) 50%/10px 10px"></div></div><div id="animalMsg" style="text-align:center;font-weight:900;font-size:18px;margin:10px 0;min-height:26px;color:#2a0f3d">Pick your animal</div><div id="animalBets" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px"><button onclick="animalPick(0)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🦁</div><b style="font-size:11px;color:#2a0f3d">Lion</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 1</small></button><button onclick="animalPick(1)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐯</div><b style="font-size:11px;color:#2a0f3d">Tiger</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 2</small></button><button onclick="animalPick(2)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐴</div><b style="font-size:11px;color:#2a0f3d">Horse</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 3</small></button><button onclick="animalPick(3)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐵</div><b style="font-size:11px;color:#2a0f3d">Monkey</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 4</small></button><button onclick="animalPick(4)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐰</div><b style="font-size:11px;color:#2a0f3d">Rabbit</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 5</small></button><button onclick="animalPick(5)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐶</div><b style="font-size:11px;color:#2a0f3d">Dog</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 6</small></button><button onclick="animalPick(6)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐱</div><b style="font-size:11px;color:#2a0f3d">Cat</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 7</small></button><button onclick="animalPick(7)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🦅</div><b style="font-size:11px;color:#2a0f3d">Eagle</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 8</small></button><button onclick="animalPick(8)" style="padding:12px 6px;border-radius:12px;border:1px solid #ece6f1;background:#fff;cursor:pointer"><div style="font-size:32px">🐻</div><b style="font-size:11px;color:#2a0f3d">Bear</b><small style="display:block;color:#8a8196;font-size:9px">COMPETITOR 9</small></button></div><div style="display:flex;justify-content:space-between;align-items:center;background:#faf8fb;border:1px solid #ece6f1;border-radius:12px;padding:12px;margin-bottom:12px"><div><small style="color:#8a8196;font-size:10px">YOUR PREDICTION</small><div id="animalSelected" style="font-weight:800;font-size:13px;color:#2a0f3d">No animal selected</div></div><button id="animalConfirm" onclick="animalConfirm()" disabled style="padding:11px 16px;border:0;border-radius:10px;background:linear-gradient(135deg,#ffc400,#ffe06b);color:#241500;font-weight:900;font-size:11px;cursor:pointer">CONFIRM PICK</button></div><div id="animalPodium" style="display:none;margin-bottom:12px;padding:16px;text-align:center;background:linear-gradient(145deg,#2f1347,#4a1f6e);border-radius:14px;color:#fff"><div style="font-size:18px;font-weight:900;color:#ffc400">🏆 RACE RESULTS</div><div style="display:flex;justify-content:center;align-items:flex-end;gap:8px;margin:12px 0"><div style="width:70px;padding:10px 4px;border-radius:10px 10px 0 0;background:#e5e0ea;color:#111;font-size:11px;font-weight:900">2ND<br><span style="font-size:22px">🥈</span><div id="animalP2">-</div></div><div style="width:70px;padding:10px 4px;border-radius:10px 10px 0 0;background:#ffc400;color:#111;font-size:11px;font-weight:900">1ST<br><span style="font-size:22px">🥇</span><div id="animalP1">-</div></div><div style="width:70px;padding:10px 4px;border-radius:10px 10px 0 0;background:#d9a06b;color:#111;font-size:11px;font-weight:900">3RD<br><span style="font-size:22px">🥉</span><div id="animalP3">-</div></div></div><div id="animalPodText" style="font-size:12px;color:#ded1e8;line-height:1.6"></div><button onclick="animalNewRound()" style="margin-top:12px;padding:11px 22px;border:0;border-radius:10px;background:linear-gradient(135deg,#ffc400,#ffe06b);color:#241500;font-weight:900;cursor:pointer">CONTINUE →</button></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px"><div style="background:#fff;border:1px solid #ece6f1;border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#2a0f3d;margin-bottom:8px">🏁 Recent Winners</div><div id="animalHistory" style="display:flex;flex-wrap:wrap;gap:6px;font-size:11px"><span style="background:#f4edf9;border:1px solid #ece6f1;padding:6px 8px;border-radius:8px">No races completed</span></div></div><div style="background:#fff;border:1px solid #ece6f1;border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#2a0f3d;margin-bottom:8px">🏆 Statistics</div><div id="animalStats" style="font-size:11px;color:#8a8196">Total races: 0</div></div></div><button class="primary-btn" id="animalPlayBtn" type="button" onclick="animalNewRound()">🐾 START RACE</button><div class="game-result" id="animalResult"></div></section><section class="section">
+<section class="game-panel" id="guessPanel"><div class="panel-head"><h3>🔢 Number Guess</h3><button class="close-panel" data-close-panel>Close</button></div><div class="coming-soon"><div style="font-size:40px">🔢</div><h3 style="margin:10px 0">Coming Soon</h3><p style="font-size:11px;color:#8a8196">Number Guess go land soon.</p></div></section>
+
+<!-- ✅ YOUR ANIMAL RUN CODE - INSIDE games.html - REAL TIME -->
+<section class="game-panel" id="animalPanel"><div class="panel-head"><h3>🐾 Animal Run - LIVE</h3><button class="close-panel" data-close-panel>Close</button></div>
+<div class="animal-arena">
+  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:10px;font-weight:900;color:#ff7777">🔴 LIVE ARENA</span><span style="background:#142e20;border:1px solid rgba(245,201,76,.3);border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;color:#f5c94c">🪙 <span id="aBalTop">₦0</span></span></div>
+  <div style="margin-top:14px"><div class="a-intro-label">WELCOME TO THE ARENA</div><div class="a-h1">THE RACE<br>STARTS HERE.</div><p class="a-sub">Select arena, predict winner, win real money. Server decides winner.</p></div>
+  <div class="a-head"><h2>Race Schedule</h2><span>Select race duration</span></div>
+  <div class="a-tabs"><button class="a-tab active" onclick="aSetTime(1,this)"><b>1 Minute</b><small>Quick Race</small></button><button class="a-tab" onclick="aSetTime(2,this)"><b>2 Minutes</b><small>Standard Race</small></button><button class="a-tab" onclick="aSetTime(3,this)"><b>3 Minutes</b><small>Long Race</small></button></div>
+  <div class="a-head"><h2>Choose Your Arena</h2><span>03 Racing categories</span></div>
+  <div class="a-race-grid">
+    <div class="a-race-card" id="aArena3"><div class="a-race-num">01</div><div class="a-race-icon">🦁</div><h3>Classic Arena</h3><p>A fast race with three competing animals.</p><div class="a-race-meta"><span>3 ANIMALS</span><span>BEGINNER</span></div><button class="a-play" onclick="aStartGame(3)">ENTER ARENA →</button></div>
+    <div class="a-race-card" id="aArena6"><div class="a-race-num">02</div><div class="a-race-icon">🐴</div><h3>Championship Arena</h3><p>More competition, more animals.</p><div class="a-race-meta"><span>6 ANIMALS</span><span>STANDARD</span></div><button class="a-play" onclick="aStartGame(6)">ENTER ARENA →</button></div>
+    <div class="a-race-card" id="aArena9"><div class="a-race-num">03</div><div class="a-race-icon">🐻</div><h3>Ultimate Arena</h3><p>Complete experience, nine competitors.</p><div class="a-race-meta"><span>9 ANIMALS</span><span>ADVANCED</span></div><button class="a-play" onclick="aStartGame(9)">ENTER ARENA →</button></div>
+  </div>
+  <div id="aGame" style="display:none;margin-top:18px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button onclick="aShowLobby()" style="background:#10251a;color:#fff;border:1px solid rgba(255,255,255,.08);padding:10px 14px;border-radius:10px;font-size:12px;font-weight:700">← BACK TO ARENA</button><div style="color:#8da597;font-size:12px">ROUND <b id="aRound" style="color:#fff">01</b> • <span id="aRoomLabel">CLASSIC</span></div><div style="background:#183b28;border:1px solid rgba(32,199,122,.2);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800">TIME LEFT <span id="aCount" style="color:#f5c94c">—</span></div></div>
+    <div class="a-msg"><h2 id="aMsg">MAKE YOUR PREDICTION</h2><p id="aSubmsg">Choose the animal you think will finish first.</p></div>
+    <div class="a-track-wrap"><div class="a-track-title"><span>🏁 LIVE RACING TRACK</span><span>FINISH LINE →</span></div><div id="aTrack"></div></div>
+    <div id="aPodium"><h2>🏆 RACE RESULTS</h2><div class="a-podium-grid"><div class="a-pod a-p2" id="aP2">2ND<br><span class="emoji">🥈</span>-</div><div class="a-pod a-p1" id="aP1">1ST<br><span class="emoji">🥇</span>-</div><div class="a-pod a-p3" id="aP3">3RD<br><span class="emoji">🥉</span>-</div></div><div id="aPodText"></div><button class="a-continue" onclick="aContinueGame()">CONTINUE →</button></div>
+    <div style="margin-top:18px"><h3 style="font-size:14px;margin:0 0 4px">Choose Your Champion</h3><p style="font-size:11px;color:#8da597;margin:0 0 12px">Select one animal, enter stake, confirm — real money.</p><div class="a-animal-grid" id="aBets"></div>
+    <div class="a-stake"><label>Stake (₦) - Min ₦100 - Win 4.5x if your animal wins</label><input id="aStake" type="number" min="100" value="100"></div>
+    <div class="a-sel-panel"><div><small>YOUR PREDICTION</small><b id="aSelectedName">No animal selected</b><div id="aWinPreview" style="font-size:11px;color:#20c77a;margin-top:4px">Win: ₦450</div></div><button class="a-confirm" id="aConfirmBtn" onclick="aConfirmPick()" disabled>CONFIRM PICK & RACE</button></div></div>
+    <div class="a-bottom"><div class="a-info"><h3>🏁 Recent Winners</h3><div class="a-hist" id="aHistory"><span>No races completed</span></div></div><div class="a-info"><h3>🏆 Championship Statistics</h3><div id="aRecordBody"></div></div></div>
+    <div class="game-result" id="aResult"></div>
+  </div>
+</div>
+</section>
+
+<section class="section">
 <div class="section-header"><h2 class="section-title">Transaction History</h2><button type="button" id="refreshHistoryButton" class="close-panel">Refresh</button></div>
 <div class="history-tabs">
 <button class="tab active" data-tab="plays" onclick="switchTab('plays')">Plays</button>
@@ -124,95 +225,150 @@ function formatNaira(v){const n=Number(v);return "₦"+(Number.isFinite(n)?n:0).
 function escapeHTML(v){return String(v??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
 async function apiRequest(path,options={}){const r=await fetch(`${API_BASE}${path}`,{credentials:"include",cache:"no-store",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(r.status===401){location.href="login.html";throw new Error("Session expired");}if(!r.ok||d.success===false)throw new Error(d.message||`Failed ${r.status}`);return d;}
 function isActivated(u){const s=String(u?.account_status||u?.status||"").toLowerCase().trim();return ["active","approved","activated"].includes(s)||String(u?.package||"").toLowerCase().includes("super");}
-function updateGameBalance(u){const bal=u?.game_balance??u?.gameBalance??u?.balance??0;const wins=u?.total_wins??u?.wins??0;document.getElementById("gameBalance").textContent=formatNaira(bal);const wb=document.getElementById("withdrawGameBalance");if(wb)wb.textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=wins+" wins";}
-async function initGames(){
- try{
-  const d=await apiRequest(`/api/me?t=${Date.now()}`);const u=d?.user||d;currentUser=u;
-  if(!isActivated(u)){document.getElementById("lockCard").classList.add("show");document.getElementById("gamesLobby").classList.remove("show");return;}
-  document.getElementById("lockCard").classList.remove("show");document.getElementById("gamesLobby").classList.add("show");
-  await refreshGameData();initCandles();drawWheel();pickBottle('up');pickUpDown('up');
- }catch(e){document.getElementById("lockCard").classList.add("show");document.getElementById("gamesLobby").classList.remove("show");}
-}
+function normalizeStatus(raw){const s=String(raw||"").toLowerCase().trim();if(["paid","approved","successful","success","completed","complete","done","confirmed","confirm","verified"].includes(s)) return "successful";if(["pending","processing","awaiting","requested","awaiting_approval","in_progress"].includes(s)) return "pending";if(["rejected","declined","failed","fail","cancelled","canceled","refunded"].includes(s)) return "failed";return s||"pending";}
+function statusBadge(status){const n=normalizeStatus(status);if(n==="successful") return {text:"Successful",className:"badge-paid"};if(n==="failed") return {text:"Failed",className:"badge-failed"};return {text:"Processing",className:"badge-processing"};}
+function updateGameBalance(u){const bal=u?.game_balance??u?.gameBalance??u?.balance??0;const wins=u?.total_wins??u?.wins??0;document.getElementById("gameBalance").textContent=formatNaira(bal);const wb=document.getElementById("withdrawGameBalance");if(wb)wb.textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=wins+" wins";const ab=document.getElementById("aBalTop");if(ab)ab.textContent=formatNaira(bal);}
+async function initGames(){try{const d=await apiRequest(`/api/me?t=${Date.now()}`);const u=d?.user||d;currentUser=u;if(!isActivated(u)){document.getElementById("lockCard").classList.add("show");document.getElementById("gamesLobby").classList.remove("show");return;}document.getElementById("lockCard").classList.remove("show");document.getElementById("gamesLobby").classList.add("show");await refreshGameData();initCandles();drawWheel();pickBottle('up');pickUpDown('up');}catch(e){document.getElementById("lockCard").classList.add("show");document.getElementById("gamesLobby").classList.remove("show");}}
 function showGamePanel(id){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));const panel=document.getElementById(id);if(panel){panel.classList.add("show");panel.scrollIntoView({behavior:"smooth",block:"nearest"});}}
 function closeGamePanels(){document.querySelectorAll(".game-panel").forEach(p=>p.classList.remove("show"));}
 function setGameResult(id,msg,type="info"){const el=document.getElementById(id);el.textContent=msg;el.classList.add("show");el.style.background=type==="success"?"#dcfce7":type==="error"?"#fee2e2":"#f5f3ff";el.style.color=type==="success"?"#166534":type==="error"?"#991b1b":"#4c1d95";}
 function clearGameResult(id){const el=document.getElementById(id);el.textContent="";el.classList.remove("show");}
 function switchTab(tab){currentTab=tab;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active", t.dataset.tab===tab));if(lastGameData) renderGameHistory(lastGameData);}
 function pickBottle(side){bottlePick=side;document.getElementById('bottlePickUp').className='pred up'+(side==='up'?' selected':'');document.getElementById('bottlePickDown').className='pred down'+(side==='down'?' selected':'');document.getElementById('bottlePlayBtn').innerText=`🍾 SPIN BOTTLE - ${side.toUpperCase()}`;document.getElementById('bottleResultText').innerHTML=`You picked <b>${side.toUpperCase()}</b>`;}
-async function playBottleUpDown(){
-  if(gameBusy) return;const stake=Number(document.getElementById('bottleStake').value);if(!stake||stake<100){setGameResult('bottleResult','Minimum stake is ₦100','error');return;}
-  const bottle=document.getElementById('bottle');const resText=document.getElementById('bottleResultText');const btn=document.getElementById('bottlePlayBtn');
-  gameBusy=true;btn.disabled=true;btn.innerText='Spinning...';clearGameResult('bottleResult');
-  bottle.style.transition='none';bottle.style.transform='rotate(0deg)';void bottle.offsetWidth;
-  bottle.style.transition='transform 2.4s cubic-bezier(.2,.8,.15,1)';bottle.style.transform='rotate(1440deg)';resText.innerText='Spinning 4 times...';
-  try{
-    const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_bottle',bet_amount:stake,prediction:bottlePick})});
-    const isWin=d.isWin;const finalSide=d.finalSide||(isWin?bottlePick:(bottlePick==='up'?'down':'up'));
-    setTimeout(()=>{bottle.style.transform=finalSide==='up'?'rotate(1440deg)':'rotate(1620deg)';setTimeout(()=>{if(finalSide===bottlePick){resText.innerHTML=`🎉 ${finalSide.toUpperCase()} - WIN ${formatNaira(d.winAmount)}`;resText.style.color='#15803d';setGameResult('bottleResult',`WIN ${formatNaira(d.winAmount)} - Balance ${formatNaira(d.newBalance)}`,'success');}else{resText.innerHTML=`💔 ${finalSide.toUpperCase()} - LOSE`;resText.style.color='#b91c1c';setGameResult('bottleResult',`LOSE ${formatNaira(stake)} - Balance ${formatNaira(d.newBalance)}`,'error');}if(d.gameAccount)updateGameBalance(d.gameAccount);refreshGameData();btn.disabled=false;gameBusy=false;},350);},2400);
-  }catch(e){bottle.style.transform='rotate(0deg)';resText.innerText='❌ '+e.message;setGameResult('bottleResult',e.message,'error');btn.disabled=false;gameBusy=false;}
-}
+async function playBottleUpDown(){if(gameBusy) return;const stake=Number(document.getElementById('bottleStake').value);if(!stake||stake<100){setGameResult('bottleResult','Minimum stake is ₦100','error');return;}const bottle=document.getElementById('bottle');const resText=document.getElementById('bottleResultText');const btn=document.getElementById('bottlePlayBtn');gameBusy=true;btn.disabled=true;btn.innerText='Spinning...';clearGameResult('bottleResult');bottle.style.transition='none';bottle.style.transform='rotate(0deg)';void bottle.offsetWidth;bottle.style.transition='transform 2.4s cubic-bezier(.2,.8,.15,1)';bottle.style.transform='rotate(1440deg)';resText.innerText='Spinning 4 times...';try{const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_bottle',bet_amount:stake,prediction:bottlePick})});const isWin=d.isWin;const finalSide=d.finalSide||(isWin?bottlePick:(bottlePick==='up'?'down':'up'));setTimeout(()=>{bottle.style.transform=finalSide==='up'?'rotate(1440deg)':'rotate(1620deg)';setTimeout(()=>{if(finalSide===bottlePick){resText.innerHTML=`🎉 ${finalSide.toUpperCase()} - WIN ${formatNaira(d.winAmount)}`;resText.style.color='#15803d';setGameResult('bottleResult',`WIN ${formatNaira(d.winAmount)} - Balance ${formatNaira(d.newBalance)}`,'success');}else{resText.innerHTML=`💔 ${finalSide.toUpperCase()} - LOSE`;resText.style.color='#b91c1c';setGameResult('bottleResult',`LOSE ${formatNaira(stake)} - Balance ${formatNaira(d.newBalance)}`,'error');}if(d.gameAccount)updateGameBalance(d.gameAccount);refreshGameData();btn.disabled=false;gameBusy=false;},350);},2400);}catch(e){bottle.style.transform='rotate(0deg)';resText.innerText='❌ '+e.message;setGameResult('bottleResult',e.message,'error');btn.disabled=false;gameBusy=false;}}
 function pickUpDown(side){updownPick=side;document.getElementById('upPickUp').className='pred up'+(side==='up'?' selected':'');document.getElementById('upPickDown').className='pred down'+(side==='down'?' selected':'');document.getElementById('updownPlayBtn').innerText=`📈 ORDER - ${side.toUpperCase()}`;}
-async function playUpDownTrading(){
-  if(gameBusy) return;const stake=Number(document.getElementById('updownStake').value);if(!stake||stake<100){setGameResult('updownResult','Minimum stake is ₦100','error');return;}
-  const resText=document.getElementById('updownResultText');const btn=document.getElementById('updownPlayBtn');gameBusy=true;btn.disabled=true;btn.innerText='Trading...';clearGameResult('updownResult');
-  try{
-    const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'up_down',bet_amount:stake,prediction:updownPick})});
-    const isWin=d.isWin;const last=candles[candles.length-1];let forcedGreen=isWin?(updownPick==='up'):(updownPick==='up'?false:true);const forcedClose=forcedGreen?last.close+60:last.close-60;
-    candles.push({open:last.close,close:forcedClose,high:Math.max(last.close,forcedClose)+10,low:Math.min(last.close,forcedClose)-10,green:forcedGreen});if(candles.length>50)candles.shift();drawCandles();
-    setTimeout(()=>{if(isWin){resText.innerHTML=`🎉 WIN ${formatNaira(d.winAmount)}`;resText.style.color='#15803d';setGameResult('updownResult',`WIN ${formatNaira(d.winAmount)} - Balance ${formatNaira(d.newBalance)}`,'success');}else{resText.innerHTML=`💔 LOSE ${formatNaira(stake)}`;resText.style.color='#b91c1c';setGameResult('updownResult',`LOSE ${formatNaira(stake)} - Balance ${formatNaira(d.newBalance)}`,'error');}if(d.gameAccount)updateGameBalance(d.gameAccount);refreshGameData();btn.disabled=false;gameBusy=false;},1200);
-  }catch(e){resText.innerText='❌ '+e.message;setGameResult('updownResult',e.message,'error');btn.disabled=false;gameBusy=false;}
-}
+async function playUpDownTrading(){if(gameBusy) return;const stake=Number(document.getElementById('updownStake').value);if(!stake||stake<100){setGameResult('updownResult','Minimum stake is ₦100','error');return;}const resText=document.getElementById('updownResultText');const btn=document.getElementById('updownPlayBtn');gameBusy=true;btn.disabled=true;btn.innerText='Trading...';clearGameResult('updownResult');try{const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'up_down',bet_amount:stake,prediction:updownPick})});const isWin=d.isWin;const last=candles[candles.length-1];let forcedGreen=isWin?(updownPick==='up'):(updownPick==='up'?false:true);const forcedClose=forcedGreen?last.close+60:last.close-60;candles.push({open:last.close,close:forcedClose,high:Math.max(last.close,forcedClose)+10,low:Math.min(last.close,forcedClose)-10,green:forcedGreen});if(candles.length>50)candles.shift();drawCandles();setTimeout(()=>{if(isWin){resText.innerHTML=`🎉 WIN ${formatNaira(d.winAmount)}`;resText.style.color='#15803d';setGameResult('updownResult',`WIN ${formatNaira(d.winAmount)} - Balance ${formatNaira(d.newBalance)}`,'success');}else{resText.innerHTML=`💔 LOSE ${formatNaira(stake)}`;resText.style.color='#b91c1c';setGameResult('updownResult',`LOSE ${formatNaira(stake)} - Balance ${formatNaira(d.newBalance)}`,'error');}if(d.gameAccount)updateGameBalance(d.gameAccount);refreshGameData();btn.disabled=false;gameBusy=false;},1200);}catch(e){resText.innerText='❌ '+e.message;setGameResult('updownResult',e.message,'error');btn.disabled=false;gameBusy=false;}}
 let wheelAngle=0;const wheelSegments=[{label:"LOSE",color:"#ef4444"},{label:"0.5x",color:"#fbbf24"},{label:"0.8x",color:"#fde68a"},{label:"1.2x",color:"#bbf7d0"},{label:"1.5x",color:"#22c55e"},{label:"2x",color:"#16a34a"}];
 function drawWheel(){const canvas=document.getElementById('wheelCanvas');if(!canvas)return;const ctx=canvas.getContext('2d');const cx=300,cy=300,r=280;ctx.clearRect(0,0,600,600);const segAngle=(2*Math.PI)/wheelSegments.length;wheelSegments.forEach((seg,i)=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,wheelAngle+i*segAngle,wheelAngle+(i+1)*segAngle);ctx.fillStyle=seg.color;ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(wheelAngle+i*segAngle+segAngle/2);ctx.textAlign="right";ctx.fillStyle=(seg.label==="LOSE")?"#fff":"#000";ctx.font="bold 22px Poppins";ctx.fillText(seg.label,r-20,8);ctx.restore();});}
-async function playWheel(){
-  if(gameBusy)return;const stake=Number(document.getElementById('wheelStake').value);if(!stake||stake<100){setGameResult('wheelResult','Minimum stake is ₦100','error');return;}
-  const btn=document.getElementById('wheelPlayBtn');const resText=document.getElementById('wheelResultText');gameBusy=true;btn.disabled=true;btn.innerText='Spinning...';clearGameResult('wheelResult');
-  try{
-    const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_wheel',bet_amount:stake})});
-    let targetLabel=d.segment||`${d.multiplier}x`;if(d.multiplier===0)targetLabel="LOSE";let targetIndex=wheelSegments.findIndex(s=>s.label===targetLabel);if(targetIndex===-1)targetIndex=0;
-    const segAngle=360/wheelSegments.length;const targetAngleDeg=360-(targetIndex*segAngle+segAngle/2)-90;const spins=5*360+targetAngleDeg;const startAngle=wheelAngle*180/Math.PI;const endAngle=startAngle+spins;const startTime=Date.now();const duration=3800;
-    const animate=()=>{const elapsed=Date.now()-startTime;const progress=Math.min(elapsed/duration,1);const ease=1-Math.pow(1-progress,3);wheelAngle=(startAngle+(endAngle-startAngle)*ease)*Math.PI/180;drawWheel();if(progress<1)requestAnimationFrame(animate);else{if(d.winAmount===0)resText.innerHTML=`💔 ${targetLabel} - LOSE`;else if(d.winAmount<stake)resText.innerHTML=`${targetLabel} - Return ${formatNaira(d.winAmount)}`;else resText.innerHTML=`🎉 WIN ${targetLabel} - ${formatNaira(d.winAmount)}`;setGameResult('wheelResult',`${targetLabel} - Balance ${formatNaira(d.newBalance)}`,d.isWin&&d.winAmount>=stake?'success':'info');if(d.gameAccount)updateGameBalance(d.gameAccount);refreshGameData();btn.disabled=false;gameBusy=false;}};animate();
-  }catch(e){resText.innerText='❌ '+e.message;setGameResult('wheelResult',e.message,'error');btn.disabled=false;gameBusy=false;}
+async function playWheel(){if(gameBusy)return;const stake=Number(document.getElementById('wheelStake').value);if(!stake||stake<100){setGameResult('wheelResult','Minimum stake is ₦100','error');return;}const btn=document.getElementById('wheelPlayBtn');const resText=document.getElementById('wheelResultText');gameBusy=true;btn.disabled=true;btn.innerText='Spinning...';clearGameResult('wheelResult');try{const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'spin_wheel',bet_amount:stake})});let targetLabel=d.segment||`${d.multiplier}x`;if(d.multiplier===0)targetLabel="LOSE";let targetIndex=wheelSegments.findIndex(s=>s.label===targetLabel);if(targetIndex===-1)targetIndex=0;const segAngle=360/wheelSegments.length;const targetAngleDeg=360-(targetIndex*segAngle+segAngle/2)-90;const spins=5*360+targetAngleDeg;const startAngle=wheelAngle*180/Math.PI;const endAngle=startAngle+spins;const startTime=Date.now();const duration=3800;const animate=()=>{const elapsed=Date.now()-startTime;const progress=Math.min(elapsed/duration,1);const ease=1-Math.pow(1-progress,3);wheelAngle=(startAngle+(endAngle-startAngle)*ease)*Math.PI/180;drawWheel();if(progress<1)requestAnimationFrame(animate);else{if(d.winAmount===0)resText.innerHTML=`💔 ${targetLabel} - LOSE`;else if(d.winAmount<stake)resText.innerHTML=`${targetLabel} - Return ${formatNaira(d.winAmount)}`;else resText.innerHTML=`🎉 WIN ${targetLabel} - ${formatNaira(d.winAmount)}`;setGameResult('wheelResult',`${targetLabel} - Balance ${formatNaira(d.newBalance)}`,d.isWin&&d.winAmount>=stake?'success':'info');if(d.gameAccount)updateGameBalance(d.gameAccount);refreshGameData();btn.disabled=false;gameBusy=false;}};animate();}catch(e){resText.innerText='❌ '+e.message;setGameResult('wheelResult',e.message,'error');btn.disabled=false;gameBusy=false;}}
+
+// ===== ANIMAL RUN - YOUR CODE + REAL MONEY - SERVER DECIDES WINNER =====
+const A_ALL=[{n:"Lion",e:"🦁"},{n:"Tiger",e:"🐯"},{n:"Horse",e:"🐴"},{n:"Monkey",e:"🐵"},{n:"Rabbit",e:"🐰"},{n:"Dog",e:"🐶"},{n:"Cat",e:"🐱"},{n:"Eagle",e:"🦅"},{n:"Bear",e:"🐻"}];
+let aAnimals=[], aMode=1, aSelected=-1, aRound=1, aBetting=false, aConfirmed=false, aGameActive=false, aHistory=[], aStats={}, aRaceTimer=null, aServerResult=null, aServerStake=0;
+function aSetTime(m,el){aMode=m;document.querySelectorAll('.a-tab').forEach(t=>t.classList.remove('active'));if(el)el.classList.add('active');}
+function aShowLobby(){clearInterval(aRaceTimer);aBetting=false;aGameActive=false;document.getElementById("aGame").style.display="none";document.querySelectorAll(".a-race-card").forEach(c=>c.classList.remove("active"));}
+function aStartGame(count){
+  aAnimals=A_ALL.slice(0,count); aRound=1; aHistory=[]; aStats={}; aSelected=-1; aConfirmed=false; aGameActive=true;
+  document.getElementById("aGame").style.display="block";
+  document.querySelectorAll(".a-race-card").forEach(c=>c.classList.remove("active"));
+  const card=document.getElementById("aArena"+count); if(card)card.classList.add("active");
+  document.getElementById("aRoomLabel").textContent=count+" ANIMALS";
+  aNewRound();
+  document.getElementById("aGame").scrollIntoView({behavior:"smooth"});
 }
-function openPlayGame(type){if(type==='bottle'){clearGameResult('bottleResult');showGamePanel('bottlePanel');return;}if(type==='updown'){clearGameResult('updownResult');showGamePanel('updownPanel');initCandles();return;}if(type==='wheel'){clearGameResult('wheelResult');showGamePanel('wheelPanel');drawWheel();return;}if(type==='guess'){showGamePanel('guessPanel');return;}}
-function renderGameHistory(data){
-  lastGameData=data;
-  const host=document.getElementById("gameHistory");
-  let rows=[];
-  if(currentTab==='plays') rows=data?.recentBets||data?.bets||[];
-  else if(currentTab==='deposits') rows=data?.deposits||[];
-  else if(currentTab==='withdraws') rows=data?.withdrawals||[];
-  if(!rows.length){
-    host.innerHTML=`<div style="padding:20px;text-align:center;background:white;border:1px solid #ece6f1;border-radius:12px">No ${currentTab} yet</div>`;
-    return;
-  }
-  host.innerHTML=rows.slice(0,20).map(item=>{
-    if(currentTab==='plays'){
-      const game=String(item.game_type||"Game").replace(/_/g," ");
-      const stake=Number(item.bet_amount||0);const win=Number(item.win_amount||0);
-      const result=String(item.result||"");const date=item.created_at||"";
-      return `<div class="history-item"><div><strong>${escapeHTML(game)}</strong><div class="history-muted">${date?new Date(date).toLocaleString():""} • Stake ${formatNaira(stake)}</div></div><div style="text-align:right"><span class="badge ${result==='win'?'badge-win':'badge-loss'}">${result.toUpperCase()}</span><div class="history-muted" style="margin-top:4px;font-weight:900;color:${result==='win'?'#15803d':'#b91c1c'}">${result==='win'?`+${formatNaira(win)}`:`-${formatNaira(stake)}`}</div></div></div>`;
-    } else if(currentTab==='deposits'){
-      const amt=Number(item.amount||0);const ref=item.reference||"";const status=String(item.status||"pending");const date=item.created_at||"";
-      const badgeClass=status==='confirmed'?'badge-successful':status==='declined'?'badge-failed':'badge-processing';
-      const statusText=status==='confirmed'?'Successful':status==='declined'?'Failed':'Processing';
-      return `<div class="history-item"><div><strong>${formatNaira(amt)}</strong><div class="history-muted">${escapeHTML(ref)} • ${date?new Date(date).toLocaleString():""}</div></div><div><span class="badge ${badgeClass}">${statusText}</span></div></div>`;
-    } else {
-      const amt=Number(item.amount||0);const acc=item.account_number||"";const status=String(item.status||"pending");const date=item.requested_at||"";
-      const badgeClass=status==='confirmed'?'badge-successful':status==='declined'?'badge-failed':'badge-processing';
-      const statusText=status==='confirmed'?'Successful':status==='declined'?'Failed':'Processing';
-      return `<div class="history-item"><div><strong>${formatNaira(amt)}</strong><div class="history-muted">${escapeHTML(acc)} • ${date?new Date(date).toLocaleString():""}</div></div><div><span class="badge ${badgeClass}">${statusText}</span></div></div>`;
+function aNewRound(){
+  if(!aGameActive)return;
+  clearInterval(aRaceTimer); aSelected=-1; aConfirmed=false; aBetting=true; aServerResult=null;
+  document.getElementById("aRound").textContent=String(aRound).padStart(2,'0');
+  document.getElementById("aCount").textContent="—";
+  document.getElementById("aMsg").textContent="MAKE YOUR PREDICTION";
+  document.getElementById("aSubmsg").textContent="Choose the animal you think will finish first.";
+  document.getElementById("aPodium").style.display="none";
+  document.getElementById("aConfirmBtn").disabled=true; document.getElementById("aConfirmBtn").textContent="CONFIRM PICK & RACE";
+  document.getElementById("aSelectedName").textContent="No animal selected";
+  aCreateTrack(); aRenderAnimals(); aRenderStats();
+  const ab=document.getElementById("aBalTop"); if(ab) ab.textContent=document.getElementById("gameBalance").textContent;
+}
+function aCreateTrack(){
+  const track=document.getElementById("aTrack"); track.innerHTML="";
+  aAnimals.forEach((a,i)=>{
+    const lane=document.createElement("div"); lane.className="a-lane"; lane.style.top=(i*(310/aAnimals.length))+"px"; lane.innerHTML='<span class="a-lane-num">'+(i+1)+'</span>'; track.appendChild(lane);
+    const runner=document.createElement("div"); runner.className="a-runner"; runner.id="aR"+i; runner.style.top=(i*(310/aAnimals.length)+1)+"px"; runner.innerHTML='<span class="a-icon">'+a.e+'</span><small>'+a.n+'</small>'; track.appendChild(runner);
+  });
+  const finish=document.createElement("div"); finish.className="a-finish"; track.appendChild(finish);
+}
+function aRenderAnimals(){
+  document.getElementById("aBets").innerHTML=aAnimals.map((a,i)=>`<button class="a-animal ${aSelected===i?'selected':''}" onclick="aSelectAnimal(${i})" ${!aBetting?'disabled':''}><span class="sel-tag">SELECTED</span><span class="emoji">${a.e}</span><b>${a.n}</b><small>COMPETITOR ${i+1}</small></button>`).join('');
+}
+function aSelectAnimal(i){
+  if(!aBetting||aConfirmed)return; aSelected=i;
+  document.getElementById("aSelectedName").textContent=aAnimals[i].e+" "+aAnimals[i].n;
+  document.getElementById("aConfirmBtn").disabled=false; aRenderAnimals();
+}
+async function aConfirmPick(){
+  if(!aBetting||aSelected<0||gameBusy) return;
+  const stake=Number(document.getElementById("aStake")?.value||0);
+  if(!stake||stake<100){setGameResult("aResult","Minimum stake is ₦100","error");return;}
+  const picked=aAnimals[aSelected].n;
+  const btn=document.getElementById("aConfirmBtn");
+  gameBusy=true; aBetting=false; aConfirmed=true; btn.disabled=true; btn.textContent="🏁 RACING — WAITING FOR SERVER...";
+  clearGameResult("aResult"); document.getElementById("aPodium").style.display="none";
+  document.getElementById("aMsg").textContent="PREDICTION CONFIRMED"; document.getElementById("aSubmsg").textContent="Server don lock your bet. Race go start now...";
+  aServerStake=stake;
+  try{
+    // ✅ REAL CALL - server deducts, decides winner, returns winner + winAmount + newBalance
+    const d=await apiRequest('/api/games/play',{method:'POST',body:JSON.stringify({game_type:'animal_run',bet_amount:stake,prediction:picked,arena_size:aAnimals.length,arena:aAnimals.length,mode:aMode})});
+    aServerResult=d;
+    let winnerName=d.winner||d.winnerAnimal||d.finalAnimal||d.winningAnimal||d.result||null;
+    let winnerIdx=aAnimals.findIndex(a=>String(a.n).toLowerCase()===String(winnerName||"").toLowerCase());
+    if(winnerIdx===-1){
+      if(d.isWin) winnerIdx=aSelected;
+      else { const losers=aAnimals.map((_,i)=>i).filter(i=>i!==aSelected); winnerIdx=losers[Math.floor(Math.random()*losers.length)]; }
     }
-  }).join("");
+    await aRunRaceToWinner(winnerIdx);
+    aFinishRace(winnerIdx, d);
+  }catch(e){
+    setGameResult("aResult",e.message,"error");
+    document.getElementById("aMsg").textContent="❌ "+e.message;
+    aBetting=true; aConfirmed=false; btn.disabled=false; btn.textContent="CONFIRM PICK & RACE";
+  }finally{ gameBusy=false; }
 }
-async function refreshGameData(){
-  const host=document.getElementById("gameHistory");
-  try{
-    const d=await apiRequest(`/api/games/me?t=${Date.now()}`);
-    const bal=d?.gameAccount?.game_balance??0;document.getElementById("gameBalance").textContent=formatNaira(bal);document.getElementById("withdrawGameBalance").textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=(d?.gameAccount?.total_wins||0)+" wins";
-    renderGameHistory(d);
-  }catch(e){host.innerHTML=`<div style="padding:20px;text-align:center">Could not load: ${escapeHTML(e.message)}</div>`;}
+function aRunRaceToWinner(winnerIdx){
+  return new Promise((resolve)=>{
+    document.getElementById("aMsg").textContent="🏁 THE RACE IS ON!"; document.getElementById("aSubmsg").textContent="Watch the competitors race to the finish line.";
+    document.querySelectorAll('.a-runner').forEach(r=>r.classList.add('running'));
+    document.getElementById("aBets").querySelectorAll('button').forEach(b=>b.disabled=true);
+    let positions=aAnimals.map(()=>0);
+    let speeds=aAnimals.map((_,i)=> i===winnerIdx ? 5.2+Math.random()*1.5 : 3.2+Math.random()*2.2);
+    let finishOrder=[]; const finishDistance=Math.max(220, document.getElementById("aTrack").clientWidth-115);
+    let ticks=0;
+    aRaceTimer=setInterval(()=>{
+      ticks++; document.getElementById("aCount").textContent=Math.max(0,12-Math.floor(ticks/10))+"s";
+      positions=positions.map((p,i)=>{
+        if(finishOrder.includes(i)) return p;
+        // Winner must finish first: boost winner in last stretch
+        let boost = (i===winnerIdx && ticks>60) ? 1.8 : 1;
+        let next=p+speeds[i]*(0.7+Math.random()*.65)*boost;
+        if(next>=finishDistance){ next=finishDistance; finishOrder.push(i); }
+        const runner=document.getElementById("aR"+i); if(runner) runner.style.left=(36+next)+"px";
+        return next;
+      });
+      // Force winner to finish first if time don reach
+      if(ticks>110 && !finishOrder.includes(winnerIdx)){
+        // push winner to finish
+        positions[winnerIdx]=finishDistance; const w=document.getElementById("aR"+winnerIdx); if(w) w.style.left=(36+finishDistance)+"px"; finishOrder.unshift(winnerIdx);
+      }
+      if(finishOrder.length===aAnimals.length){ clearInterval(aRaceTimer); aFinishOrderCache=finishOrder; setTimeout(()=>resolve(),300); }
+    },100);
+  });
 }
+let aFinishOrderCache=[];
+function aFinishRace(winnerIdx, d){
+  const winner=aAnimals[winnerIdx]; const champion=winner;
+  document.getElementById("aMsg").textContent=champion.e+" "+champion.n.toUpperCase()+" WINS!"; document.getElementById("aSubmsg").textContent="The race has officially ended.";
+  const won = (winnerIdx===aSelected) || d.isWin===true;
+  const winAmt = Number(d.winAmount||0);
+  if(d.gameAccount) updateGameBalance(d.gameAccount);
+  else if(d.newBalance!==undefined){ document.getElementById("gameBalance").textContent=formatNaira(d.newBalance); const ab=document.getElementById("aBalTop"); if(ab) ab.textContent=formatNaira(d.newBalance); }
+  aStats[champion.n]=(aStats[champion.n]||0)+1; aHistory.unshift(champion); aHistory=aHistory.slice(0,10);
+  let order=aFinishOrderCache && aFinishOrderCache.length ? aFinishOrderCache : [winnerIdx, ...aAnimals.map((_,i)=>i).filter(i=>i!==winnerIdx)];
+  // Ensure winner na first
+  order=[winnerIdx, ...order.filter(i=>i!==winnerIdx)];
+  const podiumItem=(idx,label)=>{ const a=aAnimals[order[idx]]; return label+'<br><span class="emoji">'+a.e+'</span>'+a.n; };
+  document.getElementById("aP1").innerHTML=podiumItem(0,'1ST'); document.getElementById("aP2").innerHTML=podiumItem(1,'2ND'); document.getElementById("aP3").innerHTML=podiumItem(2,'3RD');
+  document.getElementById("aPodText").innerHTML = won ? `🎉 Correct prediction! You earned <b>${formatNaira(winAmt)}.</b> Balance: ${formatNaira(d.newBalance||0)}` : aConfirmed ? `Your prediction was not correct this time. You lose ${formatNaira(aServerStake)}. Try another round!` : `You did not make a prediction this round.`;
+  document.getElementById("aPodium").style.display="block";
+  setGameResult("aResult", won ? `WIN ${formatNaira(winAmt)} - Balance ${formatNaira(d.newBalance)}` : `LOSE ${formatNaira(aServerStake)} - Balance ${formatNaira(d.newBalance)}`, won?"success":"error");
+  aRenderHistory(); aRenderStats(); aRound++;
+  refreshGameData();
+}
+function aContinueGame(){ if(!aGameActive)return; aNewRound(); }
+function aRenderHistory(){ document.getElementById("aHistory").innerHTML=aHistory.length ? aHistory.map(a=>'<span>'+a.e+' '+a.n+'</span>').join('') : '<span>No races completed</span>'; }
+function aRenderStats(){ const total=Object.values(aStats).reduce((a,b)=>a+b,0); document.getElementById("aRecordBody").innerHTML=aAnimals.map(a=>{ const count=aStats[a.n]||0; const pct=total?Math.round(count/total*100):0; return `<div class="a-rec"><span class="a-rec-name">${a.e} ${a.n}</span><div class="a-rec-track"><div class="a-rec-fill" style="width:${pct}%"></div></div><b>${count}</b></div>`; }).join('')+'<div style="font-size:10px;color:#8da597;margin-top:12px">Total completed races: '+total+'</div>'; }
+function openPlayGame(type){if(type==='bottle'){clearGameResult('bottleResult');showGamePanel('bottlePanel');return;}if(type==='updown'){clearGameResult('updownResult');showGamePanel('updownPanel');initCandles();return;}if(type==='wheel'){clearGameResult('wheelResult');showGamePanel('wheelPanel');drawWheel();return;}if(type==='animal'){clearGameResult('aResult');showGamePanel('animalPanel');return;}if(type==='guess'){showGamePanel('guessPanel');return;}}
+function renderGameHistory(data){lastGameData=data;const host=document.getElementById("gameHistory");let rows=[];if(currentTab==='plays') rows=data?.recentBets||data?.bets||[];else if(currentTab==='deposits') rows=data?.deposits||[];else if(currentTab==='withdraws') rows=data?.withdrawals||[];if(!rows.length){host.innerHTML=`<div style="padding:20px;text-align:center;background:white;border:1px solid #ece6f1;border-radius:12px">No ${currentTab} yet</div>`;return;}host.innerHTML=rows.slice(0,20).map(item=>{if(currentTab==='plays'){const game=String(item.game_type||"Game").replace(/_/g," ");const stake=Number(item.bet_amount||0);const win=Number(item.win_amount||0);const result=String(item.result||"");const date=item.created_at||"";const isWin=result.toLowerCase()==="win";return `<div class="history-item"><div><strong>${escapeHTML(game)}</strong><div class="history-muted">${date?new Date(date).toLocaleString():""} • Stake ${formatNaira(stake)}</div></div><div style="text-align:right"><span class="badge ${isWin?'badge-win':'badge-loss'}">${isWin?'WIN':'LOSS'}</span><div class="history-muted" style="margin-top:4px;font-weight:900;color:${isWin?'#15803d':'#b91c1c'}">${isWin?`+${formatNaira(win)}`:`-${formatNaira(stake)}`}</div></div></div>`;}else if(currentTab==='deposits'){const amt=Number(item.amount||0);const ref=item.reference||item.ref||"";const st=statusBadge(item.status||"pending");const date=item.created_at||item.createdAt||"";return `<div class="history-item"><div><strong style="color:#2563eb">+${formatNaira(amt)}</strong><div class="history-muted">${escapeHTML(ref)} • ${date?new Date(date).toLocaleString():""}</div></div><div><span class="badge ${st.className}">${st.text}</span></div></div>`;}else{const amt=Number(item.amount||0);const acc=item.account_number||item.accountNumber||"";const st=statusBadge(item.status||"pending");const date=item.requested_at||item.created_at||item.createdAt||"";return `<div class="history-item"><div><strong style="color:#b91c1c">-${formatNaira(amt)}</strong><div class="history-muted">${escapeHTML(acc)} • ${date?new Date(date).toLocaleString():""}</div></div><div><span class="badge ${st.className}">${st.text}</span></div></div>`;}}).join("");}
+async function refreshGameData(){const host=document.getElementById("gameHistory");try{const d=await apiRequest(`/api/games/me?t=${Date.now()}`);const bal=d?.gameAccount?.game_balance??0;document.getElementById("gameBalance").textContent=formatNaira(bal);document.getElementById("withdrawGameBalance").textContent=formatNaira(bal);document.getElementById("gamePoints").textContent=(d?.gameAccount?.total_wins||0)+" wins";const ab=document.getElementById("aBalTop");if(ab)ab.textContent=formatNaira(bal);renderGameHistory(d);}catch(e){host.innerHTML=`<div style="padding:20px;text-align:center">Could not load: ${escapeHTML(e.message)}</div>`;}}
+document.getElementById("aStake")?.addEventListener("input",e=>{const v=Number(e.target.value||0);const prev=document.getElementById("aWinPreview");if(prev)prev.textContent="Win: "+formatNaira(v*4.5);});
 document.getElementById("depositProof")?.addEventListener("change", e=>{const file=e.target.files[0];if(!file)return;if(file.size>4*1024*1024){alert("Image too large, max 4MB");e.target.value="";return;}const reader=new FileReader();reader.onload=ev=>{proofBase64=ev.target.result;const img=document.getElementById("proofPreview");img.src=proofBase64;img.style.display="block";};reader.readAsDataURL(file);});
 async function submitDeposit(event){event.preventDefault();if(gameBusy)return;const amount=Number(document.getElementById("depositAmount").value);const ref=document.getElementById("depositRef").value.trim();if(!amount||amount<100){setGameResult("depositResult","Minimum is ₦100","error");return;}if(!ref){setGameResult("depositResult","Enter reference","error");return;}if(!proofBase64){setGameResult("depositResult","Upload payment proof","error");return;}gameBusy=true;const btn=document.getElementById("depositSubmit");btn.disabled=true;btn.textContent="Uploading...";clearGameResult("depositResult");try{const d=await apiRequest("/api/games/deposit",{method:"POST",body:JSON.stringify({amount, reference:ref, proof_image:proofBase64})});setGameResult("depositResult",d.message||`Deposit submitted - Status: Processing`,"info");document.getElementById("depositForm").reset();proofBase64="";document.getElementById("proofPreview").style.display="none";await refreshGameData();}catch(e){setGameResult("depositResult",e.message,"error");}finally{gameBusy=false;btn.disabled=false;btn.textContent="Submit for Verification →";}}
 async function submitWithdrawal(event){event.preventDefault();if(gameBusy)return;const amount=Number(document.getElementById("withdrawAmount").value);const bank_name=document.getElementById("wBankName").value.trim();const account_number=document.getElementById("wAccNumber").value.trim();const account_name=document.getElementById("wAccName").value.trim();if(!amount||amount<2500){setGameResult("withdrawResult","Minimum withdrawal is ₦2500","error");return;}if(!bank_name||!account_number||!account_name){setGameResult("withdrawResult","Fill all bank details","error");return;}gameBusy=true;const btn=document.getElementById("withdrawSubmit");btn.disabled=true;btn.textContent="Requesting...";clearGameResult("withdrawResult");try{const d=await apiRequest("/api/games/withdraw",{method:"POST",body:JSON.stringify({amount,bank_name,account_number,account_name})});setGameResult("withdrawResult",d.message||`Withdrawal - Status: Processing`,"info");document.getElementById("withdrawAmount").value="";await refreshGameData();}catch(e){setGameResult("withdrawResult",e.message,"error");}finally{gameBusy=false;btn.disabled=false;btn.textContent="Request Withdrawal →";}}
