@@ -220,6 +220,36 @@ button{font-family:inherit} button:disabled{cursor:not-allowed!important}
 <div id="privatePopOverlay"><div id="privatePopBox"><div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="width:48px;height:48px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px">✉️</div><div><div style="font-size:9px;font-weight:900;letter-spacing:1px;color:#7c3aed;text-transform:uppercase">Private Message</div><div id="privatePopTime" style="font-size:10px;color:#94a3b8;margin-top:2px">Just now</div></div><button id="privatePopCloseIcon" type="button" style="margin-left:auto;width:32px;height:32px;border-radius:50%;border:none;background:#f3f0ff;color:#7c3aed;font-weight:800;cursor:pointer">✕</button></div><h3 id="privatePopTitle" style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;margin-bottom:10px">Message from Admin</h3><div id="privatePopMessage" style="font-size:13px;line-height:1.7;color:#334155;background:#fcf9ff;border:1px solid #ede9fe;border-radius:12px;padding:14px;white-space:pre-line;max-height:260px;overflow-y:auto"></div><div style="font-size:11px;color:#8a8196;margin-top:10px;text-align:center">This message stays in your 🔔 bell until you read it from there.</div><button id="privatePopOk" type="button" style="width:100%;margin-top:12px;padding:14px;background:linear-gradient(135deg,#5b21b6,#7c3aed);color:white;border:none;border-radius:12px;font-weight:800;font-size:12px;cursor:pointer">OK, I Understand ✓</button></div></div>
 <script>
 "use strict";
+// ✅ IMPERSONATE - Admin View As User (FIXED)
+let IMPERSONATE_USER = null;
+let IMPERSONATE_TOKEN = null;
+let IMPERSONATE_BALANCES = null;
+(async function handleImpersonate(){
+  try{
+    const p = new URLSearchParams(location.search);
+    const tok = p.get('impersonate');
+    if(!tok) return;
+    IMPERSONATE_TOKEN = tok;
+    const r = await fetch('/api/impersonate/verify?token='+encodeURIComponent(tok));
+    const d = await r.json();
+    if(!d.success){ alert('❌ Impersonate failed: '+d.message); history.replaceState({},'',location.pathname); return; }
+    IMPERSONATE_USER = d.user;
+    IMPERSONATE_BALANCES = d.balances || null;
+    if(IMPERSONATE_BALANCES) IMPERSONATE_USER.balances = IMPERSONATE_BALANCES;
+    sessionStorage.setItem('jovia_impersonate','yes');
+    sessionStorage.setItem('jovia_impersonate_token', tok);
+    sessionStorage.setItem('jovia_impersonate_user', JSON.stringify(IMPERSONATE_USER));
+    sessionStorage.setItem('jovia_impersonate_balances', JSON.stringify(IMPERSONATE_BALANCES||{}));
+    sessionStorage.setItem('jovia_user', JSON.stringify(IMPERSONATE_USER));
+    localStorage.setItem('jovia_user', JSON.stringify(IMPERSONATE_USER));
+    history.replaceState({},'',location.pathname);
+    const b = document.createElement('div');
+    b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:100002;background:#dc2626;color:#fff;text-align:center;padding:10px;font-size:12px;font-weight:900';
+    b.textContent='👁️ ADMIN VIEW-ONLY — Viewing as '+d.user.email+' — Expires: '+d.expires_at;
+    document.body.prepend(b);
+    console.log('✅ Impersonate OK', d.user.email);
+  }catch(e){ console.log('Impersonate error', e.message); }
+})();
 let currentUser=null,currentSlide=0,currentPrivatePopId=null,logoutInProgress=false,upgradeBusy=false;
 let privatePopFromBell=false;
 const wrapper=document.getElementById("swipeWrapper"),card=document.getElementById("accountCard"),privateOverlay=document.getElementById("privatePopOverlay"),globalOverlay=document.getElementById("joviaPopupOverlay");
@@ -239,7 +269,10 @@ card.addEventListener("touchend",finishSwipe,{passive:true});
 async function fetchJSON(url,options={}){
   const r=await fetch(url,{credentials:"include",cache:"no-store",...options,headers:{"Accept":"application/json",...(options.headers||{})}});
   let d=null; try{d=await r.json();}catch(_){}
-  if(r.status===401||r.status===403){window.location.replace("login.html"); throw new Error("Session expired");}
+  if(r.status===401||r.status===403){
+    if(IMPERSONATE_TOKEN || sessionStorage.getItem('jovia_impersonate')==='yes'){ throw new Error("Impersonate session - no redirect"); }
+    window.location.replace("login.html"); throw new Error("Session expired");
+  }
   if(!r.ok) throw new Error((d&&(d.message||d.error))||`Failed ${r.status}`);
   return {data:d};
 }
@@ -278,6 +311,38 @@ function getUserStartDate(){
 }
 async function loadUser(){
   try{
+    // ✅ IMPERSONATE: use verified user directly, skip /api/me
+    if(IMPERSONATE_USER){
+      currentUser=IMPERSONATE_USER;
+      displayUser(currentUser,{});
+      if(IMPERSONATE_BALANCES){
+        try{
+          document.getElementById("balance").textContent=money(IMPERSONATE_BALANCES.wallet_balance);
+          document.getElementById("affiliateBalance").textContent=money(IMPERSONATE_BALANCES.affiliate_balance);
+          document.getElementById("totalEarned").textContent=money(IMPERSONATE_BALANCES.total_balance);
+        }catch(_){}
+      }
+      updateBellVisibility();
+      return;
+    }
+    const savedImp = sessionStorage.getItem('jovia_impersonate_user');
+    if(savedImp && sessionStorage.getItem('jovia_impersonate')==='yes' && !currentUser){
+      try{
+        IMPERSONATE_USER = JSON.parse(savedImp);
+        try{ IMPERSONATE_BALANCES = JSON.parse(sessionStorage.getItem('jovia_impersonate_balances')||"null"); }catch(_){}
+        currentUser = IMPERSONATE_USER;
+        displayUser(currentUser,{});
+        if(IMPERSONATE_BALANCES){
+          try{
+            document.getElementById("balance").textContent=money(IMPERSONATE_BALANCES.wallet_balance);
+            document.getElementById("affiliateBalance").textContent=money(IMPERSONATE_BALANCES.affiliate_balance);
+            document.getElementById("totalEarned").textContent=money(IMPERSONATE_BALANCES.total_balance);
+          }catch(_){}
+        }
+        updateBellVisibility();
+        return;
+      }catch(_){}
+    }
     const localPlan = String(localStorage.getItem("jovia_plan")||"").toLowerCase();
     const isLocalSuper = localPlan.includes("super");
     const {data}=await fetchJSON("/api/me?t="+Date.now(),{method:"GET"});
@@ -529,7 +594,6 @@ function startNotifPolling(){
     if(document.visibilityState==="visible" && currentUser && isActiveAccount(currentUser)) loadNotifications(true);
   },15000);
 }
-// ✅ NO PRICE FOR DASHBOARD - Name only
 function onUpgradeTargetChange(){
   const sel=document.getElementById("upgradeTarget");
   const badge=document.getElementById("upgradeBadge");
@@ -652,6 +716,10 @@ function openPage(p){
     if(!isActiveAccount(currentUser)){ showToast("🔒 Music locked - Activate first!"); setTimeout(()=>{ if(confirm("Activate account to access features?")) location.href="payment.html"; },800); return; }
     if(!isSuperUser(currentUser)){ showToast("👑 Music is SUPER ONLY - Upgrade to SUPER!"); setTimeout(()=>{ if(confirm("Music is for SUPER users only. Upgrade to SUPER now? 👑")) location.href="upgrade-pay.html"; },900); return; }
   }
+  // ✅ Impersonate: keep view-only, don't lose impersonate flag when navigating inside dashboard pages that also support it
+  if(IMPERSONATE_TOKEN || sessionStorage.getItem('jovia_impersonate')==='yes'){
+    // Stay in view-only mode - other pages will also check sessionStorage if they support impersonate
+  }
   location.href=p;
 }
 function activate(){if(!currentUser) return; if(isActiveAccount(currentUser) || isSuspendedAccount(currentUser)) return; location.href="payment.html";}
@@ -687,15 +755,22 @@ async function applySuperUpgrade(){
  }catch(e){msg.textContent="❌ "+(e.message||"Failed"); msg.style.color="#ef4444"; btn.disabled=false; btn.textContent="UPGRADE →"; upgradeBusy=false;}
 }
 document.getElementById("upgradeCodeInput").addEventListener("input",e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").slice(0,14); document.getElementById("upgradeMsg").textContent="";});
-async function logout(){if(logoutInProgress) return; logoutInProgress=true; try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");}
+async function logout(){
+  if(logoutInProgress) return; logoutInProgress=true;
+  // ✅ Impersonate: clear impersonate flag on logout
+  try{ sessionStorage.removeItem('jovia_impersonate'); sessionStorage.removeItem('jovia_impersonate_user'); sessionStorage.removeItem('jovia_impersonate_token'); sessionStorage.removeItem('jovia_impersonate_balances'); }catch(_){}
+  try{await fetch("/api/logout",{method:"POST",credentials:"include"});}catch(_){} try{["jovia_email","jovia_referral_code","jovia_plan","jovia_package"].forEach(k=>localStorage.removeItem(k));}catch(_){} location.replace("login.html");
+}
 document.addEventListener("DOMContentLoaded",()=>{
   privateOverlay.classList.remove("show");
   document.getElementById("notifToast").classList.remove("show");
   updateBellVisibility();
-  loadUser();
+  // ✅ Wait a tick for impersonate verify to finish before loadUser, if token dey
+  const hasImp = new URLSearchParams(location.search).get('impersonate');
+  if(hasImp){ setTimeout(()=>loadUser(), 350); } else { loadUser(); }
   startNotifPolling();
 });
-setInterval(()=>{if(currentUser&&document.visibilityState==="visible"){loadWallet(); loadReferrals(); loadPopups(); loadNotifications(false);}},45000);
+setInterval(()=>{if(currentUser&&document.visibilityState==="visible" && !IMPERSONATE_USER){loadWallet(); loadReferrals(); loadPopups(); loadNotifications(false);}},45000);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeDrawer(); if(privateOverlay.classList.contains("show")) closePrivatePop(); if(globalOverlay.classList.contains("show")) closeGlobalPopup(); }});
 </script>
 </body>
