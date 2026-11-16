@@ -2,7 +2,7 @@
 
 module.exports = (app, db, requireUser, requireAdmin) => {
   try{
-  console.log("🔧 JOVIA SERVER 3 - BALANCE HISTORY + BALANCE ADD/DEDUCT + AFFILIATE + BACKPAY + SUSPEND + RESET PASSWORD");
+  console.log("🔧 JOVIA SERVER 3 - BALANCE HISTORY + BALANCE ADD/DEDUCT + AFFILIATE + BACKPAY + SUSPEND + RESET PASSWORD + UPLINE/FRAUD TRACKER");
 
   if(!app || typeof app.get !== "function" || typeof app.post !== "function"){
     console.log("⚠️ Server3 skip: app.get/app.post no dey - no crash");
@@ -226,6 +226,245 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
 
   // ============================================================
+  // ✅ NEW - UPLINE / AFFILIATE / BALANCE / PASSWORD-STATUS / FRAUD TRACKER
+  // Admin go see who bring who, who be affiliates, balances, and fraud signals.
+  // Password: we NEVER return full hash / plaintext. Hash no fit reverse.
+  // Admin only sees: has_password, masked preview, reset_at, is_default_suspected.
+  // ============================================================
+  const sanitizeUserPublic = (u) => {
+    if(!u) return null;
+    return {
+      id: u.id, username: u.username, email: u.email, full_name: u.full_name,
+      phone: u.phone || u.phone_number || null,
+      package: u.package || u.plan || null, plan: u.plan || u.package || null,
+      account_status: u.account_status, status: u.status,
+      referral_code: u.referral_code || u.my_referral_code || null,
+      referrer_id: u.referrer_id || u.referred_by || u.upline_id || u.sponsor_id || null,
+      referral_code_used: u.referral_code_used || u.referred_by_code || null,
+      created_at: u.created_at, last_login: u.last_login || u.last_login_at || null,
+    };
+  };
+  const getBalancesForUser = (u) => {
+    let gameBal = 0;
+    try{ const acc = db.prepare(`SELECT * FROM jovia_game_accounts WHERE user_id=?`).get(u.id); gameBal = Number(acc?.game_balance||0); }catch{}
+    const wallet = Number(u.wallet_balance ?? u.balance ?? u.available_balance ?? 0);
+    const affiliate = Number(u.affiliate_balance ?? u.affiliate_earnings ?? 0);
+    const referral = Number(u.referral_balance ?? u.referral_earnings ?? 0);
+    return { wallet_balance: wallet, available_balance: wallet, normal_balance: wallet, affiliate_balance: affiliate, referral_balance: referral, referral_earnings: referral, game_balance: gameBal, total_balance: wallet + affiliate + referral + gameBal };
+  };
+  const getPasswordStatus = (u) => {
+    const cols = userColumns();
+    const passCols = ["password_hash","password","pass","hashed_password","user_password"];
+    let hashVal = null, hashCol = null;
+    for(const c of passCols){ if(cols.includes(c) && u[c]){ hashVal = String(u[c]); hashCol = c; break; } }
+    const hasPassword = !!hashVal;
+    // Masked preview only - NEVER full hash. First 7 chars show type e.g. $2a$10$ + 5 masked
+    const preview = hasPassword ? (hashVal.slice(0,7) + "****" + hashVal.slice(-4)) : null;
+    const isBcrypt = hasPassword && hashVal.startsWith("$2");
+    const isPlaintextSuspected = hasPassword && !isBcrypt && hashVal.length < 60 && !hashVal.includes("$");
+    // If password still be default / weak, admin fit suspect am - we check if hash matches common defaults WITHOUT exposing it
+    let isDefaultSuspected = false;
+    try{
+      if(hasPassword && isBcrypt){
+        const bcrypt = require("bcryptjs");
+        const commons = ["Jovia1234","123456","12345678","password","jovia123","Jovia123"];
+        for(const pw of commons){ try{ if(bcrypt.compareSync(pw, hashVal)){ isDefaultSuspected = true; break; } }catch{} }
+      }
+    }catch{}
+    return {
+      has_password: hasPassword,
+      password_hash_preview: preview,
+      password_hash_col: hashCol,
+      password_type: !hasPassword ? "none" : isBcrypt ? "bcrypt_hash (cannot reverse)" : isPlaintextSuspected ? "PLAINTEXT_SUSPECTED - URGENT: re-hash!" : "unknown_hash",
+      password_reset_at: u.password_reset_at || null,
+      is_default_password_suspected: isDefaultSuspected,
+      note: "Original password no dey stored. Hash no fit reverse. Use Reset Password to give user new password. Full hash NEVER returned to frontend for security.",
+      can_reset: true,
+      reset_endpoint: `/api/admin/users/${u.id}/reset-password`,
+    };
+  };
+  const buildUplineChain = (startUser, maxDepth = 5) => {
+    const chain = [];
+    const seen = new Set([startUser.id]);
+    let current = startUser;
+    const cols = userColumns();
+    for(let level=1; level<=maxDepth; level++){
+      const {referrer, col, raw} = findReferrerForUser(current, cols);
+      if(!referrer) break;
+      if(seen.has(referrer.id)){
+        chain.push({ level, ...sanitizeUserPublic(referrer), balances: getBalancesForUser(referrer), via_col: col, via_raw: raw, warning: "CIRCULAR_REFERRAL - this upline don already appear for chain" });
+        break;
+      }
+      seen.add(referrer.id);
+      chain.push({ level, ...sanitizeUserPublic(referrer), balances: getBalancesForUser(referrer), via_col: col, via_raw: raw });
+      current = referrer;
+    }
+    return chain;
+  };
+  const getDirectAffiliates = (user) => {
+    // People wey this user directly bring - check all referrer cols + referral_rewards
+    const cols = userColumns();
+    const direct = new Map();
+    const tryAdd = (row) => { if(row && row.id !== user.id && !direct.has(row.id)) direct.set(row.id, row); };
+    // 1) By referrer_id style cols (numeric)
+    const numericCols = ["referrer_id","referred_by","upline_id","sponsor_id","referral_id","parent_id","invited_by"].filter(c=>cols.includes(c));
+    for(const col of numericCols){
+      try{ const rows = db.prepare(`SELECT * FROM users WHERE ${col}=?`).all(user.id); rows.forEach(tryAdd); }catch{}
+    }
+    // 2) By code / username / email (string cols)
+    const stringCols = ["referrer","referral_code_used","referred_by_code","invite_by"].filter(c=>cols.includes(c));
+    const myCodes = [String(user.id), String(user.username||""), String(user.email||""), String(user.referral_code||"")].filter(Boolean);
+    for(const col of stringCols){
+      for(const code of myCodes){
+        try{ const rows = db.prepare(`SELECT * FROM users WHERE ${col}=?`).all(code); rows.forEach(tryAdd); }catch{}
+      }
+    }
+    // 3) By referral_rewards table
+    try{ const rows = db.prepare(`SELECT u.* FROM referral_rewards rr JOIN users u ON u.id=rr.referred_user_id WHERE rr.referrer_id=?`).all(user.id); rows.forEach(tryAdd); }catch{}
+    return Array.from(direct.values());
+  };
+  const getAllDownlinesCount = (user, maxDepth = 4) => {
+    let total = 0; let frontier = [user.id]; const seen = new Set([user.id]);
+    const cols = userColumns();
+    for(let d=0; d<maxDepth; d++){
+      const next = [];
+      for(const pid of frontier){
+        const direct = getDirectAffiliates({id: pid, username:"", email:"", referral_code:""});
+        // getDirectAffiliates needs full user for code matching - fallback to numeric only for deep levels
+        // For deep levels, use numeric cols only to avoid heavy scan
+        for(const row of direct){
+          if(!seen.has(row.id)){ seen.add(row.id); total++; next.push(row.id); }
+        }
+      }
+      frontier = next; if(!frontier.length) break;
+    }
+    return total;
+  };
+  const buildFraudSignals = (user, uplineChain, directAffiliates) => {
+    const signals = [];
+    const cols = userColumns();
+    // Self referral
+    const {referrer} = findReferrerForUser(user, cols);
+    if(referrer && referrer.id === user.id) signals.push({type:"SELF_REFERRAL", severity:"HIGH", message:"User refer himself - bypass attempt"});
+    // Circular
+    if(uplineChain.some(c=>c.warning)) signals.push({type:"CIRCULAR_REFERRAL", severity:"HIGH", message:"Upline chain loop - A bring B, B bring A. Possible fraud ring"});
+    // Upline not active but collecting
+    if(referrer){
+      const st = String(referrer.account_status||referrer.status||"").toLowerCase();
+      if(!["active","approved","activated"].includes(st)) signals.push({type:"UPLINE_NOT_ACTIVE", severity:"MEDIUM", message:`Upline ${referrer.username} status na ${st} but referral fit don pay`});
+    } else {
+      signals.push({type:"NO_UPLINE", severity:"LOW", message:"User get no upline / no referrer found"});
+    }
+    // Same phone / device / ip
+    const phone = user.phone || user.phone_number;
+    if(phone){
+      try{ const same = db.prepare(`SELECT id, username, email FROM users WHERE (phone=? OR phone_number=?) AND id!=? LIMIT 10`).all(phone, phone, user.id); if(same.length) signals.push({type:"SAME_PHONE", severity:"HIGH", message:`Same phone with ${same.length} other account(s)`, accounts: same}); }catch{}
+    }
+    if(cols.includes("device_id") && user.device_id){
+      try{ const same = db.prepare(`SELECT id, username, email FROM users WHERE device_id=? AND id!=? LIMIT 10`).all(user.device_id, user.id); if(same.length) signals.push({type:"SAME_DEVICE", severity:"HIGH", message:`Same device with ${same.length} other account(s)`, accounts: same}); }catch{}
+    }
+    if(cols.includes("ip_address") && user.ip_address){
+      try{ const same = db.prepare(`SELECT id, username, email FROM users WHERE ip_address=? AND id!=? LIMIT 10`).all(user.ip_address, user.id); if(same.length) signals.push({type:"SAME_IP", severity:"MEDIUM", message:`Same IP with ${same.length} other account(s)`, accounts: same}); }catch{}
+    }
+    if(cols.includes("email") && user.email){
+      try{ const domain = String(user.email).split("@")[1]; if(domain){ const same = db.prepare(`SELECT id, username, email FROM users WHERE email LIKE ? AND id!=? LIMIT 10`).all(`%@${domain}`, user.id); if(same.length>=5) signals.push({type:"SAME_EMAIL_DOMAIN_BURST", severity:"MEDIUM", message:`${same.length} accounts use same email domain ${domain} - possible bulk fake accounts`}); } }catch{}
+    }
+    // Too many direct affiliates in short time = possible farming
+    if(directAffiliates.length >= 20) signals.push({type:"MANY_DIRECT_AFFILIATES", severity:"MEDIUM", message:`User get ${directAffiliates.length} direct affiliates - check if na real or farming`});
+    // Multiple accounts same full_name + phone combo already covered, but add name burst
+    if(user.full_name){
+      try{ const same = db.prepare(`SELECT id, username, email FROM users WHERE LOWER(TRIM(full_name))=LOWER(TRIM(?)) AND id!=? LIMIT 10`).all(user.full_name, user.id); if(same.length>=3) signals.push({type:"SAME_NAME_BURST", severity:"MEDIUM", message:`Same full name with ${same.length} other account(s)`, accounts: same}); }catch{}
+    }
+    return signals;
+  };
+  const findUserForUpline = (req) => {
+    const uid = Number(req.params?.id || req.body?.userId || req.body?.id || req.body?.user_id || req.query.userId || req.query.id || req.query.user_id || 0);
+    const em = String(req.query?.email || req.body?.email || "").trim().toLowerCase();
+    const un = String(req.query?.username || req.body?.username || "").trim();
+    let u = null;
+    if(uid) u = db.prepare(`SELECT * FROM users WHERE id=?`).get(uid);
+    if(!u && em) u = db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1`).get(em);
+    if(!u && un) u = db.prepare(`SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1`).get(un, un);
+    return u;
+  };
+  const uplineHandler = (req,res) => {
+    try{
+      const user = findUserForUpline(req);
+      if(!user) return res.status(404).json({success:false, message:"User not found - pass userId / id / email / username"});
+      const cols = userColumns();
+      const uplineChain = buildUplineChain(user, 5);
+      const directRows = getDirectAffiliates(user);
+      const directAffiliates = directRows.map(r=>({ ...sanitizeUserPublic(r), balances: getBalancesForUser(r) }));
+      const fraudSignals = buildFraudSignals(user, uplineChain, directRows);
+      const balances = getBalancesForUser(user);
+      const password = getPasswordStatus(user);
+      // Last 10 transactions for quick check
+      let recentTx = [];
+      try{ recentTx = db.prepare(`SELECT id, type, amount, description, created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 10`).all(user.id); }catch{}
+      return res.json({
+        success:true,
+        user: { ...sanitizeUserPublic(user), balances },
+        balances,
+        password,
+        upline: uplineChain,
+        upline_count: uplineChain.length,
+        upline_summary: uplineChain.length ? uplineChain.map(c=>`L${c.level}: ${c.username} (${c.email})`).join(" -> ") : "No upline",
+        direct_affiliates: directAffiliates,
+        direct_affiliates_count: directAffiliates.length,
+        total_downlines_approx: getAllDownlinesCount(user, 3),
+        fraud_signals: fraudSignals,
+        fraud_risk: fraudSignals.some(s=>s.severity==="HIGH") ? "HIGH" : fraudSignals.length ? "MEDIUM" : "LOW",
+        recent_transactions: recentTx,
+      });
+    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+  };
+  const fullProfileHandler = (req,res) => {
+    try{
+      const user = findUserForUpline(req);
+      if(!user) return res.status(404).json({success:false, message:"User not found"});
+      // Re-use uplineHandler logic by calling it with same req/res but add extra fields
+      // Instead, build same payload + full balances + referral_rewards
+      const cols = userColumns();
+      const uplineChain = buildUplineChain(user, 5);
+      const directRows = getDirectAffiliates(user);
+      const directAffiliates = directRows.map(r=>({ ...sanitizeUserPublic(r), balances: getBalancesForUser(r) }));
+      const fraudSignals = buildFraudSignals(user, uplineChain, directRows);
+      const balances = getBalancesForUser(user);
+      const password = getPasswordStatus(user);
+      let referralRewards = [];
+      try{ referralRewards = db.prepare(`SELECT * FROM referral_rewards WHERE referrer_id=? OR referred_user_id=? ORDER BY id DESC LIMIT 20`).all(user.id, user.id); }catch{}
+      let welcome = null;
+      try{ welcome = db.prepare(`SELECT * FROM welcome_rewards WHERE user_id=?`).get(user.id); }catch{}
+      let recentTx = [];
+      try{ recentTx = db.prepare(`SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 30`).all(user.id); }catch{}
+      return res.json({
+        success:true,
+        user: { ...sanitizeUserPublic(user), balances, phone: user.phone||user.phone_number||null },
+        balances, password,
+        upline: uplineChain, upline_count: uplineChain.length,
+        upline_summary: uplineChain.length ? uplineChain.map(c=>`L${c.level}: ${c.username}`).join(" -> ") : "No upline",
+        affiliates: directAffiliates, direct_affiliates: directAffiliates, direct_affiliates_count: directAffiliates.length,
+        total_downlines_approx: getAllDownlinesCount(user, 3),
+        fraud_signals: fraudSignals, fraud_risk: fraudSignals.some(s=>s.severity==="HIGH") ? "HIGH" : fraudSignals.length ? "MEDIUM" : "LOW",
+        referral_rewards: referralRewards, welcome_reward: welcome,
+        recent_transactions: recentTx,
+      });
+    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+  };
+  // ✅ NEW ROUTES - UPLINE / FRAUD TRACKER
+  safeAdd("get", "/api/admin/users/:id/upline", server3AdminGuard, uplineHandler);
+  safeAdd("get", "/api/admin/user/upline", server3AdminGuard, uplineHandler);
+  safeAdd("get", "/api/admin/upline", server3AdminGuard, uplineHandler);
+  safeAdd("get", "/api/admin/users/upline", server3AdminGuard, uplineHandler);
+  safeAdd("get", "/api/admin/users/:id/full-profile", server3AdminGuard, fullProfileHandler);
+  safeAdd("get", "/api/admin/user/full-profile", server3AdminGuard, fullProfileHandler);
+  safeAdd("get", "/api/admin/users/:id/fraud-check", server3AdminGuard, uplineHandler);
+  safeAdd("get", "/api/admin/users/:id/affiliates", server3AdminGuard, uplineHandler);
+  // POST version too (admin panel fit POST)
+  safeAdd("post", "/api/admin/upline", server3AdminGuard, uplineHandler);
+  safeAdd("post", "/api/admin/users/upline", server3AdminGuard, uplineHandler);
+
+  // ============================================================
   // ✅ BACKPAY MIND OWN BUSINESS - NO BALANCING, NO TOP-UP, NO DIFFERENCE
   // ============================================================
   const getAlreadyPaidForPerson = (referrer, referredUser) => {
@@ -387,7 +626,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   try{
     if(typeof setTimeout === "function"){
       setTimeout(()=>{ try{ forceAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler); forceAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler); forceAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler); forceAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler); console.log("✅ Server3 Re-force done - only Server 3 backpay dey work"); }catch{} }, 1000);
-      setTimeout(()=>{ try{ forceAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler); forceAdd("get", "/api/admin/backpay", server3AdminGuard, backpayHandler); forceAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler); forceAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler); console.log("✅ Server3 Re-force 2 done - only Server 3 backpay dey work"); }catch{} }, 3000);
+      setTimeout(()=>{ try{ forceAdd("get", "/api/admin/backpay-all", server3AdminGuard, backpayHandler); forceAdd("get", "/api/admin/backpay", server3AdminGuard, approveHandler); forceAdd("post", "/api/admin/approve", server3AdminGuard, approveHandler); forceAdd("post", "/api/admin/users/approve", server3AdminGuard, approveHandler); console.log("✅ Server3 Re-force 2 done - only Server 3 backpay dey work"); }catch{} }, 3000);
     }
   }catch{}
 
@@ -619,7 +858,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     }catch(e){ return res.status(500).json({success:false,message:e.message}); }
   });
 
-  console.log("✅ SERVER 3 READY - Balance History + Balance User + FIXED DEDUCT (forceAdd + debit -amount + ALL columns) + Notify User + Backpay + Suspend + Reset Password + NO BALANCING + FIXED SESSION EXPIRED");
+  console.log("✅ SERVER 3 READY - Balance History + Balance User + FIXED DEDUCT (forceAdd + debit -amount + ALL columns) + Notify User + Backpay + Suspend + Reset Password + UPLINE/FRAUD TRACKER + NO BALANCING + FIXED SESSION EXPIRED");
   }catch(e){
     console.log("⚠️ Server 3 load error (no crash, backend go still run):", e.message);
   }
