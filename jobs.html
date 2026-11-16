@@ -319,6 +319,7 @@ background:linear-gradient(135deg,#fff7ed,#fffbeb);
 border:1px solid #f59e0b;
 }
 .task-box.wait-box{background:#f5f3ff;border-color:#ddd6fe}
+.task-box.monthend-box{background:#f5f3ff;border-color:#a78bfa}
 .task-label{margin-bottom:6px;font-size:10px;font-weight:900}
 .task-info{font-size:10px;line-height:1.85}
 .task-open-btn,.complete-btn,.upgrade-btn,.primary-btn,.secondary-btn{
@@ -505,7 +506,6 @@ font-weight:900;
 margin-top:16px;
 font-size:11px;
 }
-/* ✅ REMOVED OLD LOCKED STYLE - NO MORE BLUR / LOCKED CARD */
 .locked-card{
 background:linear-gradient(135deg,#fffaf0,#fffbeb);
 border:1px dashed #f59e0b !important;
@@ -554,7 +554,10 @@ padding:20px;
 margin-bottom:15px;
 text-align:center;
 }
-/* ✅ NEW: UPGRADE CIRCLE FOR ONE EDGE - LIKE GAME OWN */
+.limit-header.monthend-header{
+background:linear-gradient(135deg,#f5f3ff,#ede9fe);
+border-color:#a78bfa;
+}
 #upgradeFab{
 position:fixed;
 right:-22px;
@@ -700,8 +703,6 @@ outline-offset:3px;
 </section>
 </main>
 </div>
-
-<!-- ✅ UPGRADE CIRCLE - ONE EDGE - SILVER & GOLD ONLY -->
 <button type="button" id="upgradeFab" aria-label="Upgrade to SUPER">
   <span class="fab-circle">
     <span class="fab-emoji">⬆️</span>
@@ -709,7 +710,6 @@ outline-offset:3px;
     <span class="fab-sub">TAP →</span>
   </span>
 </button>
-
 <nav class="bottom-nav">
   <a class="nav-item" href="dashboard.html"><span class="nav-icon">⌂</span><span>Home</span></a>
   <a class="nav-item active" href="jobs.html"><span class="nav-icon">💼</span><span>Jobs</span></a>
@@ -852,7 +852,12 @@ function isSuspended(u){
 function isActivated(u){
   return !!u&&!isSuspended(u)&&["active","approved","activated"].includes(getAccountStatus(u));
 }
-/* ✅ NEW: SHOW / HIDE UPGRADE CIRCLE - SILVER & GOLD ONLY */
+/* ✅ NEW: PACKAGE MESSAGE - SUPER vs GOLD/SILVER */
+function getNotAvailableMessage(){
+  if(isSuperPlan()) return "Currently not available, please try again month end";
+  return "Currently not available, try upgrade";
+}
+function isNotAvailableForSuper(){ return isSuperPlan(); }
 function updateUpgradeFab(){
   const fab=document.getElementById("upgradeFab");
   if(!fab) return;
@@ -1001,16 +1006,19 @@ function renderJobs(jobs){
   document.getElementById("sectionTitle").textContent=currentFilter==="completed"?"Completed Jobs":"Available Jobs";
   document.getElementById("superActiveBadge").style.display=stats.isSuper?"inline-flex":"none";
   document.getElementById("dailyEarnedText").textContent=`Earned today: ${formatNaira(stats.earned)} / ${stats.isSuper?"∞":formatNaira(stats.limits.maxDaily)}`;
-  /* ✅ CHANGED: NO MORE LOCKED CARDS / BLUR - JUST SHOW JOBS + CIRCLE FOR SIDE */
+  /* ✅ UPDATED: DAILY LIMIT - PACKAGE MESSAGE */
   if(currentFilter==="available"&&isDailyLimitReached()){
     const totalRemaining=availableJobs.reduce((sum,j)=>sum+Number(j.reward||0),0);
     const countRemaining=availableJobs.length;
+    const notAvailMsg=getNotAvailableMessage();
+    const isSuper=isSuperPlan();
     let html=`
-      <div class="limit-header">
-        <div style="font-size:26px">🔥</div>
-        <h3 style="margin-top:8px;font-size:14px">You don complete your daily tasks</h3>
+      <div class="limit-header ${isSuper?"monthend-header":""}">
+        <div style="font-size:26px">${isSuper?"⏳":"🔥"}</div>
+        <h3 style="margin-top:8px;font-size:14px">${isSuper?"You don complete your daily tasks":"You don complete your daily tasks"}</h3>
         <p style="font-size:11px;color:#756d7c;margin-top:6px">You still get <b>${countRemaining} tasks worth ${formatNaira(totalRemaining)}</b> dey wait</p>
-        <p style="margin-top:8px;font-size:11px;font-weight:800;color:#92400e">👉 Tap the gold circle for right edge to Upgrade to SUPER</p>
+        <p style="margin-top:10px;font-size:12px;font-weight:900;color:${isSuper?"#5b21b6":"#92400e"}">${escapeHTML(notAvailMsg)}</p>
+        ${!isSuper?`<p style="margin-top:8px;font-size:11px;font-weight:800;color:#92400e">👉 Tap the gold circle for right edge to Upgrade to SUPER</p>`:`<p style="margin-top:8px;font-size:11px;color:#756d7c">You already be SUPER — no upgrade again, just wait till month end.</p>`}
       </div>
     `;
     availableJobs.forEach(job=>{
@@ -1022,11 +1030,11 @@ function renderJobs(jobs){
             <div class="job-reward">${formatNaira(reward)}</div>
           </div>
           <div class="job-description">${escapeHTML(getJobDescription(job))}</div>
-          <div class="task-box upgrade-box">
-            <div class="task-label">👑 SUPER TASK</div>
-            <div class="task-info">Tap the <b>gold circle for right edge</b> to upgrade and unlock this ${formatNaira(reward)} task.</div>
+          <div class="task-box ${isSuper?"monthend-box":"upgrade-box"}">
+            <div class="task-label">${isSuper?"⏳ NOT AVAILABLE":"👑 SUPER TASK"}</div>
+            <div class="task-info">${escapeHTML(notAvailMsg)} — this ${formatNaira(reward)} task dey wait.</div>
           </div>
-          <a href="upgrade-pay.html" class="upgrade-btn">Tap Circle → Upgrade to Unlock</a>
+          ${!isSuper?`<a href="upgrade-pay.html" class="upgrade-btn">Tap Circle → Upgrade to Unlock</a>`:`<button class="secondary-btn" disabled>Currently not available, please try again month end</button>`}
         </div>
       `;
     });
@@ -1064,13 +1072,15 @@ function renderJobs(jobs){
         </div>
         <button class="complete-btn completed" disabled>Completed ✓</button>`;
     }else if(!stats.isSuper&&wouldExceedLimit(reward)){
-      /* ✅ CHANGED: NO LOCK - JUST TELL DEM TAP CIRCLE FOR SIDE */
+      /* ✅ UPDATED: PREMIUM TASK - GOLD/SILVER = TRY UPGRADE, SUPER = MONTH END (for safety, even though SUPER no dey enter here normally) */
+      const notAvailMsg=getNotAvailableMessage();
+      const isSuper=isSuperPlan();
       html+=`
-        <div class="task-box upgrade-box">
-          <div class="task-label">👑 PREMIUM TASK</div>
-          <div class="task-info">This <b>${formatNaira(reward)}</b> task dey wait. Tap the <b>gold circle for right edge</b> to upgrade to SUPER.</div>
+        <div class="task-box ${isSuper?"monthend-box":"upgrade-box"}">
+          <div class="task-label">${isSuper?"⏳ NOT AVAILABLE":"👑 PREMIUM TASK"}</div>
+          <div class="task-info">${escapeHTML(notAvailMsg)} — this <b>${formatNaira(reward)}</b> task dey wait.</div>
         </div>
-        <a href="upgrade-pay.html" class="upgrade-btn">Tap Circle → Upgrade</a>`;
+        ${!isSuper?`<a href="upgrade-pay.html" class="upgrade-btn">Tap Circle → Upgrade</a>`:`<button class="secondary-btn" disabled>Currently not available, please try again month end</button>`}`;
     }else if(timerExists&&!opened){
       html+=`
         <div class="task-box wait-box">
@@ -1174,7 +1184,12 @@ async function openTask(jobId,btn){
     showMessage(`Task opened. Return after ${TASK_WAIT_SECONDS} seconds to claim your reward.`,"success");
     window.open(destination, "_blank", "noopener");
   }catch(e){
-    showMessage(e.message||"Unable to open this task.");
+    /* ✅ If server say not available, show package message */
+    if(String(e.message||"").toLowerCase().includes("not available")||String(e.message||"").toLowerCase().includes("limit")){
+      showMessage(getNotAvailableMessage());
+    } else {
+      showMessage(e.message||"Unable to open this task.");
+    }
     if(btn){
       btn.disabled=false;
       btn.textContent="Open Task ↗️";
@@ -1203,7 +1218,11 @@ async function completeJob(jobId,btn){
     showMessage(`Reward: ${formatNaira(d.reward??0)} - Task completed!`,"success");
     await loadAll();
   }catch(e){
-    showMessage(e.message);
+    if(String(e.message||"").toLowerCase().includes("not available")||String(e.message||"").toLowerCase().includes("limit")){
+      showMessage(getNotAvailableMessage());
+    } else {
+      showMessage(e.message);
+    }
     if(btn){
       btn.disabled=false;
       btn.textContent="Claim →";
@@ -1324,7 +1343,11 @@ async function claimVideo(videoId,btn){
     showMessage(`Reward: ${formatNaira(d.reward??0)}`,"success");
     await loadAll();
   }catch(e){
-    showMessage(e.message);
+    if(String(e.message||"").toLowerCase().includes("not available")||String(e.message||"").toLowerCase().includes("limit")){
+      showMessage(getNotAvailableMessage());
+    } else {
+      showMessage(e.message);
+    }
     if(btn){
       btn.disabled=false;
       btn.textContent="Claim ✅";
@@ -1350,7 +1373,6 @@ document.getElementById("inactivePopup").addEventListener("click",e=>{
   if(e.target.id==="inactivePopup")closePopup();
 });
 document.getElementById("retryButton").addEventListener("click",loadAll);
-/* ✅ CIRCLE CLICK -> UPGRADE */
 document.getElementById("upgradeFab").addEventListener("click",()=>{
   window.location.href="upgrade-pay.html";
 });
