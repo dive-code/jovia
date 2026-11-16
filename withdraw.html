@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,6 +46,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .form-message{display:none;margin-bottom:15px;padding:12px 13px;border-radius:12px;font-size:10.5px;line-height:1.55;font-weight:700}
 .form-message.success{display:block;background:var(--success-bg);border:1px solid #ccebd8;color:var(--success)}
 .form-message.error{display:block;background:var(--danger-bg);border:1px solid #f0cccc;color:var(--danger)}
+.form-message.info{display:block;background:var(--blue-bg);border:1px solid #cfe0ff;color:var(--blue)}
 .form-group{margin-bottom:15px}
 .form-group label,.withdraw-type-label{display:block;margin-bottom:7px;color:var(--purple);font-size:10px;font-weight:800}
 .form-control{width:100%;min-height:48px;padding:13px 14px;border:1px solid var(--border);border-radius:12px;outline:none;background:#fbfafc;color:var(--text);font-size:12px;transition:.2s}
@@ -203,7 +203,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
 </div>
 <button type="button" class="save-btn" id="saveDetailsBtn" onclick="saveWithdrawalDetails()">Save Payment Details</button>
 <button type="button" class="withdraw-button" id="withdrawButton" onclick="submitWithdrawal()">Request Withdrawal</button>
-<div class="info-box"><div class="info-row"><span>Selected balance</span><strong id="infoBalance">₦0</strong></div><div class="info-row"><span>Withdrawal type</span><strong id="infoWithdrawalType">Regular</strong></div><div class="info-row"><span>Country</span><strong id="infoCountry">Nigeria</strong></div></div>
+<div class="info-box"><div class="info-row"><span>Selected balance</span><strong id="infoBalance">₦0</strong></div><div class="info-row"><span>Withdrawal type</span><strong id="infoWithdrawalType">Regular</strong></div><div class="info-row"><span>Country</span><strong id="infoCountry">Nigeria</strong></div><div class="info-row"><span>Minimum withdrawal</span><strong id="infoMinimum">₦60,000</strong></div></div>
 </section>
 <section class="history-section"><div class="history-shell"><div class="history-top"><div class="history-head"><div><div class="history-eyebrow"><span class="history-eyebrow-dot"></span>TRANSACTION RECORDS</div><h2>Withdrawal History</h2><p>Track the status of your recent withdrawal requests.</p></div><div class="history-count"><strong id="historyCount">0</strong><span>Requests</span></div></div></div><div class="history-list" id="historyList"><div class="history-loading"><span class="history-loading-dot"></span>Loading withdrawal history...</div></div><div class="history-footer">Showing your 10 most recent requests</div></div></section>
 </div>
@@ -223,15 +223,29 @@ function money(a){return"₦"+Number(a||0).toLocaleString("en-NG")}
 function getMinimumWithdrawal(t){return t==="affiliate"?20000:60000}
 function getSelectedBalance(){return document.getElementById("withdrawalType").value==="affiliate"?affiliateBalance:walletBalance}
 function getWithdrawalTypeLabel(t){return t==="affiliate"?"Affiliate Earnings":"Regular Earnings"}
-/* ✅ FRONTEND ONLY - REGULAR WITHDRAWAL BLOCKED BY PACKAGE - NO BACKEND */
 function isSuperUser(){return String(currentUser?.package||currentUser?.plan||"").toUpperCase().includes("SUPER")}
 function getRegularWithdrawMsg(){return isSuperUser()?"Regular withdrawals are currently unavailable. Please try again month end":"Regular withdrawals are currently unavailable. Please try upgrading to gain quick access"}
+// ✅ NEW: Professional minimum message - only show when NOT reached minimum
+function getMinimumMsg(type,balance,amount){
+  const min=getMinimumWithdrawal(type),label=getWithdrawalTypeLabel(type);
+  const base=Math.max(balance||0,0);
+  const remain=Math.max(0,min-base);
+  if(amount && Number(amount)>0 && Number(amount)<min){
+    return "You have not yet reached the minimum withdrawal amount. The minimum withdrawal for "+label+" is "+money(min)+". The amount you entered ("+money(amount)+") is below the required minimum. Please increase your withdrawal amount to at least "+money(min)+".";
+  }
+  return "You have not yet reached the minimum withdrawal amount. The minimum withdrawal for "+label+" is "+money(min)+". Your current "+label+" balance is "+money(base)+". You need "+money(remain)+" more to become eligible for withdrawal. Please continue earning to reach the minimum.";
+}
+function hasReachedMinimum(type,balance,amount){
+  const min=getMinimumWithdrawal(type);
+  // Must have balance >= min AND amount entered >= min
+  return Number(balance||0)>=min && Number(amount||0)>=min;
+}
 function showRegularBlocked(){const msg=getRegularWithdrawMsg();const cta=document.getElementById("withdrawUpgradeCta");if(cta)cta.classList.toggle("show",!isSuperUser());showMessage(msg,"error");return false}
+function showMinimumBlocked(type,balance,amount){const cta=document.getElementById("withdrawUpgradeCta");if(cta)cta.classList.remove("show");showMessage(getMinimumMsg(type,balance,amount),"info");return false}
 function showInactivePopup(){const o=document.getElementById("inactiveOverlay");o.classList.add("show");o.style.display="flex";document.body.style.overflow="hidden"}
-/* ✅ FRONTEND ONLY: Regular always blocked, Affiliate from server if needed */
 async function loadWithdrawalSettings(){regularWithdrawalsEnabled=false;try{const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{credentials:"include",cache:"no-store"});if(r.ok){const d=await r.json();affiliateWithdrawalsEnabled=d.affiliateEnabled!==false}}catch{}}
 function updateQuickAmounts(t){const a=t==="affiliate"?[20000,30000,50000]:[60000,70000,100000];["quickAmount1","quickAmount2","quickAmount3"].forEach((id,i)=>{const b=document.getElementById(id);b.textContent=money(a[i]);b.onclick=()=>setAmount(a[i],b)})}
-function updateBalance(){const t=document.getElementById("withdrawalType").value,s=getSelectedBalance();document.getElementById("walletBalance").textContent=money(s);document.getElementById("infoBalance").textContent=money(s);document.getElementById("typeBalance").textContent=money(s);document.getElementById("infoWithdrawalType").textContent=getWithdrawalTypeLabel(t);document.getElementById("typeBalanceLabel").textContent="Available balance";document.getElementById("amount").min=getMinimumWithdrawal(t);document.getElementById("infoCountry").textContent=document.getElementById("country").value;updateQuickAmounts(t)}
+function updateBalance(){const t=document.getElementById("withdrawalType").value,s=getSelectedBalance();document.getElementById("walletBalance").textContent=money(s);document.getElementById("infoBalance").textContent=money(s);document.getElementById("typeBalance").textContent=money(s);document.getElementById("infoWithdrawalType").textContent=getWithdrawalTypeLabel(t);document.getElementById("typeBalanceLabel").textContent="Available balance";document.getElementById("amount").min=getMinimumWithdrawal(t);document.getElementById("infoMinimum").textContent=money(getMinimumWithdrawal(t));document.getElementById("infoCountry").textContent=document.getElementById("country").value;document.getElementById("balanceNote").textContent="Minimum withdrawal for "+getWithdrawalTypeLabel(t)+" is "+money(getMinimumWithdrawal(t))+".";updateQuickAmounts(t)}
 function onCountryChange(){const c=document.getElementById("country").value;document.querySelectorAll(".method-box").forEach(b=>b.classList.remove("active"));document.getElementById("method-"+c).classList.add("active");document.getElementById("infoCountry").textContent=c;loadSavedForCountry(c);clearMessage()}
 function setGhanaMethod(m){ghanaMethod=m;document.getElementById("ghBankToggle").classList.toggle("active",m==="BANK");document.getElementById("ghMomoToggle").classList.toggle("active",m==="MOMO");document.getElementById("gh-bank-section").style.display=m==="BANK"?"block":"none";document.getElementById("gh-momo-section").style.display=m==="MOMO"?"block":"none"}
 function setCameroonMethod(m){cameroonMethod=m;document.getElementById("cmBankToggle").classList.toggle("active",m==="BANK");document.getElementById("cmMomoToggle").classList.toggle("active",m==="MOMO");document.getElementById("cm-bank-section").style.display=m==="BANK"?"block":"none";document.getElementById("cm-momo-section").style.display=m==="MOMO"?"block":"none"}
@@ -248,19 +262,34 @@ document.getElementById("accountNumber").addEventListener("input",function(){thi
 function openConfirmModal(){if(!pendingWithdrawal)return;document.getElementById("confirmType").textContent=getWithdrawalTypeLabel(pendingWithdrawal.withdrawalType);document.getElementById("confirmCountry").textContent=pendingWithdrawal.country;document.getElementById("confirmMethod").textContent=pendingWithdrawal.method+(pendingWithdrawal.provider?" - "+pendingWithdrawal.provider:"");document.getElementById("confirmAmount").textContent=money(pendingWithdrawal.amount);if(pendingWithdrawal.country==="Nigeria"){document.getElementById("confirmAccount").textContent=pendingWithdrawal.accountName;document.getElementById("confirmBank").textContent=pendingWithdrawal.bank;document.getElementById("confirmNumber").textContent="****"+pendingWithdrawal.accountNumber.slice(-4)}else if(pendingWithdrawal.method==="MOMO"){document.getElementById("confirmAccount").textContent=pendingWithdrawal.name;document.getElementById("confirmBank").textContent=pendingWithdrawal.provider;document.getElementById("confirmNumber").textContent=pendingWithdrawal.number}else if(pendingWithdrawal.method==="USDT"){document.getElementById("confirmAccount").textContent="USDT TRC20";document.getElementById("confirmBank").textContent="TRON";document.getElementById("confirmNumber").textContent=pendingWithdrawal.usdtAddress.slice(0,8)+"..."+pendingWithdrawal.usdtAddress.slice(-6)}else{document.getElementById("confirmAccount").textContent=pendingWithdrawal.accountName||pendingWithdrawal.name||pendingWithdrawal.bankName;document.getElementById("confirmBank").textContent=pendingWithdrawal.bank||pendingWithdrawal.bankName;document.getElementById("confirmNumber").textContent=pendingWithdrawal.accountNumber||pendingWithdrawal.account||""}document.getElementById("confirmModal").classList.add("show");document.body.style.overflow="hidden"}
 function closeConfirmModal(){if(submittingWithdrawal)return;document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow=""}
 document.getElementById("confirmModal").addEventListener("click",function(e){if(e.target===this)closeConfirmModal()});
-function openActivationModal(){if(!pendingWithdrawal){showMessage("Please enter your amount and payment details first.","error");return}const wt=pendingWithdrawal.withdrawalType;
-/* ✅ FRONTEND ONLY: Regular always blocked - never reach code modal */
-if(wt==="regular"){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showRegularBlocked();return}
-const isPortalOpen=affiliateWithdrawalsEnabled;if(!isPortalOpen){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}const amt=Number(pendingWithdrawal.amount||0);const min=getMinimumWithdrawal(wt);if(amt<min){showMessage("Minimum withdrawal is "+money(min)+".","error");return}document.getElementById("confirmModal").classList.remove("show");confirmWithdrawal("");return}
+function openActivationModal(){
+  if(!pendingWithdrawal){showMessage("Please enter your amount and payment details first.","error");return}
+  const wt=pendingWithdrawal.withdrawalType;
+  const amt=Number(pendingWithdrawal.amount||0), bal=wt==="affiliate"?affiliateBalance:walletBalance;
+  // ✅ MINIMUM FIRST - if never reach minimum, show minimum msg, no regular msg
+  if(!hasReachedMinimum(wt,bal,amt)){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMinimumBlocked(wt,bal,amt);return}
+  if(wt==="regular"){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showRegularBlocked();return}
+  const isPortalOpen=affiliateWithdrawalsEnabled;if(!isPortalOpen){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
+  document.getElementById("confirmModal").classList.remove("show");confirmWithdrawal("");return}
 function closeActivationModal(){if(submittingWithdrawal)return;const overlay=document.getElementById("activationOverlay");overlay.classList.remove("show");overlay.style.display="none";document.getElementById("confirmModal").classList.add("show")}
 document.getElementById("activationOverlay").addEventListener("click",function(e){if(e.target===this)closeActivationModal()});
 async function confirmWithdrawalWithCode(){const codeInput=document.getElementById("activationCodeInput");const errorEl=document.getElementById("activationError");const btn=document.getElementById("activationConfirmBtn");let code=(codeInput.value||"").trim().toUpperCase().replace(/\s/g,"");if(!code){errorEl.textContent="Please enter your withdrawal code.";errorEl.classList.add("show");return}if(!code.startsWith("JOVIA-")){errorEl.textContent="Invalid code format. Your code must start with JOVIA-.";errorEl.classList.add("show");return}btn.disabled=true;btn.textContent="Verifying...";errorEl.classList.remove("show");try{const res=await fetch("/api/withdraw/apply",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({code:code})});const data=await res.json();if(!(data&&data.success===true)){errorEl.textContent=data?.message||"Invalid or unavailable withdrawal code.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}}catch(e){errorEl.textContent="Unable to verify the code. Please try again.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}document.getElementById("activationOverlay").style.display="none";document.getElementById("activationOverlay").classList.remove("show");await confirmWithdrawal(code)}
-async function submitWithdrawal(){clearMessage();document.getElementById("withdrawUpgradeCta").classList.remove("show");const wt=document.getElementById("withdrawalType").value;
-/* ✅ FRONTEND ONLY: Block Regular immediately - no modal, no code, no backend */
-if(wt==="regular"){showRegularBlocked();return}
-if(!affiliateWithdrawalsEnabled){showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
-if(!currentUser){showMessage("Your account is still loading. Please try again.","error");return}
-const sel=getSelectedBalance();const min=getMinimumWithdrawal(wt);const amt=Number(document.getElementById("amount").value);if(!Number.isFinite(amt)||amt<=0){showMessage("Please enter a valid withdrawal amount.","error");return}if(amt<min){showMessage("Minimum withdrawal for "+(wt==="affiliate"?"Affiliate":"Regular")+" Earnings is "+money(min)+".","error");return}if(amt>sel){showMessage("Insufficient balance. Your available balance is "+money(sel)+".","error");return}const d=getCurrentDetails();if(!isDetailsComplete(d)){showMessage("Please complete your "+d.country+" payment details.","error");return}pendingWithdrawal={amount:amt,withdrawalType:wt,...d};openConfirmModal()}
+async function submitWithdrawal(){
+  clearMessage();document.getElementById("withdrawUpgradeCta").classList.remove("show");
+  const wt=document.getElementById("withdrawalType").value;
+  const sel=getSelectedBalance(), min=getMinimumWithdrawal(wt);
+  const amt=Number(document.getElementById("amount").value);
+  if(!currentUser){showMessage("Your account is still loading. Please try again.","error");return}
+  // ✅ ORDER MATTERS: 1) MINIMUM FIRST, 2) REGULAR BLOCK ONLY IF REACHED MINIMUM
+  if(!Number.isFinite(amt)||amt<=0){showMinimumBlocked(wt,sel,0);return}
+  if(amt<min){showMinimumBlocked(wt,sel,amt);return}
+  if(sel<min){showMinimumBlocked(wt,sel,amt);return}
+  if(amt>sel){showMessage("Insufficient balance. Your available balance is "+money(sel)+".","error");return}
+  // ✅ ONLY NOW - user don reach minimum, show regular unavailable
+  if(wt==="regular"){showRegularBlocked();return}
+  if(!affiliateWithdrawalsEnabled){showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
+  const d=getCurrentDetails();if(!isDetailsComplete(d)){showMessage("Please complete your "+d.country+" payment details.","error");return}
+  pendingWithdrawal={amount:amt,withdrawalType:wt,...d};openConfirmModal()}
 async function confirmWithdrawal(withdrawalCode){if(!pendingWithdrawal||submittingWithdrawal)return;const cb=document.getElementById("activationConfirmBtn");const mb=document.getElementById("withdrawButton");submittingWithdrawal=true;if(cb){cb.disabled=true;cb.textContent="Processing..."}mb.disabled=true;try{const isAff=pendingWithdrawal.withdrawalType==="affiliate";const payload={amount:pendingWithdrawal.amount,withdrawalType:pendingWithdrawal.withdrawalType,type:pendingWithdrawal.withdrawalType,country:pendingWithdrawal.country,method:pendingWithdrawal.method,accountName:pendingWithdrawal.accountName||pendingWithdrawal.name||"",bankName:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",accountNumber:pendingWithdrawal.accountNumber||pendingWithdrawal.number||pendingWithdrawal.account||pendingWithdrawal.usdtAddress||"",bank_name:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",account_name:pendingWithdrawal.accountName||pendingWithdrawal.name||"",account_number:pendingWithdrawal.accountNumber||pendingWithdrawal.number||"",code:isAff?"":withdrawalCode,withdrawalCode:isAff?"":withdrawalCode,withdrawal_code:isAff?"":withdrawalCode};const r=await fetch("/api/withdrawals",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});let data=null;try{data=await r.json()}catch(e){}if(!r.ok)throw new Error(data?.message||"Unable to submit withdrawal.");document.getElementById("confirmModal").classList.remove("show");const ov=document.getElementById("activationOverlay");ov.classList.remove("show");ov.style.display="none";document.body.style.overflow="";document.getElementById("amount").value="";pendingWithdrawal=null;showMessage(data?.message||"Your withdrawal request has been submitted successfully.","success");await loadWithdrawalHistory();await loadUserBalanceOnly()}catch(e){const ov=document.getElementById("activationOverlay");ov.classList.remove("show");ov.style.display="none";document.body.style.overflow="";document.getElementById("confirmModal").classList.remove("show");showMessage(e.message||"Unable to submit withdrawal. Please try again.","error")}finally{submittingWithdrawal=false;if(cb){cb.disabled=false;cb.textContent="Verify & Continue →"}document.getElementById("confirmWithdrawButton").disabled=false;document.getElementById("withdrawButton").disabled=false}}
 async function loadUserBalanceOnly(){try{const r=await fetch("/api/me?t="+Date.now(),{credentials:"include",cache:"no-store"});if(!r.ok)return;const data=await r.json();const user=data.user||data.data?.user||data.member||data;walletBalance=Number(user.walletBalance??user.wallet_balance??walletBalance)||0;affiliateBalance=Number(user.affiliateBalance??user.affiliate_balance??affiliateBalance)||0;updateBalance()}catch(e){}}
 function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
