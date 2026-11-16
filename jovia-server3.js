@@ -1,4 +1,4 @@
-"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 JOVIA SERVER 3 - COMPRESSED + IMPERSONATE HISTORY");
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 JOVIA SERVER 3 - COMPRESSED + IMPERSONATE HISTORY + WIPE");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
 const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/approve","/api/admin/users/approve"];
 const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
@@ -32,7 +32,6 @@ if(isOrigin(req.headers.origin||req.headers.referer||req.headers.host))return ne
 if(typeof requireAdmin==='function'){try{return requireAdmin(req,res,err=>{if(err){if(isOrigin(req.headers.origin||req.headers.referer))return next();return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"})}return next()})}catch{if(isOrigin(req.headers.origin||req.headers.referer))return next()}}
 return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"})}
 catch(e){if(isOrigin(req.headers.origin||req.headers.referer))return next();return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"})}};
-// RESET PASSWORD
 const resetPw=(req,res)=>{try{const id=Number(req.params?.id||req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId);if(!id)return res.status(400).json({success:false,message:"User ID required"});const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u)return res.status(404).json({success:false,message:"User not found"});
 const np=String(req.body?.newPassword||req.body?.new_password||req.body?.password||req.query.newPassword||"Jovia1234").trim()||"Jovia1234";const c=cols();let h=np;
 try{h=require("bcryptjs").hashSync(np,10)}catch{try{h=require("bcrypt").hashSync(np,10)}catch{}}
@@ -41,7 +40,6 @@ try{db.prepare("UPDATE users SET password_reset_at=datetime('now') WHERE id=?").
 const f=db.prepare("SELECT id,username,email,full_name FROM users WHERE id=?").get(id);console.log("✅ Password reset "+f?.username);
 return res.json({success:true,message:`Password don reset for ${f?.username} - New password: ${np}`,user:f,userId:id,newPassword:np,tempPassword:np,password:np})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 ["post","post","post","post","post","get"].forEach((m,i)=>safe(m,["/api/admin/users/:id/reset-password","/api/admin/user/:id/reset-password","/api/admin/users/reset-password","/api/admin/user/reset-password","/api/admin/reset-password","/api/admin/users/:id/reset-password"][i],sGuard,resetPw));
-// UPLINE / FRAUD HELPERS
 const findRef=(u,c)=>{for(const col of["referrer_id","referred_by","referrer","upline_id","invited_by","sponsor_id","referral_id","parent_id","invite_by","referred_by_code","referral_code_used"]){if(!c.includes(col))continue;const raw=u[col];if(!raw)continue;const s=String(raw).trim();if(!s)continue;let r=null;
 if(/^\d+$/.test(s))r=db.prepare("SELECT * FROM users WHERE id=?").get(Number(s));
 if(!r){try{r=db.prepare("SELECT * FROM users WHERE referral_code=? OR username=? OR email=? LIMIT 1").get(s,s,s)}catch{}}
@@ -72,7 +70,6 @@ if(user.full_name){try{const same=db.prepare("SELECT id,username,email FROM user
 return s};
 const findU=req=>{const id=Number(req.params?.id||req.body?.userId||req.body?.id||req.body?.user_id||req.query.userId||req.query.id||req.query.user_id||0),em=String(req.query?.email||req.body?.email||"").trim().toLowerCase(),un=String(req.query?.username||req.body?.username||"").trim();let u=null;
 if(id)u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u&&em)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);if(!u&&un)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1").get(un,un);return u};
-// ✅ IMPERSONATE HELPERS - NEW
 const getImpUser=req=>{try{const tok=String(req.headers["x-impersonate-token"]||req.query?.impersonate||req.query?.token||req.body?.impersonate||"").trim();if(!tok)return null;const row=db.prepare("SELECT * FROM admin_impersonations WHERE token=?").get(tok);if(!row)return null;if(new Date(row.expires_at).getTime()<Date.now())return null;const u=db.prepare("SELECT * FROM users WHERE id=?").get(row.target_user_id);if(!u)return null;return{user:u,row,tok}}catch{return null}};
 const getSessionUser=req=>{try{const id=Number(req.session?.userId||req.session?.user_id||req.session?.user?.id||req.user?.id||req.userId||0);if(id)return db.prepare("SELECT * FROM users WHERE id=?").get(id);return null}catch{return null}};
 const userTx=(uid)=>{let tx=[];try{tx=db.prepare("SELECT id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(uid)}catch{}return tx};
@@ -90,7 +87,6 @@ return res.json({success:true,user:{...clean(user),balances:b,phone:user.phone||
 safe("get","/api/admin/users/:id/upline",sGuard,upHandler);safe("get","/api/admin/user/upline",sGuard,upHandler);safe("get","/api/admin/upline",sGuard,upHandler);safe("get","/api/admin/users/upline",sGuard,upHandler);
 safe("get","/api/admin/users/:id/full-profile",sGuard,fullHandler);safe("get","/api/admin/user/full-profile",sGuard,fullHandler);safe("get","/api/admin/users/full-profile",sGuard,fullHandler);
 safe("get","/api/admin/users/:id/fraud-check",sGuard,upHandler);safe("get","/api/admin/users/:id/affiliates",sGuard,upHandler);safe("post","/api/admin/upline",sGuard,upHandler);safe("post","/api/admin/users/upline",sGuard,upHandler);
-// IMPERSONATE
 const imp=(req,res)=>{try{const reason=String(req.body?.reason||req.query?.reason||"fraud check").slice(0,200);if(!reason||reason.length<3)return res.status(400).json({success:false,message:"Enter reason - e go save for audit log"});
 const user=findU(req);if(!user)return res.status(404).json({success:false,message:"User not found"});
 let tok="";try{tok=require("crypto").randomBytes(24).toString("hex")}catch{tok=Math.random().toString(36).slice(2)+Date.now().toString(36)}
@@ -106,7 +102,6 @@ const tx=userTx(user.id),wd=userWithdrawals(user.id),pay=userPayments(user.id);
 return res.json({success:true,message:"Impersonate token valid - view-only",user:clean(user),balances:bals(user),recent_transactions:tx,transactions:tx,history:tx,withdrawals:wd,payments:pay,impersonated:true,impersonated_by_admin:true,expires_at:row.expires_at,reason:row.reason})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const impList=(req,res)=>{try{const rows=db.prepare("SELECT id,admin_ip,target_user_id,target_email,target_username,reason,expires_at,used_at,created_at FROM admin_impersonations ORDER BY id DESC LIMIT 50").all();return res.json({success:true,impersonations:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("post","/api/admin/impersonate",sGuard,imp);safe("get","/api/admin/impersonations",sGuard,impList);safe("get","/api/impersonate/verify",impVerify);safe("post","/api/impersonate/verify",impVerify);
-// ✅ IMPERSONATE-AWARE HISTORY / WALLET / ME - so history.html work normally when impersonating
 const impHistory=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired - login again"});
 const tx=userTx(u.id),wd=userWithdrawals(u.id),pay=userPayments(u.id);return res.json({success:true,user:clean(u),balances:bals(u),history:tx,transactions:tx,withdrawals:wd,payments:pay,wallet:{balance:bals(u).wallet_balance,transactions:tx}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const impMe=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});
@@ -114,9 +109,7 @@ return res.json({success:true,user:{...clean(u),balances:bals(u)},balances:bals(
 const impWallet=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});
 const b=bals(u);return res.json({success:true,user:clean(u),balances:b,walletBalance:b.wallet_balance,affiliateBalance:b.affiliate_balance,totalEarned:b.total_balance,wallet:{transactions:userTx(u.id)}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/impersonate/history",impHistory);safe("get","/api/impersonate/me",impMe);safe("get","/api/impersonate/wallet",impWallet);
-// NOTE: /api/history, /api/wallet, /api/me are already registered in main server. These FORCE versions only take over when impersonate token is present, else they fall through to session user. If your main server registers them AFTER Server 3, they will win for normal users and impersonate will still work via /api/impersonate/history + verify. History.html already tries verify fallback.
 safe("get","/api/history",impHistory);safe("get","/api/wallet",impWallet);safe("get","/api/me",impMe);
-// BACKPAY
 const alreadyPaid=(ref,ru)=>{const uid=ru.id,un=String(ru.username||"").toLowerCase(),rid=ref?.id||null;let a=0,b=0,c=0;
 try{const r=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(uid);if(r)a=Number(r.amount||0)}catch{}
 try{if(rid){const r=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE user_id=? AND reference=?").get(rid,`REF_${uid}`);if(r)b=Number(r.total||0)}}catch{}
@@ -152,7 +145,6 @@ return res.json({success:true,message:`User approved. Referral: ₦${bon.paid} t
 force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve);
 try{setTimeout(()=>{try{force("get","/api/admin/backpay-all",sGuard,backpay);force("get","/api/admin/backpay",sGuard,backpay);force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve)}catch{}},1000);
 setTimeout(()=>{try{force("get","/api/admin/backpay-all",sGuard,backpay);force("get","/api/admin/backpay",sGuard,backpay);force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve)}catch{}},3000)}catch{}
-// SUSPEND / UNSUSPEND
 const susp=(req,res)=>{try{const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(!id)return res.status(400).json({success:false,message:"User ID required"});
 const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u)return res.status(404).json({success:false,message:"User not found"});
 try{db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET status='suspended' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET is_suspended=1 WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET is_active=0 WHERE id=?").run(id)}catch{}
@@ -163,13 +155,36 @@ try{db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id)}ca
 const f=db.prepare("SELECT * FROM users WHERE id=?").get(id);return res.json({success:true,message:`${f.username} don unsuspend`,user:{id:f.id,username:f.username,account_status:f.account_status,status:f.status}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("post","/api/admin/suspend",sGuard,susp);safe("post","/api/admin/users/suspend",sGuard,susp);safe("post","/api/admin/user/suspend",sGuard,susp);safe("post","/api/admin/suspend-user",sGuard,susp);safe("post","/api/admin/users/block",sGuard,susp);safe("get","/api/admin/suspend",sGuard,susp);
 safe("post","/api/admin/unsuspend",sGuard,unsusp);safe("post","/api/admin/users/unsuspend",sGuard,unsusp);safe("post","/api/admin/user/unsuspend",sGuard,unsusp);safe("post","/api/admin/users/unblock",sGuard,unsusp);safe("get","/api/admin/unsuspend",sGuard,unsusp);
-// NOTIFY
+// ✅ WIPE USER DASHBOARD - LIKE NEW ACTIVATED ACCOUNT
+const wipeUser=(req,res)=>{try{
+let u=findU(req);
+if(!u){const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(id)u=db.prepare("SELECT * FROM users WHERE id=?").get(id)}
+if(!u)return res.status(404).json({success:false,message:"User not found - pass userId / email / username"});
+const id=u.id;const pkgRaw=String(u.package||u.plan||"SILVER").toUpperCase();let pkg="SILVER";if(pkgRaw.includes("GOLD"))pkg="GOLD";else if(pkgRaw.includes("SUPER"))pkg="SUPER";
+let welcome=9000;if(pkg==="GOLD")welcome=15000;if(pkg==="SUPER")welcome=25000;
+const confirm=String(req.body?.confirm||req.query?.confirm||"").toLowerCase();
+if(confirm!=="wipe"&&confirm!=="yes"){return res.json({success:false,needConfirm:true,message:`⚠️ Confirm wipe for ${u.username} (${u.email})? Send {confirm:"wipe"} to proceed. This go DELETE all history/transactions/withdrawals and reset to fresh ${pkg}. CANNOT UNDO.`,user:{id:u.id,username:u.username,email:u.email,package:pkg}})}
+const tables=["wallet_transactions","withdrawals","withdrawal_requests","payments","payment_requests","game_withdrawals","game_deposits","deposits","affiliate_withdrawals","notifications","jovia_notifications","user_notifications","user_notification","referral_rewards","welcome_rewards","jovia_upgrades","music_plays","music_earnings","job_claims","job_applications","game_plays","game_history"];
+for(const t of tables){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const colsT=db.prepare(`PRAGMA table_info(${t})`).all().map(x=>x.name);
+if(colsT.includes("user_id")){try{db.prepare(`DELETE FROM ${t} WHERE user_id=?`).run(id)}catch{}}
+if(colsT.includes("referrer_id")){try{db.prepare(`DELETE FROM ${t} WHERE referrer_id=?`).run(id)}catch{}}
+if(colsT.includes("referred_user_id")){try{db.prepare(`DELETE FROM ${t} WHERE referred_user_id=?`).run(id)}catch{}}
+if(colsT.includes("target_user_id")){try{db.prepare(`DELETE FROM ${t} WHERE target_user_id=?`).run(id)}catch{}}}catch{}}
+try{db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);")}catch{}
+const c=cols();const sets=[];if(c.includes("wallet_balance"))sets.push(`wallet_balance=${welcome}`);if(c.includes("balance"))sets.push(`balance=${welcome}`);if(c.includes("available_balance"))sets.push(`available_balance=${welcome}`);if(c.includes("affiliate_balance"))sets.push(`affiliate_balance=0`);if(c.includes("affiliate_earnings"))sets.push(`affiliate_earnings=0`);if(c.includes("referral_balance"))sets.push(`referral_balance=0`);if(c.includes("referral_earnings"))sets.push(`referral_earnings=0`);if(c.includes("account_status"))sets.push(`account_status='active'`);if(c.includes("status"))sets.push(`status='active'`);if(c.includes("is_suspended"))sets.push(`is_suspended=0`);if(c.includes("is_active"))sets.push(`is_active=1`);
+if(sets.length){try{db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(id)}catch{}}
+try{db.prepare("UPDATE jovia_game_accounts SET game_balance=0 WHERE user_id=?").run(id)}catch{}
+try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(id,welcome,pkg)}catch{}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(id,"welcome_bonus",welcome,"wallet",`WELCOME_${id}`,`Welcome bonus - ${pkg} activated`)}catch{}
+const f=db.prepare("SELECT id,username,email,full_name,package,plan,wallet_balance,affiliate_balance,referral_balance,account_status,status FROM users WHERE id=?").get(id);
+console.log(`🧹 WIPED dashboard for ${f?.username} (${f?.email}) -> fresh ${pkg} Wallet ${welcome}`);
+return res.json({success:true,message:`🧹 ${f?.username} dashboard wiped — now like new activated ${pkg} — Wallet ₦${welcome.toLocaleString()}, Affiliate ₦0, Referral ₦0, Game ₦0, History: 1 welcome record`,user:{...clean(f),balances:bals(f)}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("post","/api/admin/users/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/users/:id/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/user/wipe-dashboard",sGuard,wipeUser);
 const notify=(uid,title,msg)=>{try{let tabs=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')").all().map(r=>r.name);
 if(!tabs.length){db.exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,title TEXT,message TEXT,type TEXT DEFAULT 'system',is_read INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))");tabs.push("notifications")}
 for(const t of tabs){try{const cc=db.prepare(`PRAGMA table_info(${t})`).all().map(x=>x.name),h=n=>cc.includes(n);
 if(h("user_id")&&h("title")&&h("message")){db.prepare(`INSERT INTO ${t} (user_id,title,message${h("type")?", type":""}${h("is_read")?", is_read":""}${h("created_at")?", created_at":""}) VALUES (?,?,?${h("type")?", 'system'":""}${h("is_read")?", 0":""}${h("created_at")?", datetime('now')":""})`).run(uid,title,msg);return true}
 if(h("user_id")&&h("message")){db.prepare(`INSERT INTO ${t} (user_id,message) VALUES (?,?)`).run(uid,`${title} - ${msg}`);return true}}catch{}}}catch(e){console.log("⚠️ notify failed",e.message)}return false};
-// BALANCE HISTORY / USER
 const balHist=(req,res)=>{try{const uid=Number(req.query?.userId||req.query?.id||req.query?.user_id||0),em=String(req.query?.email||"").trim().toLowerCase(),ty=String(req.query?.type||"").trim().toLowerCase(),lim=Math.min(200,Math.max(1,Number(req.query?.limit||100)));let u=null;
 if(uid)u=db.prepare("SELECT id FROM users WHERE id=?").get(uid);if(!u&&em)u=db.prepare("SELECT id FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);
 if(u){let rows;if(ty)rows=db.prepare("SELECT id,user_id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? AND LOWER(type)=? ORDER BY id DESC LIMIT ?").all(u.id,ty,lim);else rows=db.prepare("SELECT id,user_id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT ?").all(u.id,lim);
@@ -183,7 +198,6 @@ if(!u)return res.status(404).json({success:false,message:"User not found"});let 
 const g=Number(ga?.game_balance||0),w=Number(u.wallet_balance||0),a=Number(u.affiliate_balance||0),r=Number(u.referral_balance||0);
 return res.json({success:true,user:{id:u.id,email:u.email,username:u.username,full_name:u.full_name,package:u.package||u.plan,plan:u.plan||u.package,wallet_balance:w,available_balance:w,affiliate_balance:a,referral_balance:r,referral_earnings:r,game_balance:g,account_status:u.account_status,status:u.status},wallet_balance:w,available_balance:w,affiliate_balance:a,referral_balance:r,referral_earnings:r,game_balance:g})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 ["/api/admin/balance/user","/api/admin/balance/user-by-email","/api/admin/user/balance-detail","/api/admin/balance/detail"].forEach(p=>safe("get",p,adminGuard,balUser));
-// BALANCE ADD / DEDUCT
 const findB=body=>{const uid=Number(body?.userId||body?.id||body?.user_id||0),em=String(body?.email||"").trim().toLowerCase(),un=String(body?.username||body?.user||"").trim();let u=null;
 if(uid)u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u&&em)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);if(!u&&un)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1").get(un,un);return u};
 const resCol=body=>{const t=String(body?.balanceType||body?.balance||body?.walletType||body?.target||"wallet").toLowerCase();if(t.includes("referral"))return"referral_balance";if(t.includes("affiliate"))return"affiliate_balance";if(t.includes("game"))return"game_balance";return"wallet_balance"};
@@ -209,8 +223,7 @@ const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add")
 ["/api/admin/balance/add","/api/admin/user/add-balance","/api/admin/users/add-balance","/api/admin/wallet/add","/api/admin/add-balance"].forEach(p=>force("post",p,adminGuard,adjust(true)));
 ["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=>force("post",p,adminGuard,adjust(false)));
 ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
-// UPGRADES
 const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
-console.log("✅ SERVER 3 READY - COMPRESSED - Balance + Backpay + Suspend + Reset + Upline/Fraud + Impersonate + Impersonate History");
+console.log("✅ SERVER 3 READY - COMPRESSED - Balance + Backpay + Suspend + Reset + Upline/Fraud + Impersonate + Impersonate History + WIPE");
 }catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
