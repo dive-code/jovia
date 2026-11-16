@@ -1,4 +1,4 @@
-"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 JOVIA SERVER 3 - COMPRESSED + IMPERSONATE HISTORY + WIPE");
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 JOVIA SERVER 3 - COMPRESSED + IMPERSONATE HISTORY + WIPE FIXED v5");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
 const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/approve","/api/admin/users/approve"];
 const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
@@ -155,23 +155,21 @@ try{db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id)}ca
 const f=db.prepare("SELECT * FROM users WHERE id=?").get(id);return res.json({success:true,message:`${f.username} don unsuspend`,user:{id:f.id,username:f.username,account_status:f.account_status,status:f.status}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("post","/api/admin/suspend",sGuard,susp);safe("post","/api/admin/users/suspend",sGuard,susp);safe("post","/api/admin/user/suspend",sGuard,susp);safe("post","/api/admin/suspend-user",sGuard,susp);safe("post","/api/admin/users/block",sGuard,susp);safe("get","/api/admin/suspend",sGuard,susp);
 safe("post","/api/admin/unsuspend",sGuard,unsusp);safe("post","/api/admin/users/unsuspend",sGuard,unsusp);safe("post","/api/admin/user/unsuspend",sGuard,unsusp);safe("post","/api/admin/users/unblock",sGuard,unsusp);safe("get","/api/admin/unsuspend",sGuard,unsusp);
-// ✅ WIPE USER DASHBOARD - LIKE NEW ACTIVATED ACCOUNT
+// ✅ WIPE USER DASHBOARD - LIKE NEW ACTIVATED ACCOUNT - v5 FIXED
 const wipeUser=(req,res)=>{try{
 let u=findU(req);
 if(!u){const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(id)u=db.prepare("SELECT * FROM users WHERE id=?").get(id)}
 if(!u)return res.status(404).json({success:false,message:"User not found - pass userId / email / username"});
 const id=u.id;const pkgRaw=String(u.package||u.plan||"SILVER").toUpperCase();let pkg="SILVER";if(pkgRaw.includes("GOLD"))pkg="GOLD";else if(pkgRaw.includes("SUPER"))pkg="SUPER";
-let welcome=9000;if(pkg==="GOLD")welcome=15000;if(pkg==="SUPER")welcome=25000;
+let welcome=9000;if(pkg==="GOLD")welcome=15000;if(pkg==="SUPER")welcome=21000;
 const confirm=String(req.body?.confirm||req.query?.confirm||"").toLowerCase();
 if(confirm!=="wipe"&&confirm!=="yes"){return res.json({success:false,needConfirm:true,message:`⚠️ Confirm wipe for ${u.username} (${u.email})? Send {confirm:"wipe"} to proceed. This go DELETE all history/transactions/withdrawals and reset to fresh ${pkg}. CANNOT UNDO.`,user:{id:u.id,username:u.username,email:u.email,package:pkg}})}
-const tables=["wallet_transactions","withdrawals","withdrawal_requests","payments","payment_requests","game_withdrawals","game_deposits","deposits","affiliate_withdrawals","notifications","jovia_notifications","user_notifications","user_notification","referral_rewards","welcome_rewards","jovia_upgrades","music_plays","music_earnings","job_claims","job_applications","game_plays","game_history"];
+const tables=["wallet_transactions","withdrawals","withdrawal_requests","payments","payment_requests","game_withdrawals","game_deposits","deposits","affiliate_withdrawals","notifications","jovia_notifications","user_notifications","user_notification","welcome_rewards","jovia_upgrades","music_plays","music_earnings","job_claims","job_applications","game_plays","game_history"];
 for(const t of tables){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const colsT=db.prepare(`PRAGMA table_info(${t})`).all().map(x=>x.name);
 if(colsT.includes("user_id")){try{db.prepare(`DELETE FROM ${t} WHERE user_id=?`).run(id)}catch{}}
-if(colsT.includes("referrer_id")){try{db.prepare(`DELETE FROM ${t} WHERE referrer_id=?`).run(id)}catch{}}
-if(colsT.includes("referred_user_id")){try{db.prepare(`DELETE FROM ${t} WHERE referred_user_id=?`).run(id)}catch{}}
 if(colsT.includes("target_user_id")){try{db.prepare(`DELETE FROM ${t} WHERE target_user_id=?`).run(id)}catch{}}}catch{}}
 try{db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);")}catch{}
-const c=cols();const sets=[];if(c.includes("wallet_balance"))sets.push(`wallet_balance=${welcome}`);if(c.includes("balance"))sets.push(`balance=${welcome}`);if(c.includes("available_balance"))sets.push(`available_balance=${welcome}`);if(c.includes("affiliate_balance"))sets.push(`affiliate_balance=0`);if(c.includes("affiliate_earnings"))sets.push(`affiliate_earnings=0`);if(c.includes("referral_balance"))sets.push(`referral_balance=0`);if(c.includes("referral_earnings"))sets.push(`referral_earnings=0`);if(c.includes("account_status"))sets.push(`account_status='active'`);if(c.includes("status"))sets.push(`status='active'`);if(c.includes("is_suspended"))sets.push(`is_suspended=0`);if(c.includes("is_active"))sets.push(`is_active=1`);
+const c=cols();const sets=[];if(c.includes("wallet_balance"))sets.push(`wallet_balance=${welcome}`);if(c.includes("balance"))sets.push(`balance=${welcome}`);if(c.includes("available_balance"))sets.push(`available_balance=${welcome}`);if(c.includes("affiliate_balance"))sets.push(`affiliate_balance=0`);if(c.includes("affiliate_earnings"))sets.push(`affiliate_earnings=0`);if(c.includes("referral_balance"))sets.push(`referral_balance=0`);if(c.includes("referral_earnings"))sets.push(`referral_earnings=0`);for(const col of ["total_earned","total_earnings","total_withdrawn","total_withdrawals","points","music_earnings","game_earnings"]) if(c.includes(col)) sets.push(`${col}=0`);if(c.includes("account_status"))sets.push(`account_status='active'`);if(c.includes("status"))sets.push(`status='active'`);if(c.includes("is_suspended"))sets.push(`is_suspended=0`);if(c.includes("is_active"))sets.push(`is_active=1`);
 if(sets.length){try{db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(id)}catch{}}
 try{db.prepare("UPDATE jovia_game_accounts SET game_balance=0 WHERE user_id=?").run(id)}catch{}
 try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(id,welcome,pkg)}catch{}
@@ -225,5 +223,5 @@ const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add")
 ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
 const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
-console.log("✅ SERVER 3 READY - COMPRESSED - Balance + Backpay + Suspend + Reset + Upline/Fraud + Impersonate + Impersonate History + WIPE");
+console.log("✅ SERVER 3 READY - COMPRESSED - Balance + Backpay + Suspend + Reset + Upline/Fraud + Impersonate + Impersonate History + WIPE FIXED v5");
 }catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
