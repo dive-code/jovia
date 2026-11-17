@@ -225,7 +225,6 @@ function getSelectedBalance(){return document.getElementById("withdrawalType").v
 function getWithdrawalTypeLabel(t){return t==="affiliate"?"Affiliate Earnings":"Regular Earnings"}
 function isSuperUser(){return String(currentUser?.package||currentUser?.plan||"").toUpperCase().includes("SUPER")}
 function getRegularWithdrawMsg(){return isSuperUser()?"Regular withdrawals are currently unavailable. Please try again month end":"Regular withdrawals are currently unavailable. Please try upgrading to gain quick access"}
-// ✅ NEW: Professional minimum message - only show when NOT reached minimum
 function getMinimumMsg(type,balance,amount){
   const min=getMinimumWithdrawal(type),label=getWithdrawalTypeLabel(type);
   const base=Math.max(balance||0,0);
@@ -237,7 +236,6 @@ function getMinimumMsg(type,balance,amount){
 }
 function hasReachedMinimum(type,balance,amount){
   const min=getMinimumWithdrawal(type);
-  // Must have balance >= min AND amount entered >= min
   return Number(balance||0)>=min && Number(amount||0)>=min;
 }
 function showRegularBlocked(){const msg=getRegularWithdrawMsg();const cta=document.getElementById("withdrawUpgradeCta");if(cta)cta.classList.toggle("show",!isSuperUser());showMessage(msg,"error");return false}
@@ -266,7 +264,6 @@ function openActivationModal(){
   if(!pendingWithdrawal){showMessage("Please enter your amount and payment details first.","error");return}
   const wt=pendingWithdrawal.withdrawalType;
   const amt=Number(pendingWithdrawal.amount||0), bal=wt==="affiliate"?affiliateBalance:walletBalance;
-  // ✅ MINIMUM FIRST - if never reach minimum, show minimum msg, no regular msg
   if(!hasReachedMinimum(wt,bal,amt)){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMinimumBlocked(wt,bal,amt);return}
   if(wt==="regular"){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showRegularBlocked();return}
   const isPortalOpen=affiliateWithdrawalsEnabled;if(!isPortalOpen){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
@@ -280,12 +277,11 @@ async function submitWithdrawal(){
   const sel=getSelectedBalance(), min=getMinimumWithdrawal(wt);
   const amt=Number(document.getElementById("amount").value);
   if(!currentUser){showMessage("Your account is still loading. Please try again.","error");return}
-  // ✅ ORDER MATTERS: 1) MINIMUM FIRST, 2) REGULAR BLOCK ONLY IF REACHED MINIMUM
-  if(!Number.isFinite(amt)||amt<=0){showMinimumBlocked(wt,sel,0);return}
+  // ✅ UPDATED: Empty amount only -> blue "Please enter withdrawal amount" - nothing else changed
+  if(!Number.isFinite(amt)||amt<=0){showMessage("Please enter withdrawal amount","info");return}
   if(amt<min){showMinimumBlocked(wt,sel,amt);return}
   if(sel<min){showMinimumBlocked(wt,sel,amt);return}
   if(amt>sel){showMessage("Insufficient balance. Your available balance is "+money(sel)+".","error");return}
-  // ✅ ONLY NOW - user don reach minimum, show regular unavailable
   if(wt==="regular"){showRegularBlocked();return}
   if(!affiliateWithdrawalsEnabled){showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
   const d=getCurrentDetails();if(!isDetailsComplete(d)){showMessage("Please complete your "+d.country+" payment details.","error");return}
