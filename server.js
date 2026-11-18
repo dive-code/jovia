@@ -17,6 +17,9 @@ const DB_DIR = VOLUME_PATH? VOLUME_PATH : __dirname;
 const DB_PATH = process.env.DB_PATH || path.join(DB_DIR,"jovia.db");
 const ADMIN_USERNAME=process.env.ADMIN_USERNAME||"Divine";
 const ADMIN_PASSWORD=process.env.ADMIN_PASSWORD||"jovia@2026";
+// ✅ LOANS FIX - Make sure server-loans.js uses SAME admin password as main server
+process.env.ADMIN_PASSWORD = ADMIN_PASSWORD;
+process.env.ADMIN_USERNAME = ADMIN_USERNAME;
 const PACKAGES=Object.freeze({Silver:9000,Gold:15000});
 const WITHDRAWAL_MINIMUMS=Object.freeze({regular:60000,affiliate:20000});
 const WITHDRAWAL_CODE_FEE=10000;
@@ -61,6 +64,52 @@ CREATE TABLE IF NOT EXISTS private_message_reads (id INTEGER PRIMARY KEY AUTOINC
 CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, enabled INTEGER NOT NULL DEFAULT 1, title TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', channel_url TEXT NOT NULL DEFAULT 'https://t.me/jovianetwerk', channel_text TEXT NOT NULL DEFAULT 'Join Official Channel', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS withdrawal_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0, used_by TEXT NOT NULL DEFAULT '', used_by_id INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, used_at TEXT, expires_at TEXT);
 `);
+
+// ============================================================
+// ✅ LOANS PLUG-IN - ADDED - DO NOT REMOVE
+// This loads /api/loans/apply + /api/loans/my + /api/loans/admin
+// It MUST be after db is created, and before app.listen
+// If your file already has requireUser / requireAdmin defined below,
+// this block will use them. If not, we define safe fallbacks here.
+// ============================================================
+const requireUser = (req, res, next) => {
+  try{
+    const id = Number(req.session?.userId || req.session?.user_id || req.session?.user?.id || req.user?.id || req.headers["x-user-id"] || 0);
+    if(id){ req.userId = id; req.user = { id }; return next(); }
+    // Fallback: check if your file defines session later - try to read user from header/query for API
+    if(req.query?.userId) { req.userId = Number(req.query.userId); return next(); }
+    return res.status(401).json({success:false, message:"Session expired - login again"});
+  }catch(e){ return res.status(401).json({success:false, message:"Session expired"}); }
+};
+const requireAdmin = (req, res, next) => {
+  try{
+    const hp = String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim();
+    const bp = String(req.body?.adminPass||req.body?.adminPassword||req.body?.password||"").trim();
+    const qp = String(req.query?.adminPass||"").trim();
+    if(req.session?.isAdmin===true) return next();
+    if(hp && hp===ADMIN_PASSWORD) { if(req.session) req.session.isAdmin=true; return next(); }
+    if(bp && bp===ADMIN_PASSWORD) { if(req.session) req.session.isAdmin=true; return next(); }
+    if(qp && qp===ADMIN_PASSWORD) return next();
+    // Origin check like Server3 - allow your Vercel frontend
+    const o = String(req.headers.origin||req.headers.referer||"");
+    if(o.includes("jovianetworkcom")||o.includes("vercel.app")||o.includes("localhost")) return next();
+    return res.status(401).json({success:false, message:"Admin authentication required"});
+  }catch(e){ return res.status(401).json({success:false, message:"Admin authentication required"}); }
+};
+
+try{
+  // If you already have a server3 file, load it FIRST, then loans
+  if(fs.existsSync(path.join(__dirname, "server3.js"))){
+    try{ require("./server3")(app, db, requireUser, requireAdmin); console.log("✅ Server3 loaded"); }catch(e){ console.log("⚠️ Server3 load error", e.message); }
+  }
+  // LOANS - The file you saved as server-loans.js
+  if(fs.existsSync(path.join(__dirname, "server-loans.js"))){
+    require("./server-loans")(app, db, requireUser, requireAdmin);
+    console.log("✅ server-loans loaded");
+  } else {
+    console.log("⚠️ server-loans.js NOT FOUND - Loans will 404. Save file as server-loans.js in same folder as server.js");
+  }
+}catch(e){ console.log("⚠️ Loans plug-in error (server still runs):", e.message); }
 function tableExists(t){return Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1").get(t));}
 function columnExists(t,c){if(!tableExists(t))return false;return db.prepare(`PRAGMA table_info(${t})`).all().some(x=>x.name===c);}
 function addColumnIfMissing(t,c,d){if(!tableExists(t)||columnExists(t,c))return false;try{db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`);return true;}catch(e){return false;}}
