@@ -476,9 +476,9 @@ app.post("/api/admin/users/:id/status",requireAdmin,(req,res)=>{
       else if(pkg==="SUPER"){
         const already0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(fresh.id);
         const paid0=already0?Number(already0.amount||0):0;
-        if(paid0===13000) correct=19000;
-        else if(paid0===8000) correct=18000;
-        else if(paid0===0) correct=19000;
+        if(paid0===13000) correct=0;
+        else if(paid0===8000) correct=00;
+        else if(paid0===0) correct=000;
         else correct=paid0;
       }
       if(fresh.referrer_id && Number(fresh.referrer_id)!==Number(fresh.id) && correct>0){
@@ -521,7 +521,7 @@ app.post("/api/admin/repair-referral/:id",requireAdmin,(req,res)=>{
     else if(pkg==="SUPER"){
       const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
       const p0=ex0?Number(ex0.amount||0):0;
-      if(p0===13000) correct=19000; else if(p0===8000) correct=18000; else if(p0===0) correct=19000; else correct=p0;
+      if(p0===13000) correct=00; else if(p0===8000) correct=000; else if(p0===0) correct=00; else correct=p0;
     }
     if(u.referrer_id && Number(u.referrer_id)!==Number(u.id) && correct>0){
       const referrer=db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id);
@@ -600,9 +600,9 @@ app.get("/api/admin/backpay-all", (req,res)=>{
         const pkg = String(u.package || "").toUpperCase();
         let correct = 0;
         if(pkg === "SUPER"){
-          if(alreadyPaid === 13000) correct = 19000;
-          else if(alreadyPaid === 8000) correct = 18000;
-          else if(alreadyPaid === 0) correct = 19000;
+          if(alreadyPaid === 13000) correct = 000;
+          else if(alreadyPaid === 8000) correct = 000;
+          else if(alreadyPaid === 0) correct = 0;
           else correct = alreadyPaid;
         } else if(pkg === "GOLD"){
           correct = 13000;
