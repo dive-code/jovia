@@ -1,252 +1,313 @@
-"use strict";
-module.exports = (app, db, requireUser, requireAdmin) => {
-try{
-console.log("🔧 LOANS v2 - 12% FEE + 6-12 WEEKS + DISBURSED");
-if(!app || typeof app.get !== "function" || typeof app.post !== "function"){ console.log("⚠️ Loans skip"); return; }
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v13 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS TO AFFILIATE");
+if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
+const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all","/api/admin/approve","/api/admin/users/approve"];
+const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
+let allow=false;const withAllow=fn=>{allow=true;try{fn()}finally{allow=false}};
+try{if(!app.__joviaServer3BlockerInstalled){app.__joviaServer3BlockerInstalled=true;const og=app.get.bind(app),op=app.post.bind(app);
+app.get=function(p,...h){try{if(!allow&&isBP(p)){console.log("🚫 BLOCKED GET "+p);return app}}catch{}return og(p,...h)};
+app.post=function(p,...h){try{if(!allow&&isBP(p)){console.log("🚫 BLOCKED POST "+p);return app}}catch{}return op(p,...h)};console.log("✅ Blocker installed");}}catch(e){console.log("⚠️ Blocker skip",e.message)}
+const exists=(p,m)=>{try{if(!app._router?.stack)return false;return app._router.stack.some(l=>l.route&&l.route.path===p&&Object.keys(l.route.methods)[0]===m)}catch{return false}};
+const safe=(m,p,...h)=>{try{if(exists(p,m)){console.log("⏭️ Skip "+m.toUpperCase()+" "+p);return}withAllow(()=>app[m](p,...h));console.log("✅ Added "+m.toUpperCase()+" "+p)}catch(e){console.log("⚠️ safeAdd skip",e.message)}};
+const force=(m,p,...h)=>{try{if(app._router?.stack)app._router.stack=app._router.stack.filter(l=>!l.route||l.route.path!==p||Object.keys(l.route.methods)[0]!==m)}catch{}try{withAllow(()=>app[m](p,...h))}catch(e){console.log("⚠️ forceAdd skip",e.message);return}console.log("✅ FORCE "+m.toUpperCase()+" "+p)};
+const ADMIN_PASS=process.env.ADMIN_PASSWORD||"Divine@@1";
+const cols=()=>{try{return db.prepare("PRAGMA table_info(users)").all().map(c=>c.name)}catch{return[]}};
+const has=n=>cols().includes(n);
+try{if(!has("affiliate_balance"))db.exec("ALTER TABLE users ADD COLUMN affiliate_balance INTEGER DEFAULT 0")}catch{}
+try{if(!has("referral_balance"))db.exec("ALTER TABLE users ADD COLUMN referral_balance INTEGER DEFAULT 0")}catch{}
+try{db.exec("CREATE TABLE IF NOT EXISTS admin_impersonations (id INTEGER PRIMARY KEY AUTOINCREMENT,admin_ip TEXT,admin_user TEXT DEFAULT 'admin',target_user_id INTEGER,target_email TEXT,target_username TEXT,reason TEXT,token TEXT,expires_at TEXT,used_at TEXT,created_at TEXT DEFAULT (datetime('now')))")}catch{}
+try{db.exec("CREATE TABLE IF NOT EXISTS password_reset_codes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
+/* ===== LOANS TABLES - v13 ===== */
+try{db.exec("CREATE TABLE IF NOT EXISTS loans (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,loan_code TEXT UNIQUE,amount INTEGER,fee INTEGER,purpose TEXT,term_months INTEGER,status TEXT DEFAULT 'PENDING',fee_status TEXT DEFAULT 'PENDING',receipt TEXT,receipt_name TEXT,processing_message TEXT,disbursed_at TEXT,reviewed_at TEXT,created_at TEXT DEFAULT (datetime('now')))")}catch(e){console.log("loans table",e.message)}
+try{const lc=db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);if(!lc.includes("processing_message"))db.exec("ALTER TABLE loans ADD COLUMN processing_message TEXT");if(!lc.includes("disbursed_at"))db.exec("ALTER TABLE loans ADD COLUMN disbursed_at TEXT");if(!lc.includes("fee_status"))db.exec("ALTER TABLE loans ADD COLUMN fee_status TEXT DEFAULT 'PENDING'");if(!lc.includes("receipt_name"))db.exec("ALTER TABLE loans ADD COLUMN receipt_name TEXT")}catch{}
+const isOrigin=o=>String(o||"").includes("jovianetworkcom")||String(o||"").includes("vercel.app")||String(o||"").includes("localhost");
+const adminGuard=(req,res,next)=>{const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim(),bp=String(req.body?.adminPass||req.body?.adminPassword||req.body?.password||"").trim(),qp=String(req.query?.adminPass||"").trim();
+if(req.session?.isAdmin===true)return next();if(hp&&hp===ADMIN_PASS){if(req.session)req.session.isAdmin=true;return next()}if(bp&&bp===ADMIN_PASS){if(req.session)req.session.isAdmin=true;return next()}if(qp&&qp===ADMIN_PASS)return next();if(isOrigin(req.headers.origin||req.headers.referer))return next();return res.status(401).json({success:false,message:"Admin authentication required"})};
+const sGuard=(req,res,next)=>{try{
+if(req.query.key==='jovia123')return next();if(req.query.adminPass===ADMIN_PASS||req.query.adminPass==='jovia123')return next();
+const hk=String(req.headers['x-admin-key']||"").trim(),hp=String(req.headers['x-admin-password']||req.headers['x-admin-pass']||"").trim(),ht=String(req.headers['x-admin-token']||"").trim();
+if(hk==='jovia123'||hp===ADMIN_PASS||ht==='jovia123'||ht===ADMIN_PASS)return next();
+const b=req.body||{};if(b.key==='jovia123'||b.adminPass===ADMIN_PASS||b.adminPassword===ADMIN_PASS||b.password===ADMIN_PASS)return next();
+if(req.session?.isAdmin===true||req.admin)return next();
+const auth=String(req.headers.authorization||req.headers.Authorization||"").trim();
+if(auth){const t=auth.replace(/^Bearer\s+/i,"").trim();if(t==='jovia123'||t===ADMIN_PASS)return next();
+try{const jwt=require("jsonwebtoken"),d=jwt.verify(t,process.env.JWT_SECRET||process.env.JWTSECRET||"jovia-secret");if(d&&(d.role==='admin'||d.isAdmin||d.admin)){req.admin=d;return next()}}catch{}
+try{const p=JSON.parse(Buffer.from(t.split(".")[1],"base64").toString("utf8"));if(p&&(p.role==='admin'||p.isAdmin||p.admin)){req.admin=p;return next()}}catch{}}
+if(isOrigin(req.headers.origin||req.headers.referer||req.headers.host))return next();
+if(typeof requireAdmin==='function'){try{return requireAdmin(req,res,err=>{if(err){if(isOrigin(req.headers.origin||req.headers.referer))return next();return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"})}return next()})}catch{if(isOrigin(req.headers.origin||req.headers.referer))return next()}}
+return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"})}
+catch(e){if(isOrigin(req.headers.origin||req.headers.referer))return next();return res.status(401).json({success:false,message:"Admin authentication required - Session expired - Please login again"})}};
+const resetPw=(req,res)=>{try{const id=Number(req.params?.id||req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId);if(!id)return res.status(400).json({success:false,message:"User ID required"});const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u)return res.status(404).json({success:false,message:"User not found"});
+const np=String(req.body?.newPassword||req.body?.new_password||req.body?.password||req.query.newPassword||"Jovia1234").trim()||"Jovia1234";const c=cols();let h=np;
+try{h=require("bcryptjs").hashSync(np,10)}catch{try{h=require("bcrypt").hashSync(np,10)}catch{}}
+for(const col of["password_hash","password","pass","hashed_password","user_password"]){if(!c.includes(col))continue;try{db.prepare(`UPDATE users SET ${col}=? WHERE id=?`).run(h,id)}catch{}}
+try{db.prepare("UPDATE users SET password_reset_at=datetime('now') WHERE id=?").run(id)}catch{}
+const f=db.prepare("SELECT id,username,email,full_name FROM users WHERE id=?").get(id);console.log("✅ Password reset "+f?.username);
+return res.json({success:true,message:`Password don reset for ${f?.username} - New password: ${np}`,user:f,userId:id,newPassword:np,tempPassword:np,password:np})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+["post","post","post","post","post","get"].forEach((m,i)=>safe(m,["/api/admin/users/:id/reset-password","/api/admin/user/:id/reset-password","/api/admin/users/reset-password","/api/admin/user/reset-password","/api/admin/reset-password","/api/admin/users/:id/reset-password"][i],sGuard,resetPw));
+const findRef=(u,c)=>{for(const col of["referrer_id","referred_by","referrer","upline_id","invited_by","sponsor_id","referral_id","parent_id","invite_by","referred_by_code","referral_code_used"]){if(!c.includes(col))continue;const raw=u[col];if(!raw)continue;const s=String(raw).trim();if(!s)continue;let r=null;
+if(/^\d+$/.test(s))r=db.prepare("SELECT * FROM users WHERE id=?").get(Number(s));
+if(!r){try{r=db.prepare("SELECT * FROM users WHERE referral_code=? OR username=? OR email=? LIMIT 1").get(s,s,s)}catch{}}
+if(!r){try{r=db.prepare("SELECT * FROM users WHERE username=? OR email=? LIMIT 1").get(s,s)}catch{}}
+if(!r){try{const cr=db.prepare("SELECT * FROM referral_codes WHERE code=? LIMIT 1").get(s);if(cr?.user_id)r=db.prepare("SELECT * FROM users WHERE id=?").get(cr.user_id)}catch{}}
+if(r&&r.id!==u.id)return{referrer:r,col,raw:s}}return{referrer:null,col:null,raw:null}};
+const clean=u=>u?{id:u.id,username:u.username,email:u.email,full_name:u.full_name,phone:u.phone||u.phone_number||null,package:u.package||u.plan||null,plan:u.plan||u.package||null,account_status:u.account_status,status:u.status,referral_code:u.referral_code||u.my_referral_code||null,referrer_id:u.referrer_id||u.referred_by||u.upline_id||u.sponsor_id||null,referral_code_used:u.referral_code_used||u.referred_by_code||null,created_at:u.created_at,last_login:u.last_login||u.last_login_at||null}:null;
+const bals=u=>{let g=0;try{g=Number(db.prepare("SELECT * FROM jovia_game_accounts WHERE user_id=?").get(u.id)?.game_balance||0)}catch{}const w=Number(u.wallet_balance??0),a=Number(u.affiliate_balance??u.affiliate_earnings??0),r=Number(u.referral_balance??u.referral_earnings??0);return{wallet_balance:w,available_balance:w,normal_balance:w,balance:w,affiliate_balance:a,affiliate_earnings:a,referral_balance:r,referral_earnings:r,game_balance:g,total_balance:w+a+r+g}};
+const normPkg=u=>{const p=String(u?.package||u?.plan||"").toUpperCase();if(p.includes("SUPER"))return"SUPER";if(p.includes("GOLD"))return"GOLD";return"SILVER"};
+const isSuperPkg=u=>normPkg(u)==="SUPER";
+const getNotAvailableMsg=u=>isSuperPkg(u)?"Currently not available, please try again month end":"Currently not available, try upgrade";
+const getNotAvailMsg=getNotAvailableMsg;
+const getWithdrawMsg=u=>isSuperPkg(u)?"Regular withdrawals are currently unavailable. Please try again month end":"Regular withdrawals are currently unavailable. Please try upgrading to gain quick access";
+const getPlanLimits=u=>{const p=normPkg(u);if(p==="SUPER")return{maxDaily:Infinity,taskCount:Infinity};if(p==="GOLD")return{maxDaily:7000,taskCount:10};return{maxDaily:2500,taskCount:5}};
+const PLAN_LIMITS={SILVER:{maxDaily:2500,taskCount:5},GOLD:{maxDaily:7000,taskCount:10},SUPER:{maxDaily:Infinity,taskCount:Infinity}};
+const getDailyStats=(uid,u)=>{const pkg=normPkg(u);const lim=PLAN_LIMITS[pkg];let earned=0,claimed=0;
+try{const r=db.prepare("SELECT COALESCE(SUM(amount),0) as total, COUNT(*) as cnt FROM wallet_transactions WHERE user_id=? AND date(created_at,'+1 hour')=date('now','+1 hour') AND (type LIKE '%job%' OR type LIKE '%video%' OR type='job_reward' OR type='video_reward' OR description LIKE '%job%' OR description LIKE '%video%')").get(uid);earned=Number(r?.total||0);claimed=Number(r?.cnt||0)}catch{}
+try{if(claimed===0){const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='job_claims'").get();if(ex){const r2=db.prepare("SELECT COUNT(*) as cnt, COALESCE(SUM(reward),0) as total FROM job_claims WHERE user_id=? AND date(created_at,'+1 hour')=date('now','+1 hour')").get(uid);if(Number(r2?.cnt||0)>0){claimed=Number(r2.cnt);earned=Number(r2.total)}}}}catch{}
+const blocked=pkg!=="SUPER"&&(earned>=lim.maxDaily||claimed>=lim.taskCount);
+return{package:pkg,plan:pkg,earnedToday:earned,claimedToday:claimed,maxDaily:lim.maxDaily,taskCount:lim.taskCount,remainingDaily:lim.maxDaily===Infinity?Infinity:Math.max(0,lim.maxDaily-earned),remainingTasks:lim.taskCount===Infinity?Infinity:Math.max(0,lim.taskCount-claimed),blocked,isDailyLimitReached:blocked,resetAt:"Tomorrow 12:00am WAT",resetsDaily:true}};
+const pwStat=u=>{const c=cols();let hv=null,hc=null;for(const col of["password_hash","password","pass","hashed_password","user_password"]){if(c.includes(col)&&u[col]){hv=String(u[col]);hc=col;break}}const hasPw=!!hv,prev=hasPw?hv.slice(0,7)+"****"+hv.slice(-4):null,bc=hasPw&&hv.startsWith("$2"),plain=hasPw&&!bc&&hv.length<60&&!hv.includes("$");let def=false;
+try{if(hasPw&&bc){const bcj=require("bcryptjs");for(const pw of["Jovia1234","123456","12345678","password","jovia123","Jovia123"]){try{if(bcj.compareSync(pw,hv)){def=true;break}}catch{}}}}catch{}
+return{has_password:hasPw,password_hash_preview:prev,password_hash_col:hc,password_type:!hasPw?"none":bc?"bcrypt_hash (cannot reverse)":plain?"PLAINTEXT_SUSPECTED - URGENT: re-hash!":"unknown_hash",password_reset_at:u.password_reset_at||null,is_default_password_suspected:def,note:"Original password no dey stored. Hash no fit reverse. Use Reset Password. Full hash NEVER returned.",can_reset:true,reset_endpoint:`/api/admin/users/${u.id}/reset-password`}};
+const chain=(start,max=5)=>{const ch=[],seen=new Set([start.id]);let cur=start;const c=cols();for(let l=1;l<=max;l++){const{referrer,col,raw}=findRef(cur,c);if(!referrer)break;if(seen.has(referrer.id)){ch.push({level:l,...clean(referrer),balances:bals(referrer),via_col:col,via_raw:raw,warning:"CIRCULAR_REFERRAL"});break}seen.add(referrer.id);ch.push({level:l,...clean(referrer),balances:bals(referrer),via_col:col,via_raw:raw});cur=referrer}return ch};
+const direct=(user)=>{const c=cols(),m=new Map(),add=r=>{if(r&&r.id!==user.id&&!m.has(r.id))m.set(r.id,r)};
+for(const col of["referrer_id","referred_by","upline_id","sponsor_id","referral_id","parent_id","invited_by"].filter(x=>c.includes(x))){try{db.prepare(`SELECT * FROM users WHERE ${col}=?`).all(user.id).forEach(add)}catch{}}
+for(const col of["referrer","referral_code_used","referred_by_code","invite_by"].filter(x=>c.includes(x))){for(const code of[String(user.id),String(user.username||""),String(user.email||""),String(user.referral_code||"")].filter(Boolean)){try{db.prepare(`SELECT * FROM users WHERE ${col}=?`).all(code).forEach(add)}catch{}}}
+try{db.prepare("SELECT u.* FROM referral_rewards rr JOIN users u ON u.id=rr.referred_user_id WHERE rr.referrer_id=?").all(user.id).forEach(add)}catch{}return [...m.values()]};
+const downCount=(user,max=4)=>{let t=0,front=[user.id],seen=new Set([user.id]);for(let d=0;d<max;d++){const nxt=[];for(const pid of front){for(const r of direct({id:pid,username:"",email:"",referral_code:""})){if(!seen.has(r.id)){seen.add(r.id);t++;nxt.push(r.id)}}}front=nxt;if(!front.length)break}return t};
+const fraud=(user,ch,dir)=>{const s=[],c=cols(),{referrer}=findRef(user,c);
+if(referrer?.id===user.id)s.push({type:"SELF_REFERRAL",severity:"HIGH",message:"User refer himself"});
+if(ch.some(x=>x.warning))s.push({type:"CIRCULAR_REFERRAL",severity:"HIGH",message:"Upline chain loop - possible fraud ring"});
+if(referrer){const st=String(referrer.account_status||referrer.status||"").toLowerCase();if(!["active","approved","activated"].includes(st))s.push({type:"UPLINE_NOT_ACTIVE",severity:"MEDIUM",message:`Upline ${referrer.username} status na ${st}`})}else s.push({type:"NO_UPLINE",severity:"LOW",message:"User get no upline"});
+const ph=user.phone||user.phone_number;if(ph){try{const same=db.prepare("SELECT id,username,email FROM users WHERE (phone=? OR phone_number=?) AND id!=? LIMIT 10").all(ph,ph,user.id);if(same.length)s.push({type:"SAME_PHONE",severity:"HIGH",message:`Same phone with ${same.length} other account(s)`,accounts:same})}catch{}}
+if(c.includes("device_id")&&user.device_id){try{const same=db.prepare("SELECT id,username,email FROM users WHERE device_id=? AND id!=? LIMIT 10").all(user.device_id,user.id);if(same.length)s.push({type:"SAME_DEVICE",severity:"HIGH",message:`Same device with ${same.length} other account(s)`,accounts:same})}catch{}}
+if(c.includes("ip_address")&&user.ip_address){try{const same=db.prepare("SELECT id,username,email FROM users WHERE ip_address=? AND id!=? LIMIT 10").all(user.ip_address,user.id);if(same.length)s.push({type:"SAME_IP",severity:"MEDIUM",message:`Same IP with ${same.length} other account(s)`,accounts:same})}catch{}}
+if(c.includes("email")&&user.email){try{const dom=String(user.email).split("@")[1];if(dom){const same=db.prepare("SELECT id,username,email FROM users WHERE email LIKE ? AND id!=? LIMIT 10").all(`%@${dom}`,user.id);if(same.length>=5)s.push({type:"SAME_EMAIL_DOMAIN_BURST",severity:"MEDIUM",message:`${same.length} accounts use same domain ${dom}`})}}catch{}}
+if(dir.length>=20)s.push({type:"MANY_DIRECT_AFFILIATES",severity:"MEDIUM",message:`User get ${dir.length} direct affiliates - check farming`});
+if(user.full_name){try{const same=db.prepare("SELECT id,username,email FROM users WHERE LOWER(TRIM(full_name))=LOWER(TRIM(?)) AND id!=? LIMIT 10").all(user.full_name,user.id);if(same.length>=3)s.push({type:"SAME_NAME_BURST",severity:"MEDIUM",message:`Same full name with ${same.length} other account(s)`,accounts:same})}catch{}}
+return s};
+const findU=req=>{const id=Number(req.params?.id||req.body?.userId||req.body?.id||req.body?.user_id||req.query.userId||req.query.id||req.query.user_id||0),em=String(req.query?.email||req.body?.email||"").trim().toLowerCase(),un=String(req.query?.username||req.body?.username||"").trim();let u=null;
+if(id)u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u&&em)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);if(!u&&un)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1").get(un,un);return u};
+const getImpUser=req=>{try{const tok=String(req.headers["x-impersonate-token"]||req.query?.impersonate||req.query?.token||req.body?.impersonate||"").trim();if(!tok)return null;const row=db.prepare("SELECT * FROM admin_impersonations WHERE token=?").get(tok);if(!row)return null;if(new Date(row.expires_at).getTime()<Date.now())return null;const u=db.prepare("SELECT * FROM users WHERE id=?").get(row.target_user_id);if(!u)return null;return{user:u,row,tok}}catch{return null}};
+const getSessionUser=req=>{try{const imp=getImpUser(req);if(imp)return imp.user;const id=Number(req.session?.userId||req.session?.user_id||req.session?.user?.id||req.user?.id||req.userId||0);if(id)return db.prepare("SELECT * FROM users WHERE id=?").get(id);return null}catch{return null}};
+const userTx=(uid)=>{let tx=[];try{tx=db.prepare("SELECT id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(uid)}catch{}return tx};
+const userWithdrawals=(uid)=>{let w=[];const tables=["withdrawals","withdrawal_requests","game_withdrawals","affiliate_withdrawals"];for(const t of tables){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const rows=db.prepare(`SELECT * FROM ${t} WHERE user_id=? ORDER BY id DESC LIMIT 50`).all(uid);w=w.concat(rows.map(r=>({...r,_table:t})))}catch{}}return w};
+const userPayments=(uid)=>{let p=[];const tables=["payments","payment_requests","deposits","game_deposits"];for(const t of tables){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const rows=db.prepare(`SELECT * FROM ${t} WHERE user_id=? ORDER BY id DESC LIMIT 50`).all(uid);p=p.concat(rows.map(r=>({...r,_table:t})))}catch{}}return p};
+const upHandler=(req,res)=>{try{const user=findU(req);if(!user)return res.status(404).json({success:false,message:"User not found - pass userId / id / email / username"});
+const ch=chain(user,5),dr=direct(user),da=dr.map(r=>({...clean(r),balances:bals(r)})),fs=fraud(user,ch,dr),b=bals(user),pw=pwStat(user);let tx=[];try{tx=db.prepare("SELECT id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 10").all(user.id)}catch{}
+return res.json({success:true,user:{...clean(user),balances:b},balances:b,password:pw,upline:ch,upline_count:ch.length,upline_summary:ch.length?ch.map(x=>`L${x.level}: ${x.username} (${x.email})`).join(" -> "):"No upline",direct_affiliates:da,direct_affiliates_count:da.length,total_downlines_approx:downCount(user,3),fraud_signals:fs,fraud_risk:fs.some(x=>x.severity==="HIGH")?"HIGH":fs.length?"MEDIUM":"LOW",recent_transactions:tx})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const fullHandler=(req,res)=>{try{const user=findU(req);if(!user)return res.status(404).json({success:false,message:"User not found"});
+const ch=chain(user,5),dr=direct(user),da=dr.map(r=>({...clean(r),balances:bals(r)})),fs=fraud(user,ch,dr),b=bals(user),pw=pwStat(user);let rr=[],wel=null,tx=[];
+try{rr=db.prepare("SELECT * FROM referral_rewards WHERE referrer_id=? OR referred_user_id=? ORDER BY id DESC LIMIT 20").all(user.id,user.id)}catch{}
+try{wel=db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(user.id)}catch{}
+try{tx=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 30").all(user.id)}catch{}
+return res.json({success:true,user:{...clean(user),balances:b,phone:user.phone||user.phone_number||null},balances:b,password:pw,upline:ch,upline_count:ch.length,upline_summary:ch.length?ch.map(x=>`L${x.level}: ${x.username}`).join(" -> "):"No upline",affiliates:da,direct_affiliates:da,direct_affiliates_count:da.length,total_downlines_approx:downCount(user,3),fraud_signals:fs,fraud_risk:fs.some(x=>x.severity==="HIGH")?"HIGH":fs.length?"MEDIUM":"LOW",referral_rewards:rr,welcome_reward:wel,recent_transactions:tx})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("get","/api/admin/users/:id/upline",sGuard,upHandler);safe("get","/api/admin/user/upline",sGuard,upHandler);safe("get","/api/admin/upline",sGuard,upHandler);safe("get","/api/admin/users/upline",sGuard,upHandler);
+safe("get","/api/admin/users/:id/full-profile",sGuard,fullHandler);safe("get","/api/admin/user/full-profile",sGuard,fullHandler);safe("get","/api/admin/users/full-profile",sGuard,fullHandler);
+safe("get","/api/admin/users/:id/fraud-check",sGuard,upHandler);safe("get","/api/admin/users/:id/affiliates",sGuard,upHandler);safe("post","/api/admin/upline",sGuard,upHandler);safe("post","/api/admin/users/upline",sGuard,upHandler);
+const notAvailHandler=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req)||findU(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});
+const msg=getNotAvailableMsg(u);const lim=getPlanLimits(u);const ds=getDailyStats(u.id,u);const isSuper=isSuperPkg(u);let blocked=ds.blocked;
+if(isSuper){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='jobs'").get();if(ex){const avail=db.prepare("SELECT COUNT(*) as c FROM jobs WHERE status='active' OR status IS NULL").get();if(Number(avail?.c||0)===0)blocked=true}}catch{}}
+return res.json({success:true,blocked,package:u.package||u.plan||"SILVER",message:msg,withdrawMessage:getWithdrawMsg(u),earnedToday:ds.earnedToday,claimedToday:ds.claimedToday,limits:lim,dailyStats:ds,showUpgrade:!isSuper})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("get","/api/not-available-message",notAvailHandler);safe("get","/api/jobs/check-not-available",notAvailHandler);safe("post","/api/jobs/check-not-available",notAvailHandler);safe("get","/api/jobs/not-available",notAvailHandler);
+const dailyHandler=(req,res)=>{try{const u=getSessionUser(req)||findU(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});const ds=getDailyStats(u.id,u);return res.json({success:true,user:{...clean(u),balances:bals(u)},dailyStats:ds,earnedToday:ds.earnedToday,claimedToday:ds.claimedToday,message:ds.blocked?getNotAvailableMsg(u):"Available",showUpgrade:ds.blocked&&!isSuperPkg(u)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("get","/api/jobs/daily-stats",dailyHandler);safe("get","/api/daily-stats",dailyHandler);safe("get","/api/jobs/limit-status",dailyHandler);safe("post","/api/jobs/check-limit",dailyHandler);
+const forgotPw=async(req,res)=>{try{const email=String(req.body?.email||"").trim().toLowerCase();if(!email||!email.includes("@"))return res.status(400).json({success:false,message:"Please enter a valid email."});try{const cnt=db.prepare("SELECT COUNT(*) as c FROM password_reset_codes WHERE email=? AND created_at>=datetime('now','-1 hour')").get(email);if(Number(cnt?.c||0)>=5)return res.status(429).json({success:false,message:"Too many requests. Try again after 1 hour."})}catch{}const u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(email);if(!u)return res.json({success:true,message:"If that email dey registered, reset code don go there. Check inbox / spam."});let code="JOVIA-"+Math.random().toString(36).slice(2,8).toUpperCase();const exp=new Date(Date.now()+15*60*1000).toISOString();try{db.prepare("UPDATE password_reset_codes SET used=1 WHERE email=? AND used=0").run(email)}catch{}db.prepare("INSERT INTO password_reset_codes (user_id,email,code,expires_at) VALUES (?,?,?,?)").run(u.id,email,code,exp);console.log(`🔐 FORGOT CODE for ${email}: ${code} expires ${exp}`);return res.json({success:true,message:"Reset code sent to your email. Check inbox / spam. Code expires in 15 minutes.",debugCode:code})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const resetPwPublic=async(req,res)=>{try{const email=String(req.body?.email||"").trim().toLowerCase();let code=String(req.body?.code||"").trim().toUpperCase();const np=String(req.body?.newPassword||req.body?.password||"");if(!email||!code||!np)return res.status(400).json({success:false,message:"Email, code and new password required."});if(np.length<6)return res.status(400).json({success:false,message:"New password must be at least 6 characters."});const row=db.prepare("SELECT * FROM password_reset_codes WHERE email=? AND code=? AND used=0 ORDER BY id DESC LIMIT 1").get(email,code);if(!row)return res.status(400).json({success:false,message:"Invalid or expired code. Request new code."});if(new Date(row.expires_at).getTime()<Date.now())return res.status(400).json({success:false,message:"Code don expire. Request new code."});const u=db.prepare("SELECT * FROM users WHERE id=?").get(row.user_id);if(!u)return res.status(404).json({success:false,message:"User not found."});let h=np;try{h=require("bcryptjs").hashSync(np,10)}catch{try{h=require("bcrypt").hashSync(np,10)}catch{}}const c=cols();for(const col of["password_hash","password","pass","hashed_password","user_password"]){if(c.includes(col)){try{db.prepare(`UPDATE users SET ${col}=? WHERE id=?`).run(h,u.id)}catch{}}}try{db.prepare("UPDATE users SET password_reset_at=datetime('now') WHERE id=?").run(u.id)}catch{}try{db.prepare("UPDATE password_reset_codes SET used=1 WHERE id=?").run(row.id)}catch{}return res.json({success:true,message:"Password reset successful. Login with your new password."})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("post","/api/auth/forgot-password",forgotPw);safe("post","/api/auth/reset-password",resetPwPublic);safe("post","/api/forgot-password",forgotPw);safe("post","/api/reset-password",resetPwPublic);
+const imp=(req,res)=>{try{const reason=String(req.body?.reason||req.query?.reason||"fraud check").slice(0,200);if(!reason||reason.length<3)return res.status(400).json({success:false,message:"Enter reason - e go save for audit log"});
+const user=findU(req);if(!user)return res.status(404).json({success:false,message:"User not found"});
+let tok="";try{tok=require("crypto").randomBytes(24).toString("hex")}catch{tok=Math.random().toString(36).slice(2)+Date.now().toString(36)}
+const exp=new Date(Date.now()+15*60*1000).toISOString();
+try{db.prepare("INSERT INTO admin_impersonations (admin_ip,target_user_id,target_email,target_username,reason,token,expires_at) VALUES (?,?,?,?,?,?,?)").run(String(req.ip||req.headers['x-forwarded-for']||""),user.id,user.email,user.username,reason,tok,exp)}catch(e){return res.status(500).json({success:false,message:"Impersonate audit save failed: "+e.message})}
+console.log(`👁️ IMPERSONATE admin ${req.ip} -> ${user.email}`);return res.json({success:true,message:`Impersonate ready for ${user.email} - expires in 15 mins - AUDITED`,user:{id:user.id,email:user.email,username:user.username,full_name:user.full_name},impersonate_token:tok,expires_at:exp,impersonate_url:`/dashboard.html?impersonate=${tok}`})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const impVerify=(req,res)=>{try{const tok=String(req.query?.token||req.body?.token||req.headers["x-impersonate-token"]||"").trim();if(!tok)return res.status(400).json({success:false,message:"Token required"});
+const row=db.prepare("SELECT * FROM admin_impersonations WHERE token=?").get(tok);if(!row)return res.status(404).json({success:false,message:"Invalid impersonate token"});
+if(new Date(row.expires_at).getTime()<Date.now())return res.status(401).json({success:false,message:"Impersonate token don expire"});
+const user=db.prepare("SELECT * FROM users WHERE id=?").get(row.target_user_id);if(!user)return res.status(404).json({success:false,message:"User not found"});
+try{db.prepare("UPDATE admin_impersonations SET used_at=datetime('now') WHERE id=?").run(row.id)}catch{}
+const tx=userTx(user.id),wd=userWithdrawals(user.id),pay=userPayments(user.id);
+return res.json({success:true,message:"Impersonate token valid - view-only",user:clean(user),balances:bals(user),recent_transactions:tx,transactions:tx,history:tx,withdrawals:wd,payments:pay,impersonated:true,impersonated_by_admin:true,expires_at:row.expires_at,reason:row.reason})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const impList=(req,res)=>{try{const rows=db.prepare("SELECT id,admin_ip,target_user_id,target_email,target_username,reason,expires_at,used_at,created_at FROM admin_impersonations ORDER BY id DESC LIMIT 50").all();return res.json({success:true,impersonations:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("post","/api/admin/impersonate",sGuard,imp);safe("get","/api/admin/impersonations",sGuard,impList);safe("get","/api/impersonate/verify",impVerify);safe("post","/api/impersonate/verify",impVerify);
+const impHistory=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired - login again"});
+const tx=userTx(u.id),wd=userWithdrawals(u.id),pay=userPayments(u.id);return res.json({success:true,user:clean(u),balances:bals(u),history:tx,transactions:tx,withdrawals:wd,payments:pay,wallet:{balance:bals(u).wallet_balance,transactions:tx}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const impMe=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});
+const ds=getDailyStats(u.id,u);return res.json({success:true,user:{...clean(u),balances:bals(u),dailyStats:ds,notAvailableMessage:getNotAvailableMsg(u),withdrawMessage:getWithdrawMsg(u)},balances:bals(u),dailyStats:ds,notAvailableMessage:getNotAvailableMsg(u)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const impWallet=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});
+const b=bals(u);const ds=getDailyStats(u.id,u);return res.json({success:true,user:clean(u),balances:b,dailyStats:ds,walletBalance:b.wallet_balance,affiliateBalance:b.affiliate_balance,totalEarned:b.total_balance,wallet:{transactions:userTx(u.id)}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("get","/api/impersonate/history",impHistory);safe("get","/api/impersonate/me",impMe);safe("get","/api/impersonate/wallet",impWallet);
+safe("get","/api/history",impHistory);safe("get","/api/wallet",impWallet);force("get","/api/me",impMe);
+const alreadyPaid=(ref,ru)=>{const uid=ru.id,un=String(ru.username||"").toLowerCase(),rid=ref?.id||null;let a=0,b=0,c=0;
+try{const r=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(uid);if(r)a=Number(r.amount||0)}catch{}
+try{if(rid){const r=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE user_id=? AND reference=?").get(rid,`REF_${uid}`);if(r)b=Number(r.total||0)}}catch{}
+try{const r2=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE reference=?").get(`REF_${uid}`);if(r2)b=Math.max(b,Number(r2.total||0))}catch{}
+try{if(rid){const rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (type LIKE '%upgrade%' OR description LIKE '%upgrade%' OR reference LIKE '%UPGRADE%')").all(rid);for(const tx of rows){const d=String(tx.description||"").toLowerCase(),rf=String(tx.reference||"");if(!((un&&d.includes(un))||d.includes(String(uid))||rf.includes(String(uid))))continue;if(rf===`REF_${uid}`)continue;c+=Number(tx.amount||0)}}}catch{}
+return{total:Math.max(a,b)+c,fromRewards:a,fromRefWallet:b,fromUpgradeWallet:c}};
+const payRef=ru=>{try{if(!ru?.id)return{paid:0,reason:"no user"};
+db.exec("CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,referrer_id INTEGER NOT NULL,referred_user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,referrer_package TEXT DEFAULT '',referred_package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
+db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
+const c=cols(),raw=String(ru.package||ru.plan||ru.membership||"").toUpperCase().trim();let pkg=raw;
+if(raw.includes("SILVER")||raw.includes("BASIC")||raw.includes("STARTER"))pkg="SILVER";else if(raw.includes("GOLD"))pkg="GOLD";else if(raw.includes("SUPER")||raw.includes("PLATINUM")||raw.includes("DIAMOND")||raw.includes("VIP"))pkg="SUPER";else return{paid:0,reason:"no package: "+raw};
+let cor=0,welB=0;if(pkg==="SILVER"){cor=8000;welB=9000}else if(pkg==="GOLD"){cor=13000;welB=15000}else if(pkg==="SUPER"){cor=19000;welB=21000}
+try{const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(ru.id);if(ex0){console.log(`🚫 v12 BLOCK ${ru.username} referral_rewards exist ₦${ex0.amount}`);return{paid:0,reason:"blocked - already collected (referral_rewards exist) - NO upgrade bonus",alreadyPaid:Number(ex0.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
+try{const exTx=db.prepare("SELECT * FROM wallet_transactions WHERE reference=? LIMIT 1").get(`REF_${ru.id}`);if(exTx){console.log(`🚫 v12 BLOCK ${ru.username} REF_ tx exist ₦${exTx.amount}`);return{paid:0,reason:"blocked - already collected (REF_ wallet tx exist) - NO upgrade bonus",alreadyPaid:Number(exTx.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
+const paidInfo=alreadyPaid(null,ru),ap=paidInfo.total;
+if(ap>0){console.log(`🚫 v12 BLOCK ${ru.username} alreadyPaid ₦${ap}`);return{paid:0,reason:"blocked - already collected - NO upgrade bonus, NO balancing",alreadyPaid:ap,correct:cor,blocked:true,package:pkg}}
+let welPaid=0;const welEx=db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(ru.id);let welTx=null;
+try{welTx=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR type='welcome_bonus') LIMIT 1").get(ru.id,`WELCOME_${ru.id}`)}catch{}
+if(!welEx&&!welTx&&welB>0){try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,welB,pkg)}catch{}try{db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(welB,ru.id)}catch{}try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(ru.id,"welcome_bonus",welB,"wallet",`WELCOME_${ru.id}`,`Welcome bonus - ${pkg} activated`)}catch{}welPaid=welB}
+else if(!welEx&&welTx){try{db.prepare("INSERT OR IGNORE INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,Number(welTx.amount||welB),pkg)}catch{}}
+const{referrer}=findRef(ru,c);if(!referrer)return{paid:0,reason:"no referrer found",welcomePaid:welPaid,welcomeBonus:welB,package:pkg};
+db.prepare("INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)").run(referrer.id,ru.id,cor,referrer.package,ru.package);
+if(c.includes("referral_balance"))db.prepare("UPDATE users SET referral_balance=COALESCE(referral_balance,0)+? WHERE id=?").run(cor,referrer.id);
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(referrer.id,"referral_reward",cor,"referral",`REF_${ru.id}`,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description) VALUES (?,?,?,?)").run(referrer.id,"referral_reward",cor,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{}}
+return{paid:cor,referrer:referrer.username,referrer_id:referrer.id,correct:cor,alreadyPaid:0,welcomePaid:welPaid,welcomeBonus:welB,package:pkg}}catch(e){return{paid:0,reason:e.message}}};
+const backpay=(req,res)=>{try{let all=[];try{all=db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all()}catch{}if(!all.length){try{all=db.prepare("SELECT * FROM users WHERE status IN ('active','approved') ORDER BY id ASC").all()}catch{}}
+let pc=0,tp=0,wc=0,tw=0,det=[],skip=0,blocked=0;for(const u of all){try{const b=payRef(u);if(b.welcomePaid>0){wc++;tw+=b.welcomePaid}if(b.paid>0){pc++;tp+=b.paid;det.push({referrer:b.referrer,referrer_id:b.referrer_id,referred:u.username,referred_id:u.id,package:u.package,alreadyPaid:b.alreadyPaid||0,correct:b.correct,paid:b.paid,welcomePaid:b.welcomePaid||0})}else{if(b.reason==="no referrer found")skip++;else if(b.blocked)blocked++}}catch{}}
+return res.json({success:true,message:`Backpay done - Referral: ${pc} people, ₦${tp} | Welcome: ${wc} people, ₦${tw} | Checked ${all.length}, No-referrer: ${skip}, BLOCKED (already paid / upgrade): ${blocked} - NO upgrade bonus paid`,paidCount:pc,totalPaid:tp,welcomeCount:wc,totalWelcome:tw,details:det,skippedNoReferrer:skip,blockedCount:blocked,totalActivated:all.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all"].forEach(p=>force("get",p,sGuard,backpay));
+["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all"].forEach(p=>force("post",p,sGuard,backpay));
+const approve=(req,res)=>{try{const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(!id)return res.status(400).json({success:false,message:"User ID required"});
+const b=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!b)return res.status(404).json({success:false,message:"User not found"});
+try{db.prepare("UPDATE users SET account_status='approved' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET status='active' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id)}catch{}
+const f=db.prepare("SELECT * FROM users WHERE id=?").get(id),bon=payRef(f);
+return res.json({success:true,message:`User approved. Referral: ₦${bon.paid} to ${bon.referrer||'none'} | Welcome: ₦${bon.welcomePaid||0}`,user:{id:f.id,username:f.username,package:f.package,account_status:f.account_status},referralBonus:bon})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve);
+try{let _n=0;const _iv=setInterval(()=>{try{["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all"].forEach(p=>force("get",p,sGuard,backpay));["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total"].forEach(p=>force("post",p,sGuard,backpay));force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve)}catch{};_n++;if(_n>=5)clearInterval(_iv)},2000)}catch{}
+try{setTimeout(()=>{try{force("get","/api/admin/backpay-all",sGuard,backpay);force("get","/api/admin/backpay",sGuard,backpay);force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve)}catch{}},1000);
+setTimeout(()=>{try{force("get","/api/admin/backpay-all",sGuard,backpay);force("get","/api/admin/backpay",sGuard,backpay);force("post","/api/admin/approve",sGuard,approve);force("post","/api/admin/users/approve",sGuard,approve)}catch{}},3000)}catch{}
+const susp=(req,res)=>{try{const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(!id)return res.status(400).json({success:false,message:"User ID required"});
+const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u)return res.status(404).json({success:false,message:"User not found"});
+try{db.prepare("UPDATE users SET account_status='suspended' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET status='suspended' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET is_suspended=1 WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET is_active=0 WHERE id=?").run(id)}catch{}
+const f=db.prepare("SELECT * FROM users WHERE id=?").get(id);return res.json({success:true,message:`${f.username} don suspend`,user:{id:f.id,username:f.username,account_status:f.account_status,status:f.status}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const unsusp=(req,res)=>{try{const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(!id)return res.status(400).json({success:false,message:"User ID required"});
+const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);if(!u)return res.status(404).json({success:false,message:"User not found"});
+try{db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET status='active' WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET is_suspended=0 WHERE id=?").run(id)}catch{}try{db.prepare("UPDATE users SET is_active=1 WHERE id=?").run(id)}catch{}
+const f=db.prepare("SELECT * FROM users WHERE id=?").get(id);return res.json({success:true,message:`${f.username} don unsuspend`,user:{id:f.id,username:f.username,account_status:f.account_status,status:f.status}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("post","/api/admin/suspend",sGuard,susp);safe("post","/api/admin/users/suspend",sGuard,susp);safe("post","/api/admin/user/suspend",sGuard,susp);safe("post","/api/admin/suspend-user",sGuard,susp);safe("post","/api/admin/users/block",sGuard,susp);safe("get","/api/admin/suspend",sGuard,susp);
+safe("post","/api/admin/unsuspend",sGuard,unsusp);safe("post","/api/admin/users/unsuspend",sGuard,unsusp);safe("post","/api/admin/user/unsuspend",sGuard,unsusp);safe("post","/api/admin/users/unblock",sGuard,unsusp);safe("get","/api/admin/unsuspend",sGuard,unsusp);
+const wipeUser=(req,res)=>{try{
+let u=findU(req);
+if(!u){const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(id)u=db.prepare("SELECT * FROM users WHERE id=?").get(id)}
+if(!u)return res.status(404).json({success:false,message:"User not found - pass userId / email / username"});
+const id=u.id;const pkgRaw=String(u.package||u.plan||"SILVER").toUpperCase();let pkg="SILVER";if(pkgRaw.includes("GOLD"))pkg="GOLD";else if(pkgRaw.includes("SUPER"))pkg="SUPER";
+let welcome=9000;if(pkg==="GOLD")welcome=15000;if(pkg==="SUPER")welcome=21000;
+const confirm=String(req.body?.confirm||req.query?.confirm||"").toLowerCase();
+if(confirm!=="wipe"&&confirm!=="yes"){return res.json({success:false,needConfirm:true,message:`⚠️ Confirm wipe for ${u.username} (${u.email})? Send {confirm:"wipe"} to proceed. This go DELETE all history/transactions/withdrawals and reset to fresh ${pkg}. CANNOT UNDO.`,user:{id:u.id,username:u.username,email:u.email,package:pkg}})}
+const tables=["wallet_transactions","withdrawals","withdrawal_requests","payments","payment_requests","game_withdrawals","game_deposits","deposits","affiliate_withdrawals","notifications","jovia_notifications","user_notifications","user_notification","welcome_rewards","jovia_upgrades","music_plays","music_earnings","job_claims","job_applications","game_plays","game_history"];
+for(const t of tables){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const colsT=db.prepare(`PRAGMA table_info(${t})`).all().map(x=>x.name);
+if(colsT.includes("user_id")){try{db.prepare(`DELETE FROM ${t} WHERE user_id=?`).run(id)}catch{}}
+if(colsT.includes("target_user_id")){try{db.prepare(`DELETE FROM ${t} WHERE target_user_id=?`).run(id)}catch{}}}catch{}}
+try{db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);")}catch{}
+const c=cols();const sets=[];
+if(c.includes("wallet_balance"))sets.push(`wallet_balance=${welcome}`);
+if(c.includes("balance"))sets.push(`balance=0`);
+if(c.includes("available_balance"))sets.push(`available_balance=0`);
+if(c.includes("affiliate_balance"))sets.push(`affiliate_balance=0`);
+if(c.includes("affiliate_earnings"))sets.push(`affiliate_earnings=0`);
+if(c.includes("referral_balance"))sets.push(`referral_balance=0`);
+if(c.includes("referral_earnings"))sets.push(`referral_earnings=0`);
+for(const col of ["total_earned","total_earnings","total_withdrawn","total_withdrawals","points","music_earnings","game_earnings"]) if(c.includes(col)) sets.push(`${col}=0`);
+if(c.includes("account_status"))sets.push(`account_status='active'`);
+if(c.includes("status"))sets.push(`status='active'`);
+if(c.includes("is_suspended"))sets.push(`is_suspended=0`);
+if(c.includes("is_active"))sets.push(`is_active=1`);
+if(sets.length){try{db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(id)}catch{}}
+try{db.prepare("UPDATE jovia_game_accounts SET game_balance=0 WHERE user_id=?").run(id)}catch{}
+try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(id,welcome,pkg)}catch{}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(id,"welcome_bonus",welcome,"wallet",`WELCOME_${id}`,`Welcome bonus - ${pkg} activated`)}catch{}
+const f=db.prepare("SELECT id,username,email,full_name,package,plan,wallet_balance,affiliate_balance,referral_balance,account_status,status FROM users WHERE id=?").get(id);
+console.log(`🧹 WIPED dashboard for ${f?.username} (${f?.email}) -> fresh ${pkg} Wallet ONLY ${welcome}`);
+return res.json({success:true,message:`🧹 ${f?.username} wiped — fresh ${pkg} — Wallet ONLY ₦${welcome.toLocaleString()}, Affiliate ₦0, Referral ₦0, Game ₦0, History: 1 welcome record`,user:{...clean(f),balances:bals(f)}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("post","/api/admin/users/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/users/:id/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/user/wipe-dashboard",sGuard,wipeUser);
+const notify=(uid,title,msg)=>{try{let tabs=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')").all().map(r=>r.name);
+if(!tabs.length){db.exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,title TEXT,message TEXT,type TEXT DEFAULT 'system',is_read INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))");tabs.push("notifications")}
+for(const t of tabs){try{const cc=db.prepare(`PRAGMA table_info(${t})`).all().map(x=>x.name),h=n=>cc.includes(n);
+if(h("user_id")&&h("title")&&h("message")){db.prepare(`INSERT INTO ${t} (user_id,title,message${h("type")?", type":""}${h("is_read")?", is_read":""}${h("created_at")?", created_at":""}) VALUES (?,?,?${h("type")?", 'system'":""}${h("is_read")?", 0":""}${h("created_at")?", datetime('now')":""})`).run(uid,title,msg);return true}
+if(h("user_id")&&h("message")){db.prepare(`INSERT INTO ${t} (user_id,message) VALUES (?,?)`).run(uid,`${title} - ${msg}`);return true}}catch{}}}catch(e){console.log("⚠️ notify failed",e.message)}return false};
+const balHist=(req,res)=>{try{const uid=Number(req.query?.userId||req.query?.id||req.query?.user_id||0),em=String(req.query?.email||"").trim().toLowerCase(),ty=String(req.query?.type||"").trim().toLowerCase(),lim=Math.min(200,Math.max(1,Number(req.query?.limit||100)));let u=null;
+if(uid)u=db.prepare("SELECT id FROM users WHERE id=?").get(uid);if(!u&&em)u=db.prepare("SELECT id FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);
+if(u){let rows;if(ty)rows=db.prepare("SELECT id,user_id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? AND LOWER(type)=? ORDER BY id DESC LIMIT ?").all(u.id,ty,lim);else rows=db.prepare("SELECT id,user_id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT ?").all(u.id,lim);
+const u2=db.prepare("SELECT id,email,username,full_name,wallet_balance,affiliate_balance,referral_balance FROM users WHERE id=?").get(u.id);return res.json({success:true,history:rows,transactions:rows,total:rows.length,user:u2})}
+let rows;if(ty)rows=db.prepare("SELECT w.id,w.user_id,w.type,w.amount,w.description,w.created_at,u.email,u.username,u.full_name FROM wallet_transactions w LEFT JOIN users u ON u.id=w.user_id WHERE LOWER(w.type)=? ORDER BY w.id DESC LIMIT ?").all(ty,lim);else rows=db.prepare("SELECT w.id,w.user_id,w.type,w.amount,w.description,w.created_at,u.email,u.username,u.full_name FROM wallet_transactions w LEFT JOIN users u ON u.id=w.user_id ORDER BY w.id DESC LIMIT ?").all(lim);
+return res.json({success:true,history:rows,transactions:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+["/api/admin/balance/history","/api/admin/wallet/history","/api/admin/user/balance/history","/api/admin/users/balance/history","/api/admin/balance-history","/api/admin/wallet/transactions"].forEach(p=>safe("get",p,adminGuard,balHist));
+const balUser=(req,res)=>{try{const em=String(req.query?.email||"").trim().toLowerCase(),un=String(req.query?.username||"").trim(),uid=Number(req.query?.userId||req.query?.id||req.query?.user_id||0);let u=null;
+if(uid)u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u&&em)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);if(!u&&un)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1").get(un,un);
+if(!u)return res.status(404).json({success:false,message:"User not found"});let ga=null;try{ga=db.prepare("SELECT * FROM jovia_game_accounts WHERE user_id=?").get(u.id)}catch{}
+const g=Number(ga?.game_balance||0),w=Number(u.wallet_balance||0),a=Number(u.affiliate_balance||0),r=Number(u.referral_balance||0);
+return res.json({success:true,user:{id:u.id,email:u.email,username:u.username,full_name:u.full_name,package:u.package||u.plan,plan:u.plan||u.package,wallet_balance:w,available_balance:w,affiliate_balance:a,referral_balance:r,referral_earnings:r,game_balance:g,account_status:u.account_status,status:u.status},wallet_balance:w,available_balance:w,affiliate_balance:a,referral_balance:r,referral_earnings:r,game_balance:g})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+["/api/admin/balance/user","/api/admin/balance/user-by-email","/api/admin/user/balance-detail","/api/admin/balance/detail"].forEach(p=>safe("get",p,adminGuard,balUser));
+const findB=body=>{const uid=Number(body?.userId||body?.id||body?.user_id||0),em=String(body?.email||"").trim().toLowerCase(),un=String(body?.username||body?.user||"").trim();let u=null;
+if(uid)u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);if(!u&&em)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em);if(!u&&un)u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(username))=LOWER(TRIM(?)) OR LOWER(TRIM(full_name))=LOWER(TRIM(?)) LIMIT 1").get(un,un);return u};
+const resCol=body=>{const t=String(body?.balanceType||body?.balance||body?.walletType||body?.target||"wallet").toLowerCase();if(t.includes("referral"))return"referral_balance";if(t.includes("affiliate"))return"affiliate_balance";if(t.includes("game"))return"game_balance";return"wallet_balance"};
+const adjust=isAdd=>(req,res)=>{try{const body=req.body||{},amt=Number(body?.amount||body?.value||0);if(!amt||amt<=0)return res.status(400).json({success:false,message:"Enter valid amount"});
+const user=findB(body);if(!user)return res.status(404).json({success:false,message:"User not found"});
+const reason=String(body?.reason||body?.note||body?.description||(isAdd?"Admin add balance":"Admin deduct balance")).slice(0,300),col=resCol(body),label=col==="referral_balance"?"Referral Earnings":col==="affiliate_balance"?"Affiliate":col==="game_balance"?"Game":"Available";
+if(col==="game_balance"){let acc=db.prepare("SELECT * FROM jovia_game_accounts WHERE user_id=?").get(user.id);if(!acc){db.prepare("INSERT INTO jovia_game_accounts (user_id,game_balance,points) VALUES (?,0,0)").run(user.id);acc=db.prepare("SELECT * FROM jovia_game_accounts WHERE user_id=?").get(user.id)}
+const before=Number(acc.game_balance||0),after=isAdd?before+amt:Math.max(0,before-amt),sgn=isAdd?amt:-amt;db.prepare("UPDATE jovia_game_accounts SET game_balance=? WHERE user_id=?").run(after,user.id);
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description,created_at) VALUES (?,?,?,?,datetime('now'))").run(user.id,isAdd?"credit":"debit",sgn,`${reason} [game_balance]`)}catch{}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description,created_at) VALUES (?,?,?,?,datetime('now'))").run(user.id,isAdd?"admin_add":"admin_deduct",sgn,`${reason} [game_balance]`)}catch{}
+notify(user.id,isAdd?"Balance Added - System":"Balance Deduction - System",`Hello ${user.full_name||user.username||""}, ₦${amt.toLocaleString()} was ${isAdd?"ADDED to":"DEDUCTED from"} your ${label} Balance. Reason: ${reason}. Before: ₦${before.toLocaleString()}, Now: ₦${after.toLocaleString()}. - Jovia System`);
+return res.json({success:true,message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amt.toLocaleString()}. Before ₦${before.toLocaleString()} -> Now ₦${after.toLocaleString()}`,userId:user.id,beforeBalance:before,newBalance:after,balance:after})}
+const before=Number(user[col]||0),after=isAdd?before+amt:Math.max(0,before-amt),sgn=isAdd?amt:-amt;db.prepare(`UPDATE users SET ${col}=? WHERE id=?`).run(after,user.id);
+if(col==="referral_balance"){try{db.prepare("UPDATE users SET referral_earnings=? WHERE id=?").run(after,user.id)}catch{}}
+if(col==="affiliate_balance"){try{db.prepare("UPDATE users SET affiliate_earnings=? WHERE id=?").run(after,user.id)}catch{}}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description,created_at) VALUES (?,?,?,?,datetime('now'))").run(user.id,isAdd?"credit":"debit",sgn,`${reason} [${col}]`)}catch{}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description,created_at) VALUES (?,?,?,?,datetime('now'))").run(user.id,isAdd?"admin_add":"admin_deduct",sgn,`${reason} [${col}]`)}catch{}
+notify(user.id,isAdd?"Balance Added - System":"Balance Deduction - System",`Hello ${user.full_name||user.username||""}, ₦${amt.toLocaleString()} was ${isAdd?"ADDED to":"DEDUCTED from"} your ${label} Balance. Reason: ${reason}. Before: ₦${before.toLocaleString()}, Now: ₦${after.toLocaleString()}. - Jovia System`);
+const up=db.prepare("SELECT id,email,username,wallet_balance,affiliate_balance,referral_balance FROM users WHERE id=?").get(user.id);
+return res.json({success:true,message:`✅ ${label} balance ${isAdd?"added":"deducted"}: ₦${amt.toLocaleString()}. Before ₦${before.toLocaleString()} -> Now ₦${after.toLocaleString()}`,user:up,userId:user.id,beforeBalance:before,newBalance:after,balance:after,wallet_balance:up?.wallet_balance,affiliate_balance:up?.affiliate_balance,referral_balance:up?.referral_balance})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add").toLowerCase();return adjust(!(t.includes("deduct")||t.includes("subtract")||t.includes("remove")||t==="minus"))(req,res)};
+["/api/admin/balance/add","/api/admin/user/add-balance","/api/admin/users/add-balance","/api/admin/wallet/add","/api/admin/add-balance"].forEach(p=>force("post",p,adminGuard,adjust(true)));
+["/api/admin/balance/deduct","/api/admin/user/deduct-balance","/api/admin/users/deduct-balance","/api/admin/wallet/deduct","/api/admin/deduct-balance"].forEach(p=>force("post",p,adminGuard,adjust(false)));
+["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
+const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
 
-// ---------- Helpers - Same Style As Server3 ----------
-const exists = (p,m) => { try{ if(!app._router?.stack) return false; return app._router.stack.some(l=>l.route && l.route.path===p && Object.keys(l.route.methods)[0]===m); }catch{ return false; } };
-let allow=false; const withAllow = fn => { allow=true; try{ fn() }finally{ allow=false } };
-const safe = (m,p,...h) => { try{ if(exists(p,m)){ console.log("⏭️ Skip "+m.toUpperCase()+" "+p); return } withAllow(()=>app[m](p,...h)); console.log("✅ Loans Added "+m.toUpperCase()+" "+p); }catch(e){ console.log("⚠️ Loans safeAdd skip", e.message) } };
-const force = (m,p,...h) => { try{ if(app._router?.stack) app._router.stack = app._router.stack.filter(l=>!l.route || l.route.path!==p || Object.keys(l.route.methods)[0]!==m); }catch{} try{ withAllow(()=>app[m](p,...h)); }catch(e){ console.log("⚠️ Loans forceAdd skip", e.message); return; } console.log("✅ Loans FORCE "+m.toUpperCase()+" "+p); };
-
-const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
-const isOrigin = o => String(o||"").includes("jovianetworkcom") || String(o||"").includes("vercel.app") || String(o||"").includes("localhost");
-
-// Admin guard - same as Server3
-const sGuard = (req,res,next) => { try{
-  if(req.query.key==='jovia123') return next();
-  if(req.query.adminPass===ADMIN_PASS || req.query.adminPass==='jovia123') return next();
-  const hk=String(req.headers['x-admin-key']||"").trim(), hp=String(req.headers['x-admin-password']||req.headers['x-admin-pass']||"").trim(), ht=String(req.headers['x-admin-token']||"").trim();
-  if(hk==='jovia123' || hp===ADMIN_PASS || ht==='jovia123' || ht===ADMIN_PASS) return next();
-  const b=req.body||{}; if(b.key==='jovia123' || b.adminPass===ADMIN_PASS || b.adminPassword===ADMIN_PASS || b.password===ADMIN_PASS) return next();
-  if(req.session?.isAdmin===true || req.admin) return next();
-  if(isOrigin(req.headers.origin || req.headers.referer || req.headers.host)) return next();
-  if(typeof requireAdmin==='function'){ try{ return requireAdmin(req,res,err=>{ if(err){ if(isOrigin(req.headers.origin||req.headers.referer)) return next(); return res.status(401).json({success:false,message:"Admin authentication required"}); } return next(); }); }catch{ if(isOrigin(req.headers.origin||req.headers.referer)) return next(); } }
-  return res.status(401).json({success:false,message:"Admin authentication required"});
-}catch(e){ if(isOrigin(req.headers.origin||req.headers.referer)) return next(); return res.status(401).json({success:false,message:"Admin authentication required"}); } };
-
-// User guard - use your requireUser if exists, else session
-const userGuard = (req,res,next) => {
-  try{
-    if(typeof requireUser==='function') return requireUser(req,res,next);
-    const id = Number(req.session?.userId || req.session?.user_id || req.session?.user?.id || 0);
-    if(id){ req.userId = id; return next(); }
-    if(req.headers["x-impersonate-token"] || req.query?.impersonate) return next();
-    return res.status(401).json({success:false,message:"Session expired - login again"});
-  }catch(e){ return res.status(401).json({success:false,message:"Session expired"}); }
-};
-
-const getSessionUserId = (req) => {
-  try{
-    if(req.session?.userId) return Number(req.session.userId);
-    if(req.session?.user_id) return Number(req.session.user_id);
-    if(req.session?.user?.id) return Number(req.session.user.id);
-    if(req.user?.id) return Number(req.user.id);
-    if(req.userId) return Number(req.userId);
-    const tok = String(req.headers["x-impersonate-token"]||req.query?.impersonate||"").trim();
-    if(tok){ try{ const row = db.prepare("SELECT * FROM admin_impersonations WHERE token=?").get(tok); if(row) return Number(row.target_user_id); }catch{} }
-    return 0;
-  }catch{ return 0; }
-};
-
-// ---------- Tables ----------
-try{ db.exec(`CREATE TABLE IF NOT EXISTS loans (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  loan_code TEXT UNIQUE,
-  user_id INTEGER NOT NULL,
-  username TEXT,
-  email TEXT,
-  full_name TEXT,
-  amount INTEGER NOT NULL,
-  fee INTEGER NOT NULL,
-  purpose TEXT,
-  term_months INTEGER DEFAULT 2,
-  receipt_name TEXT,
-  receipt_data TEXT,
-  receipt_type TEXT,
-  status TEXT DEFAULT 'PENDING',
-  fee_status TEXT DEFAULT 'PENDING',
-  approved_at TEXT,
-  disbursed_at TEXT,
-  estimated_from TEXT,
-  estimated_to TEXT,
-  processing_time TEXT DEFAULT '6 - 12 Weeks',
-  processing_message TEXT,
-  reviewed_at TEXT,
-  created_at TEXT DEFAULT (datetime('now'))
-)`); console.log("✅ Loans table ready"); }catch(e){ console.log("⚠️ Loans table", e.message); }
-
-// Try to add columns if table existed before - NOW WITH DISBURSED_AT
-try{ const cols = db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);
-  if(!cols.includes("receipt_data")) db.exec("ALTER TABLE loans ADD COLUMN receipt_data TEXT");
-  if(!cols.includes("estimated_from")) db.exec("ALTER TABLE loans ADD COLUMN estimated_from TEXT");
-  if(!cols.includes("estimated_to")) db.exec("ALTER TABLE loans ADD COLUMN estimated_to TEXT");
-  if(!cols.includes("disbursed_at")) db.exec("ALTER TABLE loans ADD COLUMN disbursed_at TEXT");
-  if(!cols.includes("approved_at")) db.exec("ALTER TABLE loans ADD COLUMN approved_at TEXT");
-  if(!cols.includes("fee_status")) db.exec("ALTER TABLE loans ADD COLUMN fee_status TEXT DEFAULT 'PENDING'");
-}catch{}
-
-// ---------- Helpers ----------
-const isSuperPkg = (u) => String(u?.package||u?.plan||"").toUpperCase().includes("SUPER");
-const money = n => "₦"+Number(n||0).toLocaleString("en-NG");
-const cleanLoan = (l) => {
-  if(!l) return null;
-  const { receipt_data, ...rest } = l;
-  return { ...rest, has_receipt: !!l.receipt_data || !!l.receipt_name };
-};
-
-// Multer for receipt - optional, fallback to base64
-let upload = null;
-try{
-  const multer = require("multer");
-  upload = multer({ storage: multer.memoryStorage(), limits:{ fileSize: 5*1024*1024 } });
-}catch{ console.log("⚠️ multer not found - will use base64 receipt field"); }
-
-// ---------- 1. USER APPLY - POST /api/loans/apply ----------
-const applyHandler = (req,res) => {
-  try{
-    const userId = getSessionUserId(req);
-    if(!userId) return res.status(401).json({success:false,message:"Session expired - login again"});
-    const user = db.prepare("SELECT * FROM users WHERE id=?").get(userId);
-    if(!user) return res.status(404).json({success:false,message:"User not found"});
-    if(!isSuperPkg(user)) return res.status(403).json({success:false,message:"Loans are available to SUPER members only"});
-    const st = String(user.account_status||user.status||"").toLowerCase();
-    if(["suspended","banned","blocked"].includes(st)) return res.status(403).json({success:false,message:"Account suspended"});
-    const body = req.body || {};
-    const amount = Number(body.amount);
-    const fee = Number(body.fee);
-    const purpose = String(body.purpose||"").trim();
-    const term = Number(body.term_months || body.term || 2);
-    if(!Number.isInteger(amount) || amount < 1000 || amount > 10000000) return res.status(400).json({success:false,message:"Enter a loan amount between ₦1,000 and ₦10,000,000"});
-    const expectedFee = Math.round(amount * 0.12);
-    if(fee !== expectedFee) return res.status(400).json({success:false,message:`Invalid fee. Expected ${money(expectedFee)} (12%)`});
-    if(purpose.length < 10 || purpose.length > 1000) return res.status(400).json({success:false,message:"Please explain what the loan will be used for"});
-    if(!Number.isInteger(term) || term < 1 || term > 12) return res.status(400).json({success:false,message:"Term must be 1-12 months"});
-    let receiptName = "", receiptData = "", receiptType = "";
-    if(req.file){
-      receiptName = req.file.originalname;
-      receiptType = req.file.mimetype;
-      receiptData = req.file.buffer.toString("base64");
-    } else if(body.receipt_base64){
-      receiptName = String(body.receipt_name||"receipt");
-      receiptType = String(body.receipt_type||"");
-      receiptData = String(body.receipt_base64).slice(0, 7*1024*1024);
-    } else if(body.receipt){
-      receiptName = String(body.receipt||"receipt");
-    }
-    if(!receiptName && !receiptData) return res.status(400).json({success:false,message:"Please choose your payment receipt"});
-    try{
-      const pending = db.prepare("SELECT * FROM loans WHERE user_id=? AND status='PENDING' LIMIT 1").get(userId);
-      if(pending) return res.status(400).json({success:false,message:"You already have a pending loan. Wait for Admin review."});
-    }catch{}
-    const loanCode = "LOAN-" + Date.now();
-    const info = db.prepare(`INSERT INTO loans (loan_code,user_id,username,email,full_name,amount,fee,purpose,term_months,receipt_name,receipt_data,receipt_type,status,fee_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(loanCode, userId, user.username, user.email, user.full_name, amount, fee, purpose, term, receiptName, receiptData, receiptType, "PENDING", "PENDING");
-    const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(info.lastInsertRowid);
-    console.log(`✅ Loan applied ${loanCode} ${user.username} ${money(amount)} fee ${money(fee)}`);
-    return res.json({success:true,message:"Application received. Pending Admin approval.", loan: cleanLoan(loan)});
-  }catch(e){ console.error("Loan apply", e); return res.status(500).json({success:false,message:e.message}); }
-};
-if(upload){
-  safe("post","/api/loans/apply", userGuard, upload.single("receipt"), applyHandler);
-} else {
-  safe("post","/api/loans/apply", userGuard, applyHandler);
-}
-
-// ---------- 2. USER MY LOANS - GET /api/loans/my ----------
-const myHandler = (req,res) => {
-  try{
-    const userId = getSessionUserId(req);
-    if(!userId) return res.status(401).json({success:false,message:"Session expired"});
-    const loans = db.prepare("SELECT id,loan_code,user_id,username,amount,fee,purpose,term_months,receipt_name,status,fee_status,approved_at,disbursed_at,estimated_from,estimated_to,processing_time,processing_message,created_at FROM loans WHERE user_id=? ORDER BY id DESC").all(userId);
-    return res.json({success:true, loans});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
-safe("get","/api/loans/my", userGuard, myHandler);
-safe("get","/api/loans/history", userGuard, myHandler);
-
-// ---------- 3. ADMIN LIST - GET /api/loans/admin ----------
-const adminList = (req,res) => {
-  try{
-    const status = String(req.query.status||"").toUpperCase();
-    let loans;
-    if(status && ["PENDING","APPROVED","DISBURSED","REJECTED"].includes(status)){
-      loans = db.prepare("SELECT id,loan_code,user_id,username,email,full_name,amount,fee,purpose,term_months,receipt_name,status,fee_status,approved_at,disbursed_at,estimated_from,estimated_to,processing_time,created_at FROM loans WHERE status=? ORDER BY id DESC").all(status);
-    } else {
-      loans = db.prepare("SELECT id,loan_code,user_id,username,email,full_name,amount,fee,purpose,term_months,receipt_name,status,fee_status,approved_at,disbursed_at,estimated_from,estimated_to,processing_time,created_at FROM loans ORDER BY id DESC").all();
-    }
-    const total = loans.length;
-    const pending = loans.filter(l=>l.status==="PENDING").length;
-    const processing = loans.filter(l=>l.status==="APPROVED").length;
-    const disbursed = loans.filter(l=>l.status==="DISBURSED").length;
-    const totalFees = loans.reduce((s,l)=>s+Number(l.fee||0),0);
-    const totalLoans = loans.reduce((s,l)=>s+Number(l.amount||0),0);
-    const totalDisbursed = loans.filter(l=>l.status==="DISBURSED").reduce((s,l)=>s+Number(l.amount||0),0);
-    return res.json({success:true, loans, total, pending, processing, disbursed, totalFees, totalLoans, totalDisbursed});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
-safe("get","/api/loans/admin", sGuard, adminList);
-safe("get","/api/admin/loans", sGuard, adminList);
-safe("get","/api/admin/loans/list", sGuard, adminList);
-
-// ---------- 4. ADMIN VIEW RECEIPT - GET /api/loans/admin/:id/receipt ----------
-const viewReceipt = (req,res) => {
-  try{
-    const id = Number(req.params.id);
-    const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
-    if(!loan) return res.status(404).json({success:false,message:"Loan not found"});
-    if(!loan.receipt_data) return res.status(404).json({success:false,message:"No receipt file"});
-    return res.json({success:true, loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
-safe("get","/api/loans/admin/:id/receipt", sGuard, viewReceipt);
-
-// ---------- 5. ADMIN APPROVE / REJECT / DISBURSE - POST /api/loans/admin ----------
-const adminAction = (req,res) => {
-  try{
-    const body = req.body||{};
-    const id = Number(body.id || body.loanId || body.loan_id);
-    const action = String(body.action||"").toUpperCase();
-    if(!id || !["APPROVED","REJECTED","DISBURSED"].includes(action)) return res.status(400).json({success:false,message:"Invalid id or action"});
-
-    const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
-    if(!loan) return res.status(404).json({success:false,message:"Loan not found"});
-
-    if(action === "APPROVED"){
-      if(loan.status !== "PENDING") return res.status(400).json({success:false,message:`Loan already ${loan.status}`});
-      const approvedAt = new Date();
-      const from = new Date(approvedAt); from.setDate(from.getDate() + 42);
-      const to = new Date(approvedAt); to.setDate(to.getDate() + 84);
-      db.prepare(`UPDATE loans SET status='APPROVED', fee_status='FEE APPROVED', approved_at=?, estimated_from=?, estimated_to=?, processing_time='6 - 12 Weeks', processing_message=?, reviewed_at=datetime('now') WHERE id=?`)
-        .run(approvedAt.toISOString(), from.toISOString(), to.toISOString(), "Your fee has been approved. Your loan is now processing. It will take 6 - 12 weeks to be disbursed.", id);
-      console.log(`✅ Loan APPROVED ${loan.loan_code} - Processing 6-12 Weeks`);
-      const updated = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
-      return res.json({success:true, message:"Fee Approved. Loan now processing 6-12 weeks.", loan: cleanLoan(updated)});
-    }
-
-    if(action === "DISBURSED"){
-      if(loan.status !== "APPROVED") return res.status(400).json({success:false,message:`Only PROCESSING (APPROVED) loans can be disbursed. Current: ${loan.status}. Approve fee first.`});
-      db.prepare(`UPDATE loans SET status='DISBURSED', fee_status='DISBURSED', disbursed_at=datetime('now'), processing_message=?, reviewed_at=datetime('now') WHERE id=?`)
-        .run("Your loan has been disbursed. ₦" + Number(loan.amount||0).toLocaleString("en-NG") + " paid to you. Repayment starts from disbursement date.", id);
-      console.log(`✅ Loan DISBURSED ${loan.loan_code} - ₦${loan.amount} paid`);
-      const updated = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
-      return res.json({success:true, message:"Loan marked as DISBURSED. User will see Loan Disbursed.", loan: cleanLoan(updated)});
-    }
-
-    // REJECTED - only from PENDING
-    if(loan.status !== "PENDING") return res.status(400).json({success:false,message:`Loan already ${loan.status}`});
-    db.prepare(`UPDATE loans SET status='REJECTED', fee_status='REJECTED', reviewed_at=datetime('now') WHERE id=?`).run(id);
-    const updated = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
-    return res.json({success:true, message:"Loan Rejected", loan: cleanLoan(updated)});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
-force("post","/api/loans/admin", sGuard, adminAction);
-force("post","/api/admin/loans/action", sGuard, adminAction);
-force("post","/api/admin/loans/approve", sGuard, (req,res)=>{ req.body.action="APPROVED"; return adminAction(req,res); });
-force("post","/api/admin/loans/reject", sGuard, (req,res)=>{ req.body.action="REJECTED"; return adminAction(req,res); });
-force("post","/api/admin/loans/disburse", sGuard, (req,res)=>{ req.body.action="DISBURSED"; return adminAction(req,res); });
-
-console.log("✅ LOANS v2 READY - /api/loans/apply + /api/loans/my + /api/loans/admin + 6-12 WEEKS + DISBURSED");
-}catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
-};
+/* ===== LOANS - v13 - FULL - DISBURSED -> AFFILIATE BALANCE ===== */
+const cleanLoan=l=>{if(!l)return null;let u=null;try{u=db.prepare("SELECT id,username,email,full_name,package,plan FROM users WHERE id=?").get(l.user_id)}catch{}return{id:l.id,loan_code:l.loan_code,user_id:l.user_id,username:u?.username||null,email:u?.email||null,full_name:u?.full_name||null,package:u?.package||u?.plan||null,amount:Number(l.amount||0),fee:Number(l.fee||0),purpose:l.purpose||"",term_months:Number(l.term_months||0),status:l.status||"PENDING",fee_status:l.fee_status||l.status||"PENDING",receipt:l.receipt||null,receipt_name:l.receipt_name||null,processing_message:l.processing_message||null,disbursed_at:l.disbursed_at||null,reviewed_at:l.reviewed_at||null,created_at:l.created_at}};
+let loanUpload=null;try{const multer=require("multer");loanUpload=multer({limits:{fileSize:5*1024*1024}}).single("receipt")}catch{loanUpload=(req,res,next)=>next()}
+const loanApply=(req,res)=>{try{
+const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired - login again"});
+const st=String(u.account_status||u.status||"").toLowerCase();if(["suspended","banned","blocked","disabled"].includes(st))return res.status(403).json({success:false,message:"Account suspended"});
+if(!isSuperPkg(u))return res.status(403).json({success:false,message:"Loans are available to SUPER members only"});
+const amount=Number(req.body?.amount||0),fee=Number(req.body?.fee||Math.round(amount*0.12)),purpose=String(req.body?.purpose||"").trim(),term=Number(req.body?.term_months||req.body?.term||0);
+if(!Number.isSafeInteger(amount)||amount<1000||amount>10000000)return res.status(400).json({success:false,message:"Enter loan amount between ₦1,000 and ₦10,000,000"});
+if(purpose.length<10||purpose.length>1000)return res.status(400).json({success:false,message:"Loan purpose must be 10-1000 characters"});
+if(!Number.isInteger(term)||term<1||term>12)return res.status(400).json({success:false,message:"Repayment term must be 1-12 months"});
+try{const ex=db.prepare("SELECT * FROM loans WHERE user_id=? AND status IN ('PENDING','APPROVED') ORDER BY id DESC LIMIT 1").get(u.id);if(ex)return res.status(400).json({success:false,message:"You already have a pending loan "+(ex.loan_code||"")+" - wait for Admin decision"}) }catch{}
+const code="LOAN-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
+const rName=req.file?req.file.originalname:(req.body?.receipt_name||null);const rPath=req.file?("uploads/"+(req.file.filename||req.file.originalname)):(req.body?.receipt||null);
+db.prepare("INSERT INTO loans (user_id,loan_code,amount,fee,purpose,term_months,status,fee_status,receipt,receipt_name,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))").run(u.id,code,amount,Math.round(amount*0.12),purpose,term, "PENDING","PENDING",rPath,rName);
+const loan=db.prepare("SELECT * FROM loans WHERE loan_code=?").get(code);
+console.log(`💰 LOAN APPLY ${code} ${u.username} ₦${amount} fee ₦${Math.round(amount*0.12)}`);
+return res.json({success:true,message:"Loan application submitted - pending Admin approval",loan:cleanLoan(loan)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanMine=(req,res)=>{try{const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});let rows=[];try{rows=db.prepare("SELECT * FROM loans WHERE user_id=? ORDER BY id DESC LIMIT 50").all(u.id)}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanAdminList=(req,res)=>{try{let rows=[];try{rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 200").all()}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanAdminAction=(req,res)=>{try{
+const id=Number(req.body?.id||req.body?.loanId||req.params?.id||req.query?.id||0);const raw=String(req.body?.action||req.body?.status||req.query?.action||"").toUpperCase().trim();
+const action=raw.includes("DISBURS")?"DISBURSED":raw.includes("APPROV")?"APPROVED":raw.includes("REJECT")||raw.includes("DECLIN")?"REJECTED":raw.includes("PENDING")?"PENDING":raw;
+if(!id||!["APPROVED","REJECTED","DISBURSED","PENDING"].includes(action))return res.status(400).json({success:false,message:"Loan id + action (APPROVED / REJECTED / DISBURSED) required"});
+const loan=db.prepare("SELECT * FROM loans WHERE id=?").get(id);if(!loan)return res.status(404).json({success:false,message:"Loan not found"});
+const user=db.prepare("SELECT * FROM users WHERE id=?").get(loan.user_id);if(!user)return res.status(404).json({success:false,message:"User not found"});
+if(action==="APPROVED"){db.prepare("UPDATE loans SET status='APPROVED',fee_status='APPROVED',processing_message=?,reviewed_at=datetime('now') WHERE id=?").run("Your fee payment has been approved. Your loan is now processing. You will be notified when it is disbursed to your Affiliate Balance.",id);try{notify(user.id,"Loan Fee Approved","Your loan fee has been approved. Your loan is now processing.")}catch{}return res.json({success:true,message:"Loan fee APPROVED - now processing",loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))})}
+if(action==="REJECTED"){db.prepare("UPDATE loans SET status='REJECTED',fee_status='REJECTED',processing_message=?,reviewed_at=datetime('now') WHERE id=?").run("Your loan application was rejected. Contact Admin for details.",id);return res.json({success:true,message:"Loan REJECTED",loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))})}
+if(action==="PENDING"){db.prepare("UPDATE loans SET status='PENDING',fee_status='PENDING',reviewed_at=datetime('now') WHERE id=?").run(id);return res.json({success:true,message:"Loan back to PENDING",loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))})}
+if(action==="DISBURSED"){
+if(loan.status!=="APPROVED")return res.status(400).json({success:false,message:`Only APPROVED (processing) loans can be disbursed. Current: ${loan.status}. Approve fee first.`});
+let already=null;try{already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(loan.user_id,loan.loan_code)}catch{}
+if(already)return res.status(400).json({success:false,message:"This loan was already disbursed to Affiliate Balance - no double credit."});
+const amount=Number(loan.amount||0);
+db.prepare("UPDATE loans SET status='DISBURSED',fee_status='DISBURSED',disbursed_at=datetime('now'),processing_message=?,reviewed_at=datetime('now') WHERE id=?").run("Your loan has been disbursed to your Affiliate Balance. ₦"+amount.toLocaleString("en-NG")+" credited. Repayment starts from disbursement date.",id);
+try{db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+?, total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(amount,amount,loan.user_id)}catch(e){db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(amount,loan.user_id)}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(loan.user_id,"loan_disbursed",amount,"affiliate",loan.loan_code,`Loan ${loan.loan_code} disbursed to Affiliate Balance - ₦${amount.toLocaleString("en-NG")}`)}catch{}
+try{notify(user.id,"Loan Disbursed 💰",`Your loan of ₦${amount.toLocaleString("en-NG")} has been disbursed to your Affiliate Balance.`)}catch{}
+console.log(`✅ Loan DISBURSED ${loan.loan_code} - ₦${amount} -> Affiliate Balance for ${user.username}`);
+return res.json({success:true,message:`Loan DISBURSED. ₦${amount.toLocaleString("en-NG")} credited to Affiliate Balance for ${user.username}.`,loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))})}
+return res.status(400).json({success:false,message:"Unknown action"}) }catch(e){return res.status(500).json({success:false,message:e.message})}};
+force("post","/api/loans/apply",loanUpload,loanApply);
+safe("get","/api/loans/mine",loanMine);safe("get","/api/loans/history",loanMine);safe("get","/api/loans/my-loans",loanMine);
+safe("get","/api/admin/loans",sGuard,loanAdminList);safe("get","/api/admin/loans/list",sGuard,loanAdminList);
+force("post","/api/admin/loans/action",sGuard,loanAdminAction);force("post","/api/admin/loans/:id/action",sGuard,loanAdminAction);force("post","/api/admin/loan/action",sGuard,loanAdminAction);
+console.log("✅ SERVER3 v13 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS->AFFILIATE");
+}catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
