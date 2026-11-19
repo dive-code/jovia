@@ -67,8 +67,6 @@ input[type=range]{width:100%;height:6px;accent-color:var(--purple3);cursor:point
 .fee-description{font-size:10px;color:#a18750;margin-top:5px;line-height:1.5}
 .fee-value{font-family:Manrope,sans-serif;font-size:21px;font-weight:900;color:#926000;white-space:nowrap;text-align:right}
 .fee-value small{display:block;font-size:9px;font-weight:800;color:#a18750;letter-spacing:.5px;margin-top:3px}
-.fee-notice{background:#f6f0ff;border:1px solid #e6d9f5;border-radius:12px;padding:13px 15px;font-size:11px;line-height:1.7;color:#5b3a7a;margin-top:12px}
-.fee-notice b{color:var(--purple)}
 .request-summary{background:linear-gradient(120deg,#29113d,#4c226d);padding:23px;border-radius:16px;color:#fff;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;gap:15px}
 .summary-label{font-size:9px;font-weight:800;letter-spacing:1.5px;opacity:.7}
 .summary-amount{font-family:Manrope,sans-serif;font-size:27px;font-weight:900;margin-top:5px}
@@ -111,12 +109,9 @@ input[type=range]{width:100%;height:6px;accent-color:var(--purple3);cursor:point
 .success-card h2{font-family:Manrope,sans-serif;color:var(--purple);font-size:23px;font-weight:900}
 .success-card>p{color:var(--muted);font-size:12px;line-height:1.8;margin:9px auto 24px;max-width:400px}
 .note{text-align:center;color:var(--muted);font-size:10px;line-height:1.8;margin-top:15px}
-/* NEW - 6-12 WEEKS PROCESSING BOX - ONLY ADDITION */
-.process-box{background:linear-gradient(135deg,#29113d,#4c226d);border-radius:16px;padding:20px;color:#fff;text-align:left;margin:0 auto 20px;max-width:520px}
-.process-box small{font-size:9px;font-weight:800;letter-spacing:1.5px;opacity:.7}
-.process-box b{font-family:Manrope,sans-serif;font-size:24px;display:block;margin:6px 0}
-.process-box p{font-size:12px;line-height:1.7;opacity:.85}
-.process-box .dates{font-size:11px;margin-top:10px;opacity:.9}
+.pending-box{background:#fff8d6;border:1px solid #f5e4b8;border-radius:16px;padding:20px;color:#92400e;text-align:left;margin:0 auto 20px;max-width:520px}
+.pending-box b{font-size:15px;display:block;margin-bottom:6px}
+.pending-box p{font-size:12px;line-height:1.7}
 .timeline{text-align:left;font-size:12px;line-height:2.1;color:#62586e;max-width:420px;margin:0 auto 10px}
 .timeline b{color:#29113d}
 #toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%);background:#21142e;color:#fff;padding:13px 19px;border-radius:10px;font-size:11px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:10000;max-width:90%;text-align:center;box-shadow:0 8px 25px rgba(0,0,0,.15)}
@@ -152,7 +147,7 @@ input[type=range]{width:100%;height:6px;accent-color:var(--purple3);cursor:point
  <div class="hero-label">JOVIA LOANS • SUPER EXCLUSIVE</div>
  <h1>Borrow Smart.<br>Grow Faster.</h1>
  <p>Get up to ₦10,000,000 as a SUPER member. Check your fee instantly, apply in 2 minutes.</p>
- <div class="hero-pills"><span>⚡ Fast Review</span><span>👑 SUPER Only</span><span>⏳ 6-12 Weeks Processing</span><span>🔒 Secure</span></div>
+ <div class="hero-pills"><span>⚡ Fast Review</span><span>👑 SUPER Only</span><span>🔒 Secure</span></div>
 </div>
 
 <!-- STEP 1 -->
@@ -169,7 +164,6 @@ input[type=range]{width:100%;height:6px;accent-color:var(--purple3);cursor:point
   <div class="amount-input-wrap"><span class="currency-symbol">₦</span><input type="number" id="loanAmountInput" value="10000" min="1000" max="10000000" step="1" oninput="syncFromInput(this.value)"></div>
   <div class="slider-area"><div class="slider-top"><span>Adjust your amount</span><span>₦10,000,000 maximum</span></div><input type="range" id="loanSlider" min="1000" max="10000000" step="1000" value="10000" oninput="syncFromSlider(this.value)"><div class="slider-bottom"><span>₦1,000</span><span>₦10,000,000</span></div></div>
   <div class="fee-box"><div><div class="fee-title">SERVICE FEE · 12% • ESTIMATED</div><div class="fee-description">One-time application service fee</div></div><div class="fee-value"><span id="feeDisplay1">₦1,200.00</span><small>CALCULATED ONLY</small></div></div>
-  <div class="fee-notice">💡 <b>Not paying now:</b> This is only the fee you <b>will pay</b> in the next step to get your loan. You pay it in Step 4 after you confirm. No loan without fee payment.</div>
   <button class="btn btn-gold btn-full" onclick="continueStep1()">Continue to next step <span>→</span></button>
  </div>
 </section>
@@ -204,10 +198,9 @@ input[type=range]{width:100%;height:6px;accent-color:var(--purple3);cursor:point
    <div class="review-row"><span>Loan purpose</span><b id="reviewPurpose">-</b></div>
    <div class="review-row"><span>Repayment period</span><b id="reviewTerm">2 months</b></div>
    <div class="review-row"><span>Service fee (12%)</span><b id="reviewFee">₦1,200.00</b></div>
-   <div class="review-row"><span>Processing time after fee approval</span><b>6 - 12 Weeks</b></div>
   </div>
   <label class="checkbox-row"><input type="checkbox" id="agree"><span>I have read and agree to the disclosed service fee of 12% of my requested amount. I understand the fee is payable by bank transfer before approval and that payment does not guarantee loan approval.</span></label>
-  <p class="note" style="text-align:left">Your application will proceed to the service fee payment stage after confirmation. You must pay the fee to get the loan. After Admin approves your fee, your loan will take <b>6 - 12 weeks</b> to be processed.</p>
+  <p class="note" style="text-align:left">Your application will proceed to the service fee payment stage after confirmation. You must pay the fee to get the loan.</p>
   <div class="btn-row"><button class="btn btn-ghost" onclick="goStep(2)">← Back</button><button class="btn btn-gold" onclick="confirmLoan()">Confirm application →</button></div>
  </div>
 </section>
@@ -232,38 +225,32 @@ input[type=range]{width:100%;height:6px;accent-color:var(--purple3);cursor:point
   <div class="section-heading">Upload payment receipt</div><p class="section-description">Attach a clear copy of your payment receipt.</p>
   <div class="upload-box" onclick="document.getElementById('receipt').click()"><div class="upload-icon">↥</div><b id="uploadText">Choose payment receipt</b><p id="fileName">JPG, PNG, WEBP or PDF · Maximum 5MB</p><input type="file" id="receipt" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" onchange="onFileChange(this)"></div>
   <button class="btn btn-purple btn-full" id="submitBtn" onclick="submitForApproval()">Submit payment proof →</button>
-  <p class="note">Your application will be reviewed by Admin after successful submission. After Admin approves your fee, processing takes 6 - 12 weeks.</p>
+  <p class="note">Your application will be reviewed by Admin after successful submission.</p>
  </div>
 </section>
 
-<!-- SUCCESS - NOW WITH 6-12 WEEKS -->
+<!-- SUCCESS - NO 6-12 WEEKS HERE, ONLY WAITING -->
 <section id="step5" style="display:none">
  <div class="card success-card">
   <div class="success-icon">✓</div>
   <h2>Application Submitted</h2>
   <p>Your loan application has been received successfully and is pending Admin approval.</p>
 
-  <!-- 6-12 WEEKS - SHOWS ONCE ADMIN APPROVES FEE -->
-  <div class="process-box">
-    <small>WHAT HAPPENS NEXT?</small>
-    <b>6 - 12 Weeks Processing</b>
-    <p>Once Admin approves your fee, your loan will be processed. It will take <b>6 - 12 weeks</b> to be disbursed. You will see your exact dates in History after approval.</p>
-    <div class="dates" id="processDates">Estimated after approval: <b id="processDatesValue">-</b></div>
+  <div class="pending-box">
+    <b>⏳ Waiting for Admin to approve your fee</b>
+    <p>Your fee payment is under review. Once Admin approves it, you will see your processing details in History.</p>
   </div>
 
   <div class="timeline">
     ✅ Application Submitted<br>
     ✅ Service Fee Paid<br>
     ⏳ <b>Waiting for Admin to approve fee</b><br>
-    <span style="color:#a49aaa">○ Processing - 6 to 12 Weeks (starts after fee approval)</span><br>
-    <span style="color:#a49aaa">○ Loan Disbursed</span>
   </div>
 
   <div class="review-list" style="text-align:left">
    <div class="review-row"><span>Amount requested</span><b id="successAmount">₦10,000.00</b></div>
    <div class="review-row"><span>Service fee</span><b id="successFee">₦1,200.00</b></div>
    <div class="review-row"><span>Application status</span><b style="color:#a36b08">Pending Review</b></div>
-   <div class="review-row"><span>Processing time</span><b>6 - 12 Weeks after fee approval</b></div>
   </div>
   <button class="btn btn-gold btn-full" onclick="window.location.href='dashboard.html'">Back to Dashboard →</button>
   <button class="btn btn-ghost btn-full" onclick="window.location.href='history.html'">View History</button>
@@ -278,8 +265,6 @@ let currentUser=null, currentStep=1, accessGranted=false, submitting=false, toas
 const MIN_AMOUNT=1000, MAX_AMOUNT=10000000, SERVICE_FEE_RATE=0.12, MAX_RECEIPT_SIZE=5*1024*1024;
 function showToast(message){const toast=document.getElementById("toast");toast.textContent=message;toast.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove("show"),3500)}
 function money(value){return "₦"+Number(value).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
-function fmtDate(d){try{return new Date(d).toLocaleDateString("en-NG",{day:"numeric",month:"short",year:"numeric"})}catch(e){return "-"}}
-function setProcessingDates(){const from=new Date(Date.now()+42*24*60*60*1000);const to=new Date(Date.now()+84*24*60*60*1000);const el=document.getElementById("processDatesValue");if(el)el.textContent=fmtDate(from)+" - "+fmtDate(to)}
 function isSuperUser(user){if(!user)return false;return String(user.package||"").toLowerCase().includes("super")||String(user.plan||"").toLowerCase().includes("super")||Number(user.is_super)===1}
 function isActiveAccount(user){if(!user)return false;const status=String(user.accountStatus||user.account_status||user.status||"").toLowerCase();const paymentStatus=String(user.payment_status||"").toLowerCase();if(["suspended","banned","blocked","disabled","deactivated","inactive","pending","unverified"].includes(status))return false;return Number(user.is_active)===1||paymentStatus==="paid"||["active","approved","paid"].includes(status)}
 function denyAccess(message){accessGranted=false;document.getElementById("loanApp").style.display="none";document.getElementById("authLoading").textContent=message;showToast(message);setTimeout(()=>window.location.replace("dashboard.html"),1600)}
@@ -293,7 +278,7 @@ function syncFromSlider(value){document.getElementById("loanAmountInput").value=
 function syncFromInput(value){const number=Number(value);if(value.trim()!==""&&Number.isFinite(number)){document.getElementById("loanSlider").value=Math.min(MAX_AMOUNT,Math.max(MIN_AMOUNT,number))}updateFeeDisplay()}
 function continueStep1(){if(!requireAccess())return;const amount=getValidAmount();if(amount===null)return;updateFeeDisplay();goStep(2)}
 function goBack(){if(!requireAccess())return;if(currentStep>1){goStep(currentStep-1)}else{window.location.href="dashboard.html"}}
-function goStep(number){if(!requireAccess())return;if(!Number.isInteger(number)||number<1||number>5)return;currentStep=number;[1,2,3,4,5].forEach(step=>{const element=document.getElementById("step"+step);if(element){element.style.display=step===number?"block":"none"}});if(number===2){updateFeeDisplay()}if(number===3){const amount=getValidAmount();if(amount===null){goStep(1);return}const purpose=document.getElementById("loanPurpose").value.trim();const term=Number(document.getElementById("loanTerm").value);document.getElementById("reviewAmount").textContent=money(amount);document.getElementById("reviewFee").textContent=money(Math.round(amount*SERVICE_FEE_RATE));document.getElementById("reviewPurpose").textContent=purpose;document.getElementById("reviewTerm").textContent=term+" month"+(term>1?"s":"")}if(number===4){const amount=getValidAmount();if(amount===null){goStep(1);return}document.getElementById("payAmount").textContent=money(Math.round(amount*SERVICE_FEE_RATE))}if(number===5){setProcessingDates()}window.scrollTo({top:0,behavior:"smooth"})}
+function goStep(number){if(!requireAccess())return;if(!Number.isInteger(number)||number<1||number>5)return;currentStep=number;[1,2,3,4,5].forEach(step=>{const element=document.getElementById("step"+step);if(element){element.style.display=step===number?"block":"none"}});if(number===2){updateFeeDisplay()}if(number===3){const amount=getValidAmount();if(amount===null){goStep(1);return}const purpose=document.getElementById("loanPurpose").value.trim();const term=Number(document.getElementById("loanTerm").value);document.getElementById("reviewAmount").textContent=money(amount);document.getElementById("reviewFee").textContent=money(Math.round(amount*SERVICE_FEE_RATE));document.getElementById("reviewPurpose").textContent=purpose;document.getElementById("reviewTerm").textContent=term+" month"+(term>1?"s":"")}if(number===4){const amount=getValidAmount();if(amount===null){goStep(1);return}document.getElementById("payAmount").textContent=money(Math.round(amount*SERVICE_FEE_RATE))}window.scrollTo({top:0,behavior:"smooth"})}
 function validateStep2(){if(!requireAccess())return;const amount=getValidAmount();if(amount===null){goStep(1);return}const purpose=document.getElementById("loanPurpose").value.trim();const termInput=document.getElementById("loanTerm").value.trim();const term=Number(termInput);if(purpose.length<10){showToast("Please explain what the loan will be used for");return}if(purpose.length>1000){showToast("Your loan purpose is too long");return}if(termInput===""||!Number.isInteger(term)||term<1||term>12){showToast("Enter a repayment term between 1 and 12 months");return}goStep(3)}
 function confirmLoan(){if(!requireAccess())return;const amount=getValidAmount();if(amount===null){goStep(1);return}const purpose=document.getElementById("loanPurpose").value.trim();const termInput=document.getElementById("loanTerm").value.trim();const term=Number(termInput);if(purpose.length<10){showToast("Please provide a valid loan purpose");goStep(2);return}if(termInput===""||!Number.isInteger(term)||term<1||term>12){showToast("Enter a repayment term between 1 and 12 months");goStep(2);return}if(!document.getElementById("agree").checked){showToast("Please agree to the disclosed service fee");return}goStep(4)}
 async function copyAcct(){const text=document.getElementById("acctNum").textContent.trim();try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(text)}else{const temporary=document.createElement("textarea");temporary.value=text;temporary.style.position="fixed";temporary.style.opacity="0";document.body.appendChild(temporary);temporary.select();const copied=document.execCommand("copy");temporary.remove();if(!copied)throw new Error("Copy unavailable")}showToast("Copied: "+text)}catch(error){showToast("Unable to copy automatically. Account number: "+text)}}
