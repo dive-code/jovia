@@ -1,4 +1,4 @@
-"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v13 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS TO AFFILIATE");
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v13.1 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS TO AFFILIATE + /api/loans/admin FIX");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
 const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all","/api/admin/approve","/api/admin/users/approve"];
 const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
@@ -16,7 +16,6 @@ try{if(!has("affiliate_balance"))db.exec("ALTER TABLE users ADD COLUMN affiliate
 try{if(!has("referral_balance"))db.exec("ALTER TABLE users ADD COLUMN referral_balance INTEGER DEFAULT 0")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS admin_impersonations (id INTEGER PRIMARY KEY AUTOINCREMENT,admin_ip TEXT,admin_user TEXT DEFAULT 'admin',target_user_id INTEGER,target_email TEXT,target_username TEXT,reason TEXT,token TEXT,expires_at TEXT,used_at TEXT,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS password_reset_codes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
-/* ===== LOANS TABLES - v13 ===== */
 try{db.exec("CREATE TABLE IF NOT EXISTS loans (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,loan_code TEXT UNIQUE,amount INTEGER,fee INTEGER,purpose TEXT,term_months INTEGER,status TEXT DEFAULT 'PENDING',fee_status TEXT DEFAULT 'PENDING',receipt TEXT,receipt_name TEXT,processing_message TEXT,disbursed_at TEXT,reviewed_at TEXT,created_at TEXT DEFAULT (datetime('now')))")}catch(e){console.log("loans table",e.message)}
 try{const lc=db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);if(!lc.includes("processing_message"))db.exec("ALTER TABLE loans ADD COLUMN processing_message TEXT");if(!lc.includes("disbursed_at"))db.exec("ALTER TABLE loans ADD COLUMN disbursed_at TEXT");if(!lc.includes("fee_status"))db.exec("ALTER TABLE loans ADD COLUMN fee_status TEXT DEFAULT 'PENDING'");if(!lc.includes("receipt_name"))db.exec("ALTER TABLE loans ADD COLUMN receipt_name TEXT")}catch{}
 const isOrigin=o=>String(o||"").includes("jovianetworkcom")||String(o||"").includes("vercel.app")||String(o||"").includes("localhost");
@@ -263,27 +262,26 @@ const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add")
 ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
 const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
-
-/* ===== LOANS - v13 - FULL - DISBURSED -> AFFILIATE BALANCE ===== */
+/* ===== LOANS v13.1 ===== */
 const cleanLoan=l=>{if(!l)return null;let u=null;try{u=db.prepare("SELECT id,username,email,full_name,package,plan FROM users WHERE id=?").get(l.user_id)}catch{}return{id:l.id,loan_code:l.loan_code,user_id:l.user_id,username:u?.username||null,email:u?.email||null,full_name:u?.full_name||null,package:u?.package||u?.plan||null,amount:Number(l.amount||0),fee:Number(l.fee||0),purpose:l.purpose||"",term_months:Number(l.term_months||0),status:l.status||"PENDING",fee_status:l.fee_status||l.status||"PENDING",receipt:l.receipt||null,receipt_name:l.receipt_name||null,processing_message:l.processing_message||null,disbursed_at:l.disbursed_at||null,reviewed_at:l.reviewed_at||null,created_at:l.created_at}};
 let loanUpload=null;try{const multer=require("multer");loanUpload=multer({limits:{fileSize:5*1024*1024}}).single("receipt")}catch{loanUpload=(req,res,next)=>next()}
 const loanApply=(req,res)=>{try{
 const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired - login again"});
 const st=String(u.account_status||u.status||"").toLowerCase();if(["suspended","banned","blocked","disabled"].includes(st))return res.status(403).json({success:false,message:"Account suspended"});
 if(!isSuperPkg(u))return res.status(403).json({success:false,message:"Loans are available to SUPER members only"});
-const amount=Number(req.body?.amount||0),fee=Number(req.body?.fee||Math.round(amount*0.12)),purpose=String(req.body?.purpose||"").trim(),term=Number(req.body?.term_months||req.body?.term||0);
+const amount=Number(req.body?.amount||0),purpose=String(req.body?.purpose||"").trim(),term=Number(req.body?.term_months||req.body?.term||0);
 if(!Number.isSafeInteger(amount)||amount<1000||amount>10000000)return res.status(400).json({success:false,message:"Enter loan amount between ₦1,000 and ₦10,000,000"});
 if(purpose.length<10||purpose.length>1000)return res.status(400).json({success:false,message:"Loan purpose must be 10-1000 characters"});
 if(!Number.isInteger(term)||term<1||term>12)return res.status(400).json({success:false,message:"Repayment term must be 1-12 months"});
-try{const ex=db.prepare("SELECT * FROM loans WHERE user_id=? AND status IN ('PENDING','APPROVED') ORDER BY id DESC LIMIT 1").get(u.id);if(ex)return res.status(400).json({success:false,message:"You already have a pending loan "+(ex.loan_code||"")+" - wait for Admin decision"}) }catch{}
+try{const ex=db.prepare("SELECT * FROM loans WHERE user_id=? AND status IN ('PENDING','APPROVED') ORDER BY id DESC LIMIT 1").get(u.id);if(ex)return res.status(400).json({success:false,message:"You already have a pending loan "+(ex.loan_code||"")+" - wait for Admin decision"})}catch{}
 const code="LOAN-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
 const rName=req.file?req.file.originalname:(req.body?.receipt_name||null);const rPath=req.file?("uploads/"+(req.file.filename||req.file.originalname)):(req.body?.receipt||null);
-db.prepare("INSERT INTO loans (user_id,loan_code,amount,fee,purpose,term_months,status,fee_status,receipt,receipt_name,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))").run(u.id,code,amount,Math.round(amount*0.12),purpose,term, "PENDING","PENDING",rPath,rName);
+db.prepare("INSERT INTO loans (user_id,loan_code,amount,fee,purpose,term_months,status,fee_status,receipt,receipt_name,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))").run(u.id,code,amount,Math.round(amount*0.12),purpose,term,"PENDING","PENDING",rPath,rName);
 const loan=db.prepare("SELECT * FROM loans WHERE loan_code=?").get(code);
 console.log(`💰 LOAN APPLY ${code} ${u.username} ₦${amount} fee ₦${Math.round(amount*0.12)}`);
 return res.json({success:true,message:"Loan application submitted - pending Admin approval",loan:cleanLoan(loan)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const loanMine=(req,res)=>{try{const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});let rows=[];try{rows=db.prepare("SELECT * FROM loans WHERE user_id=? ORDER BY id DESC LIMIT 50").all(u.id)}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
-const loanAdminList=(req,res)=>{try{let rows=[];try{rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 200").all()}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanAdminList=(req,res)=>{try{let rows=[];try{rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 200").all()}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length,applications:rows.map(cleanLoan)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const loanAdminAction=(req,res)=>{try{
 const id=Number(req.body?.id||req.body?.loanId||req.params?.id||req.query?.id||0);const raw=String(req.body?.action||req.body?.status||req.query?.action||"").toUpperCase().trim();
 const action=raw.includes("DISBURS")?"DISBURSED":raw.includes("APPROV")?"APPROVED":raw.includes("REJECT")||raw.includes("DECLIN")?"REJECTED":raw.includes("PENDING")?"PENDING":raw;
@@ -304,10 +302,13 @@ try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_typ
 try{notify(user.id,"Loan Disbursed 💰",`Your loan of ₦${amount.toLocaleString("en-NG")} has been disbursed to your Affiliate Balance.`)}catch{}
 console.log(`✅ Loan DISBURSED ${loan.loan_code} - ₦${amount} -> Affiliate Balance for ${user.username}`);
 return res.json({success:true,message:`Loan DISBURSED. ₦${amount.toLocaleString("en-NG")} credited to Affiliate Balance for ${user.username}.`,loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))})}
-return res.status(400).json({success:false,message:"Unknown action"}) }catch(e){return res.status(500).json({success:false,message:e.message})}};
+return res.status(400).json({success:false,message:"Unknown action"})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 force("post","/api/loans/apply",loanUpload,loanApply);
 safe("get","/api/loans/mine",loanMine);safe("get","/api/loans/history",loanMine);safe("get","/api/loans/my-loans",loanMine);
+/* ✅ FIXED - BOTH ADMIN LIST PATHS */
 safe("get","/api/admin/loans",sGuard,loanAdminList);safe("get","/api/admin/loans/list",sGuard,loanAdminList);
+safe("get","/api/loans/admin",sGuard,loanAdminList);safe("get","/api/loans/admin/list",sGuard,loanAdminList);safe("get","/api/loans/all",sGuard,loanAdminList);safe("get","/api/loans/list",sGuard,loanAdminList);
 force("post","/api/admin/loans/action",sGuard,loanAdminAction);force("post","/api/admin/loans/:id/action",sGuard,loanAdminAction);force("post","/api/admin/loan/action",sGuard,loanAdminAction);
-console.log("✅ SERVER3 v13 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS->AFFILIATE");
+force("post","/api/loans/admin/action",sGuard,loanAdminAction);force("post","/api/loans/action",sGuard,loanAdminAction);force("post","/api/loans/admin/:id/action",sGuard,loanAdminAction);
+console.log("✅ SERVER3 v13.1 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS->AFFILIATE + /api/loans/admin");
 }catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
