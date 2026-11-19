@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS private_message_reads (id INTEGER PRIMARY KEY AUTOINC
 CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, enabled INTEGER NOT NULL DEFAULT 1, title TEXT NOT NULL DEFAULT '', message TEXT NOT NULL DEFAULT '', channel_url TEXT NOT NULL DEFAULT 'https://t.me/jovianetwerk', channel_text TEXT NOT NULL DEFAULT 'Join Official Channel', updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS withdrawal_codes (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL UNIQUE, used INTEGER NOT NULL DEFAULT 0, used_by TEXT NOT NULL DEFAULT '', used_by_id INTEGER, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, used_at TEXT, expires_at TEXT);
 `);
+// ===== FIX: LOANS WILL LOAD INSIDE THIS SAME FILE - DO NOT DELETE BELOW =====
+// The actual loader is at the BOTTOM of this file, just before app.listen
+// It uses the same app, db, requireUser, requireAdmin - so Balance/Upline/Impersonations stay
 function tableExists(t){return Boolean(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1").get(t));}
 function columnExists(t,c){if(!tableExists(t))return false;return db.prepare(`PRAGMA table_info(${t})`).all().some(x=>x.name===c);}
 function addColumnIfMissing(t,c,d){if(!tableExists(t)||columnExists(t,c))return false;try{db.exec(`ALTER TABLE ${t} ADD COLUMN ${c} ${d}`);return true;}catch(e){return false;}}
