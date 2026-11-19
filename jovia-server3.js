@@ -1,4 +1,4 @@
-"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v13.1 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS TO AFFILIATE + /api/loans/admin FIX");
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v14 - ADMIN BOARD FULL + LOANS + RECEIPT FIX");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
 const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all","/api/admin/approve","/api/admin/users/approve"];
 const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
@@ -18,6 +18,8 @@ try{db.exec("CREATE TABLE IF NOT EXISTS admin_impersonations (id INTEGER PRIMARY
 try{db.exec("CREATE TABLE IF NOT EXISTS password_reset_codes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS loans (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,loan_code TEXT UNIQUE,amount INTEGER,fee INTEGER,purpose TEXT,term_months INTEGER,status TEXT DEFAULT 'PENDING',fee_status TEXT DEFAULT 'PENDING',receipt TEXT,receipt_name TEXT,processing_message TEXT,disbursed_at TEXT,reviewed_at TEXT,created_at TEXT DEFAULT (datetime('now')))")}catch(e){console.log("loans table",e.message)}
 try{const lc=db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);if(!lc.includes("processing_message"))db.exec("ALTER TABLE loans ADD COLUMN processing_message TEXT");if(!lc.includes("disbursed_at"))db.exec("ALTER TABLE loans ADD COLUMN disbursed_at TEXT");if(!lc.includes("fee_status"))db.exec("ALTER TABLE loans ADD COLUMN fee_status TEXT DEFAULT 'PENDING'");if(!lc.includes("receipt_name"))db.exec("ALTER TABLE loans ADD COLUMN receipt_name TEXT")}catch{}
+try{db.exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,title TEXT,message TEXT,type TEXT DEFAULT 'system',is_read INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
+try{db.exec("CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT,message TEXT,channel_url TEXT,enabled INTEGER DEFAULT 1,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 const isOrigin=o=>String(o||"").includes("jovianetworkcom")||String(o||"").includes("vercel.app")||String(o||"").includes("localhost");
 const adminGuard=(req,res,next)=>{const hp=String(req.headers["x-admin-password"]||req.headers["x-admin-pass"]||"").trim(),bp=String(req.body?.adminPass||req.body?.adminPassword||req.body?.password||"").trim(),qp=String(req.query?.adminPass||"").trim();
 if(req.session?.isAdmin===true)return next();if(hp&&hp===ADMIN_PASS){if(req.session)req.session.isAdmin=true;return next()}if(bp&&bp===ADMIN_PASS){if(req.session)req.session.isAdmin=true;return next()}if(qp&&qp===ADMIN_PASS)return next();if(isOrigin(req.headers.origin||req.headers.referer))return next();return res.status(401).json({success:false,message:"Admin authentication required"})};
@@ -54,7 +56,6 @@ const bals=u=>{let g=0;try{g=Number(db.prepare("SELECT * FROM jovia_game_account
 const normPkg=u=>{const p=String(u?.package||u?.plan||"").toUpperCase();if(p.includes("SUPER"))return"SUPER";if(p.includes("GOLD"))return"GOLD";return"SILVER"};
 const isSuperPkg=u=>normPkg(u)==="SUPER";
 const getNotAvailableMsg=u=>isSuperPkg(u)?"Currently not available, please try again month end":"Currently not available, try upgrade";
-const getNotAvailMsg=getNotAvailableMsg;
 const getWithdrawMsg=u=>isSuperPkg(u)?"Regular withdrawals are currently unavailable. Please try again month end":"Regular withdrawals are currently unavailable. Please try upgrading to gain quick access";
 const getPlanLimits=u=>{const p=normPkg(u);if(p==="SUPER")return{maxDaily:Infinity,taskCount:Infinity};if(p==="GOLD")return{maxDaily:7000,taskCount:10};return{maxDaily:2500,taskCount:5}};
 const PLAN_LIMITS={SILVER:{maxDaily:2500,taskCount:5},GOLD:{maxDaily:7000,taskCount:10},SUPER:{maxDaily:Infinity,taskCount:Infinity}};
@@ -147,10 +148,10 @@ db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTO
 const c=cols(),raw=String(ru.package||ru.plan||ru.membership||"").toUpperCase().trim();let pkg=raw;
 if(raw.includes("SILVER")||raw.includes("BASIC")||raw.includes("STARTER"))pkg="SILVER";else if(raw.includes("GOLD"))pkg="GOLD";else if(raw.includes("SUPER")||raw.includes("PLATINUM")||raw.includes("DIAMOND")||raw.includes("VIP"))pkg="SUPER";else return{paid:0,reason:"no package: "+raw};
 let cor=0,welB=0;if(pkg==="SILVER"){cor=8000;welB=9000}else if(pkg==="GOLD"){cor=13000;welB=15000}else if(pkg==="SUPER"){cor=19000;welB=21000}
-try{const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(ru.id);if(ex0){console.log(`🚫 v12 BLOCK ${ru.username} referral_rewards exist ₦${ex0.amount}`);return{paid:0,reason:"blocked - already collected (referral_rewards exist) - NO upgrade bonus",alreadyPaid:Number(ex0.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
-try{const exTx=db.prepare("SELECT * FROM wallet_transactions WHERE reference=? LIMIT 1").get(`REF_${ru.id}`);if(exTx){console.log(`🚫 v12 BLOCK ${ru.username} REF_ tx exist ₦${exTx.amount}`);return{paid:0,reason:"blocked - already collected (REF_ wallet tx exist) - NO upgrade bonus",alreadyPaid:Number(exTx.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
+try{const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(ru.id);if(ex0)return{paid:0,reason:"blocked - already collected (referral_rewards exist) - NO upgrade bonus",alreadyPaid:Number(ex0.amount||0),correct:cor,blocked:true,package:pkg}}catch{}
+try{const exTx=db.prepare("SELECT * FROM wallet_transactions WHERE reference=? LIMIT 1").get(`REF_${ru.id}`);if(exTx)return{paid:0,reason:"blocked - already collected (REF_ wallet tx exist) - NO upgrade bonus",alreadyPaid:Number(exTx.amount||0),correct:cor,blocked:true,package:pkg}}catch{}
 const paidInfo=alreadyPaid(null,ru),ap=paidInfo.total;
-if(ap>0){console.log(`🚫 v12 BLOCK ${ru.username} alreadyPaid ₦${ap}`);return{paid:0,reason:"blocked - already collected - NO upgrade bonus, NO balancing",alreadyPaid:ap,correct:cor,blocked:true,package:pkg}}
+if(ap>0)return{paid:0,reason:"blocked - already collected - NO upgrade bonus, NO balancing",alreadyPaid:ap,correct:cor,blocked:true,package:pkg}
 let welPaid=0;const welEx=db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(ru.id);let welTx=null;
 try{welTx=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR type='welcome_bonus') LIMIT 1").get(ru.id,`WELCOME_${ru.id}`)}catch{}
 if(!welEx&&!welTx&&welB>0){try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,welB,pkg)}catch{}try{db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(welB,ru.id)}catch{}try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(ru.id,"welcome_bonus",welB,"wallet",`WELCOME_${ru.id}`,`Welcome bonus - ${pkg} activated`)}catch{}welPaid=welB}
@@ -215,7 +216,6 @@ try{db.prepare("UPDATE jovia_game_accounts SET game_balance=0 WHERE user_id=?").
 try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(id,welcome,pkg)}catch{}
 try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(id,"welcome_bonus",welcome,"wallet",`WELCOME_${id}`,`Welcome bonus - ${pkg} activated`)}catch{}
 const f=db.prepare("SELECT id,username,email,full_name,package,plan,wallet_balance,affiliate_balance,referral_balance,account_status,status FROM users WHERE id=?").get(id);
-console.log(`🧹 WIPED dashboard for ${f?.username} (${f?.email}) -> fresh ${pkg} Wallet ONLY ${welcome}`);
 return res.json({success:true,message:`🧹 ${f?.username} wiped — fresh ${pkg} — Wallet ONLY ₦${welcome.toLocaleString()}, Affiliate ₦0, Referral ₦0, Game ₦0, History: 1 welcome record`,user:{...clean(f),balances:bals(f)}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("post","/api/admin/users/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/users/:id/wipe-dashboard",sGuard,wipeUser);safe("post","/api/admin/user/wipe-dashboard",sGuard,wipeUser);
 const notify=(uid,title,msg)=>{try{let tabs=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('notifications','jovia_notifications','user_notifications','user_notification')").all().map(r=>r.name);
@@ -262,7 +262,47 @@ const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add")
 ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
 const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
-/* ===== LOANS v13.1 ===== */
+
+/* ===== ADMIN BOARD - RECHECKED ALL ===== */
+const adminUsersList=(req,res)=>{try{
+const q=String(req.query?.search||req.query?.q||"").trim().toLowerCase(),pkg=String(req.query?.package||req.query?.plan||"").toUpperCase(),st=String(req.query?.status||"").toLowerCase(),lim=Math.min(500,Math.max(1,Number(req.query?.limit||200))),off=Math.max(0,Number(req.query?.offset||0)));
+let rows=db.prepare("SELECT * FROM users ORDER BY id DESC LIMIT 1000").all();
+if(q)rows=rows.filter(u=>[u.username,u.email,u.full_name,String(u.id),u.phone].join(" ").toLowerCase().includes(q));
+if(pkg)rows=rows.filter(u=>String(u.package||u.plan||"").toUpperCase().includes(pkg));
+if(st)rows=rows.filter(u=>String(u.account_status||u.status||"").toLowerCase().includes(st));
+const total=rows.length,page=rows.slice(off,off+lim).map(u=>({...clean(u),balances:bals(u),password:pwStat(u)}));
+return res.json({success:true,users:page,total,count:total})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminUserOne=(req,res)=>{try{const u=findU(req);if(!u)return res.status(404).json({success:false,message:"User not found"});return res.json({success:true,user:{...clean(u),balances:bals(u),phone:u.phone||u.phone_number||null},balances:bals(u),password:pwStat(u),recent_transactions:userTx(u.id)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminStats=(req,res)=>{try{
+const users=db.prepare("SELECT * FROM users").all();const active=users.filter(u=>["active","approved","activated"].includes(String(u.account_status||u.status||"").toLowerCase())).length;
+const suspended=users.filter(u=>String(u.account_status||u.status||"").toLowerCase().includes("suspend")).length;
+let loans=[],wd=[],pay=[];try{loans=db.prepare("SELECT * FROM loans").all()}catch{}try{wd=db.prepare("SELECT * FROM withdrawals").all()}catch{try{wd=db.prepare("SELECT * FROM withdrawal_requests").all()}catch{}}
+try{pay=db.prepare("SELECT * FROM payments").all()}catch{}
+const stats={total_users:users.length,total:users.length,active_users:active,pending_users:users.length-active-suspended,suspended_users:suspended,super_users:users.filter(u=>isSuperPkg(u)).length,gold_users:users.filter(u=>normPkg(u)==="GOLD").length,silver_users:users.filter(u=>normPkg(u)==="SILVER").length,total_wallet:users.reduce((s,u)=>s+Number(u.wallet_balance||0),0),total_affiliate:users.reduce((s,u)=>s+Number(u.affiliate_balance||0),0),total_referral:users.reduce((s,u)=>s+Number(u.referral_balance||0),0),loans_total:loans.length,loans_pending:loans.filter(l=>l.status==="PENDING").length,loans_approved:loans.filter(l=>l.status==="APPROVED").length,loans_disbursed:loans.filter(l=>l.status==="DISBURSED").length,loans_rejected:loans.filter(l=>l.status==="REJECTED").length,withdrawals_total:wd.length,withdrawals_pending:wd.filter(w=>String(w.status||"").toLowerCase().includes("pend")).length,payments_total:pay.length};
+return res.json({success:true,stats,data:stats})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminWithdrawals=(req,res)=>{try{let all=[];for(const t of["withdrawals","withdrawal_requests","game_withdrawals","affiliate_withdrawals"]){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const rows=db.prepare(`SELECT * FROM ${t} ORDER BY id DESC LIMIT 200`).all();all=all.concat(rows.map(r=>{let u=null;try{u=db.prepare("SELECT username,email,full_name FROM users WHERE id=?").get(r.user_id)}catch{}return{...r,_table:t,username:u?.username,email:u?.email,full_name:u?.full_name}}))}catch{}}all.sort((a,b)=>Number(b.id)-Number(a.id));return res.json({success:true,withdrawals:all,total:all.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminPayments=(req,res)=>{try{let all=[];for(const t of["payments","payment_requests","deposits","game_deposits"]){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;const rows=db.prepare(`SELECT * FROM ${t} ORDER BY id DESC LIMIT 200`).all();all=all.concat(rows.map(r=>{let u=null;try{u=db.prepare("SELECT username,email,full_name FROM users WHERE id=?").get(r.user_id)}catch{}return{...r,_table:t,username:u?.username,email:u?.email,full_name:u?.full_name}}))}catch{}}return res.json({success:true,payments:all,total:all.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminNotifSend=(req,res)=>{try{const uid=Number(req.body?.userId||req.body?.user_id||req.body?.id||0),title=String(req.body?.title||"Message from Admin"),msg=String(req.body?.message||req.body?.text||"");if(!msg)return res.status(400).json({success:false,message:"Message required"});if(uid){notify(uid,title,msg);return res.json({success:true,message:"Sent to user "+uid})}const users=db.prepare("SELECT id FROM users").all();let c=0;for(const u of users){if(notify(u.id,title,msg))c++}return res.json({success:true,message:`Sent to ${c} users`})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminNotifList=(req,res)=>{try{let rows=[];for(const t of["notifications","jovia_notifications","user_notifications"]){try{const ex=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t);if(!ex)continue;rows=rows.concat(db.prepare(`SELECT * FROM ${t} ORDER BY id DESC LIMIT 100`).all().map(r=>({...r,_table:t})))}catch{}}return res.json({success:true,notifications:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminAnnounce=(req,res)=>{try{let row=null;try{row=db.prepare("SELECT * FROM announcements WHERE enabled=1 ORDER BY id DESC LIMIT 1").get()}catch{}if(!row)return res.json({success:true,popup:null,announcement:null});return res.json({success:true,popup:row,announcement:row,title:row.title,message:row.message})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminAnnounceSave=(req,res)=>{try{const t=String(req.body?.title||""),m=String(req.body?.message||req.body?.text||"");if(!t&&!m)return res.status(400).json({success:false,message:"Title/message required"});db.prepare("UPDATE announcements SET enabled=0").run();db.prepare("INSERT INTO announcements (title,message,channel_url,enabled) VALUES (?,?,?,1)").run(t,m,String(req.body?.channelUrl||req.body?.channel_url||"https://t.me/jovianetwerk"));return res.json({success:true,message:"Announcement saved"})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminDeleteUser=(req,res)=>{try{const u=findU(req);if(!u)return res.status(404).json({success:false,message:"User not found"});const conf=String(req.body?.confirm||req.query?.confirm||"");if(conf!=="delete"&&conf!=="yes")return res.json({success:false,needConfirm:true,message:`Send {confirm:"delete"} to delete ${u.username}`});db.prepare("DELETE FROM users WHERE id=?").run(u.id);try{db.prepare("DELETE FROM wallet_transactions WHERE user_id=?").run(u.id)}catch{}return res.json({success:true,message:`${u.username} deleted`})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const adminUpdateUser=(req,res)=>{try{const u=findU(req);if(!u)return res.status(404).json({success:false,message:"User not found"});const b=req.body||{};const sets=[];if(b.package||b.plan)sets.push(`package='${String(b.package||b.plan).toUpperCase()}'`);if(b.account_status||b.status)sets.push(`account_status='${String(b.account_status||b.status).toLowerCase()}'`);if(b.full_name)sets.push(`full_name='${String(b.full_name).replace(/'/g,"''")}'`);if(b.phone)sets.push(`phone='${String(b.phone).replace(/'/g,"''")}'`);if(!sets.length)return res.status(400).json({success:false,message:"Nothing to update"});db.prepare(`UPDATE users SET ${sets.join(",")} WHERE id=?`).run(u.id);const f=db.prepare("SELECT * FROM users WHERE id=?").get(u.id);return res.json({success:true,message:"User updated",user:clean(f)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+["get","get","get","get","get"].forEach((m,i)=>safe(m,["/api/admin/users","/api/admin/users/list","/api/admin/all-users","/api/admin/members","/api/admin/user/list"][i],sGuard,adminUsersList));
+["get","get","get"].forEach((m,i)=>safe(m,["/api/admin/users/:id","/api/admin/user/:id","/api/admin/user"][i],sGuard,adminUserOne));
+["get","get","get","get"].forEach((m,i)=>safe(m,["/api/admin/stats","/api/admin/dashboard","/api/admin/dashboard/stats","/api/admin/overview"][i],sGuard,adminStats));
+["get","get","get"].forEach((m,i)=>safe(m,["/api/admin/withdrawals","/api/admin/withdrawal-requests","/api/admin/withdrawals/list"][i],sGuard,adminWithdrawals));
+["get","get","get"].forEach((m,i)=>safe(m,["/api/admin/payments","/api/admin/payment-requests","/api/admin/deposits"][i],sGuard,adminPayments));
+safe("post","/api/admin/notify",sGuard,adminNotifSend);safe("post","/api/admin/notifications/send",sGuard,adminNotifSend);safe("post","/api/admin/send-notification",sGuard,adminNotifSend);safe("post","/api/admin/send-message",sGuard,adminNotifSend);
+safe("get","/api/admin/notifications",sGuard,adminNotifList);safe("get","/api/admin/notifications/list",sGuard,adminNotifList);
+safe("get","/api/announcement",adminAnnounce);safe("get","/api/global-popup",adminAnnounce);safe("get","/api/popup",adminAnnounce);safe("get","/api/announcements/active",adminAnnounce);safe("get","/api/admin/announcement",sGuard,adminAnnounce);
+safe("post","/api/admin/announcement",sGuard,adminAnnounceSave);safe("post","/api/admin/announcements",sGuard,adminAnnounceSave);
+safe("post","/api/admin/users/:id/delete",sGuard,adminDeleteUser);safe("post","/api/admin/users/delete",sGuard,adminDeleteUser);safe("post","/api/admin/delete-user",sGuard,adminDeleteUser);
+safe("post","/api/admin/users/:id/update",sGuard,adminUpdateUser);safe("post","/api/admin/users/update",sGuard,adminUpdateUser);safe("post","/api/admin/update-user",sGuard,adminUpdateUser);
+safe("get","/api/admin/health",sGuard,(req,res)=>res.json({success:true,status:"ok",server:"server3 v14",time:new Date().toISOString()}));
+safe("get","/api/admin/ping",sGuard,(req,res)=>res.json({success:true,pong:true}));
+
+/* ===== LOANS v14 ===== */
 const cleanLoan=l=>{if(!l)return null;let u=null;try{u=db.prepare("SELECT id,username,email,full_name,package,plan FROM users WHERE id=?").get(l.user_id)}catch{}return{id:l.id,loan_code:l.loan_code,user_id:l.user_id,username:u?.username||null,email:u?.email||null,full_name:u?.full_name||null,package:u?.package||u?.plan||null,amount:Number(l.amount||0),fee:Number(l.fee||0),purpose:l.purpose||"",term_months:Number(l.term_months||0),status:l.status||"PENDING",fee_status:l.fee_status||l.status||"PENDING",receipt:l.receipt||null,receipt_name:l.receipt_name||null,processing_message:l.processing_message||null,disbursed_at:l.disbursed_at||null,reviewed_at:l.reviewed_at||null,created_at:l.created_at}};
 let loanUpload=null;try{const multer=require("multer");loanUpload=multer({limits:{fileSize:5*1024*1024}}).single("receipt")}catch{loanUpload=(req,res,next)=>next()}
 const loanApply=(req,res)=>{try{
@@ -273,17 +313,18 @@ const amount=Number(req.body?.amount||0),purpose=String(req.body?.purpose||"").t
 if(!Number.isSafeInteger(amount)||amount<1000||amount>10000000)return res.status(400).json({success:false,message:"Enter loan amount between ₦1,000 and ₦10,000,000"});
 if(purpose.length<10||purpose.length>1000)return res.status(400).json({success:false,message:"Loan purpose must be 10-1000 characters"});
 if(!Number.isInteger(term)||term<1||term>12)return res.status(400).json({success:false,message:"Repayment term must be 1-12 months"});
-try{const ex=db.prepare("SELECT * FROM loans WHERE user_id=? AND status IN ('PENDING','APPROVED') ORDER BY id DESC LIMIT 1").get(u.id);if(ex)return res.status(400).json({success:false,message:"You already have a pending loan "+(ex.loan_code||"")+" - wait for Admin decision"})}catch{}
+try{const ex=db.prepare("SELECT * FROM loans WHERE user_id=? AND status IN ('PENDING','APPROVED') ORDER BY id DESC LIMIT 1").get(u.id);if(ex)return res.json({success:true,alreadyExists:true,already_exists:true,message:"You already have a pending loan "+(ex.loan_code||"")+" - upload your fee receipt for that loan, no need to apply again",loan:cleanLoan(ex),existing:cleanLoan(ex)})}catch{}
 const code="LOAN-"+Date.now().toString(36).toUpperCase()+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
 const rName=req.file?req.file.originalname:(req.body?.receipt_name||null);const rPath=req.file?("uploads/"+(req.file.filename||req.file.originalname)):(req.body?.receipt||null);
-db.prepare("INSERT INTO loans (user_id,loan_code,amount,fee,purpose,term_months,status,fee_status,receipt,receipt_name,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))").run(u.id,code,amount,Math.round(amount*0.12),purpose,term,"PENDING","PENDING",rPath,rName);
+try{db.prepare("INSERT INTO loans (user_id,loan_code,amount,fee,purpose,term_months,status,fee_status,receipt,receipt_name,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime('now'))").run(u.id,code,amount,Math.round(amount*0.12),purpose,term,"PENDING","PENDING",rPath,rName)}catch(e){if(String(e.message).includes("UNIQUE")||String(e.message).includes("already exists")){const ex=db.prepare("SELECT * FROM loans WHERE user_id=? ORDER BY id DESC LIMIT 1").get(u.id);return res.json({success:true,alreadyExists:true,message:"Loan already exists - use this one",loan:cleanLoan(ex)})}throw e}
 const loan=db.prepare("SELECT * FROM loans WHERE loan_code=?").get(code);
 console.log(`💰 LOAN APPLY ${code} ${u.username} ₦${amount} fee ₦${Math.round(amount*0.12)}`);
 return res.json({success:true,message:"Loan application submitted - pending Admin approval",loan:cleanLoan(loan)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const loanMine=(req,res)=>{try{const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Session expired"});let rows=[];try{rows=db.prepare("SELECT * FROM loans WHERE user_id=? ORDER BY id DESC LIMIT 50").all(u.id)}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
-const loanAdminList=(req,res)=>{try{let rows=[];try{rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 200").all()}catch{}return res.json({success:true,loans:rows.map(cleanLoan),total:rows.length,applications:rows.map(cleanLoan)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanAdminList=(req,res)=>{try{let rows=[];try{rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 200").all()}catch{}return res.json({success:true,loans:rows.map(cleanLoan),applications:rows.map(cleanLoan),total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanOneAdmin=(req,res)=>{try{const id=Number(req.params?.id||req.query?.id||0);const loan=db.prepare("SELECT * FROM loans WHERE id=?").get(id);if(!loan)return res.status(404).json({success:false,message:"Loan not found"});return res.json({success:true,loan:cleanLoan(loan)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const loanAdminAction=(req,res)=>{try{
-const id=Number(req.body?.id||req.body?.loanId||req.params?.id||req.query?.id||0);const raw=String(req.body?.action||req.body?.status||req.query?.action||"").toUpperCase().trim();
+const id=Number(req.body?.id||req.body?.loanId||req.body?.loan_id||req.params?.id||req.query?.id||0);const raw=String(req.body?.action||req.body?.status||req.query?.action||"").toUpperCase().trim();
 const action=raw.includes("DISBURS")?"DISBURSED":raw.includes("APPROV")?"APPROVED":raw.includes("REJECT")||raw.includes("DECLIN")?"REJECTED":raw.includes("PENDING")?"PENDING":raw;
 if(!id||!["APPROVED","REJECTED","DISBURSED","PENDING"].includes(action))return res.status(400).json({success:false,message:"Loan id + action (APPROVED / REJECTED / DISBURSED) required"});
 const loan=db.prepare("SELECT * FROM loans WHERE id=?").get(id);if(!loan)return res.status(404).json({success:false,message:"Loan not found"});
@@ -303,12 +344,41 @@ try{notify(user.id,"Loan Disbursed 💰",`Your loan of ₦${amount.toLocaleStrin
 console.log(`✅ Loan DISBURSED ${loan.loan_code} - ₦${amount} -> Affiliate Balance for ${user.username}`);
 return res.json({success:true,message:`Loan DISBURSED. ₦${amount.toLocaleString("en-NG")} credited to Affiliate Balance for ${user.username}.`,loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))})}
 return res.status(400).json({success:false,message:"Unknown action"})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanGetById=(req)=>{const id=Number(req.params?.id||req.query?.id||req.body?.loanId||req.body?.id||0);if(!id)return null;try{return db.prepare("SELECT * FROM loans WHERE id=?").get(id)}catch{return null}};
+const loanReceiptView=(req,res)=>{try{
+const loan=loanGetById(req);if(!loan)return res.status(404).json({success:false,message:"Loan not found"});
+const p=loan.receipt||"";
+if(p && p.includes("uploads")){try{const fs=require("fs"),path=require("path");const full=path.join(process.cwd(),p.replace(/^\/+/,""));if(fs.existsSync(full))return res.sendFile(full);}catch{}try{const fs=require("fs");if(fs.existsSync(p))return res.sendFile(require("path").resolve(p));}catch{}}
+return res.json({success:true,loan:cleanLoan(loan),receipt:loan.receipt||null,receipt_name:loan.receipt_name||null,has_receipt:!!(loan.receipt||loan.receipt_name),message:loan.receipt?"Receipt found":"No receipt uploaded yet for this loan"});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const loanReceiptUpload=(req,res)=>{try{
+const u=getSessionUser(req);if(!u && !req.session?.isAdmin)return res.status(401).json({success:false,message:"Session expired"});
+const loan=loanGetById(req);if(!loan)return res.status(404).json({success:false,message:"Loan not found - apply first"});
+if(u && loan.user_id!==u.id && !req.session?.isAdmin) return res.status(403).json({success:false,message:"Not your loan"});
+const rName=req.file?req.file.originalname:(req.body?.receipt_name||req.body?.fileName||loan.receipt_name);
+const rPath=req.file?("uploads/"+(req.file.filename||req.file.originalname)):(req.body?.receipt||loan.receipt);
+if(!rName && !rPath) return res.status(400).json({success:false,message:"No receipt file sent"});
+db.prepare("UPDATE loans SET receipt=?, receipt_name=?, fee_status='PENDING' WHERE id=?").run(rPath||"",rName||"",loan.id);
+console.log(`🧾 RECEIPT UPLOADED for ${loan.loan_code} - ${rName}`);
+return res.json({success:true,message:"Receipt uploaded - waiting for Admin to verify fee",loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(loan.id))});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
 force("post","/api/loans/apply",loanUpload,loanApply);
 safe("get","/api/loans/mine",loanMine);safe("get","/api/loans/history",loanMine);safe("get","/api/loans/my-loans",loanMine);
-/* ✅ FIXED - BOTH ADMIN LIST PATHS */
 safe("get","/api/admin/loans",sGuard,loanAdminList);safe("get","/api/admin/loans/list",sGuard,loanAdminList);
 safe("get","/api/loans/admin",sGuard,loanAdminList);safe("get","/api/loans/admin/list",sGuard,loanAdminList);safe("get","/api/loans/all",sGuard,loanAdminList);safe("get","/api/loans/list",sGuard,loanAdminList);
+safe("get","/api/admin/loans/:id",sGuard,loanOneAdmin);safe("get","/api/loans/admin/:id",sGuard,loanOneAdmin);safe("get","/api/loans/:id",loanOneAdmin);
 force("post","/api/admin/loans/action",sGuard,loanAdminAction);force("post","/api/admin/loans/:id/action",sGuard,loanAdminAction);force("post","/api/admin/loan/action",sGuard,loanAdminAction);
 force("post","/api/loans/admin/action",sGuard,loanAdminAction);force("post","/api/loans/action",sGuard,loanAdminAction);force("post","/api/loans/admin/:id/action",sGuard,loanAdminAction);
-console.log("✅ SERVER3 v13.1 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS + LOANS->AFFILIATE + /api/loans/admin");
+/* ✅ RECEIPT - ALL FORMS */
+safe("get","/api/loans/admin/:id/receipt",sGuard,loanReceiptView);
+safe("get","/api/loans/:id/receipt",loanReceiptView);
+safe("get","/api/admin/loans/:id/receipt",sGuard,loanReceiptView);
+safe("get","/api/admin/loan/:id/receipt",sGuard,loanReceiptView);
+safe("get","/api/loans/receipt",loanReceiptView);
+force("post","/api/loans/:id/receipt",loanUpload,loanReceiptUpload);
+force("post","/api/loans/admin/:id/receipt",sGuard,loanUpload,loanReceiptUpload);
+force("post","/api/admin/loans/:id/receipt",sGuard,loanUpload,loanReceiptUpload);
+force("post","/api/loans/upload-receipt",loanUpload,(req,res)=>{req.params.id=req.body?.loanId||req.body?.id;return loanReceiptUpload(req,res)});
+force("post","/api/loans/receipt",loanUpload,(req,res)=>{req.params.id=req.body?.loanId||req.body?.id;return loanReceiptUpload(req,res)});
+console.log("✅ SERVER3 v14 READY - ADMIN BOARD FULL + LOANS + RECEIPT");
 }catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
