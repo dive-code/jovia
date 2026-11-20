@@ -75,6 +75,7 @@
   .search-btn:hover{opacity:.92;}
   .clear-btn{height:42px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
   .search-result{padding:8px 20px 0;color:var(--muted);font-size:11px;display:none;}
+  .debug-box{margin:10px 20px 0;padding:10px 12px;background:#fff7dc;border:1px solid #fde68a;border-radius:10px;font-size:11px;color:#92400e;display:none;word-break:break-all;line-height:1.6;}
   .table-wrap{width:100%;overflow-x:auto;}
     table{width:100%;min-width:760px;border-collapse:collapse;}
     th{padding:12px 20px;background:#fbfafc;color:#918a95;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.55px;border-bottom:1px solid var(--border);}
@@ -85,6 +86,7 @@
   .user-name{color:var(--purple-dark);font-size:11px;font-weight:700;}
   .username{color:var(--muted);font-size:9px;margin-top:1px;}
   .email-text{color:#514955;font-size:11px;word-break:break-all;}
+  .email-missing{color:#dc2626;font-size:10px;font-weight:700;}
   .badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:700;}
   .badge.gold{color:#8b6500;background:#fff6d8;}
   .badge.silver{color:#66616a;background:#f0eef1;}
@@ -141,6 +143,7 @@
         <button type="button" class="clear-btn" onclick="clearReferralSearch()">✕ Clear</button>
       </div>
       <div class="search-result" id="searchResult"></div>
+      <div class="debug-box" id="debugBox"></div>
       <div class="table-wrap"><table><thead><tr><th>User</th><th>Email</th><th>Package</th><th>Status</th><th>Commission</th><th>Date Joined</th></tr></thead><tbody id="referralTableBody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr></tbody></table><div class="empty-state" id="emptyState"><div class="empty-icon">👥</div><h3>No referrals yet</h3><p>When someone joins Jovia Network using your referral link, their activity will appear here.</p></div></div>
     </section>
   </main>
@@ -148,17 +151,34 @@
 <script>
   const VERCEL_URL = "https://jovianetworkcom.vercel.app";
   let allReferrals = [];
+
   function escapeHtml(value){return String(value?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
   function formatMoney(value){const amount=Number(value||0);return "₦"+amount.toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});}
   function formatDate(value){if(!value){return "—";}const date=new Date(String(value).replace(" ","T"));if(Number.isNaN(date.getTime())){return String(value);}return date.toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"});}
   function getInitials(name){const text=String(name||"User").trim();if(!text){return "U";}const parts=text.split(/\s+/).filter(Boolean);if(parts.length===1){return parts[0].substring(0,2).toUpperCase();}return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();}
   function showToast(message){const toast=document.getElementById("toast");toast.textContent=message;toast.classList.add("show");clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast.classList.remove("show");},2500);}
+
+  // CHECK FIX 1: Try Server4 referrals FIRST, then old endpoint. This stops old endpoint from hiding email.
+  function pickEmail(item){
+    if(!item || typeof item!=="object") return "";
+    // Check every possible key + nested user object
+    const keys=["email","referred_email","user_email","referredEmail","email_address","contact_email","userEmail","mail","e_mail","ref_email","referred_user_email"];
+    for(const k of keys){ if(item[k] && String(item[k]).includes("@")) return String(item[k]).trim(); }
+    if(item.user && typeof item.user==="object"){ for(const k of keys){ if(item.user[k] && String(item.user[k]).includes("@")) return String(item.user[k]).trim(); } }
+    if(item.referred_user && typeof item.referred_user==="object"){ for(const k of keys){ if(item.referred_user[k] && String(item.referred_user[k]).includes("@")) return String(item.referred_user[k]).trim(); } }
+    if(item.data && typeof item.data==="object"){ for(const k of keys){ if(item.data[k] && String(item.data[k]).includes("@")) return String(item.data[k]).trim(); } }
+    return "";
+  }
+  function pickName(item){ return item.full_name||item.fullName||item.name||item.referredName||item.user_name||item.user?.full_name||item.user?.name||item.referred_user?.full_name||"User"; }
+  function pickUsername(item){ return item.username||item.referredUsername||item.user?.username||item.referred_user?.username||""; }
+
   async function apiFetch(url,options={}){
     const response=await fetch(url,{credentials:"include",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
     let data={};try{data=await response.json();}catch{data={};}
     if(!response.ok){throw new Error(data.message||data.error||"Request failed.");}
     return data;
   }
+
   async function loadReferralLink(){
     try{
       const meData = await apiFetch("/api/me");
@@ -185,6 +205,7 @@
     const fallback = (localStorage.getItem("joviaUsername") || localStorage.getItem("jovia_username") || "DIVEMEDIA").toUpperCase();
     document.getElementById("referralLink").value = `${VERCEL_URL}/register.html?ref=${encodeURIComponent(fallback)}`;
   }
+
   async function copyReferralLink(){
     const input=document.getElementById("referralLink");
     const value=input.value.trim();
@@ -192,11 +213,7 @@
     try{await navigator.clipboard.writeText(value);showToast("Referral link copied.");}
     catch{input.select();document.execCommand("copy");showToast("Referral link copied.");}
   }
-  // FIXED: get email from ANY key backend fit use
-  function getEmail(item){
-    const v = item.email || item.referred_email || item.user_email || item.referredEmail || item.email_address || item.referral_email || item.user?.email || item.referred_user?.email || item.referredUser?.email || "";
-    return String(v||"").trim();
-  }
+
   function renderList(list){
     const tbody=document.getElementById("referralTableBody");
     const emptyState=document.getElementById("emptyState");
@@ -215,7 +232,8 @@
     const box=document.getElementById("searchResult");
     if(!q){renderList(allReferrals);box.style.display="none";return;}
     const found=allReferrals.filter(item=>{
-      const hay=[getEmail(item),item.email,item.referred_email,item.user_email,item.full_name,item.fullName,item.name,item.referredName,item.user_name,item.username,item.referredUsername,item.referral_code,item.id,item.user_id,item.referred_user_id,item.referred_id].map(v=>String(v??"").toLowerCase()).join(" | ");
+      // CHECK FIX 2: search uses pickEmail() so e go find email even if key different
+      const hay=[pickEmail(item),pickName(item),pickUsername(item),item.referral_code,item.id,item.user_id,item.referred_user_id,item.referred_id,JSON.stringify(item)].map(v=>String(v??"").toLowerCase()).join(" | ");
       return hay.includes(q);
     });
     renderList(found);
@@ -231,21 +249,34 @@
     const emptyState=document.getElementById("emptyState");
     if(allReferrals.length){emptyState.style.display="none";}
   }
+
   async function loadReferralHistory(){
     const tbody=document.getElementById("referralTableBody");
     const emptyState=document.getElementById("emptyState");
+    const debugBox=document.getElementById("debugBox");
     tbody.innerHTML=`<tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr>`;
     emptyState.style.display="none";
     document.getElementById("searchResult").style.display="none";
+    debugBox.style.display="none";
+    let data=null, usedUrl="";
+    // Try Server4 fixed endpoint first, then old one
+    const tries=["/api/referrals?t="+Date.now(), "/api/server4/referrals?t="+Date.now(), "/api/referrals/list?t="+Date.now()];
+    for(const u of tries){
+      try{ data=await apiFetch(u); usedUrl=u; if(data && (data.referrals||data.data||data.users)) break; }catch(e){ console.log("referrals try failed", u, e.message); }
+    }
     try{
-      const data=await apiFetch("/api/referrals");
+      if(!data) throw new Error("No referrals endpoint responded");
       const referrals=data.referrals||data.data||data.users||[];
       allReferrals = Array.isArray(referrals) ? referrals : [];
-      // DEBUG: check if backend send email
-      console.log("REFERRALS SAMPLE:", allReferrals[0]);
-      if(allReferrals.length && !getEmail(allReferrals[0])){
-        console.warn("⚠️ Backend still no send email - server4 fix no deploy yet");
-        showToast("Backend no send email yet - deploy server4 fix");
+      // CHECK FIX 3: Debug box - e go tell you if API send email or not
+      if(allReferrals.length){
+        const first=allReferrals[0];
+        const keys=Object.keys(first||{}).join(", ");
+        const emailFound=pickEmail(first);
+        debugBox.style.display="block";
+        debugBox.innerHTML=`<b>DEBUG:</b> Loaded from <b>${escapeHtml(usedUrl)}</b> • ${allReferrals.length} referrals • First item keys: ${escapeHtml(keys)}<br>First email found: <b>${escapeHtml(emailFound||"NONE - backend no send email")}</b> • First user: ${escapeHtml(pickName(first))} / ${escapeHtml(pickUsername(first))}<br><small>If e show NONE, your Server 4 never deploy, or main server dey overwrite am. Deploy Server 4 LAST.</small>`;
+        console.log("REFERRALS DEBUG - first item:", first);
+        console.log("REFERRALS DEBUG - all keys:", keys);
       }
       updateStats(data,allReferrals);
       if(!allReferrals.length){tbody.innerHTML="";emptyState.style.display="block";emptyState.querySelector("h3").textContent="No referrals yet";emptyState.querySelector("p").textContent="When someone joins Jovia Network using your referral link, their activity will appear here.";return;}
@@ -255,8 +286,11 @@
     }catch(error){
       console.error("Referral history error:",error);
       tbody.innerHTML=`<tr><td colspan="6"><div class="loading">Unable to load referral history.</div></td></tr>`;
+      debugBox.style.display="block";
+      debugBox.innerHTML=`<b>DEBUG ERROR:</b> ${escapeHtml(error.message)} • Tried: ${tries.join(" , ")}`;
     }
   }
+
   function updateStats(data,referrals){
     const total=Number(data.totalReferrals??data.total??referrals.length??0);
     const successful=Number(data.successfulReferrals??data.approvedReferrals??referrals.filter(item=>["approved","active","completed"].includes(String(item.status||"").toLowerCase())).length);
@@ -268,20 +302,23 @@
     document.getElementById("totalEarnings").textContent=formatMoney(earnings);
     document.getElementById("heroEarnings").textContent=formatMoney(earnings);
   }
+
   function renderReferral(item){
-    const name=item.full_name||item.fullName||item.name||item.referredName||item.user_name||"User";
-    const username=item.username||item.referredUsername||"";
-    const email=getEmail(item) || ("ID "+(item.user_id||item.referred_id||item.id||""));
-    const packageName=item.package||item.package_name||item.plan||"—";
-    const statusRaw=String(item.status||"pending").toLowerCase();
+    const name=pickName(item);
+    const username=pickUsername(item);
+    const email=pickEmail(item);
+    const packageName=item.package||item.package_name||item.plan||item.user?.package||"—";
+    const statusRaw=String(item.status||item.user?.status||"pending").toLowerCase();
     let statusClass="pending";let statusText="Pending";
     if(["approved","active","completed"].includes(statusRaw)){statusClass="approved";statusText="Approved";}
     else if(["rejected","declined"].includes(statusRaw)){statusClass="rejected";statusText="Rejected";}
     const commission=Number(item.commission??item.earning??item.amount??0);
-    const date=item.created_at||item.createdAt||item.date||item.joined_at||item.joinedAt||"";
+    const date=item.created_at||item.createdAt||item.date||item.joined_at||item.joinedAt||item.user?.created_at||"";
     const packageClass=String(packageName).toLowerCase().includes("gold")?"gold":"silver";
-    return `<tr><td><div class="user"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div class="user-name">${escapeHtml(name)}</div>${username?`<div class="username">@${escapeHtml(username)}</div>`:""}</div></div></td><td><span class="email-text">${escapeHtml(email)}</span></td><td><span class="badge ${packageClass}">${escapeHtml(packageName)}</span></td><td><span class="status ${statusClass}">${escapeHtml(statusText)}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td><span class="date">${escapeHtml(formatDate(date))}</span></td></tr>`;
+    const emailHtml=email ? `<span class="email-text">${escapeHtml(email)}</span>` : `<span class="email-missing">No email in API ⚠️</span>`;
+    return `<tr><td><div class="user"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div class="user-name">${escapeHtml(name)}</div>${username?`<div class="username">@${escapeHtml(username)}</div>`:""}</div></div></td><td>${emailHtml}</td><td><span class="badge ${packageClass}">${escapeHtml(packageName)}</span></td><td><span class="status ${statusClass}">${escapeHtml(statusText)}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td><span class="date">${escapeHtml(formatDate(date))}</span></td></tr>`;
   }
+
   document.addEventListener("DOMContentLoaded",()=>{Promise.allSettled([loadReferralLink(),loadReferralHistory()]);});
 </script>
 </body>
