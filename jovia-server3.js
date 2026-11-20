@@ -582,7 +582,7 @@ const vendorPending = (req,res)=>{
   try{
     const v = resolveVendor(req);
     if(!v || normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
-    let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 100").all(); }catch{}
+    let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 1000").all(); }catch{}
     return res.json({success:true, users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST[normPkg(x)]||9000})), total:rows.length, vendor_balance:Number(v.balance||0)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
