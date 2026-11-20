@@ -214,7 +214,7 @@ force4("get","/api/referrals/history",userGuard4,referralsHandler4);
 // ---------- FIX 71000 -> 7100 ----------
 force4("post","/api/admin/fix-71000",sGuard4,(req,res)=>{try{let report=[];const tryRun=(label,sql)=>{try{const r=db.prepare(sql).run();report.push(`${label}: ${r.changes} fixed`)}catch(e){report.push(`${label}: skipped`)}};tryRun("tasks.reward","UPDATE tasks SET reward=7100 WHERE reward=71000");tryRun("jobs.reward","UPDATE jobs SET reward=7100 WHERE reward=71000");let corrected=0;try{const txs=db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();for(const t of txs){const already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id,'FIX_71000_'+t.id);if(already)continue;db.prepare("UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0)-63900) WHERE id=?").run(t.user_id);db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(t.user_id,'task_correction',-63900,'wallet','FIX_71000_'+t.id,'Correction: 71,000 -> 7,100');corrected++}report.push(`users corrected: ${corrected}`)}catch(e){report.push(`users corrected: skipped`)}return res.json({success:true,message:`Done! 71,000 -> 7,100. ${corrected} users corrected.`,report})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
-// ========== BACKPAY 2 - WORKS WITH BACKPAY 1 (MAIN SERVER) - DIRECT REFERRAL ONLY 8K / 13K, NO UPGRADE ==========
+// ========== BACKPAY 2 - NO BALANCING - IF DON RECEIVE BEFORE, SKIP ==========
 const findUplineBackpay2=(u)=>{
   try{
     const cols=["referrer_id","referred_by","referrer","referredBy","invited_by","upline_id","parent_id","sponsor_id","referral_code_used","used_referral_code","referred_by_code"];
@@ -241,40 +241,53 @@ const runBackpay2=(from,to,mode)=>{
   const fromDate=from?from+" 00:00:00":"2000-01-01";
   const toDate=to?to+" 23:59:59":"2099-12-31";
   const all=db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') AND created_at BETWEEN ? AND ? ORDER BY id ASC").all(fromDate,toDate);
-  let missing=[],paid=[],noUpline=[];
+  let missing=[],paid=[],skipped=[],noUpline=[];
   for(const u of all){
     const uplineId=Number(u.referrer_id||0)||findUplineBackpay2(u);
     if(!uplineId){noUpline.push({id:u.id,username:u.username,package:u.package,created_at:u.created_at});continue;}
     const referrer=db.prepare("SELECT * FROM users WHERE id=?").get(uplineId);
     if(!referrer||referrer.id===u.id){noUpline.push({id:u.id,username:u.username,package:u.package});continue;}
+    // === NO BALANCING: if don receive ANY money for this person before, SKIP ===
     let existing=null; try{existing=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);}catch{}
     const alreadyPaid=existing?Number(existing.amount||0):0;
+    if(existing && alreadyPaid>0){
+      skipped.push({id:u.id,username:u.username,uplineId,bonus:alreadyPaid,reason:"Already got referral_rewards - skipped, no balancing"});
+      paid.push({id:u.id,username:u.username,uplineId,bonus:alreadyPaid,skipped:true});
+      continue;
+    }
+    let wm=null; try{wm=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR reference=?)").get(uplineId,`BACKPAY_ALL_${u.id}`,`REF_BONUS_${u.id}`);}catch{}
+    if(wm){
+      skipped.push({id:u.id,username:u.username,uplineId,bonus:Number(wm.amount||0),reason:"Already got wallet "+wm.reference+" - skipped, no balancing"});
+      paid.push({id:u.id,username:u.username,uplineId,bonus:Number(wm.amount||0),skipped:true});
+      continue;
+    }
+    // Also check any referral_reward for this username before - if exist, skip
+    let anyR=null; try{anyR=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND type IN ('referral_reward','referral_bonus') AND description LIKE ?").get(uplineId,`%${u.username}%`);}catch{}
+    if(anyR){
+      skipped.push({id:u.id,username:u.username,uplineId,bonus:Number(anyR.amount||0),reason:"Already got referral_reward before - skipped"});
+      paid.push({id:u.id,username:u.username,uplineId,bonus:Number(anyR.amount||0),skipped:true});
+      continue;
+    }
     const correct=correctBackpay2(u.package);
     if(correct<=0) continue;
-    const toPay=correct-alreadyPaid;
-    if(toPay<=0){paid.push({id:u.id,username:u.username,uplineId,bonus:alreadyPaid});continue;}
-    let wm=null; try{wm=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR reference=?)").get(uplineId,`BACKPAY_ALL_${u.id}`,`REF_BONUS_${u.id}`);}catch{}
-    if(wm && alreadyPaid>=correct){paid.push({id:u.id,username:u.username,uplineId,bonus:alreadyPaid});continue;}
-    missing.push({id:u.id,username:u.username,package:u.package,uplineId,bonus:toPay,correct,alreadyPaid,created_at:u.created_at});
+    // FULL amount only, no minus, no balancing
+    missing.push({id:u.id,username:u.username,package:u.package,uplineId,bonus:correct,correct,alreadyPaid:0,created_at:u.created_at});
   }
-  if(mode!=="pay") return {total_active:all.length,missing_count:missing.length,paid_count:paid.length,no_upline_count:noUpline.length,total_to_pay:missing.reduce((s,x)=>s+x.bonus,0),missing,paid,noUpline};
+  if(mode!=="pay") return {total_active:all.length,missing_count:missing.length,paid_count:paid.length,skipped_count:skipped.length,no_upline_count:noUpline.length,total_to_pay:missing.reduce((s,x)=>s+x.bonus,0),missing,paid,skipped,noUpline};
   let paidNow=0,totalPaid=0,details=[];
   for(const m of missing){
-    try{
-      let ex=null; try{ex=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(m.id);}catch{}
-      if(ex) db.prepare("UPDATE referral_rewards SET amount=? WHERE referred_user_id=?").run(m.correct,m.id);
-      else db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(m.uplineId,m.id,m.correct,"",""+m.package);
-    }catch(e){ console.log("Backpay2 referral_rewards skip",e.message); }
+    // INSERT ONLY - no UPDATE, because we already skip if row exist
+    try{ db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(m.uplineId,m.id,m.correct,"",""+m.package); }catch(e){ console.log("Backpay2 insert skip (already exist)",e.message); continue; }
     db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+?, total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(m.bonus,m.bonus,m.uplineId);
     db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(m.uplineId,"referral_reward",m.bonus,"affiliate",`BACKPAY_ALL_${m.id}`,`Backpay 2 - ${m.username} ${m.package}`);
     try{notify4(m.uplineId,"Referral Bonus 💰",`You don get ₦${m.bonus.toLocaleString()} backpay for ${m.username} (${m.package})`);}catch{}
     paidNow++;totalPaid+=m.bonus;details.push(m);
   }
-  return {paid:paidNow,paidCount:paidNow,totalPaid,total_to_pay:totalPaid,details};
+  return {paid:paidNow,paidCount:paidNow,totalPaid,total_to_pay:totalPaid,details,skipped};
 };
-force4("get","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,message:`Backpay 2 Check - Missing ${r.missing_count}, Already Paid ${r.paid_count}, No Upline ${r.no_upline_count}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("get","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,message:`Backpay 2 Check - Missing ${r.missing_count}, Already Paid/Skipped ${r.paid_count}, No Upline ${r.no_upline_count}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 force4("post","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const b=req.body||{};const r=runBackpay2(b.from||null,b.to||null,"pay");return res.json({success:true,message:`Backpay 2 Done - Paid ${r.paid}, Total ₦${r.totalPaid}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
-force4("post","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const {from,to,mode}=req.body||{};const r=runBackpay2(from||null,to||null,mode==="pay"?"pay":"check");if(mode==="pay")return res.json({success:true,message:`Backpay Range Done ${from} to ${to} - Paid ${r.paid}, Total ₦${r.totalPaid}`,...r});return res.json({success:true,from,to,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("post","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const {from,to,mode}=req.body||{};const r=runBackpay2(from||null,to||null,mode==="pay"?"pay":"check");if(mode==="pay")return res.json({success:true,message:`Backpay Range Done ${from} to ${to} - Paid ${r.paid}, Skipped ${r.skipped?r.skipped.length:0}, Total ₦${r.totalPaid}`,...r});return res.json({success:true,from,to,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 force4("get","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,from:req.query.from||null,to:req.query.to||null,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
 // ---------- PING ----------
