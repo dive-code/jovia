@@ -660,7 +660,7 @@ const adminCreditVendor = (req,res)=>{
     if(!v) return res.status(404).json({success:false,message:"Vendor not found"});
     const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id);
     if(!user) return res.status(404).json({success:false,message:"Vendor user not found"});
-    // ✅ FIX: Only vendors.balance - NO double credit to affiliate_balance
+// ✅ FIX: Only vendors.balance - NO double credit to affiliate_balance
     db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id);
     try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{}
     try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{}
@@ -723,7 +723,7 @@ try{
   console.log("✅ SERVER 4 CONNECTED TO SERVER 3 - WORKING AS ONE");
 }catch(e){
   console.log("⚠️ Server4 file not found, loading Server4 inside Server 3 as backup:", e.message);
-  // BACKUP: If server4.js no dey, these 4 go still work inside Server 3, so Server 4 no go fail
+  // BACKUP: If server4.js no dey, these go still work inside Server 3, so Server 4 no go fail
   try{
     // 2. Admin Search
     force("get","/api/admin/users/search", sGuard, (req,res)=>{
@@ -746,6 +746,22 @@ try{
         return res.json({success:true,user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name,package:user.package||user.plan,account_status:user.account_status},balances:{wallet_balance:w,affiliate_balance:a,referral_balance:r,game_balance:g,total_balance:w+a+r+g}});
       }catch(err){ return res.status(500).json({success:false,message:err.message}); }
     });
+    // 4b. Admin Balance History - ADDED BACK
+    force("get","/api/admin/balance/history", sGuard, (req,res)=>{
+      try{
+        const v = req.query.email || req.query.username || req.query.userId || req.query.id || "";
+        let rows=[];
+        if(v){
+          const user=findUserByVal(v);
+          if(!user) return res.status(404).json({success:false,message:"User not found"});
+          try{ rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
+          return res.json({success:true,user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name},history:rows,transactions:rows,total:rows.length});
+        }
+        try{ rows=db.prepare("SELECT * FROM wallet_transactions ORDER BY id DESC LIMIT 100").all(); }catch{}
+        return res.json({success:true,history:rows,transactions:rows,total:rows.length});
+      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
+    });
+    force("get","/api/admin/balance-history", sGuard, (req,res)=>{ return res.redirect(307, "/api/admin/balance/history?key=jovia123"); });
     // 5. Admin Upgrades List
     force("get","/api/admin/upgrades/list", sGuard, (req,res)=>{
       try{
@@ -755,6 +771,16 @@ try{
         return res.json({success:true,upgrades:rows,total:rows.length,list:rows});
       }catch(err){ return res.status(500).json({success:false,message:err.message}); }
     });
+    // 5b. Loans Admin - ADDED BACK
+    force("get","/api/loans/admin", sGuard, (req,res)=>{
+      try{
+        let rows=[];
+        try{ if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='loans'").get()) rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 500").all(); }catch{}
+        if(!rows.length){ try{ if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='loan_requests'").get()) rows=db.prepare("SELECT * FROM loan_requests ORDER BY id DESC LIMIT 500").all(); }catch{} }
+        return res.json({success:true,loans:rows,total:rows.length,list:rows});
+      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
+    });
+    force("get","/api/admin/loans", sGuard, (req,res)=>{ return res.redirect(307, "/api/loans/admin?key=jovia123"); });
     // 6. Game Screenshot No-Duplicate
     try{ db.exec(`CREATE TABLE IF NOT EXISTS screenshot_hashes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,hash TEXT UNIQUE,filename TEXT,game_id TEXT,created_at TEXT DEFAULT (datetime('now')))`); }catch{}
     force("post","/api/game/upload-screenshot", (req,res)=>{
