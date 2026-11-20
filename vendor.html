@@ -41,9 +41,22 @@
 function formatNaira(n){return "₦"+Number(n||0).toLocaleString("en-NG")}
 async function loadAll(){
   try{
-    const r=await fetch('/api/vendor/me?t='+Date.now(),{credentials:'include',cache:'no-store'});
-    const d=await r.json();
-    if(!d.success||!d.vendor){document.getElementById('vendorPendingList').innerHTML='<p style="color:#dc2626;text-align:center">❌ You no be Vendor yet. Go Profile, or ask Admin to make you Vendor.</p>';return;}
+    let myEmail = "";
+    try{
+      const mr = await fetch('/api/me?t='+Date.now(),{credentials:'include',cache:'no-store'});
+      const md = await mr.json();
+      const mu = md.user || md.data?.user || md;
+      myEmail = mu?.email || "";
+      window.__myEmail = myEmail;
+      window.__myId = mu?.id || "";
+    }catch{}
+    const url = '/api/vendor/me?t='+Date.now() + (myEmail ? '&email='+encodeURIComponent(myEmail) : '');
+    const r = await fetch(url,{credentials:'include',cache:'no-store'});
+    const d = await r.json();
+    if(!d.success||!d.vendor){
+      document.getElementById('vendorPendingList').innerHTML='<p style="color:#dc2626;text-align:center">❌ You no be Vendor yet. Go Profile, or ask Admin to make you Vendor.<br><small>Email checked: '+(myEmail||'none')+' | ID: '+(window.__myId||'none')+'</small></p>';
+      return;
+    }
     const st=String(d.vendor_status||d.vendor?.status||'').toUpperCase();
     document.getElementById('vendorStatusText').textContent=st;
     document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??d.vendor?.balance??0);
@@ -55,7 +68,8 @@ async function loadAll(){
 async function loadPending(){
   const el=document.getElementById('vendorPendingList'); el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:12px">⏳ Loading pending users...</p>';
   try{
-    const r=await fetch('/api/vendor/pending-users?t='+Date.now(),{credentials:'include',cache:'no-store'});
+    const q = window.__myEmail ? '&email='+encodeURIComponent(window.__myEmail) : '';
+    const r=await fetch('/api/vendor/pending-users?t='+Date.now()+q,{credentials:'include',cache:'no-store'});
     const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Not approved yet');
     document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??0);
     if(!d.users||!d.users.length){el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:14px">No pending users to activate yet.</p>';return;}
@@ -70,7 +84,8 @@ async function loadPending(){
 async function activateUser(id,name){
   if(!confirm('Activate '+name+'? E go deduct from your Vendor Balance.')) return;
   try{
-    const r=await fetch('/api/vendor/activate',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({userId:id})});
+    const body={userId:id}; if(window.__myEmail) body.email=window.__myEmail;
+    const r=await fetch('/api/vendor/activate',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)});
     const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Activate failed');
     alert('✅ '+d.message); loadAll();
   }catch(e){alert('❌ '+e.message)}
