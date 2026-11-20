@@ -662,7 +662,7 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
     tryRun("products.price", "UPDATE products SET price=7100 WHERE price=71000");
     tryRun("products.amount", "UPDATE products SET amount=7100 WHERE amount=71000");
     let corrected = 0;
-  try{
+    try{
       const txs = db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();
       for(const t of txs){
         const already = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id, 'FIX_71000_'+t.id);
@@ -682,16 +682,5 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
 force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({success:true, message:"Use POST /api/admin/fix-71000 to run the fix. Send POST with key=jovia123"}); });
 
 console.log("✅ LOANS v4 READY - FORGOT PASSWORD + VENDOR FIXED + NO DOUBLE DEDUCT + 71000");
-
-// ---------- ONLY ADDITION: CONNECT TO SERVER 4 - YOUR PREVIOUS SERVER NO TOUCH ----------
-// Server 4 file must dey same folder as this file (server3)
-// Any new fix from now go dey inside server4.js only, this file go stay as e be
-try{
-  require("./server4")(app, db, requireUser, requireAdmin);
-  console.log("✅ SERVER 4 CONNECTED TO SERVER 3 - WORKING AS ONE");
-}catch(e){
-  console.log("⚠️ Server4 file not found yet, Server 3 go still work alone:", e.message);
-}
-
 }catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
 };
