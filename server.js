@@ -586,38 +586,50 @@ app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
-// === BACKPAY TOTAL - FROM BEGINNING - REFUND REFERRAL ===
+// === BACKPAY 1 FIXED - MAIN SERVER - DIRECT REFERRAL ONLY 8K / 13K ===
 app.get("/api/admin/backpay-all", (req,res)=>{
-  if (req.query.key !== 'jovia123') {
-    return res.status(401).json({success:false, message:"Admin authentication required"});
-  }
+  if (req.query.key !== 'jovia123') return res.status(401).json({success:false, message:"Admin authentication required"});
   try{
+    const findUpline1 = (u)=>{
+      // Check ALL referral columns, no be referrer_id only
+      const cols = ["referrer_id","referred_by","referrer","referredBy","invited_by","upline_id","parent_id","sponsor_id","referral_code_used","used_referral_code","referred_by_code"];
+      for(const c of cols){
+        const v = u[c]; if(!v) continue;
+        if(/^\d+$/.test(String(v).trim())) return Number(v);
+        const found = db.prepare("SELECT * FROM users WHERE referral_code=? COLLATE NOCASE").get(String(v).trim())
+          || db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(String(v).trim());
+        if(found) return Number(found.id);
+      }
+      // Last: check referrals table
+      try{
+        const r = db.prepare("SELECT * FROM referrals WHERE referred_id=? LIMIT 1").get(u.id)
+          || db.prepare("SELECT * FROM referrals WHERE referred_user_id=? LIMIT 1").get(u.id);
+        if(r) return Number(r.referrer_id||r.user_id||0);
+      }catch{}
+      return 0;
+    };
     const result = db.transaction(()=>{
       let paidCount = 0, totalPaid = 0, details = [];
       const allActivated = db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all();
       for(const u of allActivated){
-        if(!u.referrer_id) continue;
-        const referrer = db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id);
+        const uplineId = Number(u.referrer_id||0) || findUpline1(u);
+        if(!uplineId) continue;
+        const referrer = db.prepare("SELECT * FROM users WHERE id=?").get(uplineId);
         if(!referrer || referrer.id === u.id) continue;
+        // Check BOTH marks: referral_rewards + wallet_transactions (so Backpay 2 no duplicate)
         const existing = db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);
         const alreadyPaid = existing ? Number(existing.amount||0) : 0;
         const pkg = String(u.package || "").toUpperCase();
         let correct = 0;
-        if(pkg === "SUPER"){
-          if(alreadyPaid === 13000) correct = 000;
-          else if(alreadyPaid === 8000) correct = 000;
-          else if(alreadyPaid === 0) correct = 0;
-          else correct = alreadyPaid;
-        } else if(pkg === "GOLD"){
-          correct = 13000;
-        } else if(pkg === "SILVER"){
-          correct = 8000;
-        } else {
-          correct = 0;
-        }
+        if(pkg.includes("SUPER") || pkg.includes("GOLD")) correct = 13000;
+        else if(pkg.includes("SILVER")) correct = 8000;
+        else correct = 0;
         if(correct <= 0) continue;
         const toPay = correct - alreadyPaid;
         if(toPay <= 0) continue;
+        // Also check wallet mark from Backpay 2
+        const walletMark = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR reference=?)").get(referrer.id, `BACKPAY_ALL_${u.id}`, `REF_BONUS_${u.id}`);
+        if(walletMark && alreadyPaid >= correct) continue;
         if(existing){
           db.prepare("UPDATE referral_rewards SET amount=? WHERE referred_user_id=?").run(correct, u.id);
         } else {
@@ -632,189 +644,6 @@ app.get("/api/admin/backpay-all", (req,res)=>{
     })();
     return res.json({success:true, message:`Backpay TOTAL done - ${result.paidCount} people refunded, total ₦${result.totalPaid}`, ...result});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-});
-app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
-  try{
-    const rows = db.prepare("SELECT * FROM private_messages ORDER BY id DESC LIMIT 200").all();
-    const mapped = rows.map(r=>{
-      let ids=[]; try{ids=JSON.parse(r.recipient_ids||"[]");}catch{}
-      let recips=[];
-      if(ids.length && ids.length<=20){
-        try{ recips = db.prepare(`SELECT id, full_name, username, email FROM users WHERE id IN (${ids.map(()=>'?').join(',')})`).all(...ids); }catch{}
-      }
-      return {id:r.id, title:r.title, message:r.message, recipient_ids:ids, recipients:recips.length?recips:r.recipient_summary, recipient_summary:r.recipient_summary, type:r.type, status:r.status, created_at:r.created_at, createdAt:r.created_at};
-    });
-    return res.json({success:true, messages:mapped});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
-});
-app.get("/api/user/private-messages",requireUser,(req,res)=>{
-  try{
-    const userId = req.user.id;
-    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
-    const unread = [];
-    for(const msg of all){
-      let ids=[]; try{ids=JSON.parse(msg.recipient_ids||"[]");}catch{}
-      if(!ids.includes(userId)) continue;
-      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(msg.id, userId);
-      if(!read) unread.push({id:msg.id, title:msg.title, message:msg.message, type:msg.type, created_at:msg.created_at});
-    }
-    return res.json({success:true, messages:unread, count:unread.length});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
-});
-app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
-  try{
-    const {recipientIds, title, message, type} = req.body||{};
-    if(!Array.isArray(recipientIds) || recipientIds.length===0) return res.status(400).json({success:false,message:"Select at least one recipient"});
-    const cleanTitle = cleanString(title,150);
-    const cleanMessage = cleanString(message,5000);
-    if(!cleanTitle) return res.status(400).json({success:false,message:"Title required"});
-    if(!cleanMessage) return res.status(400).json({success:false,message:"Message required"});
-    const validIds = recipientIds.map(n=>Number(n)).filter(n=>Number.isInteger(n)&&n>0);
-    if(!validIds.length) return res.status(400).json({success:false,message:"No valid recipient IDs"});
-    let summary = "";
-    if(validIds.length===1){
-      const u = db.prepare("SELECT full_name, username, email FROM users WHERE id=?").get(validIds[0]);
-      summary = u? `${u.full_name} (${u.username}) - ONE user` : `User ID ${validIds[0]} - ONE`;
-    } else {
-      summary = `${validIds.length} users - ALL/POP`;
-    }
-    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", req.admin.username||"admin");
-    return res.json({success:true, message:`Pop sent to ${validIds.length} user(s)`, id:result.lastInsertRowid, recipientCount:validIds.length, recipients:summary});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
-});
-app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
-  try{
-    const id = toPositiveInteger(req.body?.id || req.body?.message_id);
-    if(!id) return res.status(400).json({success:false,message:"Invalid id"});
-    db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
-    return res.json({success:true, message:"Marked as read"});
-  }catch(e){return res.status(400).json({success:false,message:e.message});}
-});
-app.post("/api/admin/email/send",requireAdmin,async(req,res)=>{
-  try{
-    const {recipients, subject, message} = req.body||{};
-    if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients"});
-    const cleanSub = cleanString(subject,200);
-    const cleanMsg = cleanString(message,10000);
-    if(!cleanSub) return res.status(400).json({success:false,message:"Subject required"});
-    if(!cleanMsg) return res.status(400).json({success:false,message:"Message required"});
-    const unique = [...new Set(recipients.map(e=>normalizeEmail(e)).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))];
-    if(!unique.length) return res.status(400).json({success:false,message:"No valid emails"});
-    if(!BREVO_API_KEY) return res.status(400).json({success:false,message:"BREVO_API_KEY not set"});
-    let sent=0, failed=0;
-    const errors=[];
-    for(const email of unique){
-      try{ await sendBrevoEmail(email, cleanSub, cleanMsg); sent++; }catch(err){ failed++; errors.push(`${email}: ${err.message}`); }
-    }
-    return res.json({success:true, sent, failed, total:unique.length, message:`Email campaign: Sent ${sent}, Failed ${failed} of ${unique.length}`, errors:errors.slice(0,5)});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
-});
-app.get("/api/announcement",(req,res)=>{
-  try{
-    const row = db.prepare("SELECT * FROM announcements ORDER BY id DESC LIMIT 1").get();
-    if(!row) return res.json({success:true, enabled:false, title:"", message:"", channelUrl:"https://t.me/jovianetwerk", channelText:"Join Channel"});
-    return res.json({success:true, enabled:Boolean(row.enabled), title:row.title, message:row.message, channelUrl:row.channel_url, channelText:row.channel_text, updatedAt:row.updated_at});
-  }catch(e){return res.json({success:true, enabled:false, title:"Join Official Channel", message:"Join our channel", channelUrl:"https://t.me/jovianetwerk", channelText:"Join Official Channel"});}
-});
-// === NOTIFICATIONS FOR BELL - ACTIVE ONLY, HISTORY STAYS ===
-app.get("/api/notifications", requireUser, (req,res)=>{
-  try{
-    const u = req.user;
-    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
-      return res.json({success:true, notifications:[]});
-    }
-    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
-    const out = [];
-    for(const m of all){
-      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
-      if(!ids.includes(u.id)) continue;
-      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
-      out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read: read?1:0, read: !!read});
-    }
-    return res.json({success:true, notifications:out});
-  }catch(e){ return res.json({success:true, notifications:[]}); }
-});
-app.get("/api/notifications/unread", requireUser, (req,res)=>{
-  try{
-    const u = req.user;
-    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
-      return res.json({success:true, notifications:[]});
-    }
-    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
-    const out = [];
-    for(const m of all){
-      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
-      if(!ids.includes(u.id)) continue;
-      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
-      if(!read) out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read:0, read:false});
-    }
-    return res.json({success:true, notifications:out});
-  }catch(e){ return res.json({success:true, notifications:[]}); }
-});
-app.get("/api/user/notifications", requireUser, (req,res)=>{
-  try{
-    const u = req.user;
-    if(u.account_status !== 'active' && u.account_status !== 'approved' && u.id !== 1){
-      return res.json({success:true, notifications:[]});
-    }
-    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
-    const out = [];
-    for(const m of all){
-      let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
-      if(!ids.includes(u.id)) continue;
-      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(m.id, u.id);
-      out.push({id:m.id, title:m.title, message:m.message, created_at:m.created_at, is_read: read?1:0, read: !!read});
-    }
-    return res.json({success:true, notifications:out});
-  }catch(e){ return res.json({success:true, notifications:[]}); }
-});
-app.post("/api/notifications/read", requireUser, (req,res)=>{
-  const id = Number(req.body?.id || req.body?.message_id);
-  if(!id) return res.json({success:false});
-  db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
-  return res.json({success:true});
-});
-app.post("/api/user/private-messages/read", requireUser, (req,res)=>{
-  const id = Number(req.body?.id || req.body?.message_id);
-  if(!id) return res.json({success:false});
-  db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
-  return res.json({success:true});
-});
-app.post("/api/notifications/toast-shown", requireUser, (req,res)=>{
-  const id = Number(req.body?.id || req.body?.message_id);
-  if(!id) return res.json({success:false});
-  db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
-  return res.json({success:true});
-});
-app.post("/api/notifications/read-all", requireUser, (req,res)=>{
-  const all = db.prepare("SELECT * FROM private_messages WHERE status='sent'").all();
-  for(const m of all){
-    let ids=[]; try{ ids=JSON.parse(m.recipient_ids||"[]"); }catch{}
-    if(ids.includes(req.user.id)){
-      db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(m.id, req.user.id);
-    }
-  }
-  return res.json({success:true});
-});
-app.post("/api/announcement",requireAdmin,(req,res)=>{
-  try{
-    let {enabled, title, message, channelUrl, channelText} = req.body||{};
-    const en = (enabled===true || enabled==='true' || enabled==='1' || enabled===1)?1:0;
-    const ct = cleanString(title,200)||"Join Official Channel";
-    const cm = cleanString(message,2000)||"Join our official channel";
-    const cu = cleanString(channelUrl,500)||"https://t.me/jovianetwerk";
-    const ctt = cleanString(channelText,100)||"Join Official Channel";
-    const ex = db.prepare("SELECT id FROM announcements LIMIT 1").get();
-    if(ex) db.prepare("UPDATE announcements SET enabled=?, title=?, message=?, channel_url=?, channel_text=?, updated_at=CURRENT_TIMESTAMP WHERE id=?").run(en, ct, cm, cu, ctt, ex.id);
-    else db.prepare("INSERT INTO announcements (enabled,title,message,channel_url,channel_text) VALUES (?,?,?,?,?)").run(en, ct, cm, cu, ctt);
-    return res.json({success:true, message:"Announcement saved", announcement:{enabled:!!en, title:ct, message:cm, channelUrl:cu, channelText:ctt}});
-  }catch(e){return res.status(400).json({success:false,message:e.message});}
-});
-app.get("/api/admin/announcement",requireAdmin,(req,res)=>{
-  try{
-    const row = db.prepare("SELECT * FROM announcements ORDER BY id DESC LIMIT 1").get();
-    return res.json({success:true, announcement:row});
-  }catch(e){return res.status(500).json({success:false,message:e.message});}
 });
 app.get("/api/admin/withdrawals",requireAdmin,(req,res)=>{try{const status=cleanString(req.query.status,30).toLowerCase();let rows;if(["pending","processing","paid","rejected"].includes(status)){rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.status=? ORDER BY w.id DESC`).all(status);}else{rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC`).all();}return res.json({success:true,withdrawals:rows.map((row)=>({...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)}})),withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled()});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawals."});}});
 app.get("/api/admin/withdrawals/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});const row=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.id=?`).get(id);if(!row)return res.status(404).json({success:false,message:"Withdrawal not found."});const events=db.prepare(`SELECT * FROM withdrawal_events WHERE withdrawal_id=? ORDER BY id DESC`).all(id);return res.json({success:true,withdrawal:{...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)},events}});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawal."});}});
