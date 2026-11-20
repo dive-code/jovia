@@ -705,7 +705,7 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
         try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(t.user_id, 'Task Reward Corrected', 'That task reward na ₦7,100, no be ₦71,000. We don remove extra ₦63,900. Your ₦7,100 still dey.'); }catch{}
         corrected++;
       }
-      report.push(`users corrected: ${corrected} users, ₦63,900 removed each`);
+     report.push(`users corrected: ${corrected} users, ₦63,900 removed each`);
     }catch(e){ report.push(`users corrected: skipped`); }
     tryRun("wallet_transactions task 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%task%'");
     tryRun("wallet_transactions job 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%job%'");
@@ -715,5 +715,65 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
 force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({success:true, message:"Use POST /api/admin/fix-71000 to run the fix. Send POST with key=jovia123"}); });
 
 console.log("✅ LOANS v4 READY - FORGOT PASSWORD + VENDOR FIXED + NO DOUBLE DEDUCT + 71000");
+
+// ---------- REQUIRED STUFF SO SERVER 4 CAN CONNECT AND WORK WITH SERVER 3 - ADD AM HERE ----------
+try{
+  // Server 4 file must dey same folder as Server 3
+  require("./server4")(app, db, requireUser, requireAdmin);
+  console.log("✅ SERVER 4 CONNECTED TO SERVER 3 - WORKING AS ONE");
+}catch(e){
+  console.log("⚠️ Server4 file not found, loading Server4 inside Server 3 as backup:", e.message);
+  // BACKUP: If server4.js no dey, these 4 go still work inside Server 3, so Server 4 no go fail
+  try{
+    // 2. Admin Search
+    force("get","/api/admin/users/search", sGuard, (req,res)=>{
+      try{
+        const q = String(req.query.q || req.query.search || req.query.email || req.query.username || "").trim();
+        if(!q) return res.status(400).json({success:false,message:"Enter email / name / username / ID"});
+        const like="%"+q+"%";
+        const rows=db.prepare("SELECT * FROM users WHERE CAST(id AS TEXT) LIKE ? OR username LIKE ? OR email LIKE ? OR full_name LIKE ? ORDER BY id DESC LIMIT 100").all(like,like,like,like);
+        return res.json({success:true, users:rows, total:rows.length});
+      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
+    });
+    // 4. Admin Balance User
+    force("get","/api/admin/balance/user", sGuard, (req,res)=>{
+      try{
+        const v = req.query.email || req.query.username || req.query.userId || req.query.id || "";
+        if(!v) return res.status(400).json({success:false,message:"Enter email / username / ID"});
+        const user = findUserByVal(v);
+        if(!user) return res.status(404).json({success:false,message:"User not found"});
+        const w=Number(user.wallet_balance||0), a=Number(user.affiliate_balance||0), r=Number(user.referral_balance||0), g=Number(user.game_balance||0);
+        return res.json({success:true,user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name,package:user.package||user.plan,account_status:user.account_status},balances:{wallet_balance:w,affiliate_balance:a,referral_balance:r,game_balance:g,total_balance:w+a+r+g}});
+      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
+    });
+    // 5. Admin Upgrades List
+    force("get","/api/admin/upgrades/list", sGuard, (req,res)=>{
+      try{
+        let rows=[];
+        try{ if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='upgrades'").get()) rows=db.prepare("SELECT * FROM upgrades ORDER BY id DESC LIMIT 500").all(); }catch{}
+        if(!rows.length){ const users=db.prepare("SELECT id,username,email,full_name,package,plan,account_status,created_at FROM users ORDER BY id DESC LIMIT 200").all(); rows=users.map(u=>({id:u.id,user_id:u.id,username:u.username,email:u.email,full_name:u.full_name,to_package:u.package||u.plan,status:u.account_status,created_at:u.created_at})); }
+        return res.json({success:true,upgrades:rows,total:rows.length,list:rows});
+      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
+    });
+    // 6. Game Screenshot No-Duplicate
+    try{ db.exec(`CREATE TABLE IF NOT EXISTS screenshot_hashes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,hash TEXT UNIQUE,filename TEXT,game_id TEXT,created_at TEXT DEFAULT (datetime('now')))`); }catch{}
+    force("post","/api/game/upload-screenshot", (req,res)=>{
+      try{
+        const crypto=require("crypto");
+        const uid = resolveUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+        const b=req.body||{}; const raw = req.file ? req.file.buffer : Buffer.from(String(b.screenshot_base64||b.screenshot||b.image||b.proof||"").replace(/^data:[^;]+;base64,[STRIPPED],"base64");
+        if(!raw.length) return res.status(400).json({success:false,message:"No screenshot sent"});
+        const hash=crypto.createHash("sha256").update(raw).digest("hex");
+        if(db.prepare("SELECT * FROM screenshot_hashes WHERE hash=?").get(hash)) return res.status(400).json({success:false,message:"This screenshot don already upload before - upload a new screenshot, no reuse old one",duplicate:true});
+        db.prepare("INSERT OR IGNORE INTO screenshot_hashes (user_id,hash,filename,game_id) VALUES (?,?,?,?)").run(uid,hash,b.filename||"",b.game_id||"");
+        return res.json({success:true,message:"Screenshot uploaded ✅"});
+      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
+    });
+    // 7. Ping
+    force("get","/api/server4/ping", (req,res)=>{ return res.json({success:true,message:"Server4 dey work ✅ - connected inside Server 3"}); });
+    console.log("✅ SERVER 4 BACKUP LOADED INSIDE SERVER 3");
+  }catch(e2){ console.log("⚠️ Server4 backup fail:", e2.message); }
+}
+
 }catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
 };
