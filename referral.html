@@ -158,10 +158,8 @@
   function getInitials(name){const text=String(name||"User").trim();if(!text){return "U";}const parts=text.split(/\s+/).filter(Boolean);if(parts.length===1){return parts[0].substring(0,2).toUpperCase();}return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();}
   function showToast(message){const toast=document.getElementById("toast");toast.textContent=message;toast.classList.add("show");clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast.classList.remove("show");},2500);}
 
-  // CHECK FIX 1: Try Server4 referrals FIRST, then old endpoint. This stops old endpoint from hiding email.
   function pickEmail(item){
     if(!item || typeof item!=="object") return "";
-    // Check every possible key + nested user object
     const keys=["email","referred_email","user_email","referredEmail","email_address","contact_email","userEmail","mail","e_mail","ref_email","referred_user_email"];
     for(const k of keys){ if(item[k] && String(item[k]).includes("@")) return String(item[k]).trim(); }
     if(item.user && typeof item.user==="object"){ for(const k of keys){ if(item.user[k] && String(item.user[k]).includes("@")) return String(item.user[k]).trim(); } }
@@ -232,7 +230,6 @@
     const box=document.getElementById("searchResult");
     if(!q){renderList(allReferrals);box.style.display="none";return;}
     const found=allReferrals.filter(item=>{
-      // CHECK FIX 2: search uses pickEmail() so e go find email even if key different
       const hay=[pickEmail(item),pickName(item),pickUsername(item),item.referral_code,item.id,item.user_id,item.referred_user_id,item.referred_id,JSON.stringify(item)].map(v=>String(v??"").toLowerCase()).join(" | ");
       return hay.includes(q);
     });
@@ -258,25 +255,34 @@
     emptyState.style.display="none";
     document.getElementById("searchResult").style.display="none";
     debugBox.style.display="none";
-    let data=null, usedUrl="";
-    // Try Server4 fixed endpoint first, then old one
-    const tries=["/api/referrals?t="+Date.now(), "/api/server4/referrals?t="+Date.now(), "/api/referrals/list?t="+Date.now()];
+    let data=null, usedUrl="", triedUrls=[];
+    // FIXED FOR PHONE: Server4 FIRST, and if endpoint return NO email, try next one - no stop early
+    const tries=["/api/server4/referrals?t="+Date.now(), "/api/referrals?t="+Date.now(), "/api/server4/referrals/list?t="+Date.now(), "/api/referrals/list?t="+Date.now()];
+    let bestData=null, bestUrl="", bestEmailCount=-1;
     for(const u of tries){
-      try{ data=await apiFetch(u); usedUrl=u; if(data && (data.referrals||data.data||data.users)) break; }catch(e){ console.log("referrals try failed", u, e.message); }
+      triedUrls.push(u.split("?")[0]);
+      try{
+        const d=await apiFetch(u);
+        const list=d.referrals||d.data||d.users||[];
+        if(!Array.isArray(list) || !list.length) continue;
+        const withEmail=list.filter(x=>pickEmail(x)).length;
+        if(withEmail > bestEmailCount){ bestEmailCount=withEmail; bestData=d; bestUrl=u; }
+        // If this one get email for almost all, stop - e don win
+        if(withEmail >= list.length * 0.9) break;
+        // If this one get 0 email, continue to next - don't stop
+      }catch(e){ console.log("referrals try failed", u, e.message); }
     }
+    data=bestData; usedUrl=bestUrl;
     try{
       if(!data) throw new Error("No referrals endpoint responded");
       const referrals=data.referrals||data.data||data.users||[];
       allReferrals = Array.isArray(referrals) ? referrals : [];
-      // CHECK FIX 3: Debug box - e go tell you if API send email or not
       if(allReferrals.length){
         const first=allReferrals[0];
         const keys=Object.keys(first||{}).join(", ");
         const emailFound=pickEmail(first);
         debugBox.style.display="block";
-        debugBox.innerHTML=`<b>DEBUG:</b> Loaded from <b>${escapeHtml(usedUrl)}</b> • ${allReferrals.length} referrals • First item keys: ${escapeHtml(keys)}<br>First email found: <b>${escapeHtml(emailFound||"NONE - backend no send email")}</b> • First user: ${escapeHtml(pickName(first))} / ${escapeHtml(pickUsername(first))}<br><small>If e show NONE, your Server 4 never deploy, or main server dey overwrite am. Deploy Server 4 LAST.</small>`;
-        console.log("REFERRALS DEBUG - first item:", first);
-        console.log("REFERRALS DEBUG - all keys:", keys);
+        debugBox.innerHTML=`<b>DEBUG:</b> Loaded from <b>${escapeHtml(usedUrl.split("?")[0])}</b> • ${allReferrals.length} referrals • ${bestEmailCount} with email • First item keys: ${escapeHtml(keys)}<br>First email found: <b>${escapeHtml(emailFound||"NONE - backend no send email")}</b> • First user: ${escapeHtml(pickName(first))} / ${escapeHtml(pickUsername(first))}<br><small>If e still show NONE, Server 4 never deploy yet. Wait 2 mins, close Chrome, open again.</small>`;
       }
       updateStats(data,allReferrals);
       if(!allReferrals.length){tbody.innerHTML="";emptyState.style.display="block";emptyState.querySelector("h3").textContent="No referrals yet";emptyState.querySelector("p").textContent="When someone joins Jovia Network using your referral link, their activity will appear here.";return;}
@@ -287,7 +293,7 @@
       console.error("Referral history error:",error);
       tbody.innerHTML=`<tr><td colspan="6"><div class="loading">Unable to load referral history.</div></td></tr>`;
       debugBox.style.display="block";
-      debugBox.innerHTML=`<b>DEBUG ERROR:</b> ${escapeHtml(error.message)} • Tried: ${tries.join(" , ")}`;
+      debugBox.innerHTML=`<b>DEBUG ERROR:</b> ${escapeHtml(error.message)} • Tried: ${triedUrls.join(" , ")}`;
     }
   }
 
