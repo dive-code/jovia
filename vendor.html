@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JOVIA - Vendor Panel</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#f5f7fb;color:#111827}
+.app{max-width:680px;margin:0 auto;padding-bottom:90px}.topbar{background:#fff;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:20}
+.brand{font-size:23px;font-weight:800}.brand span{color:#f59e0b}.content{padding:20px 16px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin-bottom:16px}
+.stats{display:flex;gap:10px;margin:12px 0}.stat{flex:1;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px;text-align:center}.stat small{font-size:11px;color:#6b7280}.stat b{display:block;font-size:18px;margin-top:4px}
+.user{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:13px;margin-bottom:10px}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}.btn-green{background:#16a34a;color:#fff}.btn-light{background:#f1f5f9;border:1px solid #e5e7eb}
+.bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;height:72px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-around}.nav-item{color:#9ca3af;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:700}.nav-item.active{color:#f59e0b}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="topbar"><div class="brand">JOVIA<span>.</span></div><div style="font-weight:700">Vendor Panel</div></header>
+<main class="content">
+<div class="card" style="background:#fffbeb;border-color:#f59e0b">
+<h2 style="font-size:17px">🏪 Vendor Panel</h2>
+<p style="font-size:12px;color:#6b7280;line-height:1.6;margin-top:6px">Activate new users. E go deduct from your Vendor Balance.<br>SILVER ₦9,000 • GOLD ₦15,000 • SUPER ₦21,000</p>
+<div class="stats">
+<div class="stat"><small>Vendor Balance</small><b id="vendorBalanceText">₦0</b></div>
+<div class="stat"><small>Status</small><b id="vendorStatusText" style="color:#16a34a;font-size:14px">—</b></div>
+<div class="stat"><small>Activated</small><b id="vendorActivatedText">0</b></div>
+</div>
+<button class="btn btn-light" onclick="loadAll()">🔄 Refresh</button>
+</div>
+<div class="card"><h2 style="font-size:16px;margin-bottom:10px">Pending Users</h2><div id="vendorPendingList"><p style="text-align:center;color:#9ca3af;padding:12px">Loading...</p></div></div>
+<div class="card"><a href="profile.html" style="display:block;text-align:center;text-decoration:none;background:#111827;color:#fff;padding:14px;border-radius:12px;font-weight:800">← Back to Profile</a></div>
+</main>
+</div>
+<nav class="bottom-nav">
+<a class="nav-item" href="dashboard.html"><span>⌂</span><span>Home</span></a>
+<a class="nav-item" href="payment.html"><span>₦</span><span>Payment</span></a>
+<a class="nav-item" href="referral.html"><span>👥</span><span>Referral</span></a>
+<a class="nav-item active" href="profile.html"><span>👤</span><span>Profile</span></a>
+</nav>
+<script>
+function formatNaira(n){return "₦"+Number(n||0).toLocaleString("en-NG")}
+async function loadAll(){
+  try{
+    const r=await fetch('/api/vendor/me?t='+Date.now(),{credentials:'include',cache:'no-store'});
+    const d=await r.json();
+    if(!d.success||!d.vendor){document.getElementById('vendorPendingList').innerHTML='<p style="color:#dc2626;text-align:center">❌ You no be Vendor yet. Go Profile, or ask Admin to make you Vendor.</p>';return;}
+    const st=String(d.vendor_status||d.vendor?.status||'').toUpperCase();
+    document.getElementById('vendorStatusText').textContent=st;
+    document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??d.vendor?.balance??0);
+    document.getElementById('vendorActivatedText').textContent=d.vendor?.total_activated??0;
+    if(st!=='APPROVED'){document.getElementById('vendorPendingList').innerHTML='<p style="text-align:center;color:#92400e">⏳ Your Vendor application dey PENDING. Wait Admin approve you.</p>';return;}
+    loadPending();
+  }catch(e){document.getElementById('vendorPendingList').innerHTML='<p style="color:#dc2626;text-align:center">'+e.message+'</p>'}
+}
+async function loadPending(){
+  const el=document.getElementById('vendorPendingList'); el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:12px">⏳ Loading pending users...</p>';
+  try{
+    const r=await fetch('/api/vendor/pending-users?t='+Date.now(),{credentials:'include',cache:'no-store'});
+    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Not approved yet');
+    document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??0);
+    if(!d.users||!d.users.length){el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:14px">No pending users to activate yet.</p>';return;}
+    el.innerHTML='<div style="font-size:13px;font-weight:800;margin-bottom:8px">Pending Users ('+d.users.length+')</div>'+d.users.map(u=>`
+      <div class="user">
+        <div style="display:flex;justify-content:space-between"><b>${String(u.username||'').replace(/</g,'&lt;')}</b><span style="font-size:10px;background:#fef3c7;padding:4px 8px;border-radius:20px;font-weight:800">${u.package||'SILVER'}</span></div>
+        <div style="font-size:12px;color:#6b7280;margin-top:4px">${String(u.email||'').replace(/</g,'&lt;')} • ${String(u.full_name||'').replace(/</g,'&lt;')}<br>Cost: <b>${formatNaira(u.activation_cost||9000)}</b></div>
+        <button class="btn btn-green" style="margin-top:10px" onclick="activateUser(${Number(u.id)},'${String(u.username||'').replace(/'/g,"")}')">✅ Activate ${String(u.username||'').replace(/</g,'&lt;')} - ${formatNaira(u.activation_cost||9000)}</button>
+      </div>`).join('');
+  }catch(e){el.innerHTML='<p style="color:#dc2626;text-align:center">'+String(e.message).replace(/</g,'&lt;')+'</p>'}
+}
+async function activateUser(id,name){
+  if(!confirm('Activate '+name+'? E go deduct from your Vendor Balance.')) return;
+  try{
+    const r=await fetch('/api/vendor/activate',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({userId:id})});
+    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Activate failed');
+    alert('✅ '+d.message); loadAll();
+  }catch(e){alert('❌ '+e.message)}
+}
+document.addEventListener('DOMContentLoaded',loadAll);
+</script>
+</body>
+</html>
