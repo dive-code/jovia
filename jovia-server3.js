@@ -504,7 +504,6 @@ force("post","/api/vendor/users/activate", vendorActivate);
 // ---------- 6b. ADMIN VENDORS - FIXED + CREATE ADDED ----------
 safe("get","/api/admin/vendors", sGuard, (req,res)=>{ try{ const rows=db.prepare("SELECT v.*, u.username as username, u.email as email, u.full_name as full_name, u.package as package, u.account_status as account_status FROM vendors v LEFT JOIN users u ON u.id=v.user_id ORDER BY v.id DESC LIMIT 200").all(); return res.json({success:true,vendors:rows,total:rows.length}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
 
-// ✅ NEW - THIS WAS MISSING - FIXES: ❌ API endpoint not found: POST /api/admin/vendors/create
 force("post","/api/admin/vendors/create", sGuard, (req,res)=>{
   try{
     const val = req.body?.email || req.body?.username || req.body?.userId || req.body?.user_id || req.body?.user || req.body?.vendor || "";
@@ -541,9 +540,53 @@ force("post","/api/admin/vendors/fund", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/credit", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/:id/fund", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/:id/credit", sGuard, adminCreditVendor);
-// Vendor apply - user fit apply, but panel NO go show until Admin APPROVED
 safe("post","/api/vendor/register", (req,res)=>{ try{ const uid=getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Login first"}); const ex=getVendorByUser(uid); if(ex) return res.json({success:true,alreadyExists:true,message:"You already applied - Status: "+ex.status,vendor:ex}); const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid); db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status) VALUES (?,?,?,?, 'PENDING')").run(uid,code,String(req.body?.vendor_name||u?.full_name||u?.username||""),String(req.body?.phone||u?.phone||"")); return res.json({success:true,message:"Vendor application sent - wait for Admin to approve you",vendor:db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
 
-console.log("✅ LOANS v3 READY - /api/loans/apply + /api/loans/my + /api/loans/admin + receipt UPDATE + DISBURSED->AFFILIATE + IMPERSONATE + VENDOR");
+// ---------- 7. FIX 71000 -> 7100 EVERYWHERE (Task Video mistake) ----------
+// Anywhere you see 71000, change am to 7100. Safe to run twice, no double deduct.
+force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
+  try{
+    let report = [];
+    const tryRun = (label, sql) => {
+      try{ const r = db.prepare(sql).run(); report.push(`${label}: ${r.changes} fixed`); }
+      catch(e){ report.push(`${label}: skipped`); }
+    };
+    // Tasks / Jobs / Videos - all possible table + column names
+    tryRun("tasks.reward", "UPDATE tasks SET reward=7100 WHERE reward=71000");
+    tryRun("tasks.amount", "UPDATE tasks SET amount=7100 WHERE amount=71000");
+    tryRun("tasks.earning", "UPDATE tasks SET earning=7100 WHERE earning=71000");
+    tryRun("tasks.price", "UPDATE tasks SET price=7100 WHERE price=71000");
+    tryRun("jobs.reward", "UPDATE jobs SET reward=7100 WHERE reward=71000");
+    tryRun("jobs.amount", "UPDATE jobs SET amount=7100 WHERE amount=71000");
+    tryRun("jobs.price", "UPDATE jobs SET price=7100 WHERE price=71000");
+    tryRun("videos.reward", "UPDATE videos SET reward=7100 WHERE reward=71000");
+    tryRun("videos.amount", "UPDATE videos SET amount=7100 WHERE amount=71000");
+    tryRun("task_videos.reward", "UPDATE task_videos SET reward=7100 WHERE reward=71000");
+    tryRun("task_videos.amount", "UPDATE task_videos SET amount=7100 WHERE amount=71000");
+    tryRun("products.price", "UPDATE products SET price=7100 WHERE price=71000");
+    tryRun("products.amount", "UPDATE products SET amount=7100 WHERE amount=71000");
+    // Users wey don collect 71000 - remove extra 63900 (71000-7100)
+    let corrected = 0;
+    try{
+      const txs = db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();
+      for(const t of txs){
+        const already = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id, 'FIX_71000_'+t.id);
+        if(already) continue;
+        db.prepare("UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0)-63900) WHERE id=?").run(t.user_id);
+        db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(t.user_id, 'task_correction', -63900, 'wallet', 'FIX_71000_'+t.id, 'Correction: 71,000 -> 7,100 - extra 63,900 removed');
+        try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(t.user_id, 'Task Reward Corrected', 'That task reward na ₦7,100, no be ₦71,000. We don remove extra ₦63,900. Your ₦7,100 still dey.'); }catch{}
+        corrected++;
+      }
+      report.push(`users corrected: ${corrected} users, ₦63,900 removed each`);
+    }catch(e){ report.push(`users corrected: skipped`); }
+    tryRun("wallet_transactions task 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%task%'");
+    tryRun("wallet_transactions job 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%job%'");
+    return res.json({success:true, message:`Done! Everywhere 71,000 don change to 7,100. ${corrected} users corrected.`, report});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+// Alias so you fit call am with GET for quick test
+force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({success:true, message:"Use POST /api/admin/fix-71000 to run the fix. Send POST with key=jovia123"}); });
+
+console.log("✅ LOANS v3 READY - /api/loans/apply + /api/loans/my + /api/loans/admin + receipt UPDATE + DISBURSED->AFFILIATE + IMPERSONATE + VENDOR + FIX-71000");
 }catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
 };
