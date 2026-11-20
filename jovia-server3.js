@@ -1,10 +1,10 @@
 "use strict";
 module.exports = (app, db, requireUser, requireAdmin) => {
 try{
-console.log("🔧 LOANS v4 - FULL FIXED - FORGOT PASSWORD + VENDOR FIX + NO DOUBLE DEDUCT");
+console.log("🔧 LOANS v3 - FROM LAST WORKING v2 + RECEIPT FIX + DISBURSE TO AFFILIATE + VENDOR");
 if(!app || typeof app.get !== "function" || typeof app.post !== "function"){ console.log("⚠️ Loans skip"); return; }
 
-// ---------- Helpers ----------
+// ---------- Helpers - Same Style As Server3 ----------
 const exists = (p,m) => { try{ if(!app._router?.stack) return false; return app._router.stack.some(l=>l.route && l.route.path===p && Object.keys(l.route.methods)[0]===m); }catch{ return false; } };
 let allow=false; const withAllow = fn => { allow=true; try{ fn() }finally{ allow=false } };
 const safe = (m,p,...h) => { try{ if(exists(p,m)){ console.log("⏭️ Skip "+m.toUpperCase()+" "+p); return } withAllow(()=>app[m](p,...h)); console.log("✅ Loans Added "+m.toUpperCase()+" "+p); }catch(e){ console.log("⚠️ Loans safeAdd skip", e.message) } };
@@ -113,22 +113,9 @@ try{ const vc = db.prepare("PRAGMA table_info(vendors)").all().map(c=>c.name);
 }catch{}
 try{ db.exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,title TEXT,message TEXT,type TEXT DEFAULT 'system',is_read INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))"); }catch{}
 
-// ✅ NEW: Password resets table for Forgot Password
-try{ db.exec(`CREATE TABLE IF NOT EXISTS password_resets (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER,
-  email TEXT,
-  token TEXT UNIQUE,
-  code TEXT,
-  expires_at TEXT,
-  used INTEGER DEFAULT 0,
-  created_at TEXT DEFAULT (datetime('now'))
-)`); }catch{}
-
 // ---------- Helpers ----------
 const isSuperPkg = (u) => String(u?.package||u?.plan||"").toUpperCase().includes("SUPER");
 const normPkg = (u) => { const p=String(u?.package||u?.plan||"").toUpperCase(); if(p.includes("SUPER")) return "SUPER"; if(p.includes("GOLD")) return "GOLD"; return "SILVER"; };
-const normStatus = (s) => String(s||"").trim().toUpperCase();
 const PKG_COST = { SILVER:9000, GOLD:15000, SUPER:21000 };
 const money = n => "₦"+Number(n||0).toLocaleString("en-NG");
 const cleanLoan = (l) => {
@@ -150,19 +137,6 @@ function safeBalances(u){
   return {wallet_balance:w,affiliate_balance:a,referral_balance:r,game_balance:g,total_balance:Number(u.total_balance||(w+a+r+g))};
 }
 const notify = (uid,title,msg)=>{ try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(uid,title,msg); }catch{} };
-// Password hashing - support bcrypt if available, else sha256 fallback
-let bcrypt=null; try{ bcrypt=require("bcryptjs"); }catch{ try{ bcrypt=require("bcrypt"); }catch{} }
-function hashPass(pw){
-  try{ if(bcrypt) return bcrypt.hashSync(String(pw),10); }catch{}
-  try{ return "sha256:"+require("crypto").createHash("sha256").update(String(pw)).digest("hex"); }catch{ return String(pw); }
-}
-function setUserPassword(userId, newPass){
-  const h = hashPass(newPass);
-  const cols = colsOf("users");
-  try{ if(cols.includes("password")) db.prepare("UPDATE users SET password=? WHERE id=?").run(h,userId); }catch{}
-  try{ if(cols.includes("password_hash")) db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(h,userId); }catch{}
-  try{ if(cols.includes("password_reset_at")) db.prepare("UPDATE users SET password_reset_at=datetime('now') WHERE id=?").run(userId); }catch{}
-}
 
 let upload = null;
 try{
@@ -180,6 +154,7 @@ safe("get","/api/admin/impersonations", sGuard, (req,res)=>{
   }catch(e){ return res.json({success:true, impersonations:[]}); }
 });
 
+// 0a2. IMPERSONATE VERIFY
 const impVerify = (req,res)=>{
   try{
     const tok = String(req.query?.token || req.body?.token || req.headers["x-impersonate-token"] || "").trim();
@@ -196,6 +171,7 @@ const impVerify = (req,res)=>{
 safe("get","/api/impersonate/verify", impVerify);
 safe("post","/api/impersonate/verify", impVerify);
 
+// 0a3. IMPERSONATE CREATE - ADMIN ONLY
 safe("post","/api/admin/impersonate", sGuard, (req,res)=>{
   try{
     const user = findUserByVal(req.body?.userId || req.body?.id || req.body?.email || req.body?.username || req.query?.userId || req.query?.email);
@@ -207,6 +183,7 @@ safe("post","/api/admin/impersonate", sGuard, (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
+// 0b. BALANCE HISTORY
 safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
   try{
     if(!tableExists("balance_history") && !tableExists("balance_adjustments")) return res.json({success:true, history:[]});
@@ -217,6 +194,7 @@ safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
   }catch(e){ return res.json({success:true, history:[]}); }
 });
 
+// 0c. UPLINE
 safe("get","/api/admin/upline", sGuard, (req,res)=>{
   try{
     const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || "";
@@ -253,6 +231,7 @@ safe("get","/api/admin/users/full-profile", sGuard, (req,res)=>{
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
 
+// 0d. /api/me + /api/wallet
 safe("get","/api/me", (req,res)=>{
   try{
     const uid = getSessionUserId(req);
@@ -274,85 +253,7 @@ safe("get","/api/wallet", (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
-// ---------- 0e. FORGOT / RESET PASSWORD - NEW - FIXES "API endpoint not found" ----------
-const forgotHandler = (req,res)=>{
-  try{
-    const email = String(req.body?.email || req.body?.username || req.query?.email || "").trim();
-    if(!email) return res.status(400).json({success:false,message:"Enter your email"});
-    const user = findUserByVal(email);
-    // Always return success so attackers no go know which email exist
-    if(!user) return res.json({success:true,message:"If this email exists, we don send reset code. Check your email / ask Admin for code."});
-    let code = String(Math.floor(100000 + Math.random()*900000));
-    let token = ""; try{ token=require("crypto").randomBytes(24).toString("hex"); }catch{ token=Date.now().toString(36)+Math.random().toString(36).slice(2); }
-    const exp = new Date(Date.now()+30*60*1000).toISOString();
-    try{ db.prepare("UPDATE password_resets SET used=1 WHERE user_id=? AND used=0").run(user.id); }catch{}
-    db.prepare("INSERT INTO password_resets (user_id,email,token,code,expires_at,used) VALUES (?,?,?,?,?,0)").run(user.id, user.email, token, code, exp);
-    try{ notify(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes. If no be you, ignore am.`); }catch{}
-    console.log(`🔑 Reset code for ${user.email} = ${code} token=${token}`);
-    // In dev / Admin view, return code so user fit test without email service. Remove in production if you add email.
-    return res.json({success:true,message:"Reset code sent. Check your email / notifications. Code expires in 30 minutes.", code, reset_code:code, token, reset_token:token, email:user.email});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
-force("post","/api/auth/forgot-password", forgotHandler);
-force("post","/api/forgot-password", forgotHandler);
-force("post","/api/auth/forgot", forgotHandler);
-force("post","/api/auth/request-reset", forgotHandler);
-
-const resetHandler = (req,res)=>{
-  try{
-    const b = req.body||{};
-    const token = String(b.token || b.reset_token || b.resetToken || "").trim();
-    const code = String(b.code || b.reset_code || b.resetCode || b.otp || "").trim();
-    const newPass = String(b.newPassword || b.new_password || b.password || "").trim();
-    const email = String(b.email || b.username || "").trim();
-    if(!newPass || newPass.length < 6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
-    if(!token && !code) return res.status(400).json({success:false,message:"Enter reset code"});
-    let row=null;
-    if(token) row = db.prepare("SELECT * FROM password_resets WHERE token=? AND used=0 ORDER BY id DESC LIMIT 1").get(token);
-    if(!row && code){
-      if(email){ const u=findUserByVal(email); if(u) row=db.prepare("SELECT * FROM password_resets WHERE user_id=? AND code=? AND used=0 ORDER BY id DESC LIMIT 1").get(u.id, code); }
-      if(!row) row=db.prepare("SELECT * FROM password_resets WHERE code=? AND used=0 ORDER BY id DESC LIMIT 1").get(code);
-    }
-    if(!row) return res.status(400).json({success:false,message:"Invalid or expired code. Request new code."});
-    if(row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return res.status(400).json({success:false,message:"Code don expire. Request new code."});
-    setUserPassword(row.user_id, newPass);
-    db.prepare("UPDATE password_resets SET used=1 WHERE id=?").run(row.id);
-    try{ notify(row.user_id,"Password Changed ✅","Your password don change successfully. If no be you, contact Admin now."); }catch{}
-    // Clear session so user go login with new password
-    try{ if(req.session) req.session.destroy(()=>{}); }catch{}
-    return res.json({success:true,message:"Password changed ✅ Login with your new password."});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
-force("post","/api/auth/reset-password", resetHandler);
-force("post","/api/reset-password", resetHandler);
-force("post","/api/auth/reset", resetHandler);
-
-// Admin easy reset - Admin fit reset any user password without code
-force("post","/api/admin/reset-password", sGuard, (req,res)=>{
-  try{
-    const b=req.body||{};
-    const user = findUserByVal(b.email || b.username || b.userId || b.user_id || b.id || b.user || "");
-    const newPass = String(b.newPassword || b.new_password || b.password || "").trim();
-    if(!user) return res.status(404).json({success:false,message:"User not found"});
-    if(!newPass || newPass.length < 6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
-    setUserPassword(user.id, newPass);
-    try{ notify(user.id,"Password Reset by Admin 🔑",`Admin don reset your password. New password don set. Login with new password and change am.`); }catch{}
-    return res.json({success:true,message:`Password for ${user.username} don reset ✅`});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-force("post","/api/admin/users/reset-password", sGuard, (req,res)=>{
-  try{
-    const b=req.body||{};
-    const user = findUserByVal(b.email || b.username || b.userId || b.user_id || b.id || "");
-    const newPass = String(b.newPassword || b.new_password || b.password || "").trim();
-    if(!user) return res.status(404).json({success:false,message:"User not found"});
-    if(!newPass || newPass.length < 6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
-    setUserPassword(user.id, newPass);
-    return res.json({success:true,message:`Password for ${user.username} don reset ✅`});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-
-// ---------- 1. USER APPLY ----------
+// ---------- 1. USER APPLY - POST /api/loans/apply ----------
 const applyHandler = (req,res) => {
   try{
     const userId = getSessionUserId(req);
@@ -477,6 +378,7 @@ safe("get","/api/loans/admin/list", sGuard, adminList);
 safe("get","/api/loans/all", sGuard, adminList);
 safe("get","/api/loans/list", sGuard, adminList);
 
+// Single loan - ADMIN
 safe("get","/api/loans/admin/:id", sGuard, (req,res)=>{
   try{ const loan=db.prepare("SELECT * FROM loans WHERE id=?").get(Number(req.params.id)); if(!loan) return res.status(404).json({success:false,message:"Loan not found"}); return res.json({success:true, loan:cleanLoan(loan)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
@@ -488,7 +390,7 @@ const viewReceipt = (req,res) => {
     const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
     if(!loan) return res.status(404).json({success:false,message:"Loan not found"});
     if(!loan.receipt_data && !loan.receipt_name) return res.status(404).json({success:false,message:"No receipt file"});
-    return res.json({success:true, loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data, loan:cleanLoan(loan), has_receipt:!!(loan.receipt_data||loan.receipt_name)});
+    return res.json({success:true,loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data, loan:cleanLoan(loan), has_receipt:!!(loan.receipt_data||loan.receipt_name)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 safe("get","/api/loans/admin/:id/receipt", sGuard, viewReceipt);
@@ -548,21 +450,20 @@ force("post","/api/admin/loans/disburse", sGuard, (req,res)=>{ req.body.action="
 force("post","/api/loans/admin/:id/action", sGuard, adminAction);
 force("post","/api/admin/loans/:id/action", sGuard, adminAction);
 
-// ---------- 6. VENDOR - FIXED ----------
+// ---------- 6. VENDOR ----------
 const getVendorByUser = (uid)=>{ try{ return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid); }catch{ return null; } };
 const vendorMe = (req,res)=>{
   try{
     const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
     const v = getVendorByUser(uid);
     if(!v) return res.json({success:false, isVendor:false, is_vendor:false, message:"Not a vendor yet"});
-    const st = normStatus(v.status);
-    return res.json({success:true, isVendor:st==="APPROVED", is_vendor:st==="APPROVED", vendor:v, vendor_status:st, vendor_balance:Number(v.balance||0)});
+    return res.json({success:true, isVendor:v.status==="APPROVED", is_vendor:v.status==="APPROVED", vendor:v, vendor_status:v.status, vendor_balance:Number(v.balance||0)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 const vendorPending = (req,res)=>{
   try{
     const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
-    const v = getVendorByUser(uid); if(!v || normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
+    const v = getVendorByUser(uid); if(!v || v.status!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
     let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 100").all(); }catch{}
     return res.json({success:true, users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST[normPkg(x)]||9000})), total:rows.length, vendor_balance:Number(v.balance||0)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -571,14 +472,14 @@ const vendorActivate = (req,res)=>{
   try{
     const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
     const v = getVendorByUser(uid); if(!v) return res.status(403).json({success:false,message:"Not a vendor"});
-    if(normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet"});
+    if(v.status!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet"});
     const targetId = Number(req.body?.userId || req.body?.id || req.params?.id || 0); if(!targetId) return res.status(400).json({success:false,message:"User ID required"});
     const target = db.prepare("SELECT * FROM users WHERE id=?").get(targetId); if(!target) return res.status(404).json({success:false,message:"User not found"});
     const st = String(target.account_status||target.status||"").toLowerCase(); if(["active","approved"].includes(st)) return res.status(400).json({success:false,message:"User already active"});
     const pkg = normPkg(target); const cost = PKG_COST[pkg]||9000; const bal = Number(v.balance||0);
     if(bal < cost) return res.status(400).json({success:false,message:`Insufficient Vendor Fund! You need ₦${cost.toLocaleString()} to activate ${pkg} user. Your balance: ₦${bal.toLocaleString()}. Ask Admin to fund you.`, need:cost, balance:bal, package:pkg});
-    // ✅ FIX: Deduct ONLY from vendors.balance - NO double deduct from affiliate_balance
     db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)-?, total_activated=COALESCE(total_activated,0)+1, total_deducted=COALESCE(total_deducted,0)+? WHERE id=?").run(cost,cost,v.id);
+    try{ db.prepare("UPDATE users SET affiliate_balance=GREATEST(0,COALESCE(affiliate_balance,0)-?) WHERE id=?").run(cost,uid); }catch{}
     try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(targetId); }catch{}
     try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(targetId); }catch{}
     try{
@@ -592,17 +493,17 @@ const vendorActivate = (req,res)=>{
     return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ₦${cost.toLocaleString()} deducted. Remaining: ₦${(bal-cost).toLocaleString()}`, deducted:cost, cost, remaining_balance:bal-cost, vendor_balance:bal-cost});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
-// ✅ FIX: force() so this version always wins, old version no go skip am
-force("get","/api/vendor/me", vendorMe);
-force("get","/api/vendor/dashboard", vendorMe);
-force("get","/api/vendor/pending-users", vendorPending);
-force("get","/api/vendor/users/pending", vendorPending);
+safe("get","/api/vendor/me", vendorMe);
+safe("get","/api/vendor/dashboard", vendorMe);
+safe("get","/api/vendor/pending-users", vendorPending);
+safe("get","/api/vendor/users/pending", vendorPending);
 force("post","/api/vendor/activate", vendorActivate);
 force("post","/api/vendor/activate/:id", vendorActivate);
 force("post","/api/vendor/users/activate", vendorActivate);
 
-// ---------- 6b. ADMIN VENDORS ----------
+// ---------- 6b. ADMIN VENDORS - FIXED + CREATE ADDED ----------
 safe("get","/api/admin/vendors", sGuard, (req,res)=>{ try{ const rows=db.prepare("SELECT v.*, u.username as username, u.email as email, u.full_name as full_name, u.package as package, u.account_status as account_status FROM vendors v LEFT JOIN users u ON u.id=v.user_id ORDER BY v.id DESC LIMIT 200").all(); return res.json({success:true,vendors:rows,total:rows.length}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
+
 force("post","/api/admin/vendors/create", sGuard, (req,res)=>{
   try{
     const val = req.body?.email || req.body?.username || req.body?.userId || req.body?.user_id || req.body?.user || req.body?.vendor || "";
@@ -632,6 +533,7 @@ force("post","/api/admin/vendor/create", sGuard, (req,res)=>{
     return res.json({success:true, message:`${user.username} don enter as PENDING Vendor. Approve am now.`, vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(info.lastInsertRowid)});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
+
 force("post","/api/admin/vendors/action", sGuard, (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||0); const act=String(req.body?.action||req.body?.status||"").toUpperCase(); if(!id) return res.status(400).json({success:false,message:"Vendor ID required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const st=act.includes("APPROV")?"APPROVED":act.includes("REJECT")?"REJECTED":act.includes("SUSPEND")?"SUSPENDED":"PENDING"; db.prepare("UPDATE vendors SET status=? WHERE id=?").run(st,id); return res.json({success:true,message:`Vendor ${st}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
 const adminCreditVendor = (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||req.params?.id||0); const amt=Number(req.body?.amount||0); if(!id||!amt||amt<=0) return res.status(400).json({success:false,message:"Vendor ID + amount required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id); if(!user) return res.status(404).json({success:false,message:"Vendor user not found"}); db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id); try{ db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(amt,v.user_id); }catch{} try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{} try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{} return res.json({success:true,message:`Vendor ${user.username} funded ₦${amt.toLocaleString()}. New: ₦${(Number(v.balance||0)+amt).toLocaleString()}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } };
 force("post","/api/admin/vendors/fund", sGuard, adminCreditVendor);
@@ -640,7 +542,8 @@ force("post","/api/admin/vendors/:id/fund", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/:id/credit", sGuard, adminCreditVendor);
 safe("post","/api/vendor/register", (req,res)=>{ try{ const uid=getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Login first"}); const ex=getVendorByUser(uid); if(ex) return res.json({success:true,alreadyExists:true,message:"You already applied - Status: "+ex.status,vendor:ex}); const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid); db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status) VALUES (?,?,?,?, 'PENDING')").run(uid,code,String(req.body?.vendor_name||u?.full_name||u?.username||""),String(req.body?.phone||u?.phone||"")); return res.json({success:true,message:"Vendor application sent - wait for Admin to approve you",vendor:db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
 
-// ---------- 7. FIX 71000 -> 7100 ----------
+// ---------- 7. FIX 71000 -> 7100 EVERYWHERE (Task Video mistake) ----------
+// Anywhere you see 71000, change am to 7100. Safe to run twice, no double deduct.
 force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
   try{
     let report = [];
@@ -648,6 +551,7 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
       try{ const r = db.prepare(sql).run(); report.push(`${label}: ${r.changes} fixed`); }
       catch(e){ report.push(`${label}: skipped`); }
     };
+    // Tasks / Jobs / Videos - all possible table + column names
     tryRun("tasks.reward", "UPDATE tasks SET reward=7100 WHERE reward=71000");
     tryRun("tasks.amount", "UPDATE tasks SET amount=7100 WHERE amount=71000");
     tryRun("tasks.earning", "UPDATE tasks SET earning=7100 WHERE earning=71000");
@@ -661,6 +565,7 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
     tryRun("task_videos.amount", "UPDATE task_videos SET amount=7100 WHERE amount=71000");
     tryRun("products.price", "UPDATE products SET price=7100 WHERE price=71000");
     tryRun("products.amount", "UPDATE products SET amount=7100 WHERE amount=71000");
+    // Users wey don collect 71000 - remove extra 63900 (71000-7100)
     let corrected = 0;
     try{
       const txs = db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();
@@ -679,8 +584,9 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
     return res.json({success:true, message:`Done! Everywhere 71,000 don change to 7,100. ${corrected} users corrected.`, report});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
+// Alias so you fit call am with GET for quick test
 force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({success:true, message:"Use POST /api/admin/fix-71000 to run the fix. Send POST with key=jovia123"}); });
 
-console.log("✅ LOANS v4 READY - FORGOT PASSWORD + VENDOR FIXED + NO DOUBLE DEDUCT + 71000");
+console.log("✅ LOANS v3 READY - /api/loans/apply + /api/loans/my + /api/loans/admin + receipt UPDATE + DISBURSED->AFFILIATE + IMPERSONATE + VENDOR + FIX-71000");
 }catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
 };
