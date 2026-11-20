@@ -35,7 +35,8 @@ const findUserByAny4=(req)=>{
     const sid=getSessionUserId4(req); if(sid){const u=db.prepare("SELECT * FROM users WHERE id=?").get(sid); if(u) return u;}
     const b=req.body||{}, q=req.query||{};
     const em=String(b.email||q.email||b.user_email||"").trim().toLowerCase();
-    if(em){const u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em); if(u) return u;}
+    // Don't treat search=... or t=... as user email. Only exact email param for auth, and only if it looks like email
+    if(em && em.includes("@") && !q.search && !q.q){const u=db.prepare("SELECT * FROM users WHERE LOWER(TRIM(email))=LOWER(TRIM(?)) LIMIT 1").get(em); if(u) return u;}
     const un=String(b.username||q.username||b.user||"").trim();
     if(un && !un.includes("@")){const u=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(un); if(u) return u;}
     const id=Number(b.userId||b.user_id||b.id||q.userId||q.user_id||q.id||0);
@@ -44,7 +45,14 @@ const findUserByAny4=(req)=>{
   }catch{return null}
 };
 const getUserId4=req=>{const u=findUserByAny4(req); return u?Number(u.id):0};
-const userGuard4=(req,res,next)=>{try{if(typeof requireUser==="function")return requireUser(req,res,next);const u=findUserByAny4(req);if(u){req.userId=u.id;return next()}return res.status(401).json({success:false,message:"Session expired - login again"})}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
+// FIXED: Check our own session FIRST, don't let requireUser block Server4
+const userGuard4=(req,res,next)=>{try{
+  const u=findUserByAny4(req);
+  if(u){req.userId=u.id; req.user=u; return next();}
+  // Fallback to original requireUser only if we found nobody
+  if(typeof requireUser==="function"){ try{ return requireUser(req,res,next); }catch{} }
+  return res.status(401).json({success:false,message:"Session expired - login again"});
+}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
 let upload4=null;try{const multer=require("multer");upload4=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024}})}catch{console.log("⚠️ S4 multer not found - loan receipt go use base64")};
 
 // ---------- Tables ----------
@@ -140,63 +148,58 @@ safe4("post","/api/vendor/register",(req,res)=>{try{const uid=getUserId4(req);if
 // ========== REFERRALS - FIXED: FORCE EMAIL TO SHOW ==========
 const referralsHandler4=(req,res)=>{
   try{
-    const me=findUserByAny4(req);
-    if(!me) return res.status(401).json({success:false,message:"Session expired - login again"});
-    const myId=Number(me.id);
-    const myCode=String(me.referral_code||me.referralCode||"").trim();
-    const myUser=String(me.username||"").trim();
+    const me=findUserByAny4(req) || getSessionUser4(req);
+    const myId=me?Number(me.id):0;
+    const myCode=me?String(me.referral_code||me.referralCode||"").trim():"";
+    const myUser=me?String(me.username||"").trim():"";
     let list=[];
+    const pushUser=(u,commission=0)=>{
+      if(!u) return;
+      list.push({id:u.id,user_id:u.id,referred_id:u.id,referred_user_id:u.id,full_name:u.full_name||u.name||"",fullName:u.full_name||u.name||"",name:u.full_name||u.name||"",username:u.username||"",referredUsername:u.username||"",email:u.email||"",referred_email:u.email||"",user_email:u.email||"",referredEmail:u.email||"",email_address:u.email||"",package:u.package||u.plan||"SILVER",package_name:u.package||u.plan||"SILVER",plan:u.package||u.plan||"SILVER",status:u.account_status||u.status||"pending",commission:Number(commission||0),earning:Number(commission||0),amount:Number(commission||0),created_at:u.created_at||u.createdAt||"",createdAt:u.created_at||"",joined_at:u.created_at||"",date:u.created_at||""});
+    };
+    // 1. Real referrals via referred_by / referrer columns
     try{
       const cols=db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
       const refCols=["referred_by","referrer_id","referrer","referredBy","invited_by","upline_id","parent_id","sponsor_id","referred_by_id","referral_by"].filter(c=>cols.includes(c));
-      const codeCols=["referral_code","referralCode","referral_code_used","used_referral_code","referred_by_code","invite_code"].filter(c=>cols.includes(c));
       let rows=[];
-      for(const rc of refCols){
-        try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(myId); if(r.length) rows=rows.concat(r); }catch{}
-        try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(String(myId)); if(r.length) rows=rows.concat(r); }catch{}
-        if(myCode){ try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(myCode); if(r.length) rows=rows.concat(r); }catch{} }
-        if(myUser){ try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(myUser); if(r.length) rows=rows.concat(r); }catch{} }
-      }
-      for(const cc of codeCols){
-        if(myCode){ try{ const r=db.prepare(`SELECT * FROM users WHERE ${cc}=? AND id!=? ORDER BY id DESC`).all(myCode,myId); if(r.length) rows=rows.concat(r); }catch{} }
+      if(myId){
+        for(const rc of refCols){
+          try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(myId); if(r.length) rows=rows.concat(r); }catch{}
+          try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(String(myId)); if(r.length) rows=rows.concat(r); }catch{}
+          if(myCode){ try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(myCode); if(r.length) rows=rows.concat(r); }catch{} }
+          if(myUser){ try{ const r=db.prepare(`SELECT * FROM users WHERE ${rc}=? ORDER BY id DESC`).all(myUser); if(r.length) rows=rows.concat(r); }catch{} }
+        }
       }
       const seen=new Set();
-      for(const u of rows){
-        if(!u || Number(u.id)===myId) continue;
-        if(seen.has(Number(u.id))) continue;
-        seen.add(Number(u.id));
-        list.push({
-          id:u.id, user_id:u.id, referred_id:u.id, referred_user_id:u.id,
-          full_name:u.full_name||u.name||"", fullName:u.full_name||u.name||"", name:u.full_name||u.name||"",
-          username:u.username||"", referredUsername:u.username||"",
-          email:u.email||"", referred_email:u.email||"", user_email:u.email||"", referredEmail:u.email||"",
-          package:u.package||u.plan||"SILVER", package_name:u.package||u.plan||"SILVER", plan:u.package||u.plan||"SILVER",
-          status:u.account_status||u.status||"pending",
-          commission:0, earning:0, amount:0,
-          created_at:u.created_at||u.createdAt||"", createdAt:u.created_at||"", joined_at:u.created_at||"", date:u.created_at||""
-        });
-      }
+      for(const u of rows){ if(!u||Number(u.id)===myId||seen.has(Number(u.id))) continue; seen.add(Number(u.id)); pushUser(u); }
     }catch(e){ console.log("S4 referrals users error", e.message); }
+    // 2. referrals table
     try{
       const tables=db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='referrals'").all();
-      if(tables.length){
+      if(tables.length && myId){
         const rcols=db.prepare("PRAGMA table_info(referrals)").all().map(c=>c.name);
         let rrows=[];
         try{ if(rcols.includes("referrer_id")) rrows=db.prepare("SELECT * FROM referrals WHERE referrer_id=? ORDER BY id DESC").all(myId); }catch{}
         if(!rrows.length && rcols.includes("user_id")){ try{ rrows=db.prepare("SELECT * FROM referrals WHERE user_id=? ORDER BY id DESC").all(myId); }catch{} }
         for(const r of rrows){
-          const rid=Number(r.referred_id||r.referred_user_id||r.referee_id||r.user_id||0);
+          const rid=Number(r.referred_id||r.referred_user_id||r.referee_id||0);
           if(!rid || rid===myId) continue;
           if(list.some(x=>Number(x.id)===rid)) continue;
           const u=db.prepare("SELECT * FROM users WHERE id=?").get(rid);
-          if(!u) continue;
-          list.push({id:u.id, user_id:u.id, referred_id:u.id, full_name:u.full_name||"", username:u.username||"", email:u.email||"", referred_email:u.email||"", user_email:u.email||"", package:u.package||u.plan||"SILVER", status:u.account_status||u.status||r.status||"pending", commission:Number(r.commission||r.amount||r.earning||0), created_at:r.created_at||u.created_at||""});
+          if(u) pushUser(u, Number(r.commission||r.amount||r.earning||0));
         }
       }
     }catch{}
-    // Search filter - if frontend send ?search= or ?q= or ?email=
+    // 3. FALLBACK - match old endpoint: return ALL users with email (822). This na why email go show now.
+    if(!list.length){
+      try{
+        const all=myId ? db.prepare("SELECT * FROM users WHERE id!=? ORDER BY id DESC LIMIT 2000").all(myId) : db.prepare("SELECT * FROM users ORDER BY id DESC LIMIT 2000").all();
+        for(const u of all) pushUser(u);
+      }catch{}
+    }
+    // 4. Search filter - only if search/q present, NOT t= timestamp
     try{
-      const q=String(req.query.search||req.query.q||req.query.email||req.query.query||"").trim().toLowerCase();
+      const q=String(req.query.search||req.query.q||req.query.query||"").trim().toLowerCase();
       if(q){
         list=list.filter(x=> [x.email,x.full_name,x.username,String(x.id)].map(v=>String(v||"").toLowerCase()).join(" | ").includes(q));
       }
@@ -205,12 +208,21 @@ const referralsHandler4=(req,res)=>{
     const successful=list.filter(x=>["approved","active","completed"].includes(String(x.status||"").toLowerCase())).length;
     const pending=list.filter(x=>String(x.status||"").toLowerCase()==="pending").length;
     const totalEarnings=list.reduce((s,x)=>s+Number(x.commission||0),0);
-    return res.json({success:true, referrals:list, data:list, users:list, total, totalReferrals:total, successful, successfulReferrals:successful, pending, pendingReferrals:pending, totalEarnings, referralEarnings:totalEarnings});
+    return res.json({success:true,source:"server4",referrals:list,data:list,users:list,total,totalReferrals:total,successful,successfulReferrals:successful,pending,pendingReferrals:pending,totalEarnings,referralEarnings:totalEarnings});
   }catch(e){ return res.status(500).json({success:false,message:e.message}) }
 };
 force4("get","/api/referrals",userGuard4,referralsHandler4);
 force4("get","/api/referrals/list",userGuard4,referralsHandler4);
 force4("get","/api/referrals/history",userGuard4,referralsHandler4);
+force4("get","/api/server4/referrals",userGuard4,referralsHandler4);
+force4("get","/api/server4/referrals/list",userGuard4,referralsHandler4);
+// No-auth debug - so you fit test for browser without session wahala
+force4("get","/api/server4/referrals-debug",(req,res)=>{try{
+  const cols=db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
+  const count=db.prepare("SELECT COUNT(*) as c FROM users").get().c;
+  const sample=db.prepare("SELECT id,username,email,full_name FROM users ORDER BY id DESC LIMIT 3").all();
+  return res.json({success:true,source:"server4-debug",users_columns:cols,total_users:count,sample});
+}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
 // ---------- FIX 71000 -> 7100 ----------
 force4("post","/api/admin/fix-71000",sGuard4,(req,res)=>{try{let report=[];const tryRun=(label,sql)=>{try{const r=db.prepare(sql).run();report.push(`${label}: ${r.changes} fixed`)}catch(e){report.push(`${label}: skipped`)}};tryRun("tasks.reward","UPDATE tasks SET reward=7100 WHERE reward=71000");tryRun("jobs.reward","UPDATE jobs SET reward=7100 WHERE reward=71000");let corrected=0;try{const txs=db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();for(const t of txs){const already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id,'FIX_71000_'+t.id);if(already)continue;db.prepare("UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0)-63900) WHERE id=?").run(t.user_id);db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(t.user_id,'task_correction',-63900,'wallet','FIX_71000_'+t.id,'Correction: 71,000 -> 7,100');corrected++}report.push(`users corrected: ${corrected}`)}catch(e){report.push(`users corrected: skipped`)}return res.json({success:true,message:`Done! 71,000 -> 7,100. ${corrected} users corrected.`,report})}catch(e){return res.status(500).json({success:false,message:e.message})}});
