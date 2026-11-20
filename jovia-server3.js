@@ -390,7 +390,7 @@ const viewReceipt = (req,res) => {
     const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
     if(!loan) return res.status(404).json({success:false,message:"Loan not found"});
     if(!loan.receipt_data && !loan.receipt_name) return res.status(404).json({success:false,message:"No receipt file"});
-    return res.json({success:true,loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data, loan:cleanLoan(loan), has_receipt:!!(loan.receipt_data||loan.receipt_name)});
+    return res.json({success:true, loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data, loan:cleanLoan(loan), has_receipt:!!(loan.receipt_data||loan.receipt_name)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 safe("get","/api/loans/admin/:id/receipt", sGuard, viewReceipt);
