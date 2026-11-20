@@ -48,6 +48,24 @@ const getSessionUserId = (req) => {
   }catch{ return 0; }
 };
 
+// ✅ FIX 1: Email fallback - Vendor go work even if session ID no match
+const getUserIdByEmail = (req) => {
+  try{
+    const email = String(req.query?.email || req.body?.email || req.query?.username || req.body?.username || "").trim();
+    if(!email) return 0;
+    if(/^\d+$/.test(email)) return Number(email);
+    let u = null;
+    if(email.includes('@')){ try{ u = db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(email); }catch{} }
+    if(!u){ try{ u = db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(email); }catch{} }
+    return u ? Number(u.id) : 0;
+  }catch{ return 0; }
+};
+const resolveUserId = (req) => {
+  const sid = getSessionUserId(req);
+  if(sid) return sid;
+  return getUserIdByEmail(req);
+};
+
 // ---------- Tables ----------
 try{ db.exec(`CREATE TABLE IF NOT EXISTS loans (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -255,7 +273,7 @@ safe("get","/api/admin/users/full-profile", sGuard, (req,res)=>{
 
 safe("get","/api/me", (req,res)=>{
   try{
-    const uid = getSessionUserId(req);
+    const uid = resolveUserId(req);
     if(!uid) return res.status(401).json({success:false,message:"Session expired"});
     const u = db.prepare("SELECT * FROM users WHERE id=?").get(uid);
     if(!u) return res.status(404).json({success:false,message:"User not found"});
@@ -274,23 +292,21 @@ safe("get","/api/wallet", (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
-// ---------- 0e. FORGOT / RESET PASSWORD - NEW - FIXES "API endpoint not found" ----------
+// ---------- 0e. FORGOT / RESET PASSWORD - SHOW CODE ON SAME PAGE, NO EMAIL ----------
 const forgotHandler = (req,res)=>{
   try{
     const email = String(req.body?.email || req.body?.username || req.query?.email || "").trim();
     if(!email) return res.status(400).json({success:false,message:"Enter your email"});
     const user = findUserByVal(email);
-    // Always return success so attackers no go know which email exist
-    if(!user) return res.json({success:true,message:"If this email exists, we don send reset code. Check your email / ask Admin for code."});
+    if(!user) return res.status(404).json({success:false,message:"Email not found - check email or register first", code:"", reset_code:""});
     let code = String(Math.floor(100000 + Math.random()*900000));
     let token = ""; try{ token=require("crypto").randomBytes(24).toString("hex"); }catch{ token=Date.now().toString(36)+Math.random().toString(36).slice(2); }
     const exp = new Date(Date.now()+30*60*1000).toISOString();
     try{ db.prepare("UPDATE password_resets SET used=1 WHERE user_id=? AND used=0").run(user.id); }catch{}
     db.prepare("INSERT INTO password_resets (user_id,email,token,code,expires_at,used) VALUES (?,?,?,?,?,0)").run(user.id, user.email, token, code, exp);
-    try{ notify(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes. If no be you, ignore am.`); }catch{}
+    try{ notify(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes.`); }catch{}
     console.log(`🔑 Reset code for ${user.email} = ${code} token=${token}`);
-    // In dev / Admin view, return code so user fit test without email service. Remove in production if you add email.
-    return res.json({success:true,message:"Reset code sent. Check your email / notifications. Code expires in 30 minutes.", code, reset_code:code, token, reset_token:token, email:user.email});
+    return res.json({success:true,message:`Your reset code na: ${code} - Type am for same page, no need email. Code expires in 30 minutes.`, code, reset_code:code, token, reset_token:token, email:user.email, show_code:true});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 force("post","/api/auth/forgot-password", forgotHandler);
@@ -318,7 +334,6 @@ const resetHandler = (req,res)=>{
     setUserPassword(row.user_id, newPass);
     db.prepare("UPDATE password_resets SET used=1 WHERE id=?").run(row.id);
     try{ notify(row.user_id,"Password Changed ✅","Your password don change successfully. If no be you, contact Admin now."); }catch{}
-    // Clear session so user go login with new password
     try{ if(req.session) req.session.destroy(()=>{}); }catch{}
     return res.json({success:true,message:"Password changed ✅ Login with your new password."});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -548,12 +563,16 @@ force("post","/api/admin/loans/disburse", sGuard, (req,res)=>{ req.body.action="
 force("post","/api/loans/admin/:id/action", sGuard, adminAction);
 force("post","/api/admin/loans/:id/action", sGuard, adminAction);
 
-// ---------- 6. VENDOR - FIXED ----------
+// ---------- 6. VENDOR - FIXED WITH EMAIL FALLBACK ----------
 const getVendorByUser = (uid)=>{ try{ return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid); }catch{ return null; } };
+const resolveVendor = (req)=>{
+  const uid = resolveUserId(req);
+  if(!uid) return null;
+  return getVendorByUser(uid);
+};
 const vendorMe = (req,res)=>{
   try{
-    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
-    const v = getVendorByUser(uid);
+    const v = resolveVendor(req);
     if(!v) return res.json({success:false, isVendor:false, is_vendor:false, message:"Not a vendor yet"});
     const st = normStatus(v.status);
     return res.json({success:true, isVendor:st==="APPROVED", is_vendor:st==="APPROVED", vendor:v, vendor_status:st, vendor_balance:Number(v.balance||0)});
@@ -561,23 +580,23 @@ const vendorMe = (req,res)=>{
 };
 const vendorPending = (req,res)=>{
   try{
-    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
-    const v = getVendorByUser(uid); if(!v || normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
+    const v = resolveVendor(req);
+    if(!v || normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
     let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 100").all(); }catch{}
     return res.json({success:true, users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST[normPkg(x)]||9000})), total:rows.length, vendor_balance:Number(v.balance||0)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 const vendorActivate = (req,res)=>{
   try{
-    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
-    const v = getVendorByUser(uid); if(!v) return res.status(403).json({success:false,message:"Not a vendor"});
+    const v = resolveVendor(req);
+    const uid = resolveUserId(req);
+    if(!v) return res.status(403).json({success:false,message:"Not a vendor"});
     if(normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet"});
     const targetId = Number(req.body?.userId || req.body?.id || req.params?.id || 0); if(!targetId) return res.status(400).json({success:false,message:"User ID required"});
     const target = db.prepare("SELECT * FROM users WHERE id=?").get(targetId); if(!target) return res.status(404).json({success:false,message:"User not found"});
     const st = String(target.account_status||target.status||"").toLowerCase(); if(["active","approved"].includes(st)) return res.status(400).json({success:false,message:"User already active"});
     const pkg = normPkg(target); const cost = PKG_COST[pkg]||9000; const bal = Number(v.balance||0);
     if(bal < cost) return res.status(400).json({success:false,message:`Insufficient Vendor Fund! You need ₦${cost.toLocaleString()} to activate ${pkg} user. Your balance: ₦${bal.toLocaleString()}. Ask Admin to fund you.`, need:cost, balance:bal, package:pkg});
-    // ✅ FIX: Deduct ONLY from vendors.balance - NO double deduct from affiliate_balance
     db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)-?, total_activated=COALESCE(total_activated,0)+1, total_deducted=COALESCE(total_deducted,0)+? WHERE id=?").run(cost,cost,v.id);
     try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(targetId); }catch{}
     try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(targetId); }catch{}
@@ -592,7 +611,6 @@ const vendorActivate = (req,res)=>{
     return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ₦${cost.toLocaleString()} deducted. Remaining: ₦${(bal-cost).toLocaleString()}`, deducted:cost, cost, remaining_balance:bal-cost, vendor_balance:bal-cost});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
-// ✅ FIX: force() so this version always wins, old version no go skip am
 force("get","/api/vendor/me", vendorMe);
 force("get","/api/vendor/dashboard", vendorMe);
 force("get","/api/vendor/pending-users", vendorPending);
@@ -633,7 +651,22 @@ force("post","/api/admin/vendor/create", sGuard, (req,res)=>{
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
 force("post","/api/admin/vendors/action", sGuard, (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||0); const act=String(req.body?.action||req.body?.status||"").toUpperCase(); if(!id) return res.status(400).json({success:false,message:"Vendor ID required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const st=act.includes("APPROV")?"APPROVED":act.includes("REJECT")?"REJECTED":act.includes("SUSPEND")?"SUSPENDED":"PENDING"; db.prepare("UPDATE vendors SET status=? WHERE id=?").run(st,id); return res.json({success:true,message:`Vendor ${st}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
-const adminCreditVendor = (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||req.params?.id||0); const amt=Number(req.body?.amount||0); if(!id||!amt||amt<=0) return res.status(400).json({success:false,message:"Vendor ID + amount required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id); if(!user) return res.status(404).json({success:false,message:"Vendor user not found"}); db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id); try{ db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(amt,v.user_id); }catch{} try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{} try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{} return res.json({success:true,message:`Vendor ${user.username} funded ₦${amt.toLocaleString()}. New: ₦${(Number(v.balance||0)+amt).toLocaleString()}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } };
+const adminCreditVendor = (req,res)=>{
+  try{
+    const id=Number(req.body?.id||req.body?.vendorId||req.params?.id||0);
+    const amt=Number(req.body?.amount||0);
+    if(!id||!amt||amt<=0) return res.status(400).json({success:false,message:"Vendor ID + amount required"});
+    const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id);
+    if(!v) return res.status(404).json({success:false,message:"Vendor not found"});
+    const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id);
+    if(!user) return res.status(404).json({success:false,message:"Vendor user not found"});
+    // ✅ FIX: Only vendors.balance - NO double credit to affiliate_balance
+    db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id);
+    try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{}
+    try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{}
+    return res.json({success:true,message:`Vendor ${user.username} funded ₦${amt.toLocaleString()}. New: ₦${(Number(v.balance||0)+amt).toLocaleString()}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+};
 force("post","/api/admin/vendors/fund", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/credit", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/:id/fund", sGuard, adminCreditVendor);
