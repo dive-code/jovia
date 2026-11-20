@@ -77,23 +77,43 @@ force("post","/api/game/upload-screenshot", (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 force("post","/api/games/upload-screenshot", (req,res)=>{ return res.redirect(307, "/api/game/upload-screenshot"); });
-
-// ---------- FIX 71000 - SOURCE ADDED ----------
-force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
-  try{
-    const report=[]; const tryRun=(label,sql,params=[])=>{ try{ const r=db.prepare(sql).run(...params); report.push(`${label}: ${r.changes} changed`); }catch(e){ report.push(`${label}: skipped - ${e.message}`); } };
-    tryRun("users wallet 71000->7100", "UPDATE users SET wallet_balance=7100 WHERE wallet_balance=71000");
-    tryRun("wallet_transactions task 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%task%'");
-    tryRun("wallet_transactions job 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%job%'");
-    return res.json({success:true,message:"Done! 71,000 don change to 7,100",report});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({success:true,message:"Use POST /api/admin/fix-71000 with key=jovia123"}); });
-
 // ---------- 7. PING ----------
 force("get","/api/server4/ping", (req,res)=>{ return res.json({success:true,message:"Server4 dey work ✅ - SOURCE ADDED", time:new Date().toISOString()}); });
 force("get","/api/missing-check", sGuard, (req,res)=>{ const routes=[]; try{ app._router.stack.forEach(l=>{ if(l.route) routes.push(Object.keys(l.route.methods)[0].toUpperCase()+" "+l.route.path); }); }catch{} return res.json({success:true,total_routes:routes.length,routes}); });
 
 console.log("✅ SERVER 4 SOURCE READY - FULL");
 }catch(e){ console.log("⚠️ Server4 load error:", e.message); }
+};
+try{
+      const txs = db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();
+      for(const t of txs){
+        const already = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id, 'FIX_71000_'+t.id);
+        if(already) continue;
+        db.prepare("UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0)-63900) WHERE id=?").run(t.user_id);
+        db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(t.user_id, 'task_correction', -63900, 'wallet', 'FIX_71000_'+t.id, 'Correction: 71,000 -> 7,100 - extra 63,900 removed');
+        try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(t.user_id, 'Task Reward Corrected', 'That task reward na ₦7,100, no be ₦71,000. We don remove extra ₦63,900. Your ₦7,100 still dey.'); }catch{}
+        corrected++;
+      }
+      report.push(`users corrected: ${corrected} users, ₦63,900 removed each`);
+    }catch(e){ report.push(`users corrected: skipped`); }
+    tryRun("wallet_transactions task 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%task%'");
+    tryRun("wallet_transactions job 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%job%'");
+    return res.json({success:true, message:`Done! Everywhere 71,000 don change to 7,100. ${corrected} users corrected.`, report});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({success:true, message:"Use POST /api/admin/fix-71000 to run the fix. Send POST with key=jovia123"}); });
+
+console.log("✅ LOANS v4 READY - FORGOT PASSWORD + VENDOR FIXED + NO DOUBLE DEDUCT + 71000");
+
+// ---------- ONLY ADDITION: CONNECT TO SERVER 4 - YOUR PREVIOUS SERVER NO TOUCH ----------
+// Server 4 file must dey same folder as this file (server3)
+// Any new fix from now go dey inside server4.js only, this file go stay as e be
+try{
+  require("./server4")(app, db, requireUser, requireAdmin);
+  console.log("✅ SERVER 4 CONNECTED TO SERVER 3 - WORKING AS ONE");
+}catch(e){
+  console.log("⚠️ Server4 file not found yet, Server 3 go still work alone:", e.message);
+}
+
+}catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
 };
