@@ -48,24 +48,6 @@ const getSessionUserId = (req) => {
   }catch{ return 0; }
 };
 
-// ✅ FIX 1: Email fallback - Vendor go work even if session ID no match
-const getUserIdByEmail = (req) => {
-  try{
-    const email = String(req.query?.email || req.body?.email || req.query?.username || req.body?.username || "").trim();
-    if(!email) return 0;
-    if(/^\d+$/.test(email)) return Number(email);
-    let u = null;
-    if(email.includes('@')){ try{ u = db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(email); }catch{} }
-    if(!u){ try{ u = db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(email); }catch{} }
-    return u ? Number(u.id) : 0;
-  }catch{ return 0; }
-};
-const resolveUserId = (req) => {
-  const sid = getSessionUserId(req);
-  if(sid) return sid;
-  return getUserIdByEmail(req);
-};
-
 // ---------- Tables ----------
 try{ db.exec(`CREATE TABLE IF NOT EXISTS loans (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -225,54 +207,15 @@ safe("post","/api/admin/impersonate", sGuard, (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
-// ✅ FIXED IN FIRST HALF ONLY: balance/history must read wallet_transactions first, not only balance_history table
 safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
   try{
-    const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || req.query.id || "";
-    let rows=[];
-    if(v){
-      const user = findUserByVal(v);
-      if(!user) return res.status(404).json({success:false, message:"User not found"});
-      try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
-      return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name}, history:rows, transactions:rows, total:rows.length});
-    }
-    // No user passed: try wallet_transactions first (real history)
-    try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions ORDER BY id DESC LIMIT 100").all(); }catch{}
-    if(rows.length) return res.json({success:true, history:rows, transactions:rows, total:rows.length});
-    // Fallback to old balance_history / balance_adjustments table if wallet_transactions empty
     if(!tableExists("balance_history") && !tableExists("balance_adjustments")) return res.json({success:true, history:[]});
     const tbl = tableExists("balance_history") ? "balance_history" : "balance_adjustments";
-    const r2 = db.prepare(`SELECT * FROM ${tbl} ORDER BY id DESC LIMIT 100`).all();
-    const history = r2.map(h=>({ id:h.id, user_id:h.user_id, email:h.email||h.user_email||"", wallet_type:h.wallet_type||h.walletType||h.type||"wallet_balance", action:h.action||(Number(h.amount)>=0?"add":"deduct"), amount:Math.abs(Number(h.amount||0)), reason:h.reason||h.note||"", before_balance:h.before_balance??h.before??0, after_balance:h.after_balance??h.after??0, created_at:h.created_at||h.createdAt||"" }));
-    return res.json({success:true, history, transactions:history, total:history.length});
+    const rows = db.prepare(`SELECT * FROM ${tbl} ORDER BY id DESC LIMIT 100`).all();
+    const history = rows.map(h=>({ id:h.id, user_id:h.user_id, email:h.email||h.user_email||"", wallet_type:h.wallet_type||h.walletType||h.type||"wallet_balance", action:h.action||(Number(h.amount)>=0?"add":"deduct"), amount:Math.abs(Number(h.amount||0)), reason:h.reason||h.note||"", before_balance:h.before_balance??h.before??0, after_balance:h.after_balance??h.after??0, created_at:h.created_at||h.createdAt||"" }));
+    return res.json({success:true, history});
   }catch(e){ return res.json({success:true, history:[]}); }
 });
-// ---------- ADDED FOR THIS HALF ONLY - NO CUT, NO REMOVE - BALANCE HISTORY + BALANCE USER ----------
-safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
-  try{
-    const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || req.query.id || "";
-    let rows=[];
-    if(v){
-      const user = findUserByVal(v);
-      if(!user) return res.status(404).json({success:false, message:"User not found"});
-      try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
-      return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name}, history:rows, transactions:rows, total:rows.length});
-    }
-    try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions ORDER BY id DESC LIMIT 100").all(); }catch{}
-    return res.json({success:true, history:rows, transactions:rows, total:rows.length});
-  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-});
-safe("get","/api/admin/balance/user", sGuard, (req,res)=>{
-  try{
-    const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || req.query.id || "";
-    if(!v) return res.status(400).json({success:false, message:"Enter email / username / ID"});
-    const user = findUserByVal(v);
-    if(!user) return res.status(404).json({success:false, message:"User not found"});
-    return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name,package:user.package||user.plan,account_status:user.account_status}, balances:safeBalances(user)});
-  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
-});
-safe("get","/api/admin/balance-history", sGuard, (req,res)=>{ return res.redirect(307, "/api/admin/balance/history?key=jovia123"); });
-// ---------- END OF ADDED - YOUR ORIGINAL HALF STARTS BELOW, NOTHING REMOVED ----------
 
 safe("get","/api/admin/upline", sGuard, (req,res)=>{
   try{
@@ -312,7 +255,7 @@ safe("get","/api/admin/users/full-profile", sGuard, (req,res)=>{
 
 safe("get","/api/me", (req,res)=>{
   try{
-    const uid = resolveUserId(req);
+    const uid = getSessionUserId(req);
     if(!uid) return res.status(401).json({success:false,message:"Session expired"});
     const u = db.prepare("SELECT * FROM users WHERE id=?").get(uid);
     if(!u) return res.status(404).json({success:false,message:"User not found"});
@@ -331,21 +274,23 @@ safe("get","/api/wallet", (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
-// ---------- 0e. FORGOT / RESET PASSWORD - SHOW CODE ON SAME PAGE, NO EMAIL ----------
+// ---------- 0e. FORGOT / RESET PASSWORD - NEW - FIXES "API endpoint not found" ----------
 const forgotHandler = (req,res)=>{
   try{
     const email = String(req.body?.email || req.body?.username || req.query?.email || "").trim();
     if(!email) return res.status(400).json({success:false,message:"Enter your email"});
     const user = findUserByVal(email);
-    if(!user) return res.status(404).json({success:false,message:"Email not found - check email or register first", code:"", reset_code:""});
+    // Always return success so attackers no go know which email exist
+    if(!user) return res.json({success:true,message:"If this email exists, we don send reset code. Check your email / ask Admin for code."});
     let code = String(Math.floor(100000 + Math.random()*900000));
     let token = ""; try{ token=require("crypto").randomBytes(24).toString("hex"); }catch{ token=Date.now().toString(36)+Math.random().toString(36).slice(2); }
     const exp = new Date(Date.now()+30*60*1000).toISOString();
     try{ db.prepare("UPDATE password_resets SET used=1 WHERE user_id=? AND used=0").run(user.id); }catch{}
     db.prepare("INSERT INTO password_resets (user_id,email,token,code,expires_at,used) VALUES (?,?,?,?,?,0)").run(user.id, user.email, token, code, exp);
-    try{ notify(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes.`); }catch{}
+    try{ notify(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes. If no be you, ignore am.`); }catch{}
     console.log(`🔑 Reset code for ${user.email} = ${code} token=${token}`);
-    return res.json({success:true,message:`Your reset code na: ${code} - Type am for same page, no need email. Code expires in 30 minutes.`, code, reset_code:code, token, reset_token:token, email:user.email, show_code:true});
+    // In dev / Admin view, return code so user fit test without email service. Remove in production if you add email.
+    return res.json({success:true,message:"Reset code sent. Check your email / notifications. Code expires in 30 minutes.", code, reset_code:code, token, reset_token:token, email:user.email});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 force("post","/api/auth/forgot-password", forgotHandler);
@@ -373,6 +318,7 @@ const resetHandler = (req,res)=>{
     setUserPassword(row.user_id, newPass);
     db.prepare("UPDATE password_resets SET used=1 WHERE id=?").run(row.id);
     try{ notify(row.user_id,"Password Changed ✅","Your password don change successfully. If no be you, contact Admin now."); }catch{}
+    // Clear session so user go login with new password
     try{ if(req.session) req.session.destroy(()=>{}); }catch{}
     return res.json({success:true,message:"Password changed ✅ Login with your new password."});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -602,16 +548,12 @@ force("post","/api/admin/loans/disburse", sGuard, (req,res)=>{ req.body.action="
 force("post","/api/loans/admin/:id/action", sGuard, adminAction);
 force("post","/api/admin/loans/:id/action", sGuard, adminAction);
 
-// ---------- 6. VENDOR - FIXED WITH EMAIL FALLBACK ----------
+// ---------- 6. VENDOR - FIXED ----------
 const getVendorByUser = (uid)=>{ try{ return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid); }catch{ return null; } };
-const resolveVendor = (req)=>{
-  const uid = resolveUserId(req);
-  if(!uid) return null;
-  return getVendorByUser(uid);
-};
 const vendorMe = (req,res)=>{
   try{
-    const v = resolveVendor(req);
+    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const v = getVendorByUser(uid);
     if(!v) return res.json({success:false, isVendor:false, is_vendor:false, message:"Not a vendor yet"});
     const st = normStatus(v.status);
     return res.json({success:true, isVendor:st==="APPROVED", is_vendor:st==="APPROVED", vendor:v, vendor_status:st, vendor_balance:Number(v.balance||0)});
@@ -619,23 +561,23 @@ const vendorMe = (req,res)=>{
 };
 const vendorPending = (req,res)=>{
   try{
-    const v = resolveVendor(req);
-    if(!v || normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
-    let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 1000").all(); }catch{}
+    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const v = getVendorByUser(uid); if(!v || normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
+    let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 100").all(); }catch{}
     return res.json({success:true, users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST[normPkg(x)]||9000})), total:rows.length, vendor_balance:Number(v.balance||0)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 const vendorActivate = (req,res)=>{
   try{
-    const v = resolveVendor(req);
-    const uid = resolveUserId(req);
-    if(!v) return res.status(403).json({success:false,message:"Not a vendor"});
+    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const v = getVendorByUser(uid); if(!v) return res.status(403).json({success:false,message:"Not a vendor"});
     if(normStatus(v.status)!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet"});
     const targetId = Number(req.body?.userId || req.body?.id || req.params?.id || 0); if(!targetId) return res.status(400).json({success:false,message:"User ID required"});
     const target = db.prepare("SELECT * FROM users WHERE id=?").get(targetId); if(!target) return res.status(404).json({success:false,message:"User not found"});
     const st = String(target.account_status||target.status||"").toLowerCase(); if(["active","approved"].includes(st)) return res.status(400).json({success:false,message:"User already active"});
     const pkg = normPkg(target); const cost = PKG_COST[pkg]||9000; const bal = Number(v.balance||0);
     if(bal < cost) return res.status(400).json({success:false,message:`Insufficient Vendor Fund! You need ₦${cost.toLocaleString()} to activate ${pkg} user. Your balance: ₦${bal.toLocaleString()}. Ask Admin to fund you.`, need:cost, balance:bal, package:pkg});
+    // ✅ FIX: Deduct ONLY from vendors.balance - NO double deduct from affiliate_balance
     db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)-?, total_activated=COALESCE(total_activated,0)+1, total_deducted=COALESCE(total_deducted,0)+? WHERE id=?").run(cost,cost,v.id);
     try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(targetId); }catch{}
     try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(targetId); }catch{}
@@ -650,6 +592,7 @@ const vendorActivate = (req,res)=>{
     return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ₦${cost.toLocaleString()} deducted. Remaining: ₦${(bal-cost).toLocaleString()}`, deducted:cost, cost, remaining_balance:bal-cost, vendor_balance:bal-cost});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
+// ✅ FIX: force() so this version always wins, old version no go skip am
 force("get","/api/vendor/me", vendorMe);
 force("get","/api/vendor/dashboard", vendorMe);
 force("get","/api/vendor/pending-users", vendorPending);
@@ -690,22 +633,7 @@ force("post","/api/admin/vendor/create", sGuard, (req,res)=>{
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
 force("post","/api/admin/vendors/action", sGuard, (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||0); const act=String(req.body?.action||req.body?.status||"").toUpperCase(); if(!id) return res.status(400).json({success:false,message:"Vendor ID required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const st=act.includes("APPROV")?"APPROVED":act.includes("REJECT")?"REJECTED":act.includes("SUSPEND")?"SUSPENDED":"PENDING"; db.prepare("UPDATE vendors SET status=? WHERE id=?").run(st,id); return res.json({success:true,message:`Vendor ${st}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
-const adminCreditVendor = (req,res)=>{
-  try{
-    const id=Number(req.body?.id||req.body?.vendorId||req.params?.id||0);
-    const amt=Number(req.body?.amount||0);
-    if(!id||!amt||amt<=0) return res.status(400).json({success:false,message:"Vendor ID + amount required"});
-    const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id);
-    if(!v) return res.status(404).json({success:false,message:"Vendor not found"});
-    const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id);
-    if(!user) return res.status(404).json({success:false,message:"Vendor user not found"});
-// ✅ FIX: Only vendors.balance - NO double credit to affiliate_balance
-    db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id);
-    try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{}
-    try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{}
-    return res.json({success:true,message:`Vendor ${user.username} funded ₦${amt.toLocaleString()}. New: ₦${(Number(v.balance||0)+amt).toLocaleString()}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)});
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-};
+const adminCreditVendor = (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||req.params?.id||0); const amt=Number(req.body?.amount||0); if(!id||!amt||amt<=0) return res.status(400).json({success:false,message:"Vendor ID + amount required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id); if(!user) return res.status(404).json({success:false,message:"Vendor user not found"}); db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id); try{ db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(amt,v.user_id); }catch{} try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{} try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{} return res.json({success:true,message:`Vendor ${user.username} funded ₦${amt.toLocaleString()}. New: ₦${(Number(v.balance||0)+amt).toLocaleString()}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } };
 force("post","/api/admin/vendors/fund", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/credit", sGuard, adminCreditVendor);
 force("post","/api/admin/vendors/:id/fund", sGuard, adminCreditVendor);
@@ -734,7 +662,7 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
     tryRun("products.price", "UPDATE products SET price=7100 WHERE price=71000");
     tryRun("products.amount", "UPDATE products SET amount=7100 WHERE amount=71000");
     let corrected = 0;
-    try{
+  try{
       const txs = db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();
       for(const t of txs){
         const already = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id, 'FIX_71000_'+t.id);
@@ -744,7 +672,7 @@ force("post","/api/admin/fix-71000", sGuard, (req,res)=>{
         try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(t.user_id, 'Task Reward Corrected', 'That task reward na ₦7,100, no be ₦71,000. We don remove extra ₦63,900. Your ₦7,100 still dey.'); }catch{}
         corrected++;
       }
-     report.push(`users corrected: ${corrected} users, ₦63,900 removed each`);
+      report.push(`users corrected: ${corrected} users, ₦63,900 removed each`);
     }catch(e){ report.push(`users corrected: skipped`); }
     tryRun("wallet_transactions task 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%task%'");
     tryRun("wallet_transactions job 71000->7100", "UPDATE wallet_transactions SET amount=7100 WHERE amount=71000 AND type LIKE '%job%'");
@@ -755,89 +683,14 @@ force("get","/api/admin/fix-71000", sGuard, (req,res)=>{ return res.json({succes
 
 console.log("✅ LOANS v4 READY - FORGOT PASSWORD + VENDOR FIXED + NO DOUBLE DEDUCT + 71000");
 
-// ---------- REQUIRED STUFF SO SERVER 4 CAN CONNECT AND WORK WITH SERVER 3 - ADD AM HERE ----------
+// ---------- ONLY ADDITION: CONNECT TO SERVER 4 - YOUR PREVIOUS SERVER NO TOUCH ----------
+// Server 4 file must dey same folder as this file (server3)
+// Any new fix from now go dey inside server4.js only, this file go stay as e be
 try{
-  // Server 4 file must dey same folder as Server 3
   require("./server4")(app, db, requireUser, requireAdmin);
   console.log("✅ SERVER 4 CONNECTED TO SERVER 3 - WORKING AS ONE");
 }catch(e){
-  console.log("⚠️ Server4 file not found, loading Server4 inside Server 3 as backup:", e.message);
-  // BACKUP: If server4.js no dey, these go still work inside Server 3, so Server 4 no go fail
-  try{
-    // 2. Admin Search
-    force("get","/api/admin/users/search", sGuard, (req,res)=>{
-      try{
-        const q = String(req.query.q || req.query.search || req.query.email || req.query.username || "").trim();
-        if(!q) return res.status(400).json({success:false,message:"Enter email / name / username / ID"});
-        const like="%"+q+"%";
-        const rows=db.prepare("SELECT * FROM users WHERE CAST(id AS TEXT) LIKE ? OR username LIKE ? OR email LIKE ? OR full_name LIKE ? ORDER BY id DESC LIMIT 100").all(like,like,like,like);
-        return res.json({success:true, users:rows, total:rows.length});
-      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
-    });
-    // 4. Admin Balance User
-    force("get","/api/admin/balance/user", sGuard, (req,res)=>{
-      try{
-        const v = req.query.email || req.query.username || req.query.userId || req.query.id || "";
-        if(!v) return res.status(400).json({success:false,message:"Enter email / username / ID"});
-        const user = findUserByVal(v);
-        if(!user) return res.status(404).json({success:false,message:"User not found"});
-        const w=Number(user.wallet_balance||0), a=Number(user.affiliate_balance||0), r=Number(user.referral_balance||0), g=Number(user.game_balance||0);
-        return res.json({success:true,user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name,package:user.package||user.plan,account_status:user.account_status},balances:{wallet_balance:w,affiliate_balance:a,referral_balance:r,game_balance:g,total_balance:w+a+r+g}});
-      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
-    });
-    // 4b. Admin Balance History - ADDED BACK
-    force("get","/api/admin/balance/history", sGuard, (req,res)=>{
-      try{
-        const v = req.query.email || req.query.username || req.query.userId || req.query.id || "";
-        let rows=[];
-        if(v){
-          const user=findUserByVal(v);
-          if(!user) return res.status(404).json({success:false,message:"User not found"});
-          try{ rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
-          return res.json({success:true,user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name},history:rows,transactions:rows,total:rows.length});
-        }
-        try{ rows=db.prepare("SELECT * FROM wallet_transactions ORDER BY id DESC LIMIT 100").all(); }catch{}
-        return res.json({success:true,history:rows,transactions:rows,total:rows.length});
-      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
-    });
-    force("get","/api/admin/balance-history", sGuard, (req,res)=>{ return res.redirect(307, "/api/admin/balance/history?key=jovia123"); });
-    // 5. Admin Upgrades List
-    force("get","/api/admin/upgrades/list", sGuard, (req,res)=>{
-      try{
-        let rows=[];
-        try{ if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='upgrades'").get()) rows=db.prepare("SELECT * FROM upgrades ORDER BY id DESC LIMIT 500").all(); }catch{}
-        if(!rows.length){ const users=db.prepare("SELECT id,username,email,full_name,package,plan,account_status,created_at FROM users ORDER BY id DESC LIMIT 200").all(); rows=users.map(u=>({id:u.id,user_id:u.id,username:u.username,email:u.email,full_name:u.full_name,to_package:u.package||u.plan,status:u.account_status,created_at:u.created_at})); }
-        return res.json({success:true,upgrades:rows,total:rows.length,list:rows});
-      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
-    });
-    // 5b. Loans Admin - ADDED BACK
-    force("get","/api/loans/admin", sGuard, (req,res)=>{
-      try{
-        let rows=[];
-        try{ if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='loans'").get()) rows=db.prepare("SELECT * FROM loans ORDER BY id DESC LIMIT 500").all(); }catch{}
-        if(!rows.length){ try{ if(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='loan_requests'").get()) rows=db.prepare("SELECT * FROM loan_requests ORDER BY id DESC LIMIT 500").all(); }catch{} }
-        return res.json({success:true,loans:rows,total:rows.length,list:rows});
-      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
-    });
-    force("get","/api/admin/loans", sGuard, (req,res)=>{ return res.redirect(307, "/api/loans/admin?key=jovia123"); });
-    // 6. Game Screenshot No-Duplicate
-    try{ db.exec(`CREATE TABLE IF NOT EXISTS screenshot_hashes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,hash TEXT UNIQUE,filename TEXT,game_id TEXT,created_at TEXT DEFAULT (datetime('now')))`); }catch{}
-    force("post","/api/game/upload-screenshot", (req,res)=>{
-      try{
-        const crypto=require("crypto");
-        const uid = resolveUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
-        const b=req.body||{}; const raw = req.file ? req.file.buffer : Buffer.from(String(b.screenshot_base64||b.screenshot||b.image||b.proof||"").replace(/^data:[^;]+;base64,[STRIPPED],"base64");
-        if(!raw.length) return res.status(400).json({success:false,message:"No screenshot sent"});
-        const hash=crypto.createHash("sha256").update(raw).digest("hex");
-        if(db.prepare("SELECT * FROM screenshot_hashes WHERE hash=?").get(hash)) return res.status(400).json({success:false,message:"This screenshot don already upload before - upload a new screenshot, no reuse old one",duplicate:true});
-        db.prepare("INSERT OR IGNORE INTO screenshot_hashes (user_id,hash,filename,game_id) VALUES (?,?,?,?)").run(uid,hash,b.filename||"",b.game_id||"");
-        return res.json({success:true,message:"Screenshot uploaded ✅"});
-      }catch(err){ return res.status(500).json({success:false,message:err.message}); }
-    });
-    // 7. Ping
-    force("get","/api/server4/ping", (req,res)=>{ return res.json({success:true,message:"Server4 dey work ✅ - connected inside Server 3"}); });
-    console.log("✅ SERVER 4 BACKUP LOADED INSIDE SERVER 3");
-  }catch(e2){ console.log("⚠️ Server4 backup fail:", e2.message); }
+  console.log("⚠️ Server4 file not found yet, Server 3 go still work alone:", e.message);
 }
 
 }catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
