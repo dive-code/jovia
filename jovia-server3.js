@@ -235,6 +235,33 @@ safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
   }catch(e){ return res.json({success:true, history:[]}); }
 });
 
+// ---------- ADDED FOR THIS HALF ONLY - NO CUT, NO REMOVE - BALANCE HISTORY + BALANCE USER ----------
+safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
+  try{
+    const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || req.query.id || "";
+    let rows=[];
+    if(v){
+      const user = findUserByVal(v);
+      if(!user) return res.status(404).json({success:false, message:"User not found"});
+      try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
+      return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name}, history:rows, transactions:rows, total:rows.length});
+    }
+    try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions ORDER BY id DESC LIMIT 100").all(); }catch{}
+    return res.json({success:true, history:rows, transactions:rows, total:rows.length});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+safe("get","/api/admin/balance/user", sGuard, (req,res)=>{
+  try{
+    const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || req.query.id || "";
+    if(!v) return res.status(400).json({success:false, message:"Enter email / username / ID"});
+    const user = findUserByVal(v);
+    if(!user) return res.status(404).json({success:false, message:"User not found"});
+    return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name,package:user.package||user.plan,account_status:user.account_status}, balances:safeBalances(user)});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+safe("get","/api/admin/balance-history", sGuard, (req,res)=>{ return res.redirect(307, "/api/admin/balance/history?key=jovia123"); });
+// ---------- END OF ADDED - YOUR ORIGINAL HALF STARTS BELOW, NOTHING REMOVED ----------
+
 safe("get","/api/admin/upline", sGuard, (req,res)=>{
   try{
     const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || "";
