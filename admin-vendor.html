@@ -62,6 +62,34 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     </div>
   </div>
 
+  <!-- ========== BACKPAY 2 - BY DATE - WORKS WITH BACKPAY 1 ========== -->
+  <div class="card" style="border:2px solid #f59e0b">
+    <h3>💰 Backpay 2 — Direct Referral Only</h3>
+    <p class="sub">Works with Backpay 1 (Main Server). No double pay — same mark <b>BACKPAY_ALL_{id}</b>.<br>Direct Referral ONLY: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> • No upgrade.<br>Pick date, press Check first to see preview, then Pay. After Pay, everybody balance go update.</p>
+    <div class="grid2">
+      <div>
+        <label class="lbl">From Date</label>
+        <input id="bpFrom" type="date">
+      </div>
+      <div>
+        <label class="lbl">To Date</label>
+        <input id="bpTo" type="date">
+      </div>
+    </div>
+    <div class="grid2">
+      <button class="btn btn-light" onclick="backpayQuick('last7')">📅 Last 7 Days</button>
+      <button class="btn btn-light" onclick="backpayQuick('all')">📅 All Time</button>
+    </div>
+    <div style="height:8px"></div>
+    <div class="grid2">
+      <button class="btn btn-black" onclick="checkBackpay2()">🔍 Check Backpay</button>
+      <button class="btn btn-green" onclick="payBackpay2()">💰 Pay Backpay</button>
+    </div>
+    <div id="bpMsg" class="msg"></div>
+    <div id="bpResult" style="margin-top:12px;font-size:12px;line-height:1.7"></div>
+  </div>
+  <!-- ========== END BACKPAY 2 ========== -->
+
   <div class="card">
     <h3>➕ Make Someone Vendor</h3>
     <p class="sub">Enter email / username / userId. E go create as PENDING, then you approve am below.</p>
@@ -118,6 +146,63 @@ let allVendors=[], vendorFilter='ALL';
 function setMsg(id,t,k){const el=document.getElementById(id);el.textContent=t;el.className='msg show '+(k||'info')}
 function setVendorFilter(f){vendorFilter=f;['All','Approved','Pending','Rejected'].forEach(x=>{const el=document.getElementById('vendorFilter'+x);if(el)el.className='filter-btn'});const map={ALL:'vendorFilterAll',APPROVED:'vendorFilterApproved',PENDING:'vendorFilterPending',REJECTED:'vendorFilterRejected'};document.getElementById(map[f]).className='filter-btn active';renderVendors()}
 
+// ---------- BACKPAY 2 - BY DATE ----------
+function backpayGetDates(){
+  let from=document.getElementById('bpFrom').value;
+  let to=document.getElementById('bpTo').value;
+  return {from,to};
+}
+function backpayQuick(mode){
+  const today=new Date();
+  const fmtD=d=>d.toISOString().slice(0,10);
+  if(mode==='last7'){
+    const from=new Date(today); from.setDate(from.getDate()-7);
+    document.getElementById('bpFrom').value=fmtD(from);
+    document.getElementById('bpTo').value=fmtD(today);
+  } else {
+    document.getElementById('bpFrom').value='';
+    document.getElementById('bpTo').value='';
+  }
+  checkBackpay2();
+}
+function backpayRenderPreview(d){
+  const el=document.getElementById('bpResult');
+  const miss=d.missing||[];
+  el.innerHTML=`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px">
+    <b>From:</b> ${esc(d.from||'All')} &nbsp; <b>To:</b> ${esc(d.to||'All')}<br>
+    <b>Active in range:</b> ${d.total_active||0} &nbsp;|&nbsp; <b style="color:#dc2626">Missing: ${d.missing_count||0}</b> &nbsp;|&nbsp; <b style="color:#16a34a">Already Paid: ${d.paid_count||0}</b> &nbsp;|&nbsp; No Upline: ${d.no_upline_count||0}<br>
+    <b>Total to Pay:</b> <span style="font-size:16px;color:#16a34a">₦${fmt(d.total_to_pay||0)}</span><br>
+    ${miss.length?`<div style="margin-top:8px;max-height:220px;overflow:auto">${miss.map(m=>`• ${esc(m.username)} (${esc(m.package)}) — ₦${fmt(m.bonus)} → Upline ID ${m.uplineId} <small>${esc(m.created_at||'')}</small>`).join('<br>')}</div>`:'<small style="color:#16a34a">No missing — everybody don get their referral bonus ✅</small>'}
+  </div>`;
+}
+async function checkBackpay2(){
+  const {from,to}=backpayGetDates();
+  setMsg('bpMsg','⏳ Checking backpay for '+ (from||'All') +' to '+(to||'All')+'...','info');
+  document.getElementById('bpResult').innerHTML='';
+  try{
+    const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:from||null,to:to||null,mode:'check'})});
+    const d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.message||'Check failed - make sure 3rd Server don deploy Backpay 2');
+    setMsg('bpMsg','✅ Check done — Missing: '+(d.missing_count||0)+' | Total to Pay: ₦'+fmt(d.total_to_pay||0),'success');
+    backpayRenderPreview(d);
+  }catch(e){setMsg('bpMsg','❌ '+e.message,'error')}
+}
+async function payBackpay2(){
+  const {from,to}=backpayGetDates();
+  if(!confirm('Pay Backpay for '+(from||'All')+' to '+(to||'All')+'? E go pay only missing people, no double. Continue?')) return;
+  setMsg('bpMsg','⏳ Paying backpay... no close page','info');
+  try{
+    const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:from||null,to:to||null,mode:'pay'})});
+    const d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.message||'Pay failed');
+    setMsg('bpMsg','✅ '+(d.message||'Backpay Paid!')+' — Everybody balance go don update.','success');
+    backpayRenderPreview({from,to,total_active:d.total_active||0,missing_count:0,paid_count:(d.paid||0),no_upline_count:0,total_to_pay:d.totalPaid||0,missing:[]});
+    alert('✅ '+(d.message||'Backpay Paid!'));
+    // Auto reload everybody side
+    setTimeout(()=>location.reload(),1200);
+  }catch(e){setMsg('bpMsg','❌ '+e.message,'error')}
+}
+
 async function loadAdminVendors(){
   const el=document.getElementById('adminVendorList');
   el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading vendors...</p>';
@@ -166,7 +251,6 @@ async function vendorMake(){
   try{
     let body={}; if(/^\d+$/.test(val)) body.userId=Number(val); else if(val.includes('@')) body.email=val; else body.username=val;
     if(phone) body.phone=phone;
-    // Send all forms so backend findUserByVal go catch am any way
     body.user = val; body.user_id = body.userId || undefined;
     const r=await fetch('/api/admin/vendors/create'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify(body)});
     const d=await r.json();
