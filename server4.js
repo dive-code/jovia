@@ -50,7 +50,7 @@ const userGuard4=(req,res,next)=>{try{
   if(u){req.userId=u.id; req.user=u; return next();}
   if(typeof requireUser==="function"){ try{ return requireUser(req,res,next); }catch{} }
   return res.status(401).json({success:false,message:"Session expired - login again"});
-}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
+}catch(e){return res.status(401).json({success:false,message:e.message})}};
 let upload4=null;try{const multer=require("multer");upload4=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024}})}catch{console.log("⚠️ S4 multer not found - loan receipt go use base64")};
 
 // ---------- Tables ----------
@@ -61,7 +61,7 @@ try{const vc=db.prepare("PRAGMA table_info(vendors)").all().map(c=>c.name);if(!v
 try{db.exec("CREATE TABLE IF NOT EXISTS password_resets (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,token TEXT UNIQUE,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 const PKG_COST4={SILVER:9000,GOLD:15000};
 
-// Helper: find upline for any user - used by activate + backpay + referrals
+// Helper: find upline + force email from ANY mail column
 const findUpline4=(target)=>{
   try{
     let uplineId=0;
@@ -88,6 +88,26 @@ const findUpline4=(target)=>{
     if(uplineId===Number(target.id)) return 0;
     return uplineId||0;
   }catch{return 0}
+};
+const getEmailFor4=(u)=>{
+  try{
+    if(!u) return "";
+    const keys=["email","user_email","email_address","referred_email","contact_email","mail","e_mail","userEmail","referredEmail"];
+    for(const k of keys){ if(u[k] && String(u[k]).includes("@")) return String(u[k]).trim(); }
+    // Any key wey contain "mail"
+    for(const k of Object.keys(u)){ if(k.toLowerCase().includes("mail") && u[k] && String(u[k]).includes("@")) return String(u[k]).trim(); }
+    // Re-query full row by id - in case u come from referrals table wey no get email
+    if(u.id){
+      try{
+        const full=db.prepare("SELECT * FROM users WHERE id=?").get(Number(u.id));
+        if(full){
+          for(const k of keys){ if(full[k] && String(full[k]).includes("@")) return String(full[k]).trim(); }
+          for(const k of Object.keys(full)){ if(k.toLowerCase().includes("mail") && full[k] && String(full[k]).includes("@")) return String(full[k]).trim(); }
+        }
+      }catch{}
+    }
+    return "";
+  }catch{return ""}
 };
 
 // ========== LOANS FULL ==========
@@ -118,7 +138,7 @@ const vendorMe4=(req,res)=>{try{
   const st=String(v.status||"").toUpperCase();
   return res.json({success:true,isVendor:st==="APPROVED",is_vendor:st==="APPROVED",vendor:v,vendor_status:st,vendor_balance:Number(v.balance||0),user:{id:user.id,email:user.email,username:user.username,full_name:user.full_name}})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
-const vendorPending4=(req,res)=>{try{const v=resolveVendor4(req);if(!v||String(v.status||"").toUpperCase()!=="APPROVED")return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});let rows=[];try{rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 1000").all()}catch{}return res.json({success:true,users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST4[normPkg4(x)]||9000})),total:rows.length,vendor_balance:Number(v.balance||0)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const vendorPending4=(req,res)=>{try{const v=resolveVendor4(req);if(!v||String(v.status||"").toUpperCase()!=="APPROVED")return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});let rows=[];try{rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 1000").all()}catch{}return res.json({success:true,users:rows.map(x=>({id:x.id,username:x.username,email:getEmailFor4(x),full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST4[normPkg4(x)]||9000})),total:rows.length,vendor_balance:Number(v.balance||0)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const vendorActivate4=(req,res)=>{try{
   const v=resolveVendor4(req);const uid=getUserId4(req);
   if(!v)return res.status(403).json({success:false,message:"Not a vendor - ask Admin to make you Vendor"});
@@ -138,7 +158,6 @@ const vendorActivate4=(req,res)=>{try{
   try{const wel=pkg==="GOLD"?15000:9000;const hasWel=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(targetId,`WELCOME_${targetId}`);if(!hasWel){db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(wel,targetId);db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(targetId,"welcome_bonus",wel,"wallet",`WELCOME_${targetId}`,`Welcome bonus - ${pkg} activated by Vendor`)}}catch{}
   try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(uid,"vendor_activation_deduct",-cost,"vendor",`VENDOR_ACT_${targetId}`,`Vendor activation - ${money4(cost)} deducted for activating ${target.username} (${pkg})`)}catch{}
   try{notify4(uid,"Vendor Activation - Deducted",`${money4(cost)} deducted for activating ${target.username} (${pkg}). Remaining: ${money4(bal-cost)}`)}catch{}try{notify4(targetId,"Account Activated ✅",`Your ${pkg} account don activate. Welcome bonus don enter.`)}catch{}
-  // FINAL: Referral Bonus - ONLY SILVER 8000 / GOLD 13000, NO SUPER. FIXED: upline CAN be vendor
   let referralBonusPaid=0, referralUplineId=0;
   try{
     const REF_BONUS={SILVER:8000,GOLD:13000};
@@ -189,7 +208,7 @@ const adminCreditVendor4=(req,res)=>{try{
 force4("post","/api/admin/vendors/fund",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/credit",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/:id/fund",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/:id/credit",sGuard4,adminCreditVendor4);
 safe4("post","/api/vendor/register",(req,res)=>{try{const uid=getUserId4(req);if(!uid)return res.status(401).json({success:false,message:"Login first"});const ex=getVendorByUser4(uid);if(ex)return res.json({success:true,alreadyExists:true,message:"You already applied - Status: "+ex.status,vendor:ex});const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase();const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status) VALUES (?,?,?,?, 'PENDING')").run(uid,code,String(req.body?.vendor_name||u?.full_name||u?.username||""),String(req.body?.phone||u?.phone||""));return res.json({success:true,message:"Vendor application sent - wait for Admin to approve you",vendor:db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
-// ========== REFERRALS - FIXED: READ BONUS FROM wallet_transactions ==========
+// ========== REFERRALS - FIXED: FORCE EMAIL + BONUS ==========
 const referralsHandler4=(req,res)=>{
   try{
     const me=findUserByAny4(req) || getSessionUser4(req);
@@ -208,13 +227,15 @@ const referralsHandler4=(req,res)=>{
       if(!u) return;
       let realBonus=getBonusFor(Number(u.id));
       if(!realBonus) realBonus=Number(commission||0);
+      // FORCE EMAIL - no more "No email" if e dey for DB
+      const emailVal=getEmailFor4(u);
       let pkgShow=String(u.package||u.plan||"SILVER").toUpperCase();
       if(pkgShow.includes("SUPER")) pkgShow="GOLD";
       else if(pkgShow.includes("GOLD")) pkgShow="GOLD";
       else pkgShow="SILVER";
       let st=String(u.account_status||u.status||"pending");
       if(realBonus>0 && st.toLowerCase()==="pending") st="active";
-      list.push({id:u.id,user_id:u.id,referred_id:u.id,referred_user_id:u.id,full_name:u.full_name||u.name||"",fullName:u.full_name||u.name||"",name:u.full_name||u.name||"",username:u.username||"",referredUsername:u.username||"",email:u.email||"",referred_email:u.email||"",user_email:u.email||"",referredEmail:u.email||"",email_address:u.email||"",package:pkgShow,package_name:pkgShow,plan:pkgShow,status:st,commission:realBonus,earning:realBonus,amount:realBonus,bonus:realBonus,referral_bonus:realBonus,created_at:u.created_at||u.createdAt||"",createdAt:u.created_at||"",joined_at:u.created_at||"",date:u.created_at||""});
+      list.push({id:u.id,user_id:u.id,referred_id:u.id,referred_user_id:u.id,full_name:u.full_name||u.name||"",fullName:u.full_name||u.name||"",name:u.full_name||u.name||"",username:u.username||"",referredUsername:u.username||"",email:emailVal,referred_email:emailVal,user_email:emailVal,referredEmail:emailVal,email_address:emailVal,package:pkgShow,package_name:pkgShow,plan:pkgShow,status:st,commission:realBonus,earning:realBonus,amount:realBonus,bonus:realBonus,referral_bonus:realBonus,created_at:u.created_at||u.createdAt||"",createdAt:u.created_at||"",joined_at:u.created_at||"",date:u.created_at||""});
     };
     try{
       const cols=db.prepare("PRAGMA table_info(users)").all().map(c=>c.name);
@@ -263,6 +284,7 @@ const referralsHandler4=(req,res)=>{
     const successful=list.filter(x=>["approved","active","completed"].includes(String(x.status||"").toLowerCase())).length;
     const pending=list.filter(x=>String(x.status||"").toLowerCase()==="pending").length;
     const totalEarnings=list.reduce((s,x)=>s+Number(x.commission||0),0);
+    const emailFound=list.filter(x=>x.email && String(x.email).includes("@")).length;
     return res.json({success:true,source:"server4",referrals:list,data:list,[STRIPPED]
   }catch(e){ return res.status(500).json({success:false,message:e.message}) }
 };
@@ -277,6 +299,11 @@ force4("get","/api/server4/referrals-debug",(req,res)=>{try{
   const sample=db.prepare("SELECT id,username,email,full_name FROM users ORDER BY id DESC LIMIT 3").all();
   return res.json({success:true,source:"server4-debug",users_columns:cols,total_users:count,sample});
 }catch(e){return res.status(500).json({success:false,message:e.message})}});
+// Check email for first 5 users - to prove email dey for DB
+force4("get","/api/server4/check-email",sGuard4,(req,res)=>{try{
+  const rows=db.prepare("SELECT * FROM users ORDER BY id DESC LIMIT 5").all();
+  return res.json({success:true,check:rows.map(u=>({id:u.id,username:u.username,email:getEmailFor4(u),raw_email:u.email||null,keys:Object.keys(u).filter(k=>k.toLowerCase().includes("mail"))}))});
+}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
 // ========== FIXED BACK-PAY: DIAGNOSE + PAY ALL MISSING ==========
 force4("get","/api/admin/vendors/referral-backpay-diagnose",sGuard4,(req,res)=>{
@@ -286,10 +313,10 @@ force4("get","/api/admin/vendors/referral-backpay-diagnose",sGuard4,(req,res)=>{
     for(const t of all){
       const pkg=normPkg4(t);
       const uplineId=findUpline4(t);
-      if(!uplineId){ noUpline.push({id:t.id,username:t.username,email:t.email,package:pkg,reason:"No upline link - referred_by empty"}); continue; }
+      if(!uplineId){ noUpline.push({id:t.id,username:t.username,email:getEmailFor4(t),package:pkg,reason:"No upline link - referred_by empty"}); continue; }
       const already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(uplineId,`REF_BONUS_${t.id}`);
       if(already){ paid.push({id:t.id,username:t.username,uplineId,bonus:Number(already.amount||0)}); continue; }
-      missing.push({id:t.id,username:t.username,email:t.email,package:pkg,uplineId,bonus:pkg==="GOLD"?13000:8000});
+      missing.push({id:t.id,username:t.username,email:getEmailFor4(t),package:pkg,uplineId,bonus:pkg==="GOLD"?13000:8000});
     }
     return res.json({success:true,total_active:all.length,missing_count:missing.length,paid_count:paid.length,no_upline_count:noUpline.length,missing,paid,noUpline});
   }catch(e){return res.status(500).json({success:false,message:e.message})}
