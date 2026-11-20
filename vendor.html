@@ -9,7 +9,7 @@
 .brand{font-size:23px;font-weight:800}.brand span{color:#f59e0b}.content{padding:20px 16px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:18px;margin-bottom:16px}
 .stats{display:flex;gap:10px;margin:12px 0}.stat{flex:1;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px;text-align:center}.stat small{font-size:11px;color:#6b7280}.stat b{display:block;font-size:18px;margin-top:4px}
 .user{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:13px;margin-bottom:10px}
-.btn{width:100%;padding:13px;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}.btn-green{background:#16a34a;color:#fff}.btn-light{background:#f1f5f9;border:1px solid #e5e7eb}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}.btn-green{background:#16a34a;color:#fff}.btn-light{background:#f1f5f9;border:1px solid #e5e7eb}.btn-gold{background:#f59e0b;color:#fff}
 .search{width:100%;padding:13px 14px;border:2px solid #f59e0b;border-radius:12px;font-size:14px;outline:none;margin-bottom:10px}
 .chip{display:inline-block;background:#fef3c7;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:800;margin:0 4px 8px 0;cursor:pointer}
 .chip.active{background:#f59e0b;color:#fff}
@@ -29,6 +29,10 @@
 <div class="stat"><small>Activated</small><b id="vendorActivatedText">0</b></div>
 </div>
 <button class="btn btn-light" onclick="loadAll()">🔄 Refresh</button>
+<div id="makeVendorBox" style="display:none;margin-top:10px">
+<button class="btn btn-gold" onclick="makeMeVendor()">👑 Make Me Vendor (Admin)</button>
+<p style="font-size:11px;color:#6b7280;text-align:center;margin-top:6px">Press once — e go make you APPROVED Vendor.</p>
+</div>
 </div>
 <div class="card">
 <h2 style="font-size:16px;margin-bottom:10px">🔍 Search Pending Users</h2>
@@ -91,6 +95,16 @@ function renderPending(){
       <button class="btn btn-green" style="margin-top:10px" onclick="activateUser(${Number(u.id)},'${String(u.username||'').replace(/'/g,"")}')">✅ Activate ${String(u.username||'').replace(/</g,'&lt;')} - ${formatNaira(u.activation_cost||9000)}</button>
     </div>`).join('');
 }
+async function makeMeVendor(){
+  try{
+    const uid = window.__myId || 1;
+    const r = await fetch('/api/admin/vendors/make-admin-vendor?key=jovia123',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({userId:uid,email:window.__myEmail})});
+    const d = await r.json();
+    if(!r.ok||!d.success) throw new Error(d.message||'Failed');
+    alert('✅ '+d.message);
+    loadAll();
+  }catch(e){ alert('❌ '+e.message); }
+}
 async function loadAll(){
   try{
     let myEmail = "";
@@ -102,13 +116,15 @@ async function loadAll(){
       window.__myEmail = myEmail;
       window.__myId = mu?.id || "";
     }catch{}
-    const url = '/api/vendor/me?t='+Date.now() + (myEmail ? '&email='+encodeURIComponent(myEmail) : '');
+    const url = '/api/vendor/me?t='+Date.now() + (myEmail ? '&email='+encodeURIComponent(myEmail) : '') + (window.__myId ? '&userId='+window.__myId : '');
     const r = await fetch(url,{credentials:'include',cache:'no-store'});
     const d = await r.json();
     if(!d.success||!d.vendor){
-      document.getElementById('vendorPendingList').innerHTML='<p style="color:#dc2626;text-align:center">❌ You no be Vendor yet. Go Profile, or ask Admin to make you Vendor.<br><small>Email checked: '+(myEmail||'none')+' | ID: '+(window.__myId||'none')+'</small></p>';
+      document.getElementById('makeVendorBox').style.display='block';
+      document.getElementById('vendorPendingList').innerHTML='<p style="color:#dc2626;text-align:center">❌ You no be Vendor yet.<br>Press <b>Make Me Vendor</b> above, or ask Admin to make you Vendor.<br><small>Email checked: '+(myEmail||'none')+' | ID: '+(window.__myId||'none')+'</small></p>';
       return;
     }
+    document.getElementById('makeVendorBox').style.display='none';
     const st=String(d.vendor_status||d.vendor?.status||'').toUpperCase();
     document.getElementById('vendorStatusText').textContent=st;
     document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??d.vendor?.balance??0);
@@ -121,7 +137,8 @@ async function loadPending(){
   const el=document.getElementById('vendorPendingList'); el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:12px">⏳ Loading pending users...</p>';
   try{
     const q = window.__myEmail ? '&email='+encodeURIComponent(window.__myEmail) : '';
-    const r=await fetch('/api/vendor/pending-users?t='+Date.now()+q,{credentials:'include',cache:'no-store'});
+    const q2 = window.__myId ? '&userId='+window.__myId : '';
+    const r=await fetch('/api/vendor/pending-users?t='+Date.now()+q+q2,{credentials:'include',cache:'no-store'});
     const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Not approved yet');
     document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??0);
     ALL_PENDING = d.users || [];
