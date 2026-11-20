@@ -225,16 +225,28 @@ safe("post","/api/admin/impersonate", sGuard, (req,res)=>{
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
+// ✅ FIXED IN FIRST HALF ONLY: balance/history must read wallet_transactions first, not only balance_history table
 safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
   try{
+    const v = req.query.email || req.query.username || req.query.userId || req.query.user_id || req.query.id || "";
+    let rows=[];
+    if(v){
+      const user = findUserByVal(v);
+      if(!user) return res.status(404).json({success:false, message:"User not found"});
+      try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
+      return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name}, history:rows, transactions:rows, total:rows.length});
+    }
+    // No user passed: try wallet_transactions first (real history)
+    try{ if(tableExists("wallet_transactions")) rows=db.prepare("SELECT * FROM wallet_transactions ORDER BY id DESC LIMIT 100").all(); }catch{}
+    if(rows.length) return res.json({success:true, history:rows, transactions:rows, total:rows.length});
+    // Fallback to old balance_history / balance_adjustments table if wallet_transactions empty
     if(!tableExists("balance_history") && !tableExists("balance_adjustments")) return res.json({success:true, history:[]});
     const tbl = tableExists("balance_history") ? "balance_history" : "balance_adjustments";
-    const rows = db.prepare(`SELECT * FROM ${tbl} ORDER BY id DESC LIMIT 100`).all();
-    const history = rows.map(h=>({ id:h.id, user_id:h.user_id, email:h.email||h.user_email||"", wallet_type:h.wallet_type||h.walletType||h.type||"wallet_balance", action:h.action||(Number(h.amount)>=0?"add":"deduct"), amount:Math.abs(Number(h.amount||0)), reason:h.reason||h.note||"", before_balance:h.before_balance??h.before??0, after_balance:h.after_balance??h.after??0, created_at:h.created_at||h.createdAt||"" }));
-    return res.json({success:true, history});
+    const r2 = db.prepare(`SELECT * FROM ${tbl} ORDER BY id DESC LIMIT 100`).all();
+    const history = r2.map(h=>({ id:h.id, user_id:h.user_id, email:h.email||h.user_email||"", wallet_type:h.wallet_type||h.walletType||h.type||"wallet_balance", action:h.action||(Number(h.amount)>=0?"add":"deduct"), amount:Math.abs(Number(h.amount||0)), reason:h.reason||h.note||"", before_balance:h.before_balance??h.before??0, after_balance:h.after_balance??h.after??0, created_at:h.created_at||h.createdAt||"" }));
+    return res.json({success:true, history, transactions:history, total:history.length});
   }catch(e){ return res.json({success:true, history:[]}); }
 });
-
 // ---------- ADDED FOR THIS HALF ONLY - NO CUT, NO REMOVE - BALANCE HISTORY + BALANCE USER ----------
 safe("get","/api/admin/balance/history", sGuard, (req,res)=>{
   try{
