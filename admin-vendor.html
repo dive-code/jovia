@@ -103,9 +103,16 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
 </div>
 
 <script>
-function getHeaders(){const p=sessionStorage.getItem('jovia_session_pass')||'';const h={'Content-Type':'application/json'};if(p)h['x-admin-password']=p;return h}
+function getHeaders(){
+  const p = sessionStorage.getItem('jovia_session_pass') || sessionStorage.getItem('adminPass') || localStorage.getItem('jovia_session_pass') || '';
+  const h = {'Content-Type':'application/json'};
+  if(p) { h['x-admin-password']=p; h['x-admin-key']=p; }
+  return h;
+}
+function adminQS(){ return '?t='+Date.now()+'&key=jovia123'; }
 function fmt(n){return Number(n||0).toLocaleString()}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function escAttr(s){ return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 let allVendors=[], vendorFilter='ALL';
 
 function setMsg(id,t,k){const el=document.getElementById(id);el.textContent=t;el.className='msg show '+(k||'info')}
@@ -115,7 +122,7 @@ async function loadAdminVendors(){
   const el=document.getElementById('adminVendorList');
   el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading vendors...</p>';
   try{
-    const r=await fetch('/api/admin/vendors?t='+Date.now(),{headers:getHeaders(),credentials:'include'});
+    const r=await fetch('/api/admin/vendors'+adminQS(),{headers:getHeaders(),credentials:'include'});
     const d=await r.json();
     if(!r.ok||!d.success) throw new Error(d.message||'No vendors endpoint');
     allVendors=d.vendors||[];
@@ -131,19 +138,20 @@ function renderVendors(){
   const el=document.getElementById('adminVendorList');
   const q=(document.getElementById('vendorSearch').value||'').toLowerCase().trim();
   let list=vendorFilter==='ALL'?[...allVendors]:allVendors.filter(v=>v.status===vendorFilter);
-  if(q) list=list.filter(v=>`${v.username||''} ${v.email||''} ${v.vendor_name||''}`.toLowerCase().includes(q));
+  if(q) list=list.filter(v=>`${v.username||''} ${v.email||''} ${v.vendor_name||''} ${v.code||''} ${v.phone||''}`.toLowerCase().includes(q));
   document.getElementById('vendorCount').textContent=list.length;
   if(!list.length){el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No vendors here. Make one above.</p>';return}
   el.innerHTML=list.map(v=>{
     const st=String(v.status||'PENDING');
     const col=st==='APPROVED'?'#dcfce7;color:#166534':st==='PENDING'?'#fef3c7;color:#92400e':'#fee2e2;color:#991b1b';
+    const name = v.username||v.vendor_name||'Vendor';
     return `<div class="dep-item ${st==='PENDING'?'pending':''}">
-      <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(v.username||v.vendor_name||'Vendor')}</b><span class="badge" style="background:${col}">${esc(st)}</span></div>
-      <div style="font-size:11px;margin-top:6px;line-height:1.7">Vendor ID: <b>${v.id}</b> • User ID: <b>${v.user_id}</b><br>Email: ${esc(v.email||'-')}<br>Balance: <b>₦${fmt(v.balance)}</b> • Activated: <b>${v.total_activated||0}</b> • Deducted: ₦${fmt(v.total_deducted||0)}<br>Date: ${esc(v.created_at||'')}</div>
+      <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(name)}</b><span class="badge" style="background:${col}">${esc(st)}</span></div>
+      <div style="font-size:11px;margin-top:6px;line-height:1.7">Vendor ID: <b>${v.id}</b> • User ID: <b>${v.user_id}</b> • Code: <b>${esc(v.code||'-')}</b><br>Name: ${esc(v.vendor_name||'-')}<br>Email: ${esc(v.email||'-')}<br>Phone: ${esc(v.phone||'-')}<br>Balance: <b>₦${fmt(v.balance)}</b> • Activated: <b>${v.total_activated||0}</b> • Deducted: ₦${fmt(v.total_deducted||0)}<br>Date: ${esc(v.created_at||'')}</div>
       <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
         ${st!=='APPROVED'?`<button onclick="adminVendorAction(${v.id},'APPROVED')" style="flex:1;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve</button>`:''}
         ${st!=='REJECTED'?`<button onclick="adminVendorAction(${v.id},'REJECTED')" style="flex:1;padding:12px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800;font-size:12px">✕ Reject</button>`:''}
-        <button onclick="adminVendorFundPrompt(${v.id},'${esc(v.username||'vendor')}')" style="flex:1;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-weight:900;font-size:12px">💰 Fund</button>
+        <button onclick="adminVendorFundPrompt(${v.id},'${escAttr(name)}')" style="flex:1;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-weight:900;font-size:12px">💰 Fund</button>
       </div>
     </div>`
   }).join('');
@@ -158,11 +166,14 @@ async function vendorMake(){
   try{
     let body={}; if(/^\d+$/.test(val)) body.userId=Number(val); else if(val.includes('@')) body.email=val; else body.username=val;
     if(phone) body.phone=phone;
-    const r=await fetch('/api/admin/vendors/create',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify(body)});
+    // Send all forms so backend findUserByVal go catch am any way
+    body.user = val; body.user_id = body.userId || undefined;
+    const r=await fetch('/api/admin/vendors/create'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify(body)});
     const d=await r.json();
     if(!r.ok||!d.success) throw new Error(d.message||'Create failed - backend never get /api/admin/vendors/create yet');
     setMsg('vendorMakeMsg','✅ '+d.message+' - Now approve am below.','success');
     document.getElementById('vendorMakeInput').value='';
+    document.getElementById('vendorMakePhone').value='';
     await loadAdminVendors();
   }catch(e){setMsg('vendorMakeMsg','❌ '+e.message,'error')}
 }
@@ -170,7 +181,7 @@ async function vendorMake(){
 async function adminVendorAction(id,action){
   if(!confirm(action+' this vendor?')) return;
   try{
-    const r=await fetch('/api/admin/vendors/action',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,action})});
+    const r=await fetch('/api/admin/vendors/action'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,action})});
     const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Failed');
     alert('✅ '+d.message); loadAdminVendors();
   }catch(e){alert('❌ '+e.message)}
@@ -191,7 +202,7 @@ async function vendorFundDo(id,amt){
   setMsg('vendorFundMsg','⏳ Funding...','info');
   try{
     if(!confirm('Fund Vendor '+id+' with ₦'+fmt(amt)+'?')){setMsg('vendorFundMsg','Cancelled','info');return}
-    const r=await fetch('/api/admin/vendors/fund',{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,amount:amt})});
+    const r=await fetch('/api/admin/vendors/fund'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,amount:amt})});
     const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Fund failed');
     setMsg('vendorFundMsg','✅ '+d.message,'success');
     alert('✅ '+d.message);
