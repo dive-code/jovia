@@ -63,13 +63,21 @@
   .info-icon{width:27px;height:27px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#f4edf6;color:var(--purple);font-size:11px;font-weight:800;}
   .info-card p{color:var(--muted);font-size:10px;line-height:1.7;}
   .history-card{overflow:hidden;border-radius:18px;}
-  .history-head{min-height:68px;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+  .history-head{min-height:68px;display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap;}
   .history-title h2{color:var(--purple-dark);font-size:16px;font-weight:700;}
   .history-title p{color:var(--muted);font-size:10px;margin-top:2px;}
   .refresh-btn{height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 11px;border:1px solid var(--border);border-radius:9px;background:white;color:var(--purple);font-size:10px;font-weight:600;cursor:pointer;transition:0.2s ease;}
   .refresh-btn:hover{background:#fbf8fc;border-color:#d9cbe0;}
+  /* ADDED: Search bar */
+  .search-wrap{width:100%;display:flex;gap:8px;padding:14px 20px 0;}
+  .search-input{flex:1;min-width:0;height:42px;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:#faf9fb;color:#24152c;outline:none;font-size:12px;}
+  .search-input:focus{border-color:var(--purple-light);background:#fff;}
+  .search-btn{height:42px;padding:0 18px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--purple),var(--purple-light));color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+  .search-btn:hover{opacity:.92;}
+  .clear-btn{height:42px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:#fff;color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;}
+  .search-result{padding:8px 20px 0;color:var(--muted);font-size:11px;display:none;}
   .table-wrap{width:100%;overflow-x:auto;}
-    table{width:100%;min-width:700px;border-collapse:collapse;}
+    table{width:100%;min-width:760px;border-collapse:collapse;}
     th{padding:12px 20px;background:#fbfafc;color:#918a95;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.55px;border-bottom:1px solid var(--border);}
     td{padding:14px 20px;color:var(--text);font-size:11px;border-bottom:1px solid #f1edf3;}
     tbody tr{transition:0.15s ease;}tbody tr:hover{background:#fdfbfe;}tbody tr:last-child td{border-bottom:none;}
@@ -77,6 +85,7 @@
   .avatar{width:33px;height:33px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border-radius:9px;background:linear-gradient(135deg,#f1e9f4,#f8f3f9);color:var(--purple);font-size:10px;font-weight:800;}
   .user-name{color:var(--purple-dark);font-size:11px;font-weight:700;}
   .username{color:var(--muted);font-size:9px;margin-top:1px;}
+  .email-text{color:#514955;font-size:11px;word-break:break-all;}
   .badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:700;}
   .badge.gold{color:#8b6500;background:#fff6d8;}
   .badge.silver{color:#66616a;background:#f0eef1;}
@@ -100,7 +109,7 @@
   .toast{position:fixed;left:50%;bottom:22px;z-index:2000;min-width:210px;padding:11px 15px;border-radius:10px;background:var(--purple-dark);color:white;text-align:center;font-size:11px;font-weight:600;opacity:0;transform:translate(-50%,80px);pointer-events:none;transition:0.25s ease;box-shadow:0 12px 30px rgba(38,0,56,0.2);}
   .toast.show{opacity:1;transform:translate(-50%,0);}
     @media(max-width:850px){.referral-panel{grid-template-columns:1fr;}.panel-reward{padding:0 34px 28px;border-left:none;}.link-section{grid-template-columns:1fr;}}
-    @media(max-width:700px){.topbar{height:66px;padding:0 4%;}.brand-name{font-size:15px;}.brand-logo{width:36px;height:36px;}.back-btn{height:35px;padding:0 10px;font-size:10px;}.page{width:92%;padding-top:27px;}.page-intro{display:block;}.page-intro h1{font-size:29px;}.stats{grid-template-columns:1fr 1fr;gap:10px;}.stat{min-height:105px;padding:15px;}.stat-value{font-size:19px;}.referral-panel{border-radius:18px;}.panel-content{padding:24px 21px 18px;}.panel-reward{padding:3px 21px 24px;}.panel-title{font-size:25px;}.reward-amount{font-size:28px;}.link-card,.info-card{padding:17px;}.link-box{flex-direction:column;}.copy-btn{width:100%;}.history-head{padding:15px;}th,td{padding-left:15px;padding-right:15px;}}
+    @media(max-width:700px){.topbar{height:66px;padding:0 4%;}.brand-name{font-size:15px;}.brand-logo{width:36px;height:36px;}.back-btn{height:35px;padding:0 10px;font-size:10px;}.page{width:92%;padding-top:27px;}.page-intro{display:block;}.page-intro h1{font-size:29px;}.stats{grid-template-columns:1fr 1fr;gap:10px;}.stat{min-height:105px;padding:15px;}.stat-value{font-size:19px;}.referral-panel{border-radius:18px;}.panel-content{padding:24px 21px 18px;}.panel-reward{padding:3px 21px 24px;}.panel-title{font-size:25px;}.reward-amount{font-size:28px;}.link-card,.info-card{padding:17px;}.link-box{flex-direction:column;}.copy-btn{width:100%;}.history-head{padding:15px;}th,td{padding-left:15px;padding-right:15px;}.search-wrap{padding:12px 15px 0;flex-wrap:wrap;}.search-btn,.clear-btn{flex:1;}}
     @media(max-width:420px){.brand-name{display:none;}.stats{gap:8px;}.stat{padding:13px;}.stat-icon{width:30px;height:30px;}.stat-label{font-size:9px;}.stat-value{font-size:17px;}.history-head{align-items:flex-start;}}
   </style>
 </head>
@@ -127,12 +136,20 @@
     </section>
     <section class="history-card">
       <div class="history-head"><div class="history-title"><h2>Referral History</h2><p>Your recent referral activity</p></div><button type="button" class="refresh-btn" onclick="loadReferralHistory()">↻ Refresh</button></div>
-      <div class="table-wrap"><table><thead><tr><th>User</th><th>Package</th><th>Status</th><th>Commission</th><th>Date Joined</th></tr></thead><tbody id="referralTableBody"><tr><td colspan="5"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr></tbody></table><div class="empty-state" id="emptyState"><div class="empty-icon">👥</div><h3>No referrals yet</h3><p>When someone joins Jovia Network using your referral link, their activity will appear here.</p></div></div>
+      <!-- ADDED: Search by email / name / username -->
+      <div class="search-wrap">
+        <input type="text" id="referralSearch" class="search-input" placeholder="Search by Email, Name, Username or ID... e.g. divineabanum8@gmail.com" onkeydown="if(event.key==='Enter'){searchReferrals();}">
+        <button type="button" class="search-btn" onclick="searchReferrals()">🔍 Search</button>
+        <button type="button" class="clear-btn" onclick="clearReferralSearch()">✕ Clear</button>
+      </div>
+      <div class="search-result" id="searchResult"></div>
+      <div class="table-wrap"><table><thead><tr><th>User</th><th>Email</th><th>Package</th><th>Status</th><th>Commission</th><th>Date Joined</th></tr></thead><tbody id="referralTableBody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr></tbody></table><div class="empty-state" id="emptyState"><div class="empty-icon">👥</div><h3>No referrals yet</h3><p>When someone joins Jovia Network using your referral link, their activity will appear here.</p></div></div>
     </section>
   </main>
   <div id="toast" class="toast"></div>
 <script>
   const VERCEL_URL = "https://jovianetworkcom.vercel.app";
+  let allReferrals = [];
 
   function escapeHtml(value){return String(value?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
   function formatMoney(value){const amount=Number(value||0);return "₦"+amount.toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});}
@@ -147,7 +164,6 @@
     return data;
   }
 
-  // ===== FIXED: FORCE VERCEL LINK =====
   async function loadReferralLink(){
     try{
       const meData = await apiFetch("/api/me");
@@ -158,7 +174,6 @@
       document.getElementById("referralLink").value = finalLink;
       return;
     }catch(e){ console.log("me failed", e.message); }
-
     try{
       const data = await apiFetch("/api/referrals/link");
       let link = data.referralLink || data.link || data.url || "";
@@ -172,7 +187,6 @@
         }
       }
     }catch(err){ console.log("link endpoint failed"); }
-
     const fallback = (localStorage.getItem("joviaUsername") || localStorage.getItem("jovia_username") || "DIVEMEDIA").toUpperCase();
     document.getElementById("referralLink").value = `${VERCEL_URL}/register.html?ref=${encodeURIComponent(fallback)}`;
   }
@@ -185,20 +199,61 @@
     catch{input.select();document.execCommand("copy");showToast("Referral link copied.");}
   }
 
+  // ADDED: Search + render helpers
+  function renderList(list){
+    const tbody=document.getElementById("referralTableBody");
+    const emptyState=document.getElementById("emptyState");
+    if(!Array.isArray(list)||list.length===0){
+      tbody.innerHTML="";
+      emptyState.style.display="block";
+      emptyState.querySelector("h3").textContent="No matching referral";
+      emptyState.querySelector("p").textContent="No referral match that email / name / username. Try another email or press Clear.";
+      return;
+    }
+    emptyState.style.display="none";
+    tbody.innerHTML=list.map(renderReferral).join("");
+  }
+  function searchReferrals(){
+    const q=String(document.getElementById("referralSearch").value||"").trim().toLowerCase();
+    const box=document.getElementById("searchResult");
+    if(!q){renderList(allReferrals);box.style.display="none";return;}
+    const found=allReferrals.filter(item=>{
+      const hay=[item.email,item.referred_email,item.user_email,item.full_name,item.fullName,item.name,item.referredName,item.user_name,item.username,item.referredUsername,item.referral_code,item.id,item.user_id,item.referred_user_id,item.referred_id].map(v=>String(v??"").toLowerCase()).join(" | ");
+      return hay.includes(q);
+    });
+    renderList(found);
+    box.style.display="block";
+    box.textContent = found.length ? `Found ${found.length} referral(s) for "${document.getElementById("referralSearch").value.trim()}"` : `No referral found for "${document.getElementById("referralSearch").value.trim()}"`;
+    if(!found.length) showToast("No referral found for that email");
+    else showToast(`Found ${found.length} referral(s)`);
+  }
+  function clearReferralSearch(){
+    document.getElementById("referralSearch").value="";
+    document.getElementById("searchResult").style.display="none";
+    renderList(allReferrals);
+    const emptyState=document.getElementById("emptyState");
+    if(allReferrals.length){emptyState.style.display="none";}
+  }
+
   async function loadReferralHistory(){
     const tbody=document.getElementById("referralTableBody");
     const emptyState=document.getElementById("emptyState");
-    tbody.innerHTML=`<tr><td colspan="5"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="6"><div class="loading"><div class="spinner"></div>Loading referral history...</div></td></tr>`;
     emptyState.style.display="none";
+    document.getElementById("searchResult").style.display="none";
     try{
       const data=await apiFetch("/api/referrals");
       const referrals=data.referrals||data.data||data.users||[];
-      updateStats(data,referrals);
-      if(!Array.isArray(referrals)||referrals.length===0){tbody.innerHTML="";emptyState.style.display="block";return;}
-      tbody.innerHTML=referrals.map(renderReferral).join("");
+      allReferrals = Array.isArray(referrals) ? referrals : [];
+      updateStats(data,allReferrals);
+      if(!allReferrals.length){tbody.innerHTML="";emptyState.style.display="block";emptyState.querySelector("h3").textContent="No referrals yet";emptyState.querySelector("p").textContent="When someone joins Jovia Network using your referral link, their activity will appear here.";return;}
+      // If user don type search before, keep filter
+      const q=String(document.getElementById("referralSearch").value||"").trim();
+      if(q){searchReferrals();return;}
+      renderList(allReferrals);
     }catch(error){
       console.error("Referral history error:",error);
-      tbody.innerHTML=`<tr><td colspan="5"><div class="loading">Unable to load referral history.</div></td></tr>`;
+      tbody.innerHTML=`<tr><td colspan="6"><div class="loading">Unable to load referral history.</div></td></tr>`;
     }
   }
 
@@ -217,6 +272,7 @@
   function renderReferral(item){
     const name=item.full_name||item.fullName||item.name||item.referredName||item.user_name||"User";
     const username=item.username||item.referredUsername||"";
+    const email=item.email||item.referred_email||item.user_email||item.referredEmail||"—";
     const packageName=item.package||item.package_name||item.plan||"—";
     const statusRaw=String(item.status||"pending").toLowerCase();
     let statusClass="pending";let statusText="Pending";
@@ -225,7 +281,7 @@
     const commission=Number(item.commission??item.earning??item.amount??0);
     const date=item.created_at||item.createdAt||item.date||item.joined_at||item.joinedAt||"";
     const packageClass=String(packageName).toLowerCase().includes("gold")?"gold":"silver";
-    return `<tr><td><div class="user"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div class="user-name">${escapeHtml(name)}</div>${username?`<div class="username">@${escapeHtml(username)}</div>`:""}</div></div></td><td><span class="badge ${packageClass}">${escapeHtml(packageName)}</span></td><td><span class="status ${statusClass}">${escapeHtml(statusText)}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td><span class="date">${escapeHtml(formatDate(date))}</span></td></tr>`;
+    return `<tr><td><div class="user"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div class="user-name">${escapeHtml(name)}</div>${username?`<div class="username">@${escapeHtml(username)}</div>`:""}</div></div></td><td><span class="email-text">${escapeHtml(email)}</span></td><td><span class="badge ${packageClass}">${escapeHtml(packageName)}</span></td><td><span class="status ${statusClass}">${escapeHtml(statusText)}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td><span class="date">${escapeHtml(formatDate(date))}</span></td></tr>`;
   }
 
   document.addEventListener("DOMContentLoaded",()=>{Promise.allSettled([loadReferralLink(),loadReferralHistory()]);});
