@@ -1,7 +1,7 @@
 "use strict";
 module.exports = (app, db, requireUser, requireAdmin) => {
 try{
-console.log("🔧 LOANS v2 - 12% FEE + 6-12 WEEKS + DISBURSED");
+console.log("🔧 LOANS v3 - FROM LAST WORKING v2 + RECEIPT FIX + DISBURSE TO AFFILIATE + VENDOR");
 if(!app || typeof app.get !== "function" || typeof app.post !== "function"){ console.log("⚠️ Loans skip"); return; }
 
 // ---------- Helpers - Same Style As Server3 ----------
@@ -13,7 +13,6 @@ const force = (m,p,...h) => { try{ if(app._router?.stack) app._router.stack = ap
 const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
 const isOrigin = o => String(o||"").includes("jovianetworkcom") || String(o||"").includes("vercel.app") || String(o||"").includes("localhost");
 
-// Admin guard - same as Server3
 const sGuard = (req,res,next) => { try{
   if(req.query.key==='jovia123') return next();
   if(req.query.adminPass===ADMIN_PASS || req.query.adminPass==='jovia123') return next();
@@ -26,7 +25,6 @@ const sGuard = (req,res,next) => { try{
   return res.status(401).json({success:false,message:"Admin authentication required"});
 }catch(e){ if(isOrigin(req.headers.origin||req.headers.referer)) return next(); return res.status(401).json({success:false,message:"Admin authentication required"}); } };
 
-// User guard - use your requireUser if exists, else session
 const userGuard = (req,res,next) => {
   try{
     if(typeof requireUser==='function') return requireUser(req,res,next);
@@ -77,7 +75,6 @@ try{ db.exec(`CREATE TABLE IF NOT EXISTS loans (
   created_at TEXT DEFAULT (datetime('now'))
 )`); console.log("✅ Loans table ready"); }catch(e){ console.log("⚠️ Loans table", e.message); }
 
-// Try to add columns if table existed before - NOW WITH DISBURSED_AT
 try{ const cols = db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);
   if(!cols.includes("receipt_data")) db.exec("ALTER TABLE loans ADD COLUMN receipt_data TEXT");
   if(!cols.includes("estimated_from")) db.exec("ALTER TABLE loans ADD COLUMN estimated_from TEXT");
@@ -87,7 +84,6 @@ try{ const cols = db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);
   if(!cols.includes("fee_status")) db.exec("ALTER TABLE loans ADD COLUMN fee_status TEXT DEFAULT 'PENDING'");
 }catch{}
 
-// Impersonations table - so the endpoint no go 404 again
 try{ db.exec(`CREATE TABLE IF NOT EXISTS admin_impersonations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   token TEXT UNIQUE,
@@ -99,8 +95,28 @@ try{ db.exec(`CREATE TABLE IF NOT EXISTS admin_impersonations (
   expires_at TEXT
 )`); }catch{}
 
+try{ db.exec(`CREATE TABLE IF NOT EXISTS vendors (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER UNIQUE,
+  code TEXT UNIQUE,
+  vendor_name TEXT,
+  phone TEXT,
+  status TEXT DEFAULT 'PENDING',
+  balance INTEGER DEFAULT 0,
+  total_activated INTEGER DEFAULT 0,
+  total_deducted INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+)`); }catch{}
+try{ const vc = db.prepare("PRAGMA table_info(vendors)").all().map(c=>c.name);
+  if(!vc.includes("balance")) db.exec("ALTER TABLE vendors ADD COLUMN balance INTEGER DEFAULT 0");
+  if(!vc.includes("total_deducted")) db.exec("ALTER TABLE vendors ADD COLUMN total_deducted INTEGER DEFAULT 0");
+}catch{}
+try{ db.exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,title TEXT,message TEXT,type TEXT DEFAULT 'system',is_read INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))"); }catch{}
+
 // ---------- Helpers ----------
 const isSuperPkg = (u) => String(u?.package||u?.plan||"").toUpperCase().includes("SUPER");
+const normPkg = (u) => { const p=String(u?.package||u?.plan||"").toUpperCase(); if(p.includes("SUPER")) return "SUPER"; if(p.includes("GOLD")) return "GOLD"; return "SILVER"; };
+const PKG_COST = { SILVER:9000, GOLD:15000, SUPER:21000 };
 const money = n => "₦"+Number(n||0).toLocaleString("en-NG");
 const cleanLoan = (l) => {
   if(!l) return null;
@@ -120,19 +136,15 @@ function safeBalances(u){
   const w=Number(u.wallet_balance||u.wallet||0), a=Number(u.affiliate_balance||u.affiliate||0), r=Number(u.referral_balance||u.referral||0), g=Number(u.game_balance||u.game||0);
   return {wallet_balance:w,affiliate_balance:a,referral_balance:r,game_balance:g,total_balance:Number(u.total_balance||(w+a+r+g))};
 }
+const notify = (uid,title,msg)=>{ try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(uid,title,msg); }catch{} };
 
-// Multer for receipt - optional, fallback to base64
 let upload = null;
 try{
   const multer = require("multer");
   upload = multer({ storage: multer.memoryStorage(), limits:{ fileSize: 5*1024*1024 } });
 }catch{ console.log("⚠️ multer not found - will use base64 receipt field"); }
 
-// ---------- 0. FIX MISSING ADMIN ENDPOINTS - INSIDE SERVER3, INSIDE LOANS FILE ----------
-// These use safe() - if Server3 already get them, e go skip. If e miss, e go add them back.
-// This is why impersonations / balance / upline no go 404 again.
-
-// 0a. IMPERSONATIONS - THE ONE WEY FAIL NOW
+// ---------- 0. FIX MISSING ADMIN ENDPOINTS ----------
 safe("get","/api/admin/impersonations", sGuard, (req,res)=>{
   try{
     if(!tableExists("admin_impersonations")) return res.json({success:true, impersonations:[]});
@@ -140,6 +152,35 @@ safe("get","/api/admin/impersonations", sGuard, (req,res)=>{
     const list = rows.map(x=>({ id:x.id, target_user_id:x.target_user_id||x.user_id, target_email:x.target_email||x.email||"", reason:x.reason||"", admin_ip:x.admin_ip||x.ip||"", created_at:x.created_at||"", expires_at:x.expires_at||"" }));
     return res.json({success:true, impersonations:list});
   }catch(e){ return res.json({success:true, impersonations:[]}); }
+});
+
+// 0a2. IMPERSONATE VERIFY - THIS ONE DEY 404 BEFORE, NOW E DEY
+const impVerify = (req,res)=>{
+  try{
+    const tok = String(req.query?.token || req.body?.token || req.headers["x-impersonate-token"] || "").trim();
+    if(!tok) return res.status(400).json({success:false,message:"Token required"});
+    const row = db.prepare("SELECT * FROM admin_impersonations WHERE token=?").get(tok);
+    if(!row) return res.status(404).json({success:false,message:"Invalid impersonate token"});
+    if(row.expires_at && new Date(row.expires_at).getTime() < Date.now()) return res.status(401).json({success:false,message:"Impersonate token don expire"});
+    const user = db.prepare("SELECT * FROM users WHERE id=?").get(row.target_user_id);
+    if(!user) return res.status(404).json({success:false,message:"User not found"});
+    let tx=[]; try{ tx=db.prepare("SELECT id,type,amount,description,created_at FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 100").all(user.id); }catch{}
+    return res.json({success:true, user:{id:user.id,username:user.username,email:user.email,full_name:user.full_name,package:user.package||user.plan,account_status:user.account_status,status:user.status,balances:safeBalances(user)}, balances:safeBalances(user), recent_transactions:tx, transactions:tx, history:tx, impersonated:true, expires_at:row.expires_at, reason:row.reason});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+};
+safe("get","/api/impersonate/verify", impVerify);
+safe("post","/api/impersonate/verify", impVerify);
+
+// 0a3. IMPERSONATE CREATE - ADMIN ONLY
+safe("post","/api/admin/impersonate", sGuard, (req,res)=>{
+  try{
+    const user = findUserByVal(req.body?.userId || req.body?.id || req.body?.email || req.body?.username || req.query?.userId || req.query?.email);
+    if(!user) return res.status(404).json({success:false,message:"User not found"});
+    let tok=""; try{ tok=require("crypto").randomBytes(24).toString("hex"); }catch{ tok=Math.random().toString(36).slice(2)+Date.now().toString(36); }
+    const exp = new Date(Date.now()+15*60*1000).toISOString();
+    db.prepare("INSERT INTO admin_impersonations (token,target_user_id,target_email,admin_ip,reason,expires_at) VALUES (?,?,?,?,?,?)").run(tok,user.id,user.email,String(req.ip||""),String(req.body?.reason||"fraud check").slice(0,200),exp);
+    return res.json({success:true, impersonate_token:tok, token:tok, expires_at:exp, user:{id:user.id,email:user.email,username:user.username}, impersonate_url:`/dashboard.html?impersonate=${tok}`});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
 // 0b. BALANCE HISTORY
@@ -176,6 +217,7 @@ safe("get","/api/admin/upline", sGuard, (req,res)=>{
     }catch{}
     let txs=[];
     try{ if(tableExists("transactions")) txs=db.prepare("SELECT * FROM transactions WHERE user_id=? ORDER BY id DESC LIMIT 5").all(user.id); }catch{}
+    try{ if(!txs.length && tableExists("wallet_transactions")) txs=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? ORDER BY id DESC LIMIT 5").all(user.id); }catch{}
     return res.json({success:true, user, balances:safeBalances(user), upline, upline_count:upline.length, upline_summary: upline.length?`Chain: ${upline.map(u=>u.username).join(" -> ")}`:"No upline", direct_affiliates: direct.map(d=>({id:d.id, username:d.username, email:d.email, balances:safeBalances(d)})), direct_affiliates_count:direct.length, total_downlines_approx:direct.length, fraud_signals:[], fraud_risk:"LOW", password:{has_password:!!user.password, password_type:"hashed", password_hash_preview:"****", password_reset_at:user.password_reset_at||"-", is_default_password_suspected:false}, recent_transactions:txs});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
@@ -187,6 +229,28 @@ safe("get","/api/admin/users/full-profile", sGuard, (req,res)=>{
     if(!user) return res.status(404).json({success:false, message:"User not found"});
     return res.json({success:true, user, balances:safeBalances(user), upline:[], upline_count:0, direct_affiliates:[], direct_affiliates_count:0, fraud_signals:[], fraud_risk:"LOW", password:{has_password:true, password_type:"hashed", password_hash_preview:"****"}, recent_transactions:[]});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+
+// 0d. /api/me + /api/wallet - DASHBOARD BALANCE FIX - USE safe, NO FORCE, NO CLASH
+safe("get","/api/me", (req,res)=>{
+  try{
+    const uid = getSessionUserId(req);
+    if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const u = db.prepare("SELECT * FROM users WHERE id=?").get(uid);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    const {password, password_hash, ...rest} = u;
+    return res.json({success:true, user:{...rest, balances:safeBalances(u)}, balances:safeBalances(u)});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+safe("get","/api/wallet", (req,res)=>{
+  try{
+    const uid = getSessionUserId(req);
+    if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const u = db.prepare("SELECT * FROM users WHERE id=?").get(uid);
+    if(!u) return res.status(404).json({success:false,message:"User not found"});
+    const b = safeBalances(u);
+    return res.json({success:true, ...b, walletBalance:b.wallet_balance, affiliateBalance:b.affiliate_balance, totalEarned:b.total_balance, balances:b, wallet:{transactions:[]}});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
 
 // ---------- 1. USER APPLY - POST /api/loans/apply ----------
@@ -224,7 +288,7 @@ const applyHandler = (req,res) => {
     if(!receiptName && !receiptData) return res.status(400).json({success:false,message:"Please choose your payment receipt"});
     try{
       const pending = db.prepare("SELECT * FROM loans WHERE user_id=? AND status='PENDING' LIMIT 1").get(userId);
-      if(pending) return res.status(400).json({success:false,message:"You already have a pending loan. Wait for Admin review."});
+      if(pending) return res.json({success:true, alreadyExists:true, already_exists:true, message:"You already have a pending loan "+pending.loan_code+" - upload receipt for that loan, no need to apply again", loan:cleanLoan(pending)});
     }catch{}
     const loanCode = "LOAN-" + Date.now();
     const info = db.prepare(`INSERT INTO loans (loan_code,user_id,username,email,full_name,amount,fee,purpose,term_months,receipt_name,receipt_data,receipt_type,status,fee_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
@@ -232,7 +296,12 @@ const applyHandler = (req,res) => {
     const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(info.lastInsertRowid);
     console.log(`✅ Loan applied ${loanCode} ${user.username} ${money(amount)} fee ${money(fee)}`);
     return res.json({success:true,message:"Application received. Pending Admin approval.", loan: cleanLoan(loan)});
-  }catch(e){ console.error("Loan apply", e); return res.status(500).json({success:false,message:e.message}); }
+  }catch(e){
+    if(String(e.message||"").includes("UNIQUE") || String(e.message||"").toLowerCase().includes("already exists")){
+      try{ const ex=db.prepare("SELECT * FROM loans WHERE user_id=? ORDER BY id DESC LIMIT 1").get(getSessionUserId(req)); if(ex) return res.json({success:true,alreadyExists:true,message:"Loan already exists - use this one", loan:cleanLoan(ex)}); }catch{}
+    }
+    console.error("Loan apply", e); return res.status(500).json({success:false,message:e.message});
+  }
 };
 if(upload){
   safe("post","/api/loans/apply", userGuard, upload.single("receipt"), applyHandler);
@@ -240,7 +309,37 @@ if(upload){
   safe("post","/api/loans/apply", userGuard, applyHandler);
 }
 
-// ---------- 2. USER MY LOANS - GET /api/loans/my ----------
+// ---------- 1b. UPLOAD RECEIPT ONLY - NO NEW LOAN, NO ALREADY EXISTS ----------
+// Frontend MUST use this after apply, no call apply again
+const receiptUploadHandler = (req,res)=>{
+  try{
+    const uid = getSessionUserId(req);
+    if(!uid && !req.session?.isAdmin) return res.status(401).json({success:false,message:"Session expired"});
+    const id = Number(req.params?.id || req.body?.loanId || req.body?.id || req.query?.id || 0);
+    if(!id) return res.status(400).json({success:false,message:"Loan ID required"});
+    const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
+    if(!loan) return res.status(404).json({success:false,message:"Loan not found - apply first"});
+    if(uid && loan.user_id!==uid && !req.session?.isAdmin) return res.status(403).json({success:false,message:"Not your loan"});
+    let rName=loan.receipt_name, rData=loan.receipt_data, rType=loan.receipt_type;
+    if(req.file){ rName=req.file.originalname; rType=req.file.mimetype; rData=req.file.buffer.toString("base64"); }
+    else if(req.body?.receipt_base64){ rName=String(req.body.receipt_name||"receipt"); rType=String(req.body.receipt_type||""); rData=String(req.body.receipt_base64).slice(0,7*1024*1024); }
+    else if(req.body?.receipt){ rName=String(req.body.receipt); }
+    if(!rName && !rData) return res.status(400).json({success:false,message:"No receipt file sent - choose screenshot"});
+    db.prepare("UPDATE loans SET receipt_name=?, receipt_data=?, receipt_type=? WHERE id=?").run(rName||"",rData||"",rType||"",id);
+    return res.json({success:true,message:"Receipt uploaded - waiting for Admin to verify fee", loan:cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+};
+if(upload){
+  safe("post","/api/loans/:id/receipt", userGuard, upload.single("receipt"), receiptUploadHandler);
+  safe("post","/api/loans/admin/:id/receipt", sGuard, upload.single("receipt"), receiptUploadHandler);
+} else {
+  safe("post","/api/loans/:id/receipt", userGuard, receiptUploadHandler);
+  safe("post","/api/loans/admin/:id/receipt", sGuard, receiptUploadHandler);
+}
+safe("post","/api/loans/upload-receipt", userGuard, receiptUploadHandler);
+safe("post","/api/loans/receipt", userGuard, receiptUploadHandler);
+
+// ---------- 2. USER MY LOANS ----------
 const myHandler = (req,res) => {
   try{
     const userId = getSessionUserId(req);
@@ -251,8 +350,9 @@ const myHandler = (req,res) => {
 };
 safe("get","/api/loans/my", userGuard, myHandler);
 safe("get","/api/loans/history", userGuard, myHandler);
+safe("get","/api/loans/mine", userGuard, myHandler);
 
-// ---------- 3. ADMIN LIST - GET /api/loans/admin ----------
+// ---------- 3. ADMIN LIST ----------
 const adminList = (req,res) => {
   try{
     const status = String(req.query.status||"").toUpperCase();
@@ -269,32 +369,42 @@ const adminList = (req,res) => {
     const totalFees = loans.reduce((s,l)=>s+Number(l.fee||0),0);
     const totalLoans = loans.reduce((s,l)=>s+Number(l.amount||0),0);
     const totalDisbursed = loans.filter(l=>l.status==="DISBURSED").reduce((s,l)=>s+Number(l.amount||0),0);
-    return res.json({success:true, loans, total, pending, processing, disbursed, totalFees, totalLoans, totalDisbursed});
+    return res.json({success:true, loans, applications:loans, total, pending, processing, disbursed, totalFees, totalLoans, totalDisbursed});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 safe("get","/api/loans/admin", sGuard, adminList);
 safe("get","/api/admin/loans", sGuard, adminList);
 safe("get","/api/admin/loans/list", sGuard, adminList);
+safe("get","/api/loans/admin/list", sGuard, adminList);
+safe("get","/api/loans/all", sGuard, adminList);
+safe("get","/api/loans/list", sGuard, adminList);
 
-// ---------- 4. ADMIN VIEW RECEIPT - GET /api/loans/admin/:id/receipt ----------
+// Single loan - ADMIN
+safe("get","/api/loans/admin/:id", sGuard, (req,res)=>{
+  try{ const loan=db.prepare("SELECT * FROM loans WHERE id=?").get(Number(req.params.id)); if(!loan) return res.status(404).json({success:false,message:"Loan not found"}); return res.json({success:true, loan:cleanLoan(loan)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+
+// ---------- 4. ADMIN VIEW RECEIPT ----------
 const viewReceipt = (req,res) => {
   try{
     const id = Number(req.params.id);
     const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
     if(!loan) return res.status(404).json({success:false,message:"Loan not found"});
-    if(!loan.receipt_data) return res.status(404).json({success:false,message:"No receipt file"});
-    return res.json({success:true, loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data});
+    if(!loan.receipt_data && !loan.receipt_name) return res.status(404).json({success:false,message:"No receipt file"});
+    return res.json({success:true, loan_code:loan.loan_code, receipt_name:loan.receipt_name, receipt_type:loan.receipt_type, receipt_data:loan.receipt_data, loan:cleanLoan(loan), has_receipt:!!(loan.receipt_data||loan.receipt_name)});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 };
 safe("get","/api/loans/admin/:id/receipt", sGuard, viewReceipt);
+safe("get","/api/admin/loans/:id/receipt", sGuard, viewReceipt);
+safe("get","/api/loans/:id/receipt", sGuard, viewReceipt);
 
-// ---------- 5. ADMIN APPROVE / REJECT / DISBURSE - POST /api/loans/admin ----------
+// ---------- 5. ADMIN APPROVE / REJECT / DISBURSE ----------
 const adminAction = (req,res) => {
   try{
     const body = req.body||{};
-    const id = Number(body.id || body.loanId || body.loan_id);
-    const action = String(body.action||"").toUpperCase();
-    if(!id || !["APPROVED","REJECTED","DISBURSED"].includes(action)) return res.status(400).json({success:false,message:"Invalid id or action"});
+    const id = Number(body.id || body.loanId || body.loan_id || req.params?.id || req.query?.id);
+    const action = String(body.action||body.status||req.query?.action||"").toUpperCase();
+    if(!id || !["APPROVED","REJECTED","DISBURSED","PENDING"].includes(action)) return res.status(400).json({success:false,message:"Invalid id or action"});
     const loan = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
     if(!loan) return res.status(404).json({success:false,message:"Loan not found"});
     if(action === "APPROVED"){
@@ -304,17 +414,26 @@ const adminAction = (req,res) => {
       const to = new Date(approvedAt); to.setDate(to.getDate() + 84);
       db.prepare(`UPDATE loans SET status='APPROVED', fee_status='FEE APPROVED', approved_at=?, estimated_from=?, estimated_to=?, processing_time='6 - 12 Weeks', processing_message=?, reviewed_at=datetime('now') WHERE id=?`)
         .run(approvedAt.toISOString(), from.toISOString(), to.toISOString(), "Your fee has been approved. Your loan is now processing. It will take 6 - 12 weeks to be disbursed.", id);
-      console.log(`✅ Loan APPROVED ${loan.loan_code} - Processing 6-12 Weeks`);
       const updated = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
       return res.json({success:true, message:"Fee Approved. Loan now processing 6-12 weeks.", loan: cleanLoan(updated)});
     }
     if(action === "DISBURSED"){
       if(loan.status !== "APPROVED") return res.status(400).json({success:false,message:`Only PROCESSING (APPROVED) loans can be disbursed. Current: ${loan.status}. Approve fee first.`});
+      let already=null; try{ already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(loan.user_id, loan.loan_code); }catch{}
+      if(already) return res.status(400).json({success:false,message:"This loan was already disbursed - no double credit."});
+      const amount = Number(loan.amount||0);
       db.prepare(`UPDATE loans SET status='DISBURSED', fee_status='DISBURSED', disbursed_at=datetime('now'), processing_message=?, reviewed_at=datetime('now') WHERE id=?`)
-        .run("Your loan has been disbursed. ₦" + Number(loan.amount||0).toLocaleString("en-NG") + " paid to you. Repayment starts from disbursement date.", id);
-      console.log(`✅ Loan DISBURSED ${loan.loan_code} - ₦${loan.amount} paid`);
+        .run("Your loan has been disbursed to your Affiliate Balance. ₦" + amount.toLocaleString("en-NG") + " credited. Repayment starts from disbursement date.", id);
+      try{ db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(amount, loan.user_id); }catch(e){ console.log("disburse credit fail", e.message); }
+      try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(loan.user_id,"loan_disbursed",amount,"affiliate",loan.loan_code,`Loan ${loan.loan_code} disbursed to Affiliate Balance - ₦${amount.toLocaleString("en-NG")}`); }catch{}
+      try{ notify(loan.user_id,"Loan Disbursed 💰",`Your loan of ₦${amount.toLocaleString("en-NG")} has been disbursed to your Affiliate Balance.`); }catch{}
+      console.log(`✅ Loan DISBURSED ${loan.loan_code} - ₦${amount} -> Affiliate`);
       const updated = db.prepare("SELECT * FROM loans WHERE id=?").get(id);
-      return res.json({success:true, message:"Loan marked as DISBURSED. User will see Loan Disbursed.", loan: cleanLoan(updated)});
+      return res.json({success:true, message:`Loan DISBURSED. ₦${amount.toLocaleString("en-NG")} credited to Affiliate Balance.`, loan: cleanLoan(updated)});
+    }
+    if(action === "PENDING"){
+      db.prepare(`UPDATE loans SET status='PENDING', fee_status='PENDING', reviewed_at=datetime('now') WHERE id=?`).run(id);
+      return res.json({success:true, message:"Loan back to PENDING", loan: cleanLoan(db.prepare("SELECT * FROM loans WHERE id=?").get(id))});
     }
     if(loan.status !== "PENDING") return res.status(400).json({success:false,message:`Loan already ${loan.status}`});
     db.prepare(`UPDATE loans SET status='REJECTED', fee_status='REJECTED', reviewed_at=datetime('now') WHERE id=?`).run(id);
@@ -324,10 +443,76 @@ const adminAction = (req,res) => {
 };
 force("post","/api/loans/admin", sGuard, adminAction);
 force("post","/api/admin/loans/action", sGuard, adminAction);
+force("post","/api/loans/admin/action", sGuard, adminAction);
+force("post","/api/loans/action", sGuard, adminAction);
 force("post","/api/admin/loans/approve", sGuard, (req,res)=>{ req.body.action="APPROVED"; return adminAction(req,res); });
 force("post","/api/admin/loans/reject", sGuard, (req,res)=>{ req.body.action="REJECTED"; return adminAction(req,res); });
 force("post","/api/admin/loans/disburse", sGuard, (req,res)=>{ req.body.action="DISBURSED"; return adminAction(req,res); });
+force("post","/api/loans/admin/:id/action", sGuard, adminAction);
+force("post","/api/admin/loans/:id/action", sGuard, adminAction);
 
-console.log("✅ LOANS v2 READY - /api/loans/apply + /api/loans/my + /api/loans/admin + 6-12 WEEKS + DISBURSED + IMPERSONATIONS RESTORED");
+// ---------- 6. VENDOR - ONLY IF ADMIN GAVE PRIVILEGE ----------
+// Frontend hides panel unless /api/vendor/me returns isVendor:true + APPROVED. Backend also blocks.
+const getVendorByUser = (uid)=>{ try{ return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid); }catch{ return null; } };
+const vendorMe = (req,res)=>{
+  try{
+    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const v = getVendorByUser(uid);
+    if(!v) return res.json({success:false, isVendor:false, is_vendor:false, message:"Not a vendor yet"});
+    return res.json({success:true, isVendor:v.status==="APPROVED", is_vendor:v.status==="APPROVED", vendor:v, vendor_status:v.status, vendor_balance:Number(v.balance||0)});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+};
+const vendorPending = (req,res)=>{
+  try{
+    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const v = getVendorByUser(uid); if(!v || v.status!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});
+    let rows=[]; try{ rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 100").all(); }catch{}
+    return res.json({success:true, users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST[normPkg(x)]||9000})), total:rows.length, vendor_balance:Number(v.balance||0)});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+};
+const vendorActivate = (req,res)=>{
+  try{
+    const uid = getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const v = getVendorByUser(uid); if(!v) return res.status(403).json({success:false,message:"Not a vendor"});
+    if(v.status!=="APPROVED") return res.status(403).json({success:false,message:"Vendor not approved yet"});
+    const targetId = Number(req.body?.userId || req.body?.id || req.params?.id || 0); if(!targetId) return res.status(400).json({success:false,message:"User ID required"});
+    const target = db.prepare("SELECT * FROM users WHERE id=?").get(targetId); if(!target) return res.status(404).json({success:false,message:"User not found"});
+    const st = String(target.account_status||target.status||"").toLowerCase(); if(["active","approved"].includes(st)) return res.status(400).json({success:false,message:"User already active"});
+    const pkg = normPkg(target); const cost = PKG_COST[pkg]||9000; const bal = Number(v.balance||0);
+    if(bal < cost) return res.status(400).json({success:false,message:`Insufficient Vendor Fund! You need ₦${cost.toLocaleString()} to activate ${pkg} user. Your balance: ₦${bal.toLocaleString()}. Ask Admin to fund you.`, need:cost, balance:bal, package:pkg});
+    db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)-?, total_activated=COALESCE(total_activated,0)+1, total_deducted=COALESCE(total_deducted,0)+? WHERE id=?").run(cost,cost,v.id);
+    try{ db.prepare("UPDATE users SET affiliate_balance=GREATEST(0,COALESCE(affiliate_balance,0)-?) WHERE id=?").run(cost,uid); }catch{}
+    try{ db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(targetId); }catch{}
+    try{ db.prepare("UPDATE users SET status='active' WHERE id=?").run(targetId); }catch{}
+    // Welcome + referral logic dey for main approve flow - keep simple here, welcome via wallet if not exists
+    try{
+      const wel = pkg==="GOLD"?15000:pkg==="SUPER"?21000:9000;
+      const hasWel = db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(targetId, `WELCOME_${targetId}`);
+      if(!hasWel){ db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(wel,targetId); db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(targetId,"welcome_bonus",wel,"wallet",`WELCOME_${targetId}`,`Welcome bonus - ${pkg} activated by Vendor`); }
+    }catch{}
+    try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(uid,"vendor_activation_deduct",-cost,"vendor",`VENDOR_ACT_${targetId}`,`Vendor activation - ₦${cost.toLocaleString()} deducted for activating ${target.username} (${pkg})`); }catch{}
+    try{ notify(uid,"Vendor Activation - Deducted",`₦${cost.toLocaleString()} deducted for activating ${target.username} (${pkg}). Remaining: ₦${(bal-cost).toLocaleString()}`); }catch{}
+    try{ notify(targetId,"Account Activated ✅",`Your ${pkg} account don activate. Welcome bonus don enter.`); }catch{}
+    return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ₦${cost.toLocaleString()} deducted. Remaining: ₦${(bal-cost).toLocaleString()}`, deducted:cost, cost, remaining_balance:bal-cost, vendor_balance:bal-cost});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+};
+safe("get","/api/vendor/me", vendorMe);
+safe("get","/api/vendor/dashboard", vendorMe);
+safe("get","/api/vendor/pending-users", vendorPending);
+safe("get","/api/vendor/users/pending", vendorPending);
+force("post","/api/vendor/activate", vendorActivate);
+force("post","/api/vendor/activate/:id", vendorActivate);
+force("post","/api/vendor/users/activate", vendorActivate);
+safe("get","/api/admin/vendors", sGuard, (req,res)=>{ try{ const rows=db.prepare("SELECT v.*, u.username,u.email,u.full_name,u.package,u.account_status FROM vendors v LEFT JOIN users u ON u.id=v.user_id ORDER BY v.id DESC LIMIT 200").all(); return res.json({success:true,vendors:rows,total:rows.length}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
+force("post","/api/admin/vendors/action", sGuard, (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||0); const act=String(req.body?.action||req.body?.status||"").toUpperCase(); if(!id) return res.status(400).json({success:false,message:"Vendor ID required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const st=act.includes("APPROV")?"APPROVED":act.includes("REJECT")?"REJECTED":act.includes("SUSPEND")?"SUSPENDED":"PENDING"; db.prepare("UPDATE vendors SET status=? WHERE id=?").run(st,id); return res.json({success:true,message:`Vendor ${st}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
+const adminCreditVendor = (req,res)=>{ try{ const id=Number(req.body?.id||req.body?.vendorId||req.params?.id||0); const amt=Number(req.body?.amount||0); if(!id||!amt||amt<=0) return res.status(400).json({success:false,message:"Vendor ID + amount required"}); const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id); if(!v) return res.status(404).json({success:false,message:"Vendor not found"}); const user=db.prepare("SELECT * FROM users WHERE id=?").get(v.user_id); if(!user) return res.status(404).json({success:false,message:"Vendor user not found"}); db.prepare("UPDATE vendors SET balance=COALESCE(balance,0)+? WHERE id=?").run(amt,id); try{ db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(amt,v.user_id); }catch{} try{ db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(v.user_id,"vendor_funded",amt,"vendor",`VENDOR_FUND_${id}`,`Admin funded Vendor Balance +₦${amt.toLocaleString()}`); }catch{} try{ notify(v.user_id,"Vendor Funded 💰",`Admin don fund your Vendor Balance with ₦${amt.toLocaleString()}. SILVER ₦9,000 / GOLD ₦15,000 / SUPER ₦21,000 go deduct per activation.`); }catch{} return res.json({success:true,message:`Vendor ${user.username} funded ₦${amt.toLocaleString()}. New: ₦${(Number(v.balance||0)+amt).toLocaleString()}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } };
+force("post","/api/admin/vendors/fund", sGuard, adminCreditVendor);
+force("post","/api/admin/vendors/credit", sGuard, adminCreditVendor);
+force("post","/api/admin/vendors/:id/fund", sGuard, adminCreditVendor);
+force("post","/api/admin/vendors/:id/credit", sGuard, adminCreditVendor);
+// Vendor apply - user fit apply, but panel NO go show until Admin APPROVED
+safe("post","/api/vendor/register", (req,res)=>{ try{ const uid=getSessionUserId(req); if(!uid) return res.status(401).json({success:false,message:"Login first"}); const ex=getVendorByUser(uid); if(ex) return res.json({success:true,alreadyExists:true,message:"You already applied - Status: "+ex.status,vendor:ex}); const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase(); const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid); db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status) VALUES (?,?,?,?, 'PENDING')").run(uid,code,String(req.body?.vendor_name||u?.full_name||u?.username||""),String(req.body?.phone||u?.phone||"")); return res.json({success:true,message:"Vendor application sent - wait for Admin to approve you",vendor:db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)}); }catch(e){ return res.status(500).json({success:false,message:e.message}); } });
+
+console.log("✅ LOANS v3 READY - /api/loans/apply + /api/loans/my + /api/loans/admin + receipt UPDATE + DISBURSED->AFFILIATE + IMPERSONATE + VENDOR");
 }catch(e){ console.log("⚠️ Loans load error (no crash):", e.message); }
 };
