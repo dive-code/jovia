@@ -68,7 +68,6 @@
   .history-title p{color:var(--muted);font-size:10px;margin-top:2px;}
   .refresh-btn{height:34px;display:inline-flex;align-items:center;gap:6px;padding:0 11px;border:1px solid var(--border);border-radius:9px;background:white;color:var(--purple);font-size:10px;font-weight:600;cursor:pointer;transition:0.2s ease;}
   .refresh-btn:hover{background:#fbf8fc;border-color:#d9cbe0;}
-  /* ADDED: Search bar */
   .search-wrap{width:100%;display:flex;gap:8px;padding:14px 20px 0;}
   .search-input{flex:1;min-width:0;height:42px;padding:0 13px;border:1px solid var(--border);border-radius:10px;background:#faf9fb;color:#24152c;outline:none;font-size:12px;}
   .search-input:focus{border-color:var(--purple-light);background:#fff;}
@@ -136,7 +135,6 @@
     </section>
     <section class="history-card">
       <div class="history-head"><div class="history-title"><h2>Referral History</h2><p>Your recent referral activity</p></div><button type="button" class="refresh-btn" onclick="loadReferralHistory()">↻ Refresh</button></div>
-      <!-- ADDED: Search by email / name / username -->
       <div class="search-wrap">
         <input type="text" id="referralSearch" class="search-input" placeholder="Search by Email, Name, Username or ID... e.g. divineabanum8@gmail.com" onkeydown="if(event.key==='Enter'){searchReferrals();}">
         <button type="button" class="search-btn" onclick="searchReferrals()">🔍 Search</button>
@@ -150,20 +148,17 @@
 <script>
   const VERCEL_URL = "https://jovianetworkcom.vercel.app";
   let allReferrals = [];
-
   function escapeHtml(value){return String(value?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");}
   function formatMoney(value){const amount=Number(value||0);return "₦"+amount.toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});}
   function formatDate(value){if(!value){return "—";}const date=new Date(String(value).replace(" ","T"));if(Number.isNaN(date.getTime())){return String(value);}return date.toLocaleDateString("en-NG",{day:"2-digit",month:"short",year:"numeric"});}
   function getInitials(name){const text=String(name||"User").trim();if(!text){return "U";}const parts=text.split(/\s+/).filter(Boolean);if(parts.length===1){return parts[0].substring(0,2).toUpperCase();}return (parts[0][0]+parts[parts.length-1][0]).toUpperCase();}
   function showToast(message){const toast=document.getElementById("toast");toast.textContent=message;toast.classList.add("show");clearTimeout(window.__toastTimer);window.__toastTimer=setTimeout(()=>{toast.classList.remove("show");},2500);}
-
   async function apiFetch(url,options={}){
     const response=await fetch(url,{credentials:"include",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
     let data={};try{data=await response.json();}catch{data={};}
     if(!response.ok){throw new Error(data.message||data.error||"Request failed.");}
     return data;
   }
-
   async function loadReferralLink(){
     try{
       const meData = await apiFetch("/api/me");
@@ -190,7 +185,6 @@
     const fallback = (localStorage.getItem("joviaUsername") || localStorage.getItem("jovia_username") || "DIVEMEDIA").toUpperCase();
     document.getElementById("referralLink").value = `${VERCEL_URL}/register.html?ref=${encodeURIComponent(fallback)}`;
   }
-
   async function copyReferralLink(){
     const input=document.getElementById("referralLink");
     const value=input.value.trim();
@@ -198,8 +192,11 @@
     try{await navigator.clipboard.writeText(value);showToast("Referral link copied.");}
     catch{input.select();document.execCommand("copy");showToast("Referral link copied.");}
   }
-
-  // ADDED: Search + render helpers
+  // FIXED: get email from ANY key backend fit use
+  function getEmail(item){
+    const v = item.email || item.referred_email || item.user_email || item.referredEmail || item.email_address || item.referral_email || item.user?.email || item.referred_user?.email || item.referredUser?.email || "";
+    return String(v||"").trim();
+  }
   function renderList(list){
     const tbody=document.getElementById("referralTableBody");
     const emptyState=document.getElementById("emptyState");
@@ -218,7 +215,7 @@
     const box=document.getElementById("searchResult");
     if(!q){renderList(allReferrals);box.style.display="none";return;}
     const found=allReferrals.filter(item=>{
-      const hay=[item.email,item.referred_email,item.user_email,item.full_name,item.fullName,item.name,item.referredName,item.user_name,item.username,item.referredUsername,item.referral_code,item.id,item.user_id,item.referred_user_id,item.referred_id].map(v=>String(v??"").toLowerCase()).join(" | ");
+      const hay=[getEmail(item),item.email,item.referred_email,item.user_email,item.full_name,item.fullName,item.name,item.referredName,item.user_name,item.username,item.referredUsername,item.referral_code,item.id,item.user_id,item.referred_user_id,item.referred_id].map(v=>String(v??"").toLowerCase()).join(" | ");
       return hay.includes(q);
     });
     renderList(found);
@@ -234,7 +231,6 @@
     const emptyState=document.getElementById("emptyState");
     if(allReferrals.length){emptyState.style.display="none";}
   }
-
   async function loadReferralHistory(){
     const tbody=document.getElementById("referralTableBody");
     const emptyState=document.getElementById("emptyState");
@@ -245,9 +241,14 @@
       const data=await apiFetch("/api/referrals");
       const referrals=data.referrals||data.data||data.users||[];
       allReferrals = Array.isArray(referrals) ? referrals : [];
+      // DEBUG: check if backend send email
+      console.log("REFERRALS SAMPLE:", allReferrals[0]);
+      if(allReferrals.length && !getEmail(allReferrals[0])){
+        console.warn("⚠️ Backend still no send email - server4 fix no deploy yet");
+        showToast("Backend no send email yet - deploy server4 fix");
+      }
       updateStats(data,allReferrals);
       if(!allReferrals.length){tbody.innerHTML="";emptyState.style.display="block";emptyState.querySelector("h3").textContent="No referrals yet";emptyState.querySelector("p").textContent="When someone joins Jovia Network using your referral link, their activity will appear here.";return;}
-      // If user don type search before, keep filter
       const q=String(document.getElementById("referralSearch").value||"").trim();
       if(q){searchReferrals();return;}
       renderList(allReferrals);
@@ -256,7 +257,6 @@
       tbody.innerHTML=`<tr><td colspan="6"><div class="loading">Unable to load referral history.</div></td></tr>`;
     }
   }
-
   function updateStats(data,referrals){
     const total=Number(data.totalReferrals??data.total??referrals.length??0);
     const successful=Number(data.successfulReferrals??data.approvedReferrals??referrals.filter(item=>["approved","active","completed"].includes(String(item.status||"").toLowerCase())).length);
@@ -268,11 +268,10 @@
     document.getElementById("totalEarnings").textContent=formatMoney(earnings);
     document.getElementById("heroEarnings").textContent=formatMoney(earnings);
   }
-
   function renderReferral(item){
     const name=item.full_name||item.fullName||item.name||item.referredName||item.user_name||"User";
     const username=item.username||item.referredUsername||"";
-    const email=item.email||item.referred_email||item.user_email||item.referredEmail||"—";
+    const email=getEmail(item) || ("ID "+(item.user_id||item.referred_id||item.id||""));
     const packageName=item.package||item.package_name||item.plan||"—";
     const statusRaw=String(item.status||"pending").toLowerCase();
     let statusClass="pending";let statusText="Pending";
@@ -283,7 +282,6 @@
     const packageClass=String(packageName).toLowerCase().includes("gold")?"gold":"silver";
     return `<tr><td><div class="user"><div class="avatar">${escapeHtml(getInitials(name))}</div><div><div class="user-name">${escapeHtml(name)}</div>${username?`<div class="username">@${escapeHtml(username)}</div>`:""}</div></div></td><td><span class="email-text">${escapeHtml(email)}</span></td><td><span class="badge ${packageClass}">${escapeHtml(packageName)}</span></td><td><span class="status ${statusClass}">${escapeHtml(statusText)}</span></td><td><span class="commission">${formatMoney(commission)}</span></td><td><span class="date">${escapeHtml(formatDate(date))}</span></td></tr>`;
   }
-
   document.addEventListener("DOMContentLoaded",()=>{Promise.allSettled([loadReferralLink(),loadReferralHistory()]);});
 </script>
 </body>
