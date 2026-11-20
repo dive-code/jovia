@@ -10,6 +10,9 @@
 .stats{display:flex;gap:10px;margin:12px 0}.stat{flex:1;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px;text-align:center}.stat small{font-size:11px;color:#6b7280}.stat b{display:block;font-size:18px;margin-top:4px}
 .user{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:13px;margin-bottom:10px}
 .btn{width:100%;padding:13px;border:none;border-radius:12px;font-weight:800;cursor:pointer;font-size:13px}.btn-green{background:#16a34a;color:#fff}.btn-light{background:#f1f5f9;border:1px solid #e5e7eb}
+.search{width:100%;padding:13px 14px;border:2px solid #f59e0b;border-radius:12px;font-size:14px;outline:none;margin-bottom:10px}
+.chip{display:inline-block;background:#fef3c7;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:800;margin:0 4px 8px 0;cursor:pointer}
+.chip.active{background:#f59e0b;color:#fff}
 .bottom-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:680px;height:72px;background:#fff;border-top:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-around}.nav-item{color:#9ca3af;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;font-weight:700}.nav-item.active{color:#f59e0b}
 </style>
 </head>
@@ -27,7 +30,20 @@
 </div>
 <button class="btn btn-light" onclick="loadAll()">🔄 Refresh</button>
 </div>
-<div class="card"><h2 style="font-size:16px;margin-bottom:10px">Pending Users</h2><div id="vendorPendingList"><p style="text-align:center;color:#9ca3af;padding:12px">Loading...</p></div></div>
+<div class="card">
+<h2 style="font-size:16px;margin-bottom:10px">🔍 Search Pending Users</h2>
+<input id="searchInput" class="search" placeholder="Search by Email, Name, Username or ID... e.g divine@gmail.com / Divemedia / 5" oninput="renderPending()" />
+<div>
+<span class="chip active" id="chipAll" onclick="setFilter('ALL')">All</span>
+<span class="chip" id="chipSILVER" onclick="setFilter('SILVER')">SILVER</span>
+<span class="chip" id="chipGOLD" onclick="setFilter('GOLD')">GOLD</span>
+<span class="chip" id="chipSUPER" onclick="setFilter('SUPER')">SUPER</span>
+<span class="chip" onclick="clearSearch()">❌ Clear</span>
+</div>
+<p id="searchResultText" style="font-size:12px;color:#6b7280;margin-top:4px"></p>
+<h2 style="font-size:16px;margin:14px 0 10px">Pending Users</h2>
+<div id="vendorPendingList"><p style="text-align:center;color:#9ca3af;padding:12px">Loading...</p></div>
+</div>
 <div class="card"><a href="profile.html" style="display:block;text-align:center;text-decoration:none;background:#111827;color:#fff;padding:14px;border-radius:12px;font-weight:800">← Back to Profile</a></div>
 </main>
 </div>
@@ -38,7 +54,43 @@
 <a class="nav-item active" href="profile.html"><span>👤</span><span>Profile</span></a>
 </nav>
 <script>
+let ALL_PENDING = [];
+let CURRENT_FILTER = 'ALL';
 function formatNaira(n){return "₦"+Number(n||0).toLocaleString("en-NG")}
+function setFilter(p){
+  CURRENT_FILTER = p;
+  ['ALL','SILVER','GOLD','SUPER'].forEach(x=>{
+    document.getElementById('chip'+x).classList.toggle('active', x===p);
+  });
+  renderPending();
+}
+function clearSearch(){
+  document.getElementById('searchInput').value='';
+  setFilter('ALL');
+}
+function renderPending(){
+  const el=document.getElementById('vendorPendingList');
+  const q=String(document.getElementById('searchInput').value||'').trim().toLowerCase();
+  let list = ALL_PENDING.slice();
+  if(CURRENT_FILTER!=='ALL') list = list.filter(u=>String(u.package||'SILVER').toUpperCase()===CURRENT_FILTER);
+  if(q){
+    list = list.filter(u=>{
+      return String(u.id||'').toLowerCase().includes(q)
+        || String(u.username||'').toLowerCase().includes(q)
+        || String(u.email||'').toLowerCase().includes(q)
+        || String(u.full_name||'').toLowerCase().includes(q);
+    });
+  }
+  document.getElementById('searchResultText').textContent = (q || CURRENT_FILTER!=='ALL') ? `Showing ${list.length} of ${ALL_PENDING.length} pending users` : `${ALL_PENDING.length} pending users`;
+  if(!ALL_PENDING.length){ el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:14px">No pending users to activate yet.</p>'; return; }
+  if(!list.length){ el.innerHTML='<p style="text-align:center;color:#dc2626;padding:14px">❌ No user match "<b>'+q.replace(/</g,'&lt;')+'</b>"<br><small>Check spelling, email, name or ID and try again.</small></p>'; return; }
+  el.innerHTML='<div style="font-size:13px;font-weight:800;margin-bottom:8px">Pending Users ('+list.length+')</div>'+list.map(u=>`
+    <div class="user">
+      <div style="display:flex;justify-content:space-between"><b>${String(u.username||'').replace(/</g,'&lt;')}</b><span style="font-size:10px;background:#fef3c7;padding:4px 8px;border-radius:20px;font-weight:800">${u.package||'SILVER'}</span></div>
+      <div style="font-size:12px;color:#6b7280;margin-top:4px">ID: <b style="color:#111827">${u.id}</b> • ${String(u.email||'').replace(/</g,'&lt;')} • ${String(u.full_name||'').replace(/</g,'&lt;')}<br>Cost: <b>${formatNaira(u.activation_cost||9000)}</b></div>
+      <button class="btn btn-green" style="margin-top:10px" onclick="activateUser(${Number(u.id)},'${String(u.username||'').replace(/'/g,"")}')">✅ Activate ${String(u.username||'').replace(/</g,'&lt;')} - ${formatNaira(u.activation_cost||9000)}</button>
+    </div>`).join('');
+}
 async function loadAll(){
   try{
     let myEmail = "";
@@ -72,13 +124,8 @@ async function loadPending(){
     const r=await fetch('/api/vendor/pending-users?t='+Date.now()+q,{credentials:'include',cache:'no-store'});
     const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Not approved yet');
     document.getElementById('vendorBalanceText').textContent=formatNaira(d.vendor_balance??0);
-    if(!d.users||!d.users.length){el.innerHTML='<p style="text-align:center;color:#9ca3af;padding:14px">No pending users to activate yet.</p>';return;}
-    el.innerHTML='<div style="font-size:13px;font-weight:800;margin-bottom:8px">Pending Users ('+d.users.length+')</div>'+d.users.map(u=>`
-      <div class="user">
-        <div style="display:flex;justify-content:space-between"><b>${String(u.username||'').replace(/</g,'&lt;')}</b><span style="font-size:10px;background:#fef3c7;padding:4px 8px;border-radius:20px;font-weight:800">${u.package||'SILVER'}</span></div>
-        <div style="font-size:12px;color:#6b7280;margin-top:4px">${String(u.email||'').replace(/</g,'&lt;')} • ${String(u.full_name||'').replace(/</g,'&lt;')}<br>Cost: <b>${formatNaira(u.activation_cost||9000)}</b></div>
-        <button class="btn btn-green" style="margin-top:10px" onclick="activateUser(${Number(u.id)},'${String(u.username||'').replace(/'/g,"")}')">✅ Activate ${String(u.username||'').replace(/</g,'&lt;')} - ${formatNaira(u.activation_cost||9000)}</button>
-      </div>`).join('');
+    ALL_PENDING = d.users || [];
+    renderPending();
   }catch(e){el.innerHTML='<p style="color:#dc2626;text-align:center">'+String(e.message).replace(/</g,'&lt;')+'</p>'}
 }
 async function activateUser(id,name){
