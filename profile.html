@@ -72,16 +72,11 @@
         <div class="badges"><span class="badge default-badge" id="packageBadge">Loading</span><span class="badge default-badge" id="statusBadge">Loading</span><span class="badge default-badge" id="vendorBadge" style="display:none">🏪 Vendor</span></div>
       </section>
 
-      <!-- ✅ FIXED: ALWAYS SHOW - no display:none again -->
-      <section class="vendor-go" id="vendorGoSection" style="display:block">
+      <!-- ✅ ADMIN ONLY: Hidden by default. Only shows if Admin made this user Vendor. No user request. -->
+      <section class="vendor-go" id="vendorGoSection" style="display:none">
         <h2 class="section-title" style="margin-bottom:6px">🏪 Vendor Account</h2>
         <p style="font-size:13px;color:#92400e;line-height:1.6">You na approved Vendor. Balance: <b id="vendorBalanceText">₦0</b> • Activated: <b id="vendorActivatedText">0</b></p>
         <a class="vendor-go-btn" href="vendor.html">🏪 Open Vendor Panel →</a>
-      </section>
-
-      <section class="section" id="vendorPendingNotice" style="display:none;background:#fffbeb;border-color:#fde68a">
-        <h2 class="section-title" style="margin-bottom:6px">🏪 Vendor Application</h2>
-        <p style="font-size:13px;color:#92400e;line-height:1.6">Your Vendor application don enter. E dey <b>PENDING</b>. Wait make Admin approve you first, then Vendor button go show here.</p>
       </section>
 
       <section class="section"><h2 class="section-title">Personal Information</h2><div class="detail-row"><span class="detail-label">Full Name</span><span class="detail-value" id="fullName">—</span></div><div class="detail-row"><span class="detail-label">Username</span><span class="detail-value" id="username">—</span></div><div class="detail-row"><span class="detail-label">Email</span><span class="detail-value" id="email">—</span></div><div class="detail-row"><span class="detail-label">Phone Number</span><span class="detail-value" id="phone">—</span></div></section>
@@ -109,24 +104,27 @@
     function setPackageBadge(pkg) { const b = document.getElementById("packageBadge"); b.textContent = pkg; b.className = "badge"; if (pkg === "Gold") b.classList.add("gold-badge"); else if (pkg === "Silver") b.classList.add("silver-badge"); else if (pkg === "Super") b.classList.add("super-badge"); else b.classList.add("default-badge"); }
     function setStatusBadge(s) { const b = document.getElementById("statusBadge"); const n = String(s || "pending").toLowerCase(); b.className = "badge"; if (n === "approved" || n === "active") { b.textContent = "Approved"; b.classList.add("approved-badge"); return; } if (n === "suspended") { b.textContent = "Suspended"; b.classList.add("suspended-badge"); return; } b.textContent = "Pending"; b.classList.add("pending-badge"); }
     function displayUser(user) { currentUser = user; const fullName = user?.full_name || user?.fullName || user?.name || "Jovia Member"; const username = user?.username || "username"; const email = user?.email || "—"; const phone = user?.phone || "—"; const pkg = detectPackage(user); const amt = getPackageAmount(user, pkg); const bonus = getWelcomeBonus(user, pkg); const ref = getReferralCode(user); const status = user?.account_status || user?.status || "pending"; const joined = user?.created_at || user?.createdAt || user?.joined_at; document.getElementById("avatar").textContent = getInitials(fullName); document.getElementById("profileName").textContent = fullName; document.getElementById("profileUsername").textContent = "@" + String(username).replace(/^@/, ""); document.getElementById("fullName").textContent = fullName; document.getElementById("username").textContent = "@" + String(username).replace(/^@/, ""); document.getElementById("email").textContent = email; document.getElementById("phone").textContent = phone; document.getElementById("packageName").textContent = pkg; document.getElementById("packageAmount").textContent = amt > 0 ? formatNaira(amt) : "—"; document.getElementById("welcomeBonus").textContent = bonus > 0 ? formatNaira(bonus) : "—"; document.getElementById("joinedDate").textContent = formatDate(joined); document.getElementById("referralCode").textContent = ref; document.getElementById("referralLink").textContent = ref !== "—" ? `${window.location.origin}/register.html?ref=${encodeURIComponent(ref)}` : "Your referral link will appear here."; setPackageBadge(pkg); setStatusBadge(status); }
-    // ✅ FIXED: NEVER HIDE VENDOR BUTTON AGAIN
+    // ✅ ADMIN ONLY: Hide by default, show ONLY if Admin made this user Vendor
     async function loadVendorPanel(){
       const go = document.getElementById('vendorGoSection');
       const badge = document.getElementById('vendorBadge');
-      if(go) go.style.display='block';
+      if(go) go.style.display = 'none';
+      if(badge) badge.style.display = 'none';
       try{
         const r = await fetch('/api/vendor/me?t='+Date.now(),{credentials:'include',cache:'no-store'});
         const d = await r.json();
-        if(d && d.success && d.vendor){
-          const st = String(d.vendor_status || d.vendor?.status || '').toUpperCase();
-          if(st === 'APPROVED' && d.isVendor){
-            if(badge){ badge.style.display='inline-flex'; badge.textContent='🏪 Vendor'; badge.className='badge approved-badge'; }
-            document.getElementById('vendorBalanceText').textContent = formatNaira(d.vendor_balance ?? d.vendor?.balance ?? 0);
-            document.getElementById('vendorActivatedText').textContent = d.vendor?.total_activated ?? 0;
-          }
+        // Backend must return isVendor=true ONLY if Admin set vendor_status=APPROVED / is_vendor=1
+        // No user request endpoint again - user cannot set himself
+        const isVendor = d.isVendor === true || d.is_vendor === true || d.vendor?.is_vendor === 1 || String(d.vendor_status||d.vendor?.status||'').toUpperCase() === 'APPROVED';
+        // Extra safety: if backend still returns pending, DO NOT show
+        const st = String(d.vendor_status || d.vendor?.status || d.status || '').toUpperCase();
+        if(d && d.success && isVendor && st !== 'PENDING' && st !== 'REJECTED'){
+          if(go) go.style.display='block';
+          if(badge){ badge.style.display='inline-flex'; badge.textContent='🏪 Vendor'; badge.className='badge approved-badge'; }
+          document.getElementById('vendorBalanceText').textContent = formatNaira(d.vendor_balance ?? d.vendor?.balance ?? d.balance ?? 0);
+          document.getElementById('vendorActivatedText').textContent = d.vendor?.total_activated ?? d.total_activated ?? 0;
         }
       }catch(e){ console.log('vendor check', e.message); }
-      if(go) go.style.display='block';
     }
     function goVendor(){ window.location.href = 'vendor.html'; }
     async function loadUser() { try { const response = await fetch(`${API_BASE}/api/me?t=${Date.now()}`, { method: "GET", credentials: "include", cache: "no-store" }); if (!response.ok) throw new Error("Unable to load your profile."); const data = await response.json(); const user = data?.user || data?.data?.user || data?.member || data; if (!user || (!user.username && !user.email && !user.full_name)) throw new Error("No logged-in user was found."); displayUser(user); loadReferralCount(); loadVendorPanel(); } catch (error) { console.error("PROFILE LOAD ERROR:", error); showError(error.message || "Unable to load your profile."); } }
