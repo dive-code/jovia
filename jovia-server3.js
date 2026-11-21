@@ -1,4 +1,4 @@
-"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v12 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS - FIXED SUPER=0 + AFFILIATE SYNC");
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v12 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS - FIXED SUPER=0 + AFFILIATE SYNC + SAFE COLUMNS");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
 const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all","/api/admin/approve","/api/admin/users/approve"];
 const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
@@ -14,6 +14,9 @@ const cols=()=>{try{return db.prepare("PRAGMA table_info(users)").all().map(c=>c
 const has=n=>cols().includes(n);
 try{if(!has("affiliate_balance"))db.exec("ALTER TABLE users ADD COLUMN affiliate_balance INTEGER DEFAULT 0")}catch{}
 try{if(!has("referral_balance"))db.exec("ALTER TABLE users ADD COLUMN referral_balance INTEGER DEFAULT 0")}catch{}
+try{if(!has("affiliate_earnings"))db.exec("ALTER TABLE users ADD COLUMN affiliate_earnings INTEGER DEFAULT 0")}catch{}
+try{if(!has("referral_earnings"))db.exec("ALTER TABLE users ADD COLUMN referral_earnings INTEGER DEFAULT 0")}catch{}
+try{if(!has("total_earned"))db.exec("ALTER TABLE users ADD COLUMN total_earned INTEGER DEFAULT 0")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS admin_impersonations (id INTEGER PRIMARY KEY AUTOINCREMENT,admin_ip TEXT,admin_user TEXT DEFAULT 'admin',target_user_id INTEGER,target_email TEXT,target_username TEXT,reason TEXT,token TEXT,expires_at TEXT,used_at TEXT,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS password_reset_codes (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 const isOrigin=o=>String(o||"").includes("jovianetworkcom")||String(o||"").includes("vercel.app")||String(o||"").includes("localhost");
@@ -133,39 +136,34 @@ const impWallet=(req,res)=>{try{const imp=getImpUser(req);const u=imp?imp.user:g
 const b=bals(u);const ds=getDailyStats(u.id,u);return res.json({success:true,user:clean(u),balances:b,dailyStats:ds,walletBalance:b.wallet_balance,affiliateBalance:b.affiliate_balance,totalEarned:b.total_balance,wallet:{transactions:userTx(u.id)}})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/impersonate/history",impHistory);safe("get","/api/impersonate/me",impMe);safe("get","/api/impersonate/wallet",impWallet);
 safe("get","/api/history",impHistory);safe("get","/api/wallet",impWallet);force("get","/api/me",impMe);
-// ✅ v12 - ALREADY PAID CHECK - NO UPGRADE MATH
 const alreadyPaid=(ref,ru)=>{const uid=ru.id,un=String(ru.username||"").toLowerCase(),rid=ref?.id||null;let a=0,b=0,c=0;
 try{const r=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(uid);if(r)a=Number(r.amount||0)}catch{}
 try{if(rid){const r=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE user_id=? AND reference=?").get(rid,`REF_${uid}`);if(r)b=Number(r.total||0)}}catch{}
-// Any REF_ transaction for ANY referrer = already paid (upgrade case dey inside here)
 try{const r2=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE reference=?").get(`REF_${uid}`);if(r2)b=Math.max(b,Number(r2.total||0))}catch{}
 try{if(rid){const rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (type LIKE '%upgrade%' OR description LIKE '%upgrade%' OR reference LIKE '%UPGRADE%')").all(rid);for(const tx of rows){const d=String(tx.description||"").toLowerCase(),rf=String(tx.reference||"");if(!((un&&d.includes(un))||d.includes(String(uid))||rf.includes(String(uid))))continue;if(rf===`REF_${uid}`)continue;c+=Number(tx.amount||0)}}}catch{}
 return{total:Math.max(a,b)+c,fromRewards:a,fromRefWallet:b,fromUpgradeWallet:c}};
-// ✅ v12 payRef - FIXED: SUPER=0 + PAY TO AFFILIATE + REFERRAL
 const payRef=ru=>{try{if(!ru?.id)return{paid:0,reason:"no user"};
 db.exec("CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,referrer_id INTEGER NOT NULL,referred_user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,referrer_package TEXT DEFAULT '',referred_package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
 db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
 const c=cols(),raw=String(ru.package||ru.plan||ru.membership||"").toUpperCase().trim();let pkg=raw;
 if(raw.includes("SILVER")||raw.includes("BASIC")||raw.includes("STARTER"))pkg="SILVER";else if(raw.includes("GOLD"))pkg="GOLD";else if(raw.includes("SUPER")||raw.includes("PLATINUM")||raw.includes("DIAMOND")||raw.includes("VIP"))pkg="SUPER";else return{paid:0,reason:"no package: "+raw};
 let cor=0,welB=0;if(pkg==="SILVER"){cor=8000;welB=9000}else if(pkg==="GOLD"){cor=13000;welB=15000}else if(pkg==="SUPER"){cor=0;welB=0}
-// HARD BLOCK 1: referral_rewards row exist = don pay before, no matter package change
 try{const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(ru.id);if(ex0){console.log(`🚫 v12 BLOCK ${ru.username} referral_rewards exist ₦${ex0.amount}`);return{paid:0,reason:"blocked - already collected (referral_rewards exist) - NO upgrade bonus",alreadyPaid:Number(ex0.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
-// HARD BLOCK 2: any REF_ wallet tx exist
 try{const exTx=db.prepare("SELECT * FROM wallet_transactions WHERE reference=? LIMIT 1").get(`REF_${ru.id}`);if(exTx){console.log(`🚫 v12 BLOCK ${ru.username} REF_ tx exist ₦${exTx.amount}`);return{paid:0,reason:"blocked - already collected (REF_ wallet tx exist) - NO upgrade bonus",alreadyPaid:Number(exTx.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
-// HARD BLOCK 3: alreadyPaid total > 0
 const paidInfo=alreadyPaid(null,ru),ap=paidInfo.total;
 if(ap>0){console.log(`🚫 v12 BLOCK ${ru.username} alreadyPaid ₦${ap}`);return{paid:0,reason:"blocked - already collected - NO upgrade bonus, NO balancing",alreadyPaid:ap,correct:cor,blocked:true,package:pkg}}
-// Welcome - once only, check before pay - SUPER = 0 so no welcome for SUPER
 let welPaid=0;const welEx=db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(ru.id);let welTx=null;
 try{welTx=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR type='welcome_bonus') LIMIT 1").get(ru.id,`WELCOME_${ru.id}`)}catch{}
 if(!welEx&&!welTx&&welB>0){try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,welB,pkg)}catch{}try{db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(welB,ru.id)}catch{}try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(ru.id,"welcome_bonus",welB,"wallet",`WELCOME_${ru.id}`,`Welcome bonus - ${pkg} activated`)}catch{}welPaid=welB}
 else if(!welEx&&welTx){try{db.prepare("INSERT OR IGNORE INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,Number(welTx.amount||welB),pkg)}catch{}}
 const{referrer}=findRef(ru,c);if(!referrer)return{paid:0,reason:"no referrer found",welcomePaid:welPaid,welcomeBonus:welB,package:pkg};
 if(cor<=0)return{paid:0,reason:"SUPER = 0 - no referral bonus",welcomePaid:welPaid,welcomeBonus:welB,package:pkg};
-// FIRST TIME ONLY - INSERT only, NEVER UPDATE - FIXED: pay to BOTH referral + affiliate
 db.prepare("INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)").run(referrer.id,ru.id,cor,referrer.package,ru.package);
-db.prepare("UPDATE users SET referral_balance=COALESCE(referral_balance,0)+?, affiliate_balance=COALESCE(affiliate_balance,0)+?, total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(cor,cor,cor,referrer.id);
-try{db.prepare("UPDATE users SET referral_earnings=COALESCE(referral_earnings,0)+?, affiliate_earnings=COALESCE(affiliate_earnings,0)+? WHERE id=?").run(cor,cor,referrer.id)}catch{}
+// ✅ FIXED SAFE UPDATE - never crash on missing column
+try{db.prepare("UPDATE users SET referral_balance=COALESCE(referral_balance,0)+?, affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(cor,cor,referrer.id);}catch(e){console.log("payRef balance fail",e.message);}
+try{if(cols().includes("total_earned"))db.prepare("UPDATE users SET total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(cor,referrer.id);}catch{}
+try{if(cols().includes("referral_earnings"))db.prepare("UPDATE users SET referral_earnings=COALESCE(referral_earnings,0)+? WHERE id=?").run(cor,referrer.id);}catch{}
+try{if(cols().includes("affiliate_earnings"))db.prepare("UPDATE users SET affiliate_earnings=COALESCE(affiliate_earnings,0)+? WHERE id=?").run(cor,referrer.id);}catch{}
 try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(referrer.id,"referral_reward",cor,"affiliate",`REF_${ru.id}`,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description) VALUES (?,?,?,?)").run(referrer.id,"referral_reward",cor,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{}}
 return{paid:cor,referrer:referrer.username,referrer_id:referrer.id,correct:cor,alreadyPaid:0,welcomePaid:welPaid,welcomeBonus:welB,package:pkg}}catch(e){return{paid:0,reason:e.message}}};
 const backpay=(req,res)=>{try{let all=[];try{all=db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all()}catch{}if(!all.length){try{all=db.prepare("SELECT * FROM users WHERE status IN ('active','approved') ORDER BY id ASC").all()}catch{}}
@@ -257,8 +255,8 @@ try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description
 notify(user.id,isAdd?"Balance Added - System":"Balance Deduction - System",`Hello ${user.full_name||user.username||""}, ₦${amt.toLocaleString()} was ${isAdd?"ADDED to":"DEDUCTED from"} your ${label} Balance. Reason: ${reason}. Before: ₦${before.toLocaleString()}, Now: ₦${after.toLocaleString()}. - Jovia System`);
 return res.json({success:true,message:`✅ Game balance ${isAdd?"added":"deducted"}: ₦${amt.toLocaleString()}. Before ₦${before.toLocaleString()} -> Now ₦${after.toLocaleString()}`,userId:user.id,beforeBalance:before,newBalance:after,balance:after})}
 const before=Number(user[col]||0),after=isAdd?before+amt:Math.max(0,before-amt),sgn=isAdd?amt:-amt;db.prepare(`UPDATE users SET ${col}=? WHERE id=?`).run(after,user.id);
-if(col==="referral_balance"){try{db.prepare("UPDATE users SET referral_earnings=? WHERE id=?").run(after,user.id)}catch{}}
-if(col==="affiliate_balance"){try{db.prepare("UPDATE users SET affiliate_earnings=? WHERE id=?").run(after,user.id)}catch{}}
+if(col==="referral_balance"){try{if(cols().includes("referral_earnings"))db.prepare("UPDATE users SET referral_earnings=? WHERE id=?").run(after,user.id)}catch{}}
+if(col==="affiliate_balance"){try{if(cols().includes("affiliate_earnings"))db.prepare("UPDATE users SET affiliate_earnings=? WHERE id=?").run(after,user.id)}catch{}}
 try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description,created_at) VALUES (?,?,?,?,datetime('now'))").run(user.id,isAdd?"credit":"debit",sgn,`${reason} [${col}]`)}catch{}
 try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description,created_at) VALUES (?,?,?,?,datetime('now'))").run(user.id,isAdd?"admin_add":"admin_deduct",sgn,`${reason} [${col}]`)}catch{}
 notify(user.id,isAdd?"Balance Added - System":"Balance Deduction - System",`Hello ${user.full_name||user.username||""}, ₦${amt.toLocaleString()} was ${isAdd?"ADDED to":"DEDUCTED from"} your ${label} Balance. Reason: ${reason}. Before: ₦${before.toLocaleString()}, Now: ₦${after.toLocaleString()}. - Jovia System`);
@@ -270,10 +268,14 @@ const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add")
 ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
 const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
-// ✅ FIX OLD BALANCES - RUN ONCE TO SYNC REFERRAL -> AFFILIATE
+// ✅ FIX OLD BALANCES - SAFE - NO affiliate_earnings CRASH
 safe("get","/api/admin/fix-affiliate-balance",(req,res)=>{
   if(req.query.key !== 'jovia123') return res.status(401).json({success:false, message:"Admin authentication required"});
   try{
+    try{if(!cols().includes("affiliate_balance"))db.exec("ALTER TABLE users ADD COLUMN affiliate_balance INTEGER DEFAULT 0");}catch{}
+    try{if(!cols().includes("affiliate_earnings"))db.exec("ALTER TABLE users ADD COLUMN affiliate_earnings INTEGER DEFAULT 0");}catch{}
+    try{if(!cols().includes("referral_balance"))db.exec("ALTER TABLE users ADD COLUMN referral_balance INTEGER DEFAULT 0");}catch{}
+    try{if(!cols().includes("referral_earnings"))db.exec("ALTER TABLE users ADD COLUMN referral_earnings INTEGER DEFAULT 0");}catch{}
     const rows = db.prepare("SELECT id, referral_balance, affiliate_balance FROM users").all();
     let fixed = 0, totalSynced = 0;
     for(const u of rows){
@@ -281,13 +283,14 @@ safe("get","/api/admin/fix-affiliate-balance",(req,res)=>{
       const aff = Number(u.affiliate_balance||0);
       if(ref > aff){
         const diff = ref - aff;
-        db.prepare("UPDATE users SET affiliate_balance=?, affiliate_earnings=COALESCE(affiliate_earnings,0)+? WHERE id=?").run(ref, diff, u.id);
+        db.prepare("UPDATE users SET affiliate_balance=? WHERE id=?").run(ref, u.id);
+        try{if(cols().includes("affiliate_earnings"))db.prepare("UPDATE users SET affiliate_earnings=COALESCE(affiliate_earnings,0)+? WHERE id=?").run(diff, u.id);}catch{}
         fixed++; totalSynced += diff;
       }
     }
     return res.json({success:true, message:`Fixed ${fixed} users, synced ₦${totalSynced} to affiliate_balance`, fixed, totalSynced});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
-console.log("✅ SERVER3 v12 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS - FIXED");
+console.log("✅ SERVER3 v12 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS - FIXED SAFE COLUMNS");
   try{ require("./server4")(app,db,requireUser,requireAdmin); console.log("✅ SERVER 4 CONNECTED"); }catch(e){ console.log("⚠️ Server4 not found:",e.message); }
 }catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
