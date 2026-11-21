@@ -1,4 +1,4 @@
-"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v12 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS");
+"use strict";module.exports=(app,db,requireUser,requireAdmin)=>{try{console.log("🔧 SERVER3 v12 - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS - FIXED SUPER=0 + AFFILIATE SYNC");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server3 skip");return;}
 const BP=["/api/admin/backpay","/api/admin/backpay-all","/api/admin/backpay-total","/api/admin/backpay-total-all","/api/admin/approve","/api/admin/users/approve"];
 const isBP=p=>{try{return typeof p==="string"&&(BP.includes(p)||p.includes("backpay"))}catch{return false}};
@@ -141,13 +141,13 @@ try{if(rid){const r=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wal
 try{const r2=db.prepare("SELECT COALESCE(SUM(amount),0) as total FROM wallet_transactions WHERE reference=?").get(`REF_${uid}`);if(r2)b=Math.max(b,Number(r2.total||0))}catch{}
 try{if(rid){const rows=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (type LIKE '%upgrade%' OR description LIKE '%upgrade%' OR reference LIKE '%UPGRADE%')").all(rid);for(const tx of rows){const d=String(tx.description||"").toLowerCase(),rf=String(tx.reference||"");if(!((un&&d.includes(un))||d.includes(String(uid))||rf.includes(String(uid))))continue;if(rf===`REF_${uid}`)continue;c+=Number(tx.amount||0)}}}catch{}
 return{total:Math.max(a,b)+c,fromRewards:a,fromRefWallet:b,fromUpgradeWallet:c}};
-// ✅ v12 payRef - HARD BLOCK, NEVER UPDATE, NEVER DIFFERENCE
+// ✅ v12 payRef - FIXED: SUPER=0 + PAY TO AFFILIATE + REFERRAL
 const payRef=ru=>{try{if(!ru?.id)return{paid:0,reason:"no user"};
 db.exec("CREATE TABLE IF NOT EXISTS referral_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,referrer_id INTEGER NOT NULL,referred_user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,referrer_package TEXT DEFAULT '',referred_package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
 db.exec("CREATE TABLE IF NOT EXISTS welcome_rewards (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL UNIQUE,amount INTEGER DEFAULT 0,package TEXT DEFAULT '',created_at TEXT DEFAULT CURRENT_TIMESTAMP);");
 const c=cols(),raw=String(ru.package||ru.plan||ru.membership||"").toUpperCase().trim();let pkg=raw;
 if(raw.includes("SILVER")||raw.includes("BASIC")||raw.includes("STARTER"))pkg="SILVER";else if(raw.includes("GOLD"))pkg="GOLD";else if(raw.includes("SUPER")||raw.includes("PLATINUM")||raw.includes("DIAMOND")||raw.includes("VIP"))pkg="SUPER";else return{paid:0,reason:"no package: "+raw};
-let cor=0,welB=0;if(pkg==="SILVER"){cor=8000;welB=9000}else if(pkg==="GOLD"){cor=13000;welB=15000}else if(pkg==="SUPER"){cor=19000;welB=21000}
+let cor=0,welB=0;if(pkg==="SILVER"){cor=8000;welB=9000}else if(pkg==="GOLD"){cor=13000;welB=15000}else if(pkg==="SUPER"){cor=0;welB=0}
 // HARD BLOCK 1: referral_rewards row exist = don pay before, no matter package change
 try{const ex0=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(ru.id);if(ex0){console.log(`🚫 v12 BLOCK ${ru.username} referral_rewards exist ₦${ex0.amount}`);return{paid:0,reason:"blocked - already collected (referral_rewards exist) - NO upgrade bonus",alreadyPaid:Number(ex0.amount||0),correct:cor,blocked:true,package:pkg}}}catch{}
 // HARD BLOCK 2: any REF_ wallet tx exist
@@ -155,16 +155,18 @@ try{const exTx=db.prepare("SELECT * FROM wallet_transactions WHERE reference=? L
 // HARD BLOCK 3: alreadyPaid total > 0
 const paidInfo=alreadyPaid(null,ru),ap=paidInfo.total;
 if(ap>0){console.log(`🚫 v12 BLOCK ${ru.username} alreadyPaid ₦${ap}`);return{paid:0,reason:"blocked - already collected - NO upgrade bonus, NO balancing",alreadyPaid:ap,correct:cor,blocked:true,package:pkg}}
-// Welcome - once only, check before pay
+// Welcome - once only, check before pay - SUPER = 0 so no welcome for SUPER
 let welPaid=0;const welEx=db.prepare("SELECT * FROM welcome_rewards WHERE user_id=?").get(ru.id);let welTx=null;
 try{welTx=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR type='welcome_bonus') LIMIT 1").get(ru.id,`WELCOME_${ru.id}`)}catch{}
 if(!welEx&&!welTx&&welB>0){try{db.prepare("INSERT INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,welB,pkg)}catch{}try{db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(welB,ru.id)}catch{}try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(ru.id,"welcome_bonus",welB,"wallet",`WELCOME_${ru.id}`,`Welcome bonus - ${pkg} activated`)}catch{}welPaid=welB}
 else if(!welEx&&welTx){try{db.prepare("INSERT OR IGNORE INTO welcome_rewards (user_id,amount,package) VALUES (?,?,?)").run(ru.id,Number(welTx.amount||welB),pkg)}catch{}}
 const{referrer}=findRef(ru,c);if(!referrer)return{paid:0,reason:"no referrer found",welcomePaid:welPaid,welcomeBonus:welB,package:pkg};
-// FIRST TIME ONLY - INSERT only, NEVER UPDATE
+if(cor<=0)return{paid:0,reason:"SUPER = 0 - no referral bonus",welcomePaid:welPaid,welcomeBonus:welB,package:pkg};
+// FIRST TIME ONLY - INSERT only, NEVER UPDATE - FIXED: pay to BOTH referral + affiliate
 db.prepare("INSERT INTO referral_rewards (referrer_id,referred_user_id,amount,referrer_package,referred_package) VALUES (?,?,?,?,?)").run(referrer.id,ru.id,cor,referrer.package,ru.package);
-if(c.includes("referral_balance"))db.prepare("UPDATE users SET referral_balance=COALESCE(referral_balance,0)+? WHERE id=?").run(cor,referrer.id);
-try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(referrer.id,"referral_reward",cor,"referral",`REF_${ru.id}`,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description) VALUES (?,?,?,?)").run(referrer.id,"referral_reward",cor,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{}}
+db.prepare("UPDATE users SET referral_balance=COALESCE(referral_balance,0)+?, affiliate_balance=COALESCE(affiliate_balance,0)+?, total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(cor,cor,cor,referrer.id);
+try{db.prepare("UPDATE users SET referral_earnings=COALESCE(referral_earnings,0)+?, affiliate_earnings=COALESCE(affiliate_earnings,0)+? WHERE id=?").run(cor,cor,referrer.id)}catch{}
+try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(referrer.id,"referral_reward",cor,"affiliate",`REF_${ru.id}`,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,description) VALUES (?,?,?,?)").run(referrer.id,"referral_reward",cor,`Referral bonus - ${ru.username} ${ru.package} approved`)}catch{}}
 return{paid:cor,referrer:referrer.username,referrer_id:referrer.id,correct:cor,alreadyPaid:0,welcomePaid:welPaid,welcomeBonus:welB,package:pkg}}catch(e){return{paid:0,reason:e.message}}};
 const backpay=(req,res)=>{try{let all=[];try{all=db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all()}catch{}if(!all.length){try{all=db.prepare("SELECT * FROM users WHERE status IN ('active','approved') ORDER BY id ASC").all()}catch{}}
 let pc=0,tp=0,wc=0,tw=0,det=[],skip=0,blocked=0;for(const u of all){try{const b=payRef(u);if(b.welcomePaid>0){wc++;tw+=b.welcomePaid}if(b.paid>0){pc++;tp+=b.paid;det.push({referrer:b.referrer,referrer_id:b.referrer_id,referred:u.username,referred_id:u.id,package:u.package,alreadyPaid:b.alreadyPaid||0,correct:b.correct,paid:b.paid,welcomePaid:b.welcomePaid||0})}else{if(b.reason==="no referrer found")skip++;else if(b.blocked)blocked++}}catch{}}
@@ -195,7 +197,7 @@ let u=findU(req);
 if(!u){const id=Number(req.body?.userId||req.body?.id||req.body?.user_id||req.query.id||req.query.userId||req.params.id);if(id)u=db.prepare("SELECT * FROM users WHERE id=?").get(id)}
 if(!u)return res.status(404).json({success:false,message:"User not found - pass userId / email / username"});
 const id=u.id;const pkgRaw=String(u.package||u.plan||"SILVER").toUpperCase();let pkg="SILVER";if(pkgRaw.includes("GOLD"))pkg="GOLD";else if(pkgRaw.includes("SUPER"))pkg="SUPER";
-let welcome=9000;if(pkg==="GOLD")welcome=15000;if(pkg==="SUPER")welcome=21000;
+let welcome=9000;if(pkg==="GOLD")welcome=15000;if(pkg==="SUPER")welcome=0;
 const confirm=String(req.body?.confirm||req.query?.confirm||"").toLowerCase();
 if(confirm!=="wipe"&&confirm!=="yes"){return res.json({success:false,needConfirm:true,message:`⚠️ Confirm wipe for ${u.username} (${u.email})? Send {confirm:"wipe"} to proceed. This go DELETE all history/transactions/withdrawals and reset to fresh ${pkg}. CANNOT UNDO.`,user:{id:u.id,username:u.username,email:u.email,package:pkg}})}
 const tables=["wallet_transactions","withdrawals","withdrawal_requests","payments","payment_requests","game_withdrawals","game_deposits","deposits","affiliate_withdrawals","notifications","jovia_notifications","user_notifications","user_notification","welcome_rewards","jovia_upgrades","music_plays","music_earnings","job_claims","job_applications","game_plays","game_history"];
@@ -268,6 +270,24 @@ const adjGen=(req,res)=>{const t=String(req.body?.type||req.body?.action||"add")
 ["/api/admin/balance/adjust","/api/admin/user/balance","/api/admin/users/balance","/api/admin/balance","/api/admin/wallet/adjust"].forEach(p=>force("post",p,adminGuard,adjGen));
 const upg=(req,res)=>{try{const rows=db.prepare("SELECT u.*,us.email,us.username,us.full_name FROM jovia_upgrades u LEFT JOIN users us ON us.id=u.user_id ORDER BY u.id DESC LIMIT 200").all();return res.json({success:true,upgrades:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 safe("get","/api/admin/upgrades",adminGuard,upg);safe("get","/api/admin/upgrades/list",adminGuard,upg);
-console.log("✅ SERVER3 v12 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS");
-  try{ require("./server4")(app,db,requireUser,requireAdmin); console.log("✅ SERVER 4 CONNECTED"); }catch(e){ console.log("⚠️ Server4 not found:",e.message); }                                                                  
+// ✅ FIX OLD BALANCES - RUN ONCE TO SYNC REFERRAL -> AFFILIATE
+safe("get","/api/admin/fix-affiliate-balance",(req,res)=>{
+  if(req.query.key !== 'jovia123') return res.status(401).json({success:false, message:"Admin authentication required"});
+  try{
+    const rows = db.prepare("SELECT id, referral_balance, affiliate_balance FROM users").all();
+    let fixed = 0, totalSynced = 0;
+    for(const u of rows){
+      const ref = Number(u.referral_balance||0);
+      const aff = Number(u.affiliate_balance||0);
+      if(ref > aff){
+        const diff = ref - aff;
+        db.prepare("UPDATE users SET affiliate_balance=?, affiliate_earnings=COALESCE(affiliate_earnings,0)+? WHERE id=?").run(ref, diff, u.id);
+        fixed++; totalSynced += diff;
+      }
+    }
+    return res.json({success:true, message:`Fixed ${fixed} users, synced ₦${totalSynced} to affiliate_balance`, fixed, totalSynced});
+  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+});
+console.log("✅ SERVER3 v12 READY - WIPE + NOT-AVAILABLE + DAILY WAT + FORGOT + NO UPGRADE BONUS - FIXED");
+  try{ require("./server4")(app,db,requireUser,requireAdmin); console.log("✅ SERVER 4 CONNECTED"); }catch(e){ console.log("⚠️ Server4 not found:",e.message); }
 }catch(e){console.log("⚠️ Server 3 load error (no crash):",e.message)}};
