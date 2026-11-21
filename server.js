@@ -586,13 +586,11 @@ app.get("/api/admin/withdrawal-codes",requireAdmin,(req,res)=>{try{
   const rows=db.prepare("SELECT * FROM withdrawal_codes ORDER BY id DESC LIMIT 200").all();
   return res.json({success:true,codes:rows, total:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes").get().c, unused:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=0").get().c, used:db.prepare("SELECT COUNT(*) as c FROM withdrawal_codes WHERE used=1").get().c, codeFee:WITHDRAWAL_CODE_FEE, minimums:WITHDRAWAL_MINIMUMS});
 }catch(e){return res.status(500).json({success:false});}});
-// === BACKPAY TOTAL - ONE PAY, CHECK ALL 4 SERVERS - FIXED ===
-const OTHER_SERVERS = [
-  // For THIS server, put the OTHER 3 servers only. Use env or direct URL
-  { name: "Server2", url: process.env.SERVER2_URL || "https://YOUR-SERVER-2-URL", key: "jovia123" },
-  { name: "Server3", url: process.env.SERVER3_URL || "https://YOUR-SERVER-3-URL", key: "jovia123" },
-  { name: "Server4", url: process.env.SERVER4_URL || "https://YOUR-SERVER-4-URL", key: "jovia123" },
-];
+// === BACKPAY TOTAL - ONE PAY, CHECK ALL - FIXED - FULL VERSION ===
+// REAL URL: https://jovia-production.up.railway.app
+// All server files (server1, server2, server3, server4) dey inside SAME Railway app + SAME DB.
+// So no other server URL to check. OTHER_SERVERS empty na correct.
+const OTHER_SERVERS = [];
 
 // Helper: other servers go call to check - USE EMAIL, NOT ID
 app.get("/api/admin/backpay-check", (req,res)=>{
@@ -600,19 +598,15 @@ app.get("/api/admin/backpay-check", (req,res)=>{
   try{
     const email = String(req.query.email||"").toLowerCase().trim();
     if(!email) return res.json({success:true, paid:false});
-
     // Find this user for THIS server by email (ID different per server)
     const user = db.prepare("SELECT id, username FROM users WHERE LOWER(email)=? LIMIT 1").get(email);
     if(!user) return res.json({success:true, paid:false});
-
     // 1. Check referral_rewards for this referred user
     const r = db.prepare("SELECT amount FROM referral_rewards WHERE referred_user_id=?").get(user.id);
-    if(r && Number(r.amount||0) > 0) return res.json({success:true, paid:true});
-
-    // 2. Check wallet - any BACKPAY / referral pay wey mention this user
-    const w = db.prepare("SELECT amount FROM wallet_transactions WHERE (reference=? OR description LIKE ?) AND amount > 0 LIMIT 1").get(`BACKPAY_ALL_${user.id}`, `%${user.username}%`);
-    if(w) return res.json({success:true, paid:true});
-
+    if(r && Number(r.amount||0) > 0) return res.json({success:true, paid:true, amount: Number(r.amount||0), source: "referral_rewards"});
+    // 2. Check wallet - ANY old pay: REF_ or BACKPAY_ALL_
+    const w = db.prepare("SELECT amount, reference FROM wallet_transactions WHERE reference IN (?,?) AND amount > 0 LIMIT 1").get(`REF_${user.id}`, `BACKPAY_ALL_${user.id}`);
+    if(w) return res.json({success:true, paid:true, amount: Number(w.amount||0), source: w.reference});
     return res.json({success:true, paid:false});
   }catch(e){ return res.json({success:true, paid:false}); }
 });
@@ -622,14 +616,20 @@ app.get("/api/admin/backpay-all", async (req,res)=>{
     return res.status(401).json({success:false, message:"Admin authentication required"});
   }
   try{
+    const cols = ()=>{ try{ return db.prepare("PRAGMA table_info(users)").all().map(c=>c.name) }catch{ return [] } };
+    const hasCol = (n)=> cols().includes(n);
+
     async function hasPaidAnywhere(u, referrer){
-      // 1. This server - by local ID
+      // 1. This server - by local ID - referral_rewards
       const local = db.prepare("SELECT amount FROM referral_rewards WHERE referred_user_id=?").get(u.id);
       if(local && Number(local.amount||0) > 0) return true;
-      const localWallet = db.prepare("SELECT amount FROM wallet_transactions WHERE user_id=? AND (reference=? OR description LIKE ?) AND amount > 0 LIMIT 1").get(referrer.id, `BACKPAY_ALL_${u.id}`, `%${u.username}%`);
+      // 2. This server - wallet - check BOTH REF_ and BACKPAY_ALL_ (old + new)
+      const localWallet = db.prepare("SELECT amount FROM wallet_transactions WHERE reference IN (?,?) AND amount > 0 LIMIT 1").get(`REF_${u.id}`, `BACKPAY_ALL_${u.id}`);
       if(localWallet) return true;
-
-      // 2. Other 3 servers - by EMAIL (same for all servers)
+      // 3. Other servers - by EMAIL (same for all servers)
+      // NOTE: OTHER_SERVERS empty because all files dey inside same Railway app:
+      // https://jovia-production.up.railway.app - same DB, no need cross-check.
+      // If you later split to separate Railway apps, add their real URLs to OTHER_SERVERS above.
       if(!u.email) return false;
       for(const s of OTHER_SERVERS){
         if(!s.url || s.url.includes("YOUR-SERVER")) continue;
@@ -644,35 +644,47 @@ app.get("/api/admin/backpay-all", async (req,res)=>{
     }
 
     let paidCount = 0, totalPaid = 0;
+    let skippedCount = 0, superCount = 0, noReferrerCount = 0;
+    const details = [];
+    const skipped = [];
     const allActivated = db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') ORDER BY id ASC").all();
     for(const u of allActivated){
-      if(!u.referrer_id) continue;
+      if(!u.referrer_id){ noReferrerCount++; continue; }
       const referrer = db.prepare("SELECT * FROM users WHERE id=?").get(u.referrer_id);
-      if(!referrer || referrer.id === u.id) continue;
-
+      if(!referrer || referrer.id === u.id){ noReferrerCount++; continue; }
       const pkg = String(u.package || "").toUpperCase();
-      if(pkg === "SUPER") continue; // SUPER = ₦0
-
+      if(pkg.includes("SUPER")){ superCount++; skipped.push({ referred: u.username, referred_email: u.email, package: u.package, reason: "SUPER = 0" }); continue; }
       let correct = 0;
-      if(pkg === "GOLD") correct = 13000;
-      else if(pkg === "SILVER") correct = 8000; // FIXED: 8k, not 9k
-      else continue;
-
-      // If don collect ₦1 for ANY server, skip
-      if(await hasPaidAnywhere(u, referrer)) continue;
-
+      if(pkg.includes("GOLD")) correct = 13000;
+      else if(pkg.includes("SILVER") || pkg.includes("BASIC") || pkg.includes("STARTER")) correct = 8000;
+      else { skipped.push({ referred: u.username, referred_email: u.email, package: u.package, reason: "No package / unknown package" }); continue; }
+      // If don collect N1 for ANY server, skip
+      if(await hasPaidAnywhere(u, referrer)){ skippedCount++; skipped.push({ referred: u.username, referred_email: u.email, package: u.package, referrer: referrer.username, reason: "Already paid before - skipped" }); continue; }
       // Pay inside transaction - so e no go double-pay if you click twice
+      let didPay = false;
       db.transaction(()=>{
         // Re-check inside transaction
         const again = db.prepare("SELECT amount FROM referral_rewards WHERE referred_user_id=?").get(u.id);
         if(again && Number(again.amount||0) > 0) return;
+        const againWallet = db.prepare("SELECT amount FROM wallet_transactions WHERE reference IN (?,?) LIMIT 1").get(`REF_${u.id}`, `BACKPAY_ALL_${u.id}`);
+        if(againWallet) return;
         db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(referrer.id, u.id, correct, referrer.package, u.package);
-        db.prepare("UPDATE users SET affiliate_balance = COALESCE(affiliate_balance,0) + ?, total_earned = COALESCE(total_earned,0) + ? WHERE id=?").run(correct, correct, referrer.id);
+        // SAFE UPDATE - pay BOTH referral + affiliate, check column exist first - NO CRASH
+        db.prepare("UPDATE users SET referral_balance = COALESCE(referral_balance,0) + ?, affiliate_balance = COALESCE(affiliate_balance,0) + ? WHERE id=?").run(correct, correct, referrer.id);
+        try{ if(hasCol("total_earned")) db.prepare("UPDATE users SET total_earned = COALESCE(total_earned,0) + ? WHERE id=?").run(correct, referrer.id); }catch(e){ console.log("total_earned skip", e.message); }
+        try{ if(hasCol("referral_earnings")) db.prepare("UPDATE users SET referral_earnings = COALESCE(referral_earnings,0) + ? WHERE id=?").run(correct, referrer.id); }catch(e){ console.log("referral_earnings skip", e.message); }
+        try{ if(hasCol("affiliate_earnings")) db.prepare("UPDATE users SET affiliate_earnings = COALESCE(affiliate_earnings,0) + ? WHERE id=?").run(correct, referrer.id); }catch(e){ console.log("affiliate_earnings skip", e.message); }
         db.prepare("INSERT INTO wallet_transactions (user_id, type, amount, balance_type, reference, description) VALUES (?,?,?,?,?,?)").run(referrer.id, "referral_reward", correct, "affiliate", `BACKPAY_ALL_${u.id}`, `Backpay TOTAL - ${u.username} ${u.package}`);
+        didPay = true;
       })();
+      if(!didPay){ skippedCount++; continue; }
       paidCount++; totalPaid += correct;
+      details.push({ referred: u.username, referred_email: u.email, referred_id: u.id, package: u.package, referrer: referrer.username, referrer_email: referrer.email, referrer_id: referrer.id, paid: correct });
     }
-    return res.json({success:true, message:`Backpay done - ${paidCount} people paid, total ₦${totalPaid}`, paidCount, totalPaid});
+    // Username inside message - so you go see who collect without scrolling too much
+    const summary = details.map(d=>`${d.referred} (${d.package}) -> ${d.referrer} ₦${d.paid}`).join(", ");
+    const fullMessage = `Backpay done - ${paidCount} people paid, total ₦${totalPaid} | Checked ${allActivated.length}, Skipped already paid: ${skippedCount}, SUPER (0): ${superCount}, No referrer: ${noReferrerCount}` + (summary ? ` | PAID: ${summary}` : ` | No new pay - all don collect before`);
+    return res.json({success:true, message: fullMessage, paidCount, totalPaid, skippedCount, superCount, noReferrerCount, totalChecked: allActivated.length, details, skipped});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
 app.get("/api/admin/withdrawals",requireAdmin,(req,res)=>{try{const status=cleanString(req.query.status,30).toLowerCase();let rows;if(["pending","processing","paid","rejected"].includes(status)){rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.status=? ORDER BY w.id DESC`).all(status);}else{rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC`).all();}return res.json({success:true,withdrawals:rows.map((row)=>({...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)}})),withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled()});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawals."});}});
