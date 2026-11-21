@@ -1,7 +1,7 @@
 "use strict";
 module.exports=(app,db,requireUser,requireAdmin)=>{
 try{
-console.log("🔧 SERVER 4 - LOANS + VENDORS + REFERRALS FULL - FIXED");
+console.log("🔧 SERVER 4 - LOANS + VENDORS + REFERRALS FULL - FIXED - ADMIN ONLY VENDOR");
 if(!app||typeof app.get!=="function"||typeof app.post!=="function"){console.log("⚠️ Server4 skip");return;}
 
 // ---------- Helpers for Server 4 only ----------
@@ -43,6 +43,17 @@ const findUserByAny4=(req)=>{
     return null;
   }catch{return null}
 };
+// ✅ For Admin actions: find TARGET user from body/query ONLY, never session user
+const findTargetUser4=(req)=>{
+  try{
+    const b=req.body||{}, q=req.query||{};
+    const val = b.userId||b.user_id||b.id||b.target_id||b.targetUserId||b.email||b.username||b.user||q.userId||q.user_id||q.id||q.target_id||q.email||q.username||"";
+    if(!val) return null;
+    if(/^\d+$/.test(String(val).trim())) return db.prepare("SELECT * FROM users WHERE id=?").get(Number(val));
+    if(String(val).includes('@')) return db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(String(val).trim());
+    return db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(String(val).trim());
+  }catch{return null}
+};
 const getUserId4=req=>{const u=findUserByAny4(req); return u?Number(u.id):0};
 const userGuard4=(req,res,next)=>{try{if(typeof requireUser==="function")return requireUser(req,res,next);const u=findUserByAny4(req);if(u){req.userId=u.id;return next()}return res.status(401).json({success:false,message:"Session expired - login again"})}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
 let upload4=null;try{const multer=require("multer");upload4=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024}})}catch{console.log("⚠️ S4 multer not found - loan receipt go use base64")};
@@ -53,6 +64,8 @@ try{const lc=db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);if(!lc.
 try{db.exec(`CREATE TABLE IF NOT EXISTS vendors (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER UNIQUE,code TEXT UNIQUE,vendor_name TEXT,phone TEXT,status TEXT DEFAULT 'PENDING',balance INTEGER DEFAULT 0,total_activated INTEGER DEFAULT 0,total_deducted INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))`)}catch{}
 try{const vc=db.prepare("PRAGMA table_info(vendors)").all().map(c=>c.name);if(!vc.includes("balance"))db.exec("ALTER TABLE vendors ADD COLUMN balance INTEGER DEFAULT 0");if(!vc.includes("total_deducted"))db.exec("ALTER TABLE vendors ADD COLUMN total_deducted INTEGER DEFAULT 0")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS password_resets (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,token TEXT UNIQUE,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
+// ✅ Vendor flags on users table - Admin only go set am
+try{const uc=cols4(); if(!uc.includes("is_vendor")) db.exec("ALTER TABLE users ADD COLUMN is_vendor INTEGER DEFAULT 0"); if(!uc.includes("vendor_status")) db.exec("ALTER TABLE users ADD COLUMN vendor_status TEXT DEFAULT ''"); if(!uc.includes("vendor_balance")) db.exec("ALTER TABLE users ADD COLUMN vendor_balance INTEGER DEFAULT 0");}catch{}
 const PKG_COST4={SILVER:9000,GOLD:15000,SUPER:21000};
 
 // ========== LOANS FULL ==========
@@ -73,17 +86,24 @@ force4("post","/api/loans/admin",sGuard4,adminAction4);force4("post","/api/admin
 const forgotLoan4=(req,res)=>{try{const email=String(req.body?.email||req.body?.username||req.query?.email||"").trim();if(!email)return res.status(400).json({success:false,message:"Enter your email"});let user=null;if(/^\d+$/.test(email))user=db.prepare("SELECT * FROM users WHERE id=?").get(Number(email));else if(email.includes('@'))user=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(email);else user=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(email);if(!user)return res.status(404).json({success:false,message:"Email not found",code:"",reset_code:""});let code=String(Math.floor(100000+Math.random()*900000));let token="";try{token=require("crypto").randomBytes(24).toString("hex")}catch{token=Date.now().toString(36)+Math.random().toString(36).slice(2)}const exp=new Date(Date.now()+30*60*1000).toISOString();try{db.prepare("UPDATE password_resets SET used=1 WHERE user_id=? AND used=0").run(user.id)}catch{}db.prepare("INSERT INTO password_resets (user_id,email,token,code,expires_at,used) VALUES (?,?,?,?,?,0)").run(user.id,user.email,token,code,exp);try{notify4(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes.`)}catch{}return res.json({success:true,message:`Your reset code na: ${code}`,code,reset_code:code,token,reset_token:token,email:user.email,show_code:true})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 force4("post","/api/auth/forgot-password-loan",forgotLoan4);
 
-// ========== VENDORS FULL - FIXED ==========
+// ========== VENDORS - ADMIN ONLY - NO USER REQUEST ==========
 const getVendorByUser4=uid=>{try{return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)}catch{return null}};
 const resolveVendor4=req=>{const uid=getUserId4(req);if(!uid)return null;return getVendorByUser4(uid)};
+const syncVendorUser4=(userId, status)=>{ try{ db.prepare("UPDATE users SET is_vendor=?, vendor_status=? WHERE id=?").run(status==="APPROVED"?1:0, status, userId); }catch{} };
+// ✅ STRICT: Only APPROVED + is_vendor=1 go show Vendor panel
 const vendorMe4=(req,res)=>{try{
   const user=findUserByAny4(req);
-  const v=user?getVendorByUser4(Number(user.id)):null;
-  if(!v)return res.json({success:false,isVendor:false,is_vendor:false,message:"Not a vendor yet",checked_email:user?.email||req.query?.email||"",checked_id:user?.id||null});
+  if(!user) return res.json({success:true,isVendor:false,is_vendor:false,vendor_status:'',message:"Session expired"});
+  const v=getVendorByUser4(Number(user.id));
+  if(!v) return res.json({success:true,isVendor:false,is_vendor:false,vendor_status:'',message:"Not a vendor - Admin never make you Vendor",checked_email:user.email,checked_id:user.id});
   const st=String(v.status||"").toUpperCase();
-  return res.json({success:true,isVendor:st==="APPROVED",is_vendor:st==="APPROVED",vendor:v,vendor_status:st,vendor_balance:Number(v.balance||0),user:{id:user.id,email:user.email,username:user.username,full_name:user.full_name}})
+  if(st==="APPROVED"){
+    syncVendorUser4(user.id,"APPROVED");
+    return res.json({success:true,isVendor:true,is_vendor:true,vendor:v,vendor_status:st,vendor_balance:Number(v.balance||0),user:{id:user.id,email:user.email,username:user.username,full_name:user.full_name}});
+  }
+  return res.json({success:true,isVendor:false,is_vendor:false,vendor_status:st,message:"Not approved Vendor"});
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
-const vendorPending4=(req,res)=>{try{const v=resolveVendor4(req);if(!v||String(v.status||"").toUpperCase()!=="APPROVED")return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must approve you first"});let rows=[];try{rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 1000").all()}catch{}return res.json({success:true,users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST4[normPkg4(x)]||9000})),total:rows.length,vendor_balance:Number(v.balance||0)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const vendorPending4=(req,res)=>{try{const v=resolveVendor4(req);if(!v||String(v.status||"").toUpperCase()!=="APPROVED")return res.status(403).json({success:false,message:"Vendor not approved yet - Admin must make you Vendor first"});let rows=[];try{rows=db.prepare("SELECT * FROM users WHERE account_status NOT IN ('active','approved') OR account_status IS NULL ORDER BY id DESC LIMIT 1000").all()}catch{}return res.json({success:true,users:rows.map(x=>({id:x.id,username:x.username,email:x.email,full_name:x.full_name,package:x.package||x.plan,account_status:x.account_status,status:x.status,activation_cost:PKG_COST4[normPkg4(x)]||9000})),total:rows.length,vendor_balance:Number(v.balance||0)})}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const vendorActivate4=(req,res)=>{try{
   const v=resolveVendor4(req);const uid=getUserId4(req);
   if(!v)return res.status(403).json({success:false,message:"Not a vendor - ask Admin to make you Vendor"});
@@ -106,18 +126,58 @@ const vendorActivate4=(req,res)=>{try{
   return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ${money4(cost)} deducted. Remaining: ${money4(bal-cost)}`,deducted:cost,cost,remaining_balance:bal-cost,vendor_balance:bal-cost})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
 force4("get","/api/vendor/me",vendorMe4);force4("get","/api/vendor/dashboard",vendorMe4);force4("get","/api/vendor/pending-users",vendorPending4);force4("get","/api/vendor/users/pending",vendorPending4);force4("post","/api/vendor/activate",vendorActivate4);force4("post","/api/vendor/activate/:id",vendorActivate4);force4("post","/api/vendor/users/activate",vendorActivate4);
+// ❌ NO /api/vendor/register - deleted. User cannot request Vendor by himself.
 safe4("get","/api/admin/vendors",sGuard4,(req,res)=>{try{const rows=db.prepare("SELECT v.*, u.username as username, u.email as email, u.full_name as full_name, u.package as package, u.account_status as account_status FROM vendors v LEFT JOIN users u ON u.id=v.user_id ORDER BY v.id DESC LIMIT 200").all();return res.json({success:true,vendors:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}});
-force4("post","/api/admin/vendors/make-admin-vendor",sGuard4,(req,res)=>{try{
-  const user=findUserByAny4(req) || db.prepare("SELECT * FROM users WHERE id=?").get(1);
-  if(!user) return res.status(404).json({success:false,message:"User not found"});
+// ✅ ADMIN ONLY: Make Vendor - uses TARGET userId, never session user
+const makeVendorHandler4=(req,res)=>{try{
+  const user=findTargetUser4(req);
+  if(!user) return res.status(400).json({success:false,message:"Send userId / email / username of person you want make Vendor"});
   let v=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(Number(user.id));
-  if(!v){const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase();db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status,balance,total_activated,total_deducted) VALUES (?,?,?,?, 'APPROVED', 0, 0, 0)").run(Number(user.id),code,String(user.full_name||user.username||""),String(user.phone||""));v=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(Number(user.id));}
-  else{db.prepare("UPDATE vendors SET status='APPROVED' WHERE id=?").run(v.id);v=db.prepare("SELECT * FROM vendors WHERE id=?").get(v.id);}
-  return res.json({success:true,message:`${user.username} don be APPROVED Vendor now`,vendor:v,vendor_balance:Number(v.balance||0)});
-}catch(e){return res.status(500).json({success:false,message:e.message})}});
-const vendorCreate4=(req,res)=>{try{const val=req.body?.email||req.body?.username||req.body?.userId||req.body?.user_id||req.body?.user||req.body?.vendor||"";const phone=String(req.body?.phone||"").trim();if(!val)return res.status(400).json({success:false,message:"Enter email / username / userId"});let user=null;if(/^\d+$/.test(String(val).trim()))user=db.prepare("SELECT * FROM users WHERE id=?").get(Number(val));else if(String(val).includes('@'))user=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(String(val).trim());else user=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(String(val).trim());if(!user)return res.status(404).json({success:false,message:"User not found. Check email / username / ID"});const ex=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(user.id);if(ex)return res.status(400).json({success:false,message:`This user don already be Vendor - Status: ${ex.status}. Go approve am below.`});const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase();const info=db.prepare("INSERT INTO vendors (user_id, code, vendor_name, phone, status, balance, total_activated, total_deducted) VALUES (?,?,?,?, 'PENDING', 0, 0, 0)").run(user.id,code,String(user.full_name||user.username||""),phone||String(user.phone||""));const vendor=db.prepare("SELECT * FROM vendors WHERE id=?").get(info.lastInsertRowid);return res.json({success:true,message:`${user.username} don enter as PENDING Vendor. Approve am now.`,vendor})}catch(e){return res.status(500).json({success:false,message:e.message})}};
+  if(!v){
+    const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase();
+    db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status,balance,total_activated,total_deducted) VALUES (?,?,?,?, 'APPROVED', 0, 0, 0)").run(Number(user.id),code,String(user.full_name||user.username||""),String(user.phone||""));
+    v=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(Number(user.id));
+  } else {
+    db.prepare("UPDATE vendors SET status='APPROVED' WHERE id=?").run(v.id);
+    v=db.prepare("SELECT * FROM vendors WHERE id=?").get(v.id);
+  }
+  syncVendorUser4(user.id,"APPROVED");
+  return res.json({success:true,message:`${user.username} don be APPROVED Vendor now - Vendor panel go show for him profile.`,vendor:v,vendor_balance:Number(v.balance||0)});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+force4("post","/api/admin/vendors/make-admin-vendor",sGuard4,makeVendorHandler4);
+force4("post","/api/admin/make-vendor",sGuard4,makeVendorHandler4);
+force4("post","/api/admin/vendors/make-vendor",sGuard4,makeVendorHandler4);
+// ✅ ADMIN ONLY: Create Vendor = APPROVED direct, no PENDING
+const vendorCreate4=(req,res)=>{try{
+  const user=findTargetUser4(req);
+  if(!user) return res.status(400).json({success:false,message:"Enter email / username / userId"});
+  const ex=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(user.id);
+  if(ex){
+    db.prepare("UPDATE vendors SET status='APPROVED' WHERE id=?").run(ex.id);
+    syncVendorUser4(user.id,"APPROVED");
+    return res.json({success:true,message:`${user.username} don already be Vendor - now APPROVED. Vendor panel go show for him profile.`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(ex.id)});
+  }
+  const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase();
+  const phone=String(req.body?.phone||"").trim();
+  const info=db.prepare("INSERT INTO vendors (user_id, code, vendor_name, phone, status, balance, total_activated, total_deducted) VALUES (?,?,?,?, 'APPROVED', 0, 0, 0)").run(user.id,code,String(user.full_name||user.username||""),phone||String(user.phone||""));
+  syncVendorUser4(user.id,"APPROVED");
+  const vendor=db.prepare("SELECT * FROM vendors WHERE id=?").get(info.lastInsertRowid);
+  return res.json({success:true,message:`${user.username} don be APPROVED Vendor now - Vendor panel go show for him profile. No request needed.`,vendor});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
 force4("post","/api/admin/vendors/create",sGuard4,vendorCreate4);force4("post","/api/admin/vendor/create",sGuard4,vendorCreate4);
-force4("post","/api/admin/vendors/action",sGuard4,(req,res)=>{try{const id=Number(req.body?.id||req.body?.vendorId||0);const act=String(req.body?.action||req.body?.status||"").toUpperCase();if(!id)return res.status(400).json({success:false,message:"Vendor ID required"});const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id);if(!v)return res.status(404).json({success:false,message:"Vendor not found"});const st=act.includes("APPROV")?"APPROVED":act.includes("REJECT")?"REJECTED":act.includes("SUSPEND")?"SUSPENDED":"PENDING";db.prepare("UPDATE vendors SET status=? WHERE id=?").run(st,id);return res.json({success:true,message:`Vendor ${st}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)})}catch(e){return res.status(500).json({success:false,message:e.message})}});
+// ✅ ADMIN ONLY: Remove Vendor - panel go hide
+const removeVendorHandler4=(req,res)=>{try{
+  const user=findTargetUser4(req);
+  if(!user) return res.status(400).json({success:false,message:"Send userId / email / username"});
+  const v=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(user.id);
+  if(v) db.prepare("UPDATE vendors SET status='REMOVED' WHERE id=?").run(v.id);
+  syncVendorUser4(user.id,"REMOVED");
+  return res.json({success:true,message:`${user.username} vendor removed - Vendor panel go hide for him profile`,vendor:v||null});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+force4("post","/api/admin/vendors/remove-vendor",sGuard4,removeVendorHandler4);
+force4("post","/api/admin/remove-vendor",sGuard4,removeVendorHandler4);
+force4("post","/api/admin/vendors/remove",sGuard4,removeVendorHandler4);
+force4("post","/api/admin/vendors/action",sGuard4,(req,res)=>{try{const id=Number(req.body?.id||req.body?.vendorId||0);const act=String(req.body?.action||req.body?.status||"").toUpperCase();if(!id)return res.status(400).json({success:false,message:"Vendor ID required"});const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(id);if(!v)return res.status(404).json({success:false,message:"Vendor not found"});const st=act.includes("APPROV")?"APPROVED":act.includes("REJECT")?"REJECTED":act.includes("SUSPEND")?"SUSPENDED":act.includes("REMOVE")?"REMOVED":"PENDING";db.prepare("UPDATE vendors SET status=? WHERE id=?").run(st,id);syncVendorUser4(v.user_id, st);return res.json({success:true,message:`Vendor ${st}`,vendor:db.prepare("SELECT * FROM vendors WHERE id=?").get(id)})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 const adminCreditVendor4=(req,res)=>{try{
   const b=req.body||{},q=req.query||{};
   const amt=Number(b.amount||q.amount||0);if(!amt||amt<=0)return res.status(400).json({success:false,message:"Vendor ID + amount required"});
@@ -135,7 +195,6 @@ const adminCreditVendor4=(req,res)=>{try{
   return res.json({success:true,message:`Vendor ${user.username} funded ${money4(amt)}. New: ${money4(Number(updated.balance||0))}`,vendor:updated})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
 force4("post","/api/admin/vendors/fund",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/credit",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/:id/fund",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/:id/credit",sGuard4,adminCreditVendor4);
-safe4("post","/api/vendor/register",(req,res)=>{try{const uid=getUserId4(req);if(!uid)return res.status(401).json({success:false,message:"Login first"});const ex=getVendorByUser4(uid);if(ex)return res.json({success:true,alreadyExists:true,message:"You already applied - Status: "+ex.status,vendor:ex});const code="VND-"+Math.random().toString(36).slice(2,7).toUpperCase();const u=db.prepare("SELECT * FROM users WHERE id=?").get(uid);db.prepare("INSERT INTO vendors (user_id,code,vendor_name,phone,status) VALUES (?,?,?,?, 'PENDING')").run(uid,code,String(req.body?.vendor_name||u?.full_name||u?.username||""),String(req.body?.phone||u?.phone||""));return res.json({success:true,message:"Vendor application sent - wait for Admin to approve you",vendor:db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
 // ========== REFERRALS - FIXED: FORCE EMAIL TO SHOW ==========
 const referralsHandler4=(req,res)=>{
@@ -214,7 +273,7 @@ force4("get","/api/referrals/history",userGuard4,referralsHandler4);
 // ---------- FIX 71000 -> 7100 ----------
 force4("post","/api/admin/fix-71000",sGuard4,(req,res)=>{try{let report=[];const tryRun=(label,sql)=>{try{const r=db.prepare(sql).run();report.push(`${label}: ${r.changes} fixed`)}catch(e){report.push(`${label}: skipped`)}};tryRun("tasks.reward","UPDATE tasks SET reward=7100 WHERE reward=71000");tryRun("jobs.reward","UPDATE jobs SET reward=7100 WHERE reward=71000");let corrected=0;try{const txs=db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();for(const t of txs){const already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id,'FIX_71000_'+t.id);if(already)continue;db.prepare("UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0)-63900) WHERE id=?").run(t.user_id);db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(t.user_id,'task_correction',-63900,'wallet','FIX_71000_'+t.id,'Correction: 71,000 -> 7,100');corrected++}report.push(`users corrected: ${corrected}`)}catch(e){report.push(`users corrected: skipped`)}return res.json({success:true,message:`Done! 71,000 -> 7,100. ${corrected} users corrected.`,report})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
-// ========== BACKPAY 2 - NO BALANCING - IF DON RECEIVE BEFORE, SKIP ==========
+// ========== BACKPAY 2 - NO BALANCING - IF DON RECEIVE BEFORE, SKIP - ONLY CURRENT PAID GO SHOW ==========
 const findUplineBackpay2=(u)=>{
   try{
     const cols=["referrer_id","referred_by","referrer","referredBy","invited_by","upline_id","parent_id","sponsor_id","referral_code_used","used_referral_code","referred_by_code"];
@@ -241,57 +300,42 @@ const runBackpay2=(from,to,mode)=>{
   const fromDate=from?from+" 00:00:00":"2000-01-01";
   const toDate=to?to+" 23:59:59":"2099-12-31";
   const all=db.prepare("SELECT * FROM users WHERE account_status IN ('active','approved') AND created_at BETWEEN ? AND ? ORDER BY id ASC").all(fromDate,toDate);
-  let missing=[],paid=[],skipped=[],noUpline=[];
+  let missing=[], skippedCount=0, alreadyPaidCount=0, noUplineCount=0;
   for(const u of all){
     const uplineId=Number(u.referrer_id||0)||findUplineBackpay2(u);
-    if(!uplineId){noUpline.push({id:u.id,username:u.username,package:u.package,created_at:u.created_at});continue;}
+    if(!uplineId){noUplineCount++; continue;}
     const referrer=db.prepare("SELECT * FROM users WHERE id=?").get(uplineId);
-    if(!referrer||referrer.id===u.id){noUpline.push({id:u.id,username:u.username,package:u.package});continue;}
-    // === NO BALANCING: if don receive ANY money for this person before, SKIP ===
+    if(!referrer||referrer.id===u.id){noUplineCount++; continue;}
     let existing=null; try{existing=db.prepare("SELECT * FROM referral_rewards WHERE referred_user_id=?").get(u.id);}catch{}
     const alreadyPaid=existing?Number(existing.amount||0):0;
-    if(existing && alreadyPaid>0){
-      skipped.push({id:u.id,username:u.username,uplineId,bonus:alreadyPaid,reason:"Already got referral_rewards - skipped, no balancing"});
-      paid.push({id:u.id,username:u.username,uplineId,bonus:alreadyPaid,skipped:true});
-      continue;
-    }
+    if(existing && alreadyPaid>0){ skippedCount++; alreadyPaidCount++; continue; }
     let wm=null; try{wm=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND (reference=? OR reference=?)").get(uplineId,`BACKPAY_ALL_${u.id}`,`REF_BONUS_${u.id}`);}catch{}
-    if(wm){
-      skipped.push({id:u.id,username:u.username,uplineId,bonus:Number(wm.amount||0),reason:"Already got wallet "+wm.reference+" - skipped, no balancing"});
-      paid.push({id:u.id,username:u.username,uplineId,bonus:Number(wm.amount||0),skipped:true});
-      continue;
-    }
-    // Also check any referral_reward for this username before - if exist, skip
+    if(wm){ skippedCount++; alreadyPaidCount++; continue; }
     let anyR=null; try{anyR=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND type IN ('referral_reward','referral_bonus') AND description LIKE ?").get(uplineId,`%${u.username}%`);}catch{}
-    if(anyR){
-      skipped.push({id:u.id,username:u.username,uplineId,bonus:Number(anyR.amount||0),reason:"Already got referral_reward before - skipped"});
-      paid.push({id:u.id,username:u.username,uplineId,bonus:Number(anyR.amount||0),skipped:true});
-      continue;
-    }
+    if(anyR){ skippedCount++; alreadyPaidCount++; continue; }
     const correct=correctBackpay2(u.package);
     if(correct<=0) continue;
-    // FULL amount only, no minus, no balancing
     missing.push({id:u.id,username:u.username,package:u.package,uplineId,bonus:correct,correct,alreadyPaid:0,created_at:u.created_at});
   }
-  if(mode!=="pay") return {total_active:all.length,missing_count:missing.length,paid_count:paid.length,skipped_count:skipped.length,no_upline_count:noUpline.length,total_to_pay:missing.reduce((s,x)=>s+x.bonus,0),missing,paid,skipped,noUpline};
+  if(mode!=="pay") return {total_active:all.length,missing_count:missing.length,paid_count:0,skipped_count:skippedCount,no_upline_count:noUplineCount,total_to_pay:missing.reduce((s,x)=>s+x.bonus,0),missing,details:missing};
   let paidNow=0,totalPaid=0,details=[];
   for(const m of missing){
-    // INSERT ONLY - no UPDATE, because we already skip if row exist
     try{ db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(m.uplineId,m.id,m.correct,"",""+m.package); }catch(e){ console.log("Backpay2 insert skip (already exist)",e.message); continue; }
     db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+?, total_earned=COALESCE(total_earned,0)+? WHERE id=?").run(m.bonus,m.bonus,m.uplineId);
     db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(m.uplineId,"referral_reward",m.bonus,"affiliate",`BACKPAY_ALL_${m.id}`,`Backpay 2 - ${m.username} ${m.package}`);
     try{notify4(m.uplineId,"Referral Bonus 💰",`You don get ₦${m.bonus.toLocaleString()} backpay for ${m.username} (${m.package})`);}catch{}
     paidNow++;totalPaid+=m.bonus;details.push(m);
   }
-  return {paid:paidNow,paidCount:paidNow,totalPaid,total_to_pay:totalPaid,details,skipped};
+  // ✅ ONLY current paid go show for details, skipped / already paid na numbers only
+  return {paid:paidNow,paidCount:paidNow,totalPaid,total_to_pay:totalPaid,details,skipped_count:skippedCount,no_upline_count:noUplineCount};
 };
-force4("get","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,message:`Backpay 2 Check - Missing ${r.missing_count}, Already Paid/Skipped ${r.paid_count}, No Upline ${r.no_upline_count}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("get","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,message:`Backpay 2 Check - Missing ${r.missing_count}, Already Paid/Skipped ${r.skipped_count}, No Upline ${r.no_upline_count}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 force4("post","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const b=req.body||{};const r=runBackpay2(b.from||null,b.to||null,"pay");return res.json({success:true,message:`Backpay 2 Done - Paid ${r.paid}, Total ₦${r.totalPaid}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
-force4("post","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const {from,to,mode}=req.body||{};const r=runBackpay2(from||null,to||null,mode==="pay"?"pay":"check");if(mode==="pay")return res.json({success:true,message:`Backpay Range Done ${from} to ${to} - Paid ${r.paid}, Skipped ${r.skipped?r.skipped.length:0}, Total ₦${r.totalPaid}`,...r});return res.json({success:true,from,to,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("post","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const {from,to,mode}=req.body||{};const r=runBackpay2(from||null,to||null,mode==="pay"?"pay":"check");if(mode==="pay")return res.json({success:true,message:`Backpay Range Done ${from} to ${to} - Paid ${r.paid}, Skipped ${r.skipped_count||0}, Total ₦${r.totalPaid}`,...r});return res.json({success:true,from,to,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 force4("get","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,from:req.query.from||null,to:req.query.to||null,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
 // ---------- PING ----------
-force4("get","/api/server4/ping",(req,res)=>{return res.json({success:true,message:"Server4 dey work ✅ - LOANS + VENDORS + REFERRALS FULL FIXED"})});
+force4("get","/api/server4/ping",(req,res)=>{return res.json({success:true,message:"Server4 dey work ✅ - LOANS + VENDORS + REFERRALS FULL FIXED - ADMIN ONLY VENDOR"})});
 
-console.log("✅ SERVER 4 READY - LOANS + VENDORS + REFERRALS FULL FIXED");
+console.log("✅ SERVER 4 READY - LOANS + VENDORS + REFERRALS FULL FIXED - ADMIN ONLY VENDOR");
 }catch(e){console.log("⚠️ Server 4 load error (no crash):",e.message)}};
