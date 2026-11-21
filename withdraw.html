@@ -143,6 +143,17 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .activation-error{display:none;margin-top:10px;padding:10px 12px;background:#fff0f0;border:1px solid #f0cccc;border-radius:10px;color:#c83c3c;font-size:10px;font-weight:700}
 .activation-error.show{display:block}
 .activation-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-top:16px}
+/* ✅ NEW: CONVERSION PAGE */
+#conversionPage{display:none}
+#conversionPage.show{display:block}
+.conv-hero{padding:22px;border-radius:22px;background:linear-gradient(135deg,#180520,#321047 55%,#54166a);color:#fff;margin-bottom:16px}
+.conv-hero small{color:rgba(255,255,255,.65);font-size:9px;font-weight:900;letter-spacing:1.5px}
+.conv-hero h2{font-size:30px;margin-top:8px}
+.conv-hero p{color:rgba(255,255,255,.7);font-size:10px;margin-top:6px}
+.conv-result{margin-top:14px;padding:16px;border-radius:16px;background:#fff8df;border:1px solid #f0d88a;text-align:center}
+.conv-result small{display:block;color:#7a5900;font-size:9px;font-weight:900;letter-spacing:1px}
+.conv-result strong{display:block;color:#321047;font-size:28px;margin-top:6px}
+.conv-result span{display:block;color:#5a4a68;font-size:10px;margin-top:4px}
 .bottom-nav{position:fixed;z-index:400;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:720px;display:grid;grid-template-columns:repeat(4,1fr);padding:8px 12px calc(9px + env(safe-area-inset-bottom));border-top:1px solid rgba(235,231,239,.95);background:rgba(255,255,255,.97);box-shadow:0 -8px 25px rgba(40,20,50,.035);backdrop-filter:blur(18px)}
 .nav{min-height:48px;border:0;background:none;color:#88818c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:9px;font-weight:800}
 .nav-icon{width:38px;height:27px;display:flex;align-items:center;justify-content:center;font-size:19px}
@@ -152,6 +163,8 @@ button:disabled{cursor:not-allowed;opacity:.55}
 </head>
 <body>
 <div class="app">
+<!-- ===== PAGE 1: CURRENT WITHDRAWAL (NO CHANGE) ===== -->
+<div id="page1">
 <div class="topbar-wrap">
 <header class="topbar">
 <div class="topbar-left">
@@ -207,6 +220,23 @@ button:disabled{cursor:not-allowed;opacity:.55}
 </section>
 <section class="history-section"><div class="history-shell"><div class="history-top"><div class="history-head"><div><div class="history-eyebrow"><span class="history-eyebrow-dot"></span>TRANSACTION RECORDS</div><h2>Withdrawal History</h2><p>Track the status of your recent withdrawal requests.</p></div><div class="history-count"><strong id="historyCount">0</strong><span>Requests</span></div></div></div><div class="history-list" id="historyList"><div class="history-loading"><span class="history-loading-dot"></span>Loading withdrawal history...</div></div><div class="history-footer">Showing your 10 most recent requests</div></div></section>
 </div>
+<!-- ===== PAGE 2: NEW CONVERSION PAGE (AFTER CODE) ===== -->
+<div id="conversionPage">
+<div class="topbar-wrap"><header class="topbar"><div class="topbar-left"><button class="back-btn" type="button" onclick="backToWithdraw()">←</button><div class="brand"><div class="brand-mark">J</div><div class="brand-text"><div class="brand-name">Jovia</div><span class="brand-sub">NETWORK</span></div></div></div><div class="header-page"><span class="header-page-dot"></span>Convert</div></header></div>
+<section class="page-heading"><div class="page-label">STEP 2 · CONVERSION</div><h1>Convert &amp; Withdraw</h1><p>Enter the amount you want to withdraw again. Your dashboard balance will be converted — this is the actual amount wey go drop for your account.</p></section>
+<div class="conv-hero"><small>YOUR DASHBOARD BALANCE</small><h2 id="convBalance">₦0</h2><p id="convBalanceNote">Conversion rate: 10 points = ₦1 &nbsp;•&nbsp; 10,000 points = ₦1,000 &nbsp;•&nbsp; 200,000 points = ₦20,000</p></div>
+<div id="convMessage" class="form-message"></div>
+<section class="withdraw-card">
+<div class="card-header"><div class="card-icon">⇄</div><div><div class="card-title">Enter Amount Again</div><div class="card-subtitle">This amount is in points (your dashboard balance).</div></div></div>
+<div class="form-group"><label for="convAmount">Amount to Withdraw (Points)</label><input id="convAmount" class="form-control" type="number" min="0" placeholder="e.g. 50000" oninput="onConvInput()"></div>
+<div class="amount-label">Quick select (points)</div><div class="amount-options"><button type="button" class="amount-btn" onclick="setConvAmount(10000)">10,000</button><button type="button" class="amount-btn" onclick="setConvAmount(50000)">50,000</button><button type="button" class="amount-btn" onclick="setConvAmount(200000)">200,000</button></div>
+<div class="conv-result"><small>YOU GO RECEIVE FOR YOUR ACCOUNT</small><strong id="convNaira">₦0</strong><span id="convDetail">Enter amount above to see conversion</span></div>
+<div class="info-box"><div class="info-row"><span>Dashboard points you enter</span><strong id="convPointsInfo">0</strong></div><div class="info-row"><span>Conversion</span><strong>÷ 10</strong></div><div class="info-row"><span>Bank / Method</span><strong id="convMethodInfo">—</strong></div><div class="info-row"><span>Withdrawal Code</span><strong id="convCodeInfo">Verified ✓</strong></div></div>
+<button type="button" class="withdraw-button" id="convConfirmBtn" onclick="confirmConversion()">Confirm Conversion &amp; Submit Withdrawal →</button>
+<button type="button" class="modal-btn modal-cancel" style="width:100%;margin-top:10px" onclick="backToWithdraw()">← Back to Withdrawal</button>
+</section>
+</div>
+</div>
 <nav class="bottom-nav">
 <button class="nav" onclick="location.href='dashboard.html'"><div class="nav-icon">⌂</div>Home</button>
 <button class="nav" onclick="location.href='jobs.html'"><div class="nav-icon">◆</div>Jobs</button>
@@ -214,11 +244,14 @@ button:disabled{cursor:not-allowed;opacity:.55}
 <button class="nav active" onclick="location.href='withdraw.html'"><div class="nav-icon">↓</div>Withdraw</button>
 </nav>
 <div class="modal-overlay" id="confirmModal"><div class="modal"><h3 id="confirmTitle">Confirm Withdrawal</h3><p class="modal-description" id="confirmDesc">Review your withdrawal information before continuing.</p><div class="confirm-details"><div class="confirm-row"><span>Type</span><strong id="confirmType">Regular</strong></div><div class="confirm-row"><span>Country</span><strong id="confirmCountry">Nigeria</strong></div><div class="confirm-row"><span>Method</span><strong id="confirmMethod">Bank</strong></div><div class="confirm-row"><span>Amount</span><strong id="confirmAmount">₦0</strong></div><div class="confirm-row"><span>Account</span><strong id="confirmAccount">—</strong></div><div class="confirm-row"><span>Bank / Provider</span><strong id="confirmBank">—</strong></div><div class="confirm-row"><span>Number</span><strong id="confirmNumber">—</strong></div></div><div class="modal-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeConfirmModal()">Cancel</button><button type="button" class="modal-btn modal-confirm" id="confirmWithdrawButton" onclick="openActivationModal()">Continue →</button></div></div></div>
-<div id="activationOverlay"><div id="activationBox"><div class="activation-badge">🔐 WITHDRAWAL CODE · ₦10,000</div><div class="activation-title">Enter Withdrawal Code</div><div class="activation-desc">Enter your valid JOVIA withdrawal code to continue.<br><br>Code format: <b>JOVIA-XXXXXX</b><br>Code fee: <b>₦10,000</b><br><br>If you need a code, contact <b>@customer_support_team0001</b>.</div><div class="form-group"><label for="activationCodeInput">Withdrawal Code</label><input id="activationCodeInput" class="activation-input" type="text" placeholder="JOVIA-XXXXXX" maxlength="20" autocomplete="off" spellcheck="false"></div><div id="activationError" class="activation-error"></div><div class="activation-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeActivationModal()">Back</button><button type="button" class="modal-btn modal-confirm" id="activationConfirmBtn" onclick="confirmWithdrawalWithCode()">Verify & Continue →</button></div></div></div>
+<div id="activationOverlay"><div id="activationBox"><div class="activation-badge">🔐 WITHDRAWAL CODE · ₦10,000</div><div class="activation-title">Enter Withdrawal Code</div><div class="activation-desc">Enter your valid JOVIA withdrawal code to continue.<br><br>Code format: <b>JOVIA-XXXXXX</b><br>Code fee: <b>₦10,000</b><br><br>If you need a code, contact <b>@customer_support_team0001</b>.</div><div class="form-group"><label for="activationCodeInput">Withdrawal Code</label><input id="activationCodeInput" class="activation-input" type="text" placeholder="JOVIA-XXXXXX" maxlength="20" autocomplete="off" spellcheck="false"></div><div id="activationError" class="activation-error"></div><div class="activation-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeActivationModal()">Back</button><button type="button" class="modal-btn modal-confirm" id="activationConfirmBtn" onclick="confirmWithdrawalWithCode()">Verify &amp; Continue →</button></div></div></div>
 <div id="inactiveOverlay"><div id="inactiveBox"><div class="activation-badge" style="background:linear-gradient(135deg,#fff0f0,#ffd6d6);border-color:#f0cccc;color:#c83c3c">ACCOUNT NOT ACTIVE</div><div class="activation-title">Activate Your Account</div><div class="activation-desc" style="background:#fff8f8;border-color:#f0cccc">Your account is currently pending and cannot make withdrawal requests.<br><br>Complete your account activation to access withdrawals.</div><div class="activation-actions" style="grid-template-columns:1fr"><button type="button" class="modal-btn modal-confirm" onclick="location.href='payment.html'" style="min-height:52px">Activate Account Now →</button><button type="button" class="modal-btn modal-cancel" onclick="location.href='dashboard.html'" style="margin-top:8px">Back to Dashboard</button></div></div></div>
 <script>
 let currentUser=null,walletBalance=0,affiliateBalance=0,pendingWithdrawal=null,loadingUser=false,submittingWithdrawal=false,regularWithdrawalsEnabled=false,affiliateWithdrawalsEnabled=true;
 let ghanaMethod='BANK',cameroonMethod='BANK';
+/* ✅ CONVERSION RATE: Change only this number if you want change rate. 10 = 10 points = ₦1, 10,000 points = ₦1,000 */
+const CONVERT_DIVISOR = 10;
+let verifiedCode="", convPoints=0, convNaira=0;
 function money(a){return"₦"+Number(a||0).toLocaleString("en-NG")}
 function getMinimumWithdrawal(t){return t==="affiliate"?20000:60000}
 function getSelectedBalance(){return document.getElementById("withdrawalType").value==="affiliate"?affiliateBalance:walletBalance}
@@ -248,7 +281,6 @@ function onCountryChange(){const c=document.getElementById("country").value;docu
 function setGhanaMethod(m){ghanaMethod=m;document.getElementById("ghBankToggle").classList.toggle("active",m==="BANK");document.getElementById("ghMomoToggle").classList.toggle("active",m==="MOMO");document.getElementById("gh-bank-section").style.display=m==="BANK"?"block":"none";document.getElementById("gh-momo-section").style.display=m==="MOMO"?"block":"none"}
 function setCameroonMethod(m){cameroonMethod=m;document.getElementById("cmBankToggle").classList.toggle("active",m==="BANK");document.getElementById("cmMomoToggle").classList.toggle("active",m==="MOMO");document.getElementById("cm-bank-section").style.display=m==="BANK"?"block":"none";document.getElementById("cm-momo-section").style.display=m==="MOMO"?"block":"none"}
 function getCurrentDetails(){const c=document.getElementById("country").value;if(c==="Nigeria"){return{country:c,bank:document.getElementById("ngBank").value||document.getElementById("ngProvider").value,traditionalBank:document.getElementById("ngBank").value,provider:document.getElementById("ngProvider").value,accountName:document.getElementById("accountName").value.trim(),accountNumber:document.getElementById("accountNumber").value.trim(),method:document.getElementById("ngProvider").value?"FINTECH":"BANK"}}if(c==="Ghana"){if(ghanaMethod==="MOMO")return{country:c,type:"MOMO",provider:document.getElementById("ghProvider").value,number:document.getElementById("ghNumber").value.trim(),name:document.getElementById("ghName").value.trim(),method:"MOMO"};return{country:c,type:"BANK",bank:document.getElementById("ghBank").value,accountNumber:document.getElementById("ghBankAccount").value.trim(),accountName:document.getElementById("ghBankName").value.trim(),method:"BANK"}}if(c==="Cameroon"){if(cameroonMethod==="MOMO")return{country:c,type:"MOMO",provider:document.getElementById("cmProvider").value,number:document.getElementById("cmNumber").value.trim(),name:document.getElementById("cmName").value.trim(),method:"MOMO"};return{country:c,type:"BANK",bank:document.getElementById("cmBank").value,accountNumber:document.getElementById("cmBankAccount").value.trim(),accountName:document.getElementById("cmBankName").value.trim(),method:"BANK"}}if(c==="Others"){const m=document.getElementById("othersMethod").value;if(m==="USDT")return{country:c,method:"USDT",usdtAddress:document.getElementById("usdtAddress").value.trim(),type:"USDT"};return{country:c,method:"BANK",bankName:document.getElementById("intBankName").value.trim(),account:document.getElementById("intAccount").value.trim(),name:document.getElementById("intName").value.trim(),type:"INTBANK"}}}
-// ✅ NEW: Check only account number / wallet / MoMo number - per country
 function getMissingAccountNumber(d){
   if(!d) return null;
   if(d.country==="Nigeria"){ if(!d.accountNumber) return {msg:"Please enter your account number",focusId:"accountNumber"}; return null; }
@@ -276,17 +308,68 @@ function openActivationModal(){
   if(!hasReachedMinimum(wt,bal,amt)){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMinimumBlocked(wt,bal,amt);return}
   if(wt==="regular"){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showRegularBlocked();return}
   const isPortalOpen=affiliateWithdrawalsEnabled;if(!isPortalOpen){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
-  document.getElementById("confirmModal").classList.remove("show");confirmWithdrawal("");return}
+  document.getElementById("confirmModal").classList.remove("show");document.getElementById("activationOverlay").classList.add("show");document.getElementById("activationOverlay").style.display="flex";return}
 function closeActivationModal(){if(submittingWithdrawal)return;const overlay=document.getElementById("activationOverlay");overlay.classList.remove("show");overlay.style.display="none";document.getElementById("confirmModal").classList.add("show")}
 document.getElementById("activationOverlay").addEventListener("click",function(e){if(e.target===this)closeActivationModal()});
-async function confirmWithdrawalWithCode(){const codeInput=document.getElementById("activationCodeInput");const errorEl=document.getElementById("activationError");const btn=document.getElementById("activationConfirmBtn");let code=(codeInput.value||"").trim().toUpperCase().replace(/\s/g,"");if(!code){errorEl.textContent="Please enter your withdrawal code.";errorEl.classList.add("show");return}if(!code.startsWith("JOVIA-")){errorEl.textContent="Invalid code format. Your code must start with JOVIA-.";errorEl.classList.add("show");return}btn.disabled=true;btn.textContent="Verifying...";errorEl.classList.remove("show");try{const res=await fetch("/api/withdraw/apply",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({code:code})});const data=await res.json();if(!(data&&data.success===true)){errorEl.textContent=data?.message||"Invalid or unavailable withdrawal code.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}}catch(e){errorEl.textContent="Unable to verify the code. Please try again.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}document.getElementById("activationOverlay").style.display="none";document.getElementById("activationOverlay").classList.remove("show");await confirmWithdrawal(code)}
+async function confirmWithdrawalWithCode(){const codeInput=document.getElementById("activationCodeInput");const errorEl=document.getElementById("activationError");const btn=document.getElementById("activationConfirmBtn");let code=(codeInput.value||"").trim().toUpperCase().replace(/\s/g,"");if(!code){errorEl.textContent="Please enter your withdrawal code.";errorEl.classList.add("show");return}if(!code.startsWith("JOVIA-")){errorEl.textContent="Invalid code format. Your code must start with JOVIA-.";errorEl.classList.add("show");return}btn.disabled=true;btn.textContent="Verifying...";errorEl.classList.remove("show");try{const res=await fetch("/api/withdraw/apply",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({code:code})});const data=await res.json();if(!(data&&data.success===true)){errorEl.textContent=data?.message||"Invalid or unavailable withdrawal code.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}}catch(e){errorEl.textContent="Unable to verify the code. Please try again.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}
+  /* ✅ CODE VERIFIED -> GO TO CONVERSION PAGE, NOT SUBMIT YET */
+  verifiedCode=code;
+  document.getElementById("activationOverlay").style.display="none";document.getElementById("activationOverlay").classList.remove("show");
+  document.body.style.overflow="";
+  openConversionPage();
+}
+/* ✅ NEW: CONVERSION PAGE LOGIC */
+function openConversionPage(){
+  if(!pendingWithdrawal) return;
+  const bal = pendingWithdrawal.withdrawalType==="affiliate" ? affiliateBalance : walletBalance;
+  document.getElementById("page1").style.display="none";
+  const cp=document.getElementById("conversionPage"); cp.classList.add("show"); cp.style.display="block";
+  document.getElementById("convBalance").textContent=money(bal);
+  document.getElementById("convMethodInfo").textContent=(pendingWithdrawal.method||"Bank")+" - "+(pendingWithdrawal.bank||pendingWithdrawal.provider||"");
+  document.getElementById("convAmount").value = pendingWithdrawal.amount || "";
+  convPoints=0; convNaira=0;
+  onConvInput();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function backToWithdraw(){
+  document.getElementById("conversionPage").classList.remove("show"); document.getElementById("conversionPage").style.display="none";
+  document.getElementById("page1").style.display="block";
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function setConvAmount(v){ document.getElementById("convAmount").value=v; onConvInput(); }
+function onConvInput(){
+  const bal = pendingWithdrawal ? (pendingWithdrawal.withdrawalType==="affiliate" ? affiliateBalance : walletBalance) : 0;
+  const pts = Number(document.getElementById("convAmount").value||0);
+  convPoints = pts;
+  convNaira = pts>0 ? Math.floor(pts / CONVERT_DIVISOR) : 0;
+  document.getElementById("convNaira").textContent = money(convNaira);
+  document.getElementById("convPointsInfo").textContent = pts.toLocaleString("en-NG")+" points";
+  document.getElementById("convDetail").textContent = pts>0 ? pts.toLocaleString("en-NG")+" points ÷ "+CONVERT_DIVISOR+" = "+money(convNaira)+" go drop for your account" : "Enter amount above to see conversion";
+  const msg=document.getElementById("convMessage");
+  if(pts>bal){ msg.textContent="Insufficient balance. Your balance na "+money(bal)+"."; msg.className="form-message error"; msg.style.display="block"; }
+  else { msg.textContent=""; msg.className="form-message"; msg.style.display="none"; }
+}
+async function confirmConversion(){
+  if(!pendingWithdrawal){ showMessage("Session expired, go back.","error"); return; }
+  const bal = pendingWithdrawal.withdrawalType==="affiliate" ? affiliateBalance : walletBalance;
+  const pts = Number(document.getElementById("convAmount").value||0);
+  if(!pts || pts<=0){ const m=document.getElementById("convMessage"); m.textContent="Please enter the amount you want to withdraw again."; m.className="form-message info"; m.style.display="block"; return; }
+  if(pts>bal){ const m=document.getElementById("convMessage"); m.textContent="Insufficient balance. Your balance na "+money(bal)+"."; m.className="form-message error"; m.style.display="block"; return; }
+  convPoints=pts; convNaira=Math.floor(pts/CONVERT_DIVISOR);
+  if(convNaira<=0){ const m=document.getElementById("convMessage"); m.textContent="Amount too small after conversion. Enter bigger amount."; m.className="form-message error"; m.style.display="block"; return; }
+  /* ✅ Final amount = converted naira, points_used = original points */
+  pendingWithdrawal.points_used = pts;
+  pendingWithdrawal.converted_amount = convNaira;
+  pendingWithdrawal.conversion_rate = CONVERT_DIVISOR;
+  pendingWithdrawal.amount = convNaira; // backend go see naira amount
+  await confirmWithdrawal(verifiedCode);
+}
 async function submitWithdrawal(){
   clearMessage();document.getElementById("withdrawUpgradeCta").classList.remove("show");
   const wt=document.getElementById("withdrawalType").value;
   const sel=getSelectedBalance(), min=getMinimumWithdrawal(wt);
   const amt=Number(document.getElementById("amount").value);
   if(!currentUser){showMessage("Your account is still loading. Please try again.","error");return}
-  // ✅ 1. Empty amount only -> blue "Please enter withdrawal amount"
   if(!Number.isFinite(amt)||amt<=0){showMessage("Please enter withdrawal amount","info");document.getElementById("amount").focus();return}
   if(amt<min){showMinimumBlocked(wt,sel,amt);return}
   if(sel<min){showMinimumBlocked(wt,sel,amt);return}
@@ -294,12 +377,11 @@ async function submitWithdrawal(){
   if(wt==="regular"){showRegularBlocked();return}
   if(!affiliateWithdrawalsEnabled){showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
   const d=getCurrentDetails();
-  // ✅ 2. Empty account number only -> blue "Please enter your account number"
   const missingAcct=getMissingAccountNumber(d);
   if(missingAcct){showMessage(missingAcct.msg,"info");const el=document.getElementById(missingAcct.focusId);if(el)el.focus();return}
   if(!isDetailsComplete(d)){showMessage("Please complete your "+d.country+" payment details.","error");return}
   pendingWithdrawal={amount:amt,withdrawalType:wt,...d};openConfirmModal()}
-async function confirmWithdrawal(withdrawalCode){if(!pendingWithdrawal||submittingWithdrawal)return;const cb=document.getElementById("activationConfirmBtn");const mb=document.getElementById("withdrawButton");submittingWithdrawal=true;if(cb){cb.disabled=true;cb.textContent="Processing..."}mb.disabled=true;try{const isAff=pendingWithdrawal.withdrawalType==="affiliate";const payload={amount:pendingWithdrawal.amount,withdrawalType:pendingWithdrawal.withdrawalType,type:pendingWithdrawal.withdrawalType,country:pendingWithdrawal.country,method:pendingWithdrawal.method,accountName:pendingWithdrawal.accountName||pendingWithdrawal.name||"",bankName:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",accountNumber:pendingWithdrawal.accountNumber||pendingWithdrawal.number||pendingWithdrawal.account||pendingWithdrawal.usdtAddress||"",bank_name:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",account_name:pendingWithdrawal.accountName||pendingWithdrawal.name||"",account_number:pendingWithdrawal.accountNumber||pendingWithdrawal.number||"",code:isAff?"":withdrawalCode,withdrawalCode:isAff?"":withdrawalCode,withdrawal_code:isAff?"":withdrawalCode};const r=await fetch("/api/withdrawals",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});let data=null;try{data=await r.json()}catch(e){}if(!r.ok)throw new Error(data?.message||"Unable to submit withdrawal.");document.getElementById("confirmModal").classList.remove("show");const ov=document.getElementById("activationOverlay");ov.classList.remove("show");ov.style.display="none";document.body.style.overflow="";document.getElementById("amount").value="";pendingWithdrawal=null;showMessage(data?.message||"Your withdrawal request has been submitted successfully.","success");await loadWithdrawalHistory();await loadUserBalanceOnly()}catch(e){const ov=document.getElementById("activationOverlay");ov.classList.remove("show");ov.style.display="none";document.body.style.overflow="";document.getElementById("confirmModal").classList.remove("show");showMessage(e.message||"Unable to submit withdrawal. Please try again.","error")}finally{submittingWithdrawal=false;if(cb){cb.disabled=false;cb.textContent="Verify & Continue →"}document.getElementById("confirmWithdrawButton").disabled=false;document.getElementById("withdrawButton").disabled=false}}
+async function confirmWithdrawal(withdrawalCode){if(!pendingWithdrawal||submittingWithdrawal)return;const cb=document.getElementById("activationConfirmBtn");const mb=document.getElementById("withdrawButton");submittingWithdrawal=true;if(cb){cb.disabled=true;cb.textContent="Processing..."}mb.disabled=true;try{const isAff=pendingWithdrawal.withdrawalType==="affiliate";const payload={amount:pendingWithdrawal.amount,points_used:pendingWithdrawal.points_used||pendingWithdrawal.amount,converted_amount:pendingWithdrawal.converted_amount||pendingWithdrawal.amount,conversion_rate:pendingWithdrawal.conversion_rate||CONVERT_DIVISOR,withdrawalType:pendingWithdrawal.withdrawalType,type:pendingWithdrawal.withdrawalType,country:pendingWithdrawal.country,method:pendingWithdrawal.method,accountName:pendingWithdrawal.accountName||pendingWithdrawal.name||"",bankName:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",accountNumber:pendingWithdrawal.accountNumber||pendingWithdrawal.number||pendingWithdrawal.account||pendingWithdrawal.usdtAddress||"",bank_name:pendingWithdrawal.bank||pendingWithdrawal.provider||pendingWithdrawal.bankName||"",account_name:pendingWithdrawal.accountName||pendingWithdrawal.name||"",account_number:pendingWithdrawal.accountNumber||pendingWithdrawal.number||"",code:isAff?"":withdrawalCode,withdrawalCode:isAff?"":withdrawalCode,withdrawal_code:isAff?"":withdrawalCode};const r=await fetch("/api/withdrawals",{method:"POST",credentials:"include",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});let data=null;try{data=await r.json()}catch(e){}if(!r.ok)throw new Error(data?.message||"Unable to submit withdrawal.");document.getElementById("confirmModal").classList.remove("show");const ov=document.getElementById("activationOverlay");ov.classList.remove("show");ov.style.display="none";document.body.style.overflow="";document.getElementById("amount").value="";document.getElementById("convAmount").value="";pendingWithdrawal=null;verifiedCode="";backToWithdraw();showMessage(data?.message||"Your withdrawal request has been submitted successfully.","success");await loadWithdrawalHistory();await loadUserBalanceOnly()}catch(e){const ov=document.getElementById("activationOverlay");ov.classList.remove("show");ov.style.display="none";document.body.style.overflow="";document.getElementById("confirmModal").classList.remove("show");showMessage(e.message||"Unable to submit withdrawal. Please try again.","error");backToWithdraw();}finally{submittingWithdrawal=false;if(cb){cb.disabled=false;cb.textContent="Verify & Continue →"}document.getElementById("confirmWithdrawButton").disabled=false;document.getElementById("withdrawButton").disabled=false}}
 async function loadUserBalanceOnly(){try{const r=await fetch("/api/me?t="+Date.now(),{credentials:"include",cache:"no-store"});if(!r.ok)return;const data=await r.json();const user=data.user||data.data?.user||data.member||data;walletBalance=Number(user.walletBalance??user.wallet_balance??walletBalance)||0;affiliateBalance=Number(user.affiliateBalance??user.affiliate_balance??affiliateBalance)||0;updateBalance()}catch(e){}}
 function escapeHTML(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))}
 async function loadWithdrawalHistory(){const list=document.getElementById("historyList");const count=document.getElementById("historyCount");let withdrawals=[];try{const r=await fetch("/api/withdrawals?t="+Date.now(),{credentials:"include",cache:"no-store"});if(r.ok){const data=await r.json();if(Array.isArray(data))withdrawals=data;else if(Array.isArray(data.withdrawals))withdrawals=data.withdrawals}}catch(e){}if(count)count.textContent=withdrawals.length>0?Math.min(withdrawals.length,10):"0";if(!withdrawals.length){list.innerHTML=`<div class="empty-history"><div class="empty-history-icon">↓</div><strong>No withdrawal requests yet</strong><span>Your submitted requests will appear here.</span></div>`;return}list.innerHTML=withdrawals.slice(0,10).map(w=>{const amt=Number(w.amount||0);const rawStatus=String(w.status||"pending").toLowerCase();const allowedStatuses=["pending","processing","approved","completed","rejected","failed"];const status=allowedStatuses.includes(rawStatus)?rawStatus:"pending";const bankName=escapeHTML(w.bank_name||"Withdrawal");const createdAt=escapeHTML(w.created_at||"");return `<div class="history-item status-${status}"><div class="history-left"><div class="history-icon">↓</div><div><div class="history-name">${bankName}</div><div class="history-date">${createdAt}</div></div></div><div class="history-right"><div class="history-amount">-${money(amt)}</div><span class="history-status ${status}">${status}</span></div></div>`}).join("")}
