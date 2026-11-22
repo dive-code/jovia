@@ -43,11 +43,9 @@ const findUserByAny4=(req)=>{
     return null;
   }catch{return null}
 };
-// ✅ FIXED: For Admin actions - accept vendorId, params.id, {user:{id}}
 const findTargetUser4=(req)=>{
   try{
     const b=req.body||{}, q=req.query||{}, p=req.params||{};
-    // object form: {user:{id:123}} or {target:{id:123}}
     const objVal = (b.user && typeof b.user==='object' ? b.user.id : null) || (b.target && typeof b.target==='object' ? b.target.id : null) || (b.vendor && typeof b.vendor==='object' ? b.vendor.id : null);
     if(objVal) return db.prepare("SELECT * FROM users WHERE id=?").get(Number(objVal));
     const val = b.userId||b.user_id||b.id||b.target_id||b.targetUserId||b.vendorId||b.vendor_id||b.email||b.username||b.user||q.userId||q.user_id||q.id||q.target_id||q.email||q.username||p.id||p.userId||"";
@@ -70,6 +68,9 @@ try{const vc=db.prepare("PRAGMA table_info(vendors)").all().map(c=>c.name);if(!v
 try{db.exec("CREATE TABLE IF NOT EXISTS password_resets (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,token TEXT UNIQUE,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
 // ✅ Vendor flags on users table - Admin only go set am
 try{const uc=cols4(); if(!uc.includes("is_vendor")) db.exec("ALTER TABLE users ADD COLUMN is_vendor INTEGER DEFAULT 0"); if(!uc.includes("vendor_status")) db.exec("ALTER TABLE users ADD COLUMN vendor_status TEXT DEFAULT ''"); if(!uc.includes("vendor_balance")) db.exec("ALTER TABLE users ADD COLUMN vendor_balance INTEGER DEFAULT 0");}catch{}
+// ✅ Withdrawal Code Requests table - Admin go see pic from here
+try{db.exec(`CREATE TABLE IF NOT EXISTS code_purchase_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, email TEXT, amount INTEGER DEFAULT 10000, proof_image TEXT, withdrawal_type TEXT, status TEXT DEFAULT 'pending', code TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`)}catch{}
+try{const cc=db.prepare("PRAGMA table_info(code_purchase_requests)").all().map(c=>c.name); if(!cc.includes("code")) db.exec("ALTER TABLE code_purchase_requests ADD COLUMN code TEXT DEFAULT ''"); if(!cc.includes("proof_image")) db.exec("ALTER TABLE code_purchase_requests ADD COLUMN proof_image TEXT");}catch{}
 const PKG_COST4={SILVER:9000,GOLD:15000,SUPER:21000};
 
 // ========== LOANS FULL ==========
@@ -94,7 +95,6 @@ force4("post","/api/auth/forgot-password-loan",forgotLoan4);
 const getVendorByUser4=uid=>{try{return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)}catch{return null}};
 const resolveVendor4=req=>{const uid=getUserId4(req);if(!uid)return null;return getVendorByUser4(uid)};
 const syncVendorUser4=(userId, status)=>{ try{ db.prepare("UPDATE users SET is_vendor=?, vendor_status=? WHERE id=?").run(status==="APPROVED"?1:0, status, userId); }catch{} };
-// ✅ FIXED: Only APPROVED + is_vendor=1 go show Vendor panel - uses req.userId from userGuard
 const vendorMe4=(req,res)=>{try{
   const uid=Number(req.userId||req.user?.id||getSessionUserId4(req)||0);
   const user=uid?db.prepare("SELECT * FROM users WHERE id=?").get(uid):findUserByAny4(req);
@@ -130,11 +130,8 @@ const vendorActivate4=(req,res)=>{try{
   try{notify4(uid,"Vendor Activation - Deducted",`${money4(cost)} deducted for activating ${target.username} (${pkg}). Remaining: ${money4(bal-cost)}`)}catch{}try{notify4(targetId,"Account Activated ✅",`Your ${pkg} account don activate. Welcome bonus don enter.`)}catch{}
   return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ${money4(cost)} deducted. Remaining: ${money4(bal-cost)}`,deducted:cost,cost,remaining_balance:bal-cost,vendor_balance:bal-cost})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
-// ✅ FIXED: vendorMe + pending + activate now go through userGuard (same auth as /api/me)
 force4("get","/api/vendor/me",userGuard4,vendorMe4);force4("get","/api/vendor/dashboard",userGuard4,vendorMe4);force4("get","/api/vendor/pending-users",userGuard4,vendorPending4);force4("get","/api/vendor/users/pending",userGuard4,vendorPending4);force4("post","/api/vendor/activate",userGuard4,vendorActivate4);force4("post","/api/vendor/activate/:id",userGuard4,vendorActivate4);force4("post","/api/vendor/users/activate",userGuard4,vendorActivate4);
-// ❌ NO /api/vendor/register - deleted. User cannot request Vendor by himself.
 safe4("get","/api/admin/vendors",sGuard4,(req,res)=>{try{const rows=db.prepare("SELECT v.*, u.username as username, u.email as email, u.full_name as full_name, u.package as package, u.account_status as account_status FROM vendors v LEFT JOIN users u ON u.id=v.user_id ORDER BY v.id DESC LIMIT 200").all();return res.json({success:true,vendors:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}});
-// ✅ ADMIN ONLY: Make Vendor - uses TARGET userId, never session user
 const makeVendorHandler4=(req,res)=>{try{
   const user=findTargetUser4(req);
   if(!user) return res.status(400).json({success:false,message:"Send userId / email / username of person you want make Vendor"});
@@ -153,7 +150,6 @@ const makeVendorHandler4=(req,res)=>{try{
 force4("post","/api/admin/vendors/make-admin-vendor",sGuard4,makeVendorHandler4);
 force4("post","/api/admin/make-vendor",sGuard4,makeVendorHandler4);
 force4("post","/api/admin/vendors/make-vendor",sGuard4,makeVendorHandler4);
-// ✅ ADMIN ONLY: Create Vendor = APPROVED direct, no PENDING
 const vendorCreate4=(req,res)=>{try{
   const user=findTargetUser4(req);
   if(!user) return res.status(400).json({success:false,message:"Enter email / username / userId"});
@@ -171,7 +167,6 @@ const vendorCreate4=(req,res)=>{try{
   return res.json({success:true,message:`${user.username} don be APPROVED Vendor now - Vendor panel go show for him profile. No request needed.`,vendor});
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
 force4("post","/api/admin/vendors/create",sGuard4,vendorCreate4);force4("post","/api/admin/vendor/create",sGuard4,vendorCreate4);
-// ✅ ADMIN ONLY: Remove Vendor - panel go hide
 const removeVendorHandler4=(req,res)=>{try{
   const user=findTargetUser4(req);
   if(!user) return res.status(400).json({success:false,message:"Send userId / email / username"});
@@ -201,6 +196,46 @@ const adminCreditVendor4=(req,res)=>{try{
   return res.json({success:true,message:`Vendor ${user.username} funded ${money4(amt)}. New: ${money4(Number(updated.balance||0))}`,vendor:updated})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
 force4("post","/api/admin/vendors/fund",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/credit",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/:id/fund",sGuard4,adminCreditVendor4);force4("post","/api/admin/vendors/:id/credit",sGuard4,adminCreditVendor4);
+
+// ========== WITHDRAWAL CODE - PAY ON SITE - ADMIN GO SEE PIC ==========
+force4("post","/api/withdraw/code-request",userGuard4,(req,res)=>{try{
+  const proof=String(req.body?.proof_image||req.body?.proof||req.body?.receipt||"").slice(0,2000000);
+  if(!proof) return res.status(400).json({success:false,message:"Upload payment screenshot"});
+  const uid=Number(req.userId||req.user?.id||0); if(!uid) return res.status(401).json({success:false,message:"Session expired - login again"});
+  const user=db.prepare("SELECT * FROM users WHERE id=?").get(uid); if(!user) return res.status(404).json({success:false,message:"User not found"});
+  const info=db.prepare(`INSERT INTO code_purchase_requests (user_id, username, email, amount, proof_image, withdrawal_type, status) VALUES (?,?,?,?,?,?,'pending')`).run(user.id,user.username,user.email,10000,proof,String(req.body?.withdrawalType||req.body?.withdrawal_type||"withdrawal"));
+  return res.json({success:true,message:"Screenshot sent to Admin - wait, your code go enter notification",id:info.lastInsertRowid});
+}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("post","/api/withdraw/code-request-alt",userGuard4,(req,res)=>{return res.redirect(307,"/api/withdraw/code-request")});
+const codeList4=(req,res)=>{try{
+  const status=String(req.query.status||"").toLowerCase();
+  let rows;
+  if(status) rows=db.prepare("SELECT id,user_id,username,email,amount,withdrawal_type,status,code,created_at, CASE WHEN proof_image IS NOT NULL AND proof_image!='' THEN 1 ELSE 0 END as has_proof FROM code_purchase_requests WHERE LOWER(status)=? ORDER BY id DESC LIMIT 200").all(status);
+  else rows=db.prepare("SELECT id,user_id,username,email,amount,withdrawal_type,status,code,created_at, CASE WHEN proof_image IS NOT NULL AND proof_image!='' THEN 1 ELSE 0 END as has_proof FROM code_purchase_requests ORDER BY id DESC LIMIT 200").all();
+  return res.json({success:true,requests:rows,total:rows.length});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+force4("get","/api/admin/code-requests",sGuard4,codeList4);force4("get","/api/admin/withdrawals/code-requests",sGuard4,codeList4);force4("get","/api/admin/code-requests/list",sGuard4,codeList4);
+force4("get","/api/admin/code-requests/:id",sGuard4,(req,res)=>{try{
+  const row=db.prepare("SELECT * FROM code_purchase_requests WHERE id=?").get(Number(req.params.id));
+  if(!row) return res.status(404).json({success:false,message:"Not found"});
+  return res.json({success:true,request:row,proof_image:row.proof_image,has_proof:!!row.proof_image});
+}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("post","/api/admin/code-requests/approve",sGuard4,(req,res)=>{try{
+  const id=Number(req.body?.id||req.body?.requestId||req.query?.id||0);
+  const code=String(req.body?.code||"").trim()||String(Math.floor(100000+Math.random()*900000));
+  if(!id) return res.status(400).json({success:false,message:"Request ID required"});
+  const r=db.prepare("SELECT * FROM code_purchase_requests WHERE id=?").get(id); if(!r) return res.status(404).json({success:false,message:"Request not found"});
+  db.prepare("UPDATE code_purchase_requests SET status='approved', code=? WHERE id=?").run(code,id);
+  try{notify4(r.user_id,"Withdrawal Code ✅",`Your Withdrawal Code na: ${code}. Use am to withdraw.`);}catch{}
+  return res.json({success:true,message:"Approved - code sent to user notification",code,request_id:id});
+}catch(e){return res.status(500).json({success:false,message:e.message})}});
+force4("post","/api/admin/code-requests/reject",sGuard4,(req,res)=>{try{
+  const id=Number(req.body?.id||req.body?.requestId||req.query?.id||0); if(!id) return res.status(400).json({success:false,message:"Request ID required"});
+  const r=db.prepare("SELECT * FROM code_purchase_requests WHERE id=?").get(id); if(!r) return res.status(404).json({success:false,message:"Request not found"});
+  db.prepare("UPDATE code_purchase_requests SET status='rejected' WHERE id=?").run(id);
+  try{notify4(r.user_id,"Withdrawal Code Rejected ❌",`Your ₦10,000 code payment screenshot no confirm. Upload correct screenshot again.`);}catch{}
+  return res.json({success:true,message:"Rejected"});
+}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
 // ========== REFERRALS - FIXED: FORCE EMAIL TO SHOW ==========
 const referralsHandler4=(req,res)=>{
@@ -279,7 +314,7 @@ force4("get","/api/referrals/history",userGuard4,referralsHandler4);
 // ---------- FIX 71000 -> 7100 ----------
 force4("post","/api/admin/fix-71000",sGuard4,(req,res)=>{try{let report=[];const tryRun=(label,sql)=>{try{const r=db.prepare(sql).run();report.push(`${label}: ${r.changes} fixed`)}catch(e){report.push(`${label}: skipped`)}};tryRun("tasks.reward","UPDATE tasks SET reward=7100 WHERE reward=71000");tryRun("jobs.reward","UPDATE jobs SET reward=7100 WHERE reward=71000");let corrected=0;try{const txs=db.prepare("SELECT * FROM wallet_transactions WHERE amount=71000").all();for(const t of txs){const already=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(t.user_id,'FIX_71000_'+t.id);if(already)continue;db.prepare("UPDATE users SET wallet_balance = MAX(0, COALESCE(wallet_balance,0)-63900) WHERE id=?").run(t.user_id);db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(t.user_id,'task_correction',-63900,'wallet','FIX_71000_'+t.id,'Correction: 71,000 -> 7,100');corrected++}report.push(`users corrected: ${corrected}`)}catch(e){report.push(`users corrected: skipped`)}return res.json({success:true,message:`Done! 71,000 -> 7,100. ${corrected} users corrected.`,report})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 
-// ========== BACKPAY 2 - NO BALANCING - IF DON RECEIVE BEFORE, SKIP - ONLY CURRENT PAID GO SHOW ==========
+// ========== BACKPAY 2 ==========
 const findUplineBackpay2=(u)=>{
   try{
     const cols=["referrer_id","referred_by","referrer","referredBy","invited_by","upline_id","parent_id","sponsor_id","referral_code_used","used_referral_code","referred_by_code"];
