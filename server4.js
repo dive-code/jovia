@@ -43,18 +43,22 @@ const findUserByAny4=(req)=>{
     return null;
   }catch{return null}
 };
-// ✅ For Admin actions: find TARGET user from body/query ONLY, never session user
+// ✅ FIXED: For Admin actions - accept vendorId, params.id, {user:{id}}
 const findTargetUser4=(req)=>{
   try{
-    const b=req.body||{}, q=req.query||{};
-    const val = b.userId||b.user_id||b.id||b.target_id||b.targetUserId||b.email||b.username||b.user||q.userId||q.user_id||q.id||q.target_id||q.email||q.username||"";
+    const b=req.body||{}, q=req.query||{}, p=req.params||{};
+    // object form: {user:{id:123}} or {target:{id:123}}
+    const objVal = (b.user && typeof b.user==='object' ? b.user.id : null) || (b.target && typeof b.target==='object' ? b.target.id : null) || (b.vendor && typeof b.vendor==='object' ? b.vendor.id : null);
+    if(objVal) return db.prepare("SELECT * FROM users WHERE id=?").get(Number(objVal));
+    const val = b.userId||b.user_id||b.id||b.target_id||b.targetUserId||b.vendorId||b.vendor_id||b.email||b.username||b.user||q.userId||q.user_id||q.id||q.target_id||q.email||q.username||p.id||p.userId||"";
     if(!val) return null;
+    if(typeof val==='object' && val.id) return db.prepare("SELECT * FROM users WHERE id=?").get(Number(val.id));
     if(/^\d+$/.test(String(val).trim())) return db.prepare("SELECT * FROM users WHERE id=?").get(Number(val));
     if(String(val).includes('@')) return db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(String(val).trim());
     return db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(String(val).trim());
   }catch{return null}
 };
-const getUserId4=req=>{const u=findUserByAny4(req); return u?Number(u.id):0};
+const getUserId4=req=>{try{if(req.userId){const u=db.prepare("SELECT * FROM users WHERE id=?").get(Number(req.userId));if(u)return Number(u.id);}if(req.user?.id){const u=db.prepare("SELECT * FROM users WHERE id=?").get(Number(req.user.id));if(u)return Number(u.id);}}catch{}const u=findUserByAny4(req); return u?Number(u.id):0};
 const userGuard4=(req,res,next)=>{try{if(typeof requireUser==="function")return requireUser(req,res,next);const u=findUserByAny4(req);if(u){req.userId=u.id;return next()}return res.status(401).json({success:false,message:"Session expired - login again"})}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
 let upload4=null;try{const multer=require("multer");upload4=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024}})}catch{console.log("⚠️ S4 multer not found - loan receipt go use base64")};
 
@@ -90,9 +94,10 @@ force4("post","/api/auth/forgot-password-loan",forgotLoan4);
 const getVendorByUser4=uid=>{try{return db.prepare("SELECT * FROM vendors WHERE user_id=?").get(uid)}catch{return null}};
 const resolveVendor4=req=>{const uid=getUserId4(req);if(!uid)return null;return getVendorByUser4(uid)};
 const syncVendorUser4=(userId, status)=>{ try{ db.prepare("UPDATE users SET is_vendor=?, vendor_status=? WHERE id=?").run(status==="APPROVED"?1:0, status, userId); }catch{} };
-// ✅ STRICT: Only APPROVED + is_vendor=1 go show Vendor panel
+// ✅ FIXED: Only APPROVED + is_vendor=1 go show Vendor panel - uses req.userId from userGuard
 const vendorMe4=(req,res)=>{try{
-  const user=findUserByAny4(req);
+  const uid=Number(req.userId||req.user?.id||getSessionUserId4(req)||0);
+  const user=uid?db.prepare("SELECT * FROM users WHERE id=?").get(uid):findUserByAny4(req);
   if(!user) return res.json({success:true,isVendor:false,is_vendor:false,vendor_status:'',message:"Session expired"});
   const v=getVendorByUser4(Number(user.id));
   if(!v) return res.json({success:true,isVendor:false,is_vendor:false,vendor_status:'',message:"Not a vendor - Admin never make you Vendor",checked_email:user.email,checked_id:user.id});
@@ -125,7 +130,8 @@ const vendorActivate4=(req,res)=>{try{
   try{notify4(uid,"Vendor Activation - Deducted",`${money4(cost)} deducted for activating ${target.username} (${pkg}). Remaining: ${money4(bal-cost)}`)}catch{}try{notify4(targetId,"Account Activated ✅",`Your ${pkg} account don activate. Welcome bonus don enter.`)}catch{}
   return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ${money4(cost)} deducted. Remaining: ${money4(bal-cost)}`,deducted:cost,cost,remaining_balance:bal-cost,vendor_balance:bal-cost})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
-force4("get","/api/vendor/me",vendorMe4);force4("get","/api/vendor/dashboard",vendorMe4);force4("get","/api/vendor/pending-users",vendorPending4);force4("get","/api/vendor/users/pending",vendorPending4);force4("post","/api/vendor/activate",vendorActivate4);force4("post","/api/vendor/activate/:id",vendorActivate4);force4("post","/api/vendor/users/activate",vendorActivate4);
+// ✅ FIXED: vendorMe + pending + activate now go through userGuard (same auth as /api/me)
+force4("get","/api/vendor/me",userGuard4,vendorMe4);force4("get","/api/vendor/dashboard",userGuard4,vendorMe4);force4("get","/api/vendor/pending-users",userGuard4,vendorPending4);force4("get","/api/vendor/users/pending",userGuard4,vendorPending4);force4("post","/api/vendor/activate",userGuard4,vendorActivate4);force4("post","/api/vendor/activate/:id",userGuard4,vendorActivate4);force4("post","/api/vendor/users/activate",userGuard4,vendorActivate4);
 // ❌ NO /api/vendor/register - deleted. User cannot request Vendor by himself.
 safe4("get","/api/admin/vendors",sGuard4,(req,res)=>{try{const rows=db.prepare("SELECT v.*, u.username as username, u.email as email, u.full_name as full_name, u.package as package, u.account_status as account_status FROM vendors v LEFT JOIN users u ON u.id=v.user_id ORDER BY v.id DESC LIMIT 200").all();return res.json({success:true,vendors:rows,total:rows.length})}catch(e){return res.status(500).json({success:false,message:e.message})}});
 // ✅ ADMIN ONLY: Make Vendor - uses TARGET userId, never session user
@@ -326,7 +332,6 @@ const runBackpay2=(from,to,mode)=>{
     try{notify4(m.uplineId,"Referral Bonus 💰",`You don get ₦${m.bonus.toLocaleString()} backpay for ${m.username} (${m.package})`);}catch{}
     paidNow++;totalPaid+=m.bonus;details.push(m);
   }
-  // ✅ ONLY current paid go show for details, skipped / already paid na numbers only
   return {paid:paidNow,paidCount:paidNow,totalPaid,total_to_pay:totalPaid,details,skipped_count:skippedCount,no_upline_count:noUplineCount};
 };
 force4("get","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,message:`Backpay 2 Check - Missing ${r.missing_count}, Already Paid/Skipped ${r.skipped_count}, No Upline ${r.no_upline_count}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
