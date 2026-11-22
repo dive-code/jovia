@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 module.exports = (app, db, requireUser, requireAdmin) => {
-  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER + PREVENTION");
+  console.log("🔧 JOVIA SECOND SERVER - FULL GUARD - MIN 2500 8% SILENT + JOB CLEANER + PREVENTION + WITHDRAW CONVERSION");
 
   const routeExists = (path, method) => {
     try{
@@ -115,6 +115,22 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     channel_text TEXT DEFAULT 'Join Channel',
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   );`);
+  // ✅ WITHDRAWALS + CONVERSION
+  db.exec(`CREATE TABLE IF NOT EXISTS withdrawals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, email TEXT,
+    amount INTEGER DEFAULT 0, points_used INTEGER DEFAULT 0, converted_amount INTEGER DEFAULT 0, conversion_rate INTEGER DEFAULT 10,
+    withdrawal_type TEXT DEFAULT 'affiliate', type TEXT DEFAULT 'affiliate',
+    country TEXT DEFAULT 'Nigeria', method TEXT DEFAULT 'BANK',
+    bank_name TEXT DEFAULT '', account_name TEXT DEFAULT '', account_number TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending', created_at TEXT DEFAULT (datetime('now'))
+  );`);
+  try{
+    const wc = db.prepare("PRAGMA table_info(withdrawals)").all().map(c=>c.name);
+    if(!wc.includes("points_used")) db.exec("ALTER TABLE withdrawals ADD COLUMN points_used INTEGER DEFAULT 0");
+    if(!wc.includes("converted_amount")) db.exec("ALTER TABLE withdrawals ADD COLUMN converted_amount INTEGER DEFAULT 0");
+    if(!wc.includes("conversion_rate")) db.exec("ALTER TABLE withdrawals ADD COLUMN conversion_rate INTEGER DEFAULT 10");
+    if(!wc.includes("withdrawal_type")) db.exec("ALTER TABLE withdrawals ADD COLUMN withdrawal_type TEXT DEFAULT 'affiliate'");
+  }catch{}
   try{ db.exec(`ALTER TABLE game_deposits ADD COLUMN proof_image TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN bank_name TEXT DEFAULT ''`); }catch{}
   try{ db.exec(`ALTER TABLE game_withdrawals ADD COLUMN account_number TEXT DEFAULT ''`); }catch{}
@@ -199,6 +215,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
   const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
   const WIN_RATE = 35;
+  const CONVERT_DIVISOR_2 = 10; // ✅ 10 points = ₦1, 10,000 = ₦1,000, 200,000 = ₦20,000
 
   // ===== ✅ FIXED PRICES: Silver->Gold 3000, Gold->Super 8000, Silver->Super 13000 =====
   const UPGRADE_PRICES = { "silver->gold": 3000, "gold->super": 8000, "silver->super": 13000 };
@@ -318,7 +335,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   };
 
   // ===== ✅ FIXED getRedeemer - ONLY TRUST used_by_id, NEVER MATCH BY NAME/EMAIL ALONE =====
-  // Old version matched by name/email and caused false "USED by him" for people with same name.
   const getRedeemer = row => {
     let user=null;
     if(row.used_by_id!=null) user=db.prepare(`SELECT id, full_name, username, email, phone, package, plan FROM users WHERE id = ?`).get(row.used_by_id)||null;
@@ -647,7 +663,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
   safeAdd("get","/api/admin/codes/check/:code",adminGuard,(req,res)=>{ const row=db.prepare(`SELECT * FROM jovia_codes WHERE code=?`).get(normalizeCode(req.params.code)); if(!row) return res.status(404).json({success:false}); return res.json({success:true,exists:true,...safeCodeRecord(row)}); });
 
   // ===== ✅ NEW: RESET CODE - FOR WISDOM CASE (SUPER-AKZZYL9) =====
-  // Use this after downgrade: old code was USED by same user, reset am so e fit use am again.
   safeAdd("post","/api/admin/codes/reset", adminGuard, (req,res)=>{
     try{
       const code = normalizeCode(req.body?.code||req.body?.codeText||"");
@@ -780,7 +795,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
         if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED - Contact Admin");
         const code=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
         if(!code) throw new Error("INVALID CODE");
-        // ✅ Clear message when same user already used it (Wisdom case)
         if(Number(code.used)===1){
           if(Number(code.used_by_id)===Number(user.id)) throw new Error(`You already used this code (${raw}) before. Ask admin for a NEW code or to reset it - old code no fit work again.`);
           throw new Error(`USED:${getRedeemer(code).display}`);
@@ -827,21 +841,114 @@ module.exports = (app, db, requireUser, requireAdmin) => {
       const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
+
+  // ===== ✅ WITHDRAW CODE - VERIFY ONLY (DO NOT CONSUME YET) =====
+  // Frontend: Page 1 -> Code -> Conversion Page (Page 2) -> Submit
+  // Code go mark USED only for /api/withdrawals (conversion submit), so if user close conversion page, code still valid.
   safeAdd("post","/api/withdraw/apply",userGuard,(req,res)=>{
     const raw=normalizeCode(req.body?.code);
     try{
-      const tx=db.transaction(()=>{
-        const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
-        if(isSuspendedStatus(user.account_status||user.status)) throw new Error("⛔ SUSPENDED");
-        const row=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-        if(!row) throw new Error("INVALID"); if(row.type!=="withdraw") throw new Error("WRONG_TYPE"); if(Number(row.used)===1) throw new Error(`USED:${getRedeemer(row).display}`);
-        const sure=getSureUser(user);
-        db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,raw);
-        return db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
-      });
-      const saved=tx(); return res.json({success:true,code:safeCodeRecord(saved)});
+      const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+      if(isSuspendedStatus(user.account_status||user.status)) return res.status(403).json({success:false,message:"⛔ SUSPENDED"});
+      const row=db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(raw);
+      if(!row) return res.status(400).json({success:false,message:"INVALID CODE"});
+      if(row.type!=="withdraw") return res.status(400).json({success:false,message:"WRONG CODE TYPE - Use Withdrawal Code (JOVIA-XXXXXX)"});
+      if(Number(row.used)===1) return res.status(400).json({success:false,message:`This code don already use by ${getRedeemer(row).display} - buy new code`});
+      return res.json({success:true,message:"Code verified - go to conversion page",code:safeCodeRecord(row)});
     }catch(e){ return res.status(400).json({success:false,message:e.message}); }
   });
+
+  // ===== ✅ WITHDRAWALS + CONVERSION - 10 points = ₦1 =====
+  // Frontend sends: amount = converted naira, points_used = points from conversion page
+  // Backend: deduct points_used, create withdrawal for converted naira
+  safeAdd("post","/api/withdrawals", userGuard, (req,res)=>{
+    try{
+      const user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+      if(!user) return res.status(404).json({success:false, message:"User not found"});
+      if(isSuspendedStatus(user.account_status||user.status)) return res.status(403).json({success:false,message:"⛔ SUSPENDED"});
+      const b = req.body||{};
+      const type = String(b.withdrawalType || b.type || "affiliate").toLowerCase();
+      const isAff = type.includes("affiliate");
+      let pointsUsed = Number(b.points_used || b.pointsUsed || 0);
+      let nairaAmount = Number(b.converted_amount || b.convertedAmount || b.amount || 0);
+      if(pointsUsed>0 && !b.converted_amount && !b.convertedAmount){
+        nairaAmount = Math.floor(pointsUsed / CONVERT_DIVISOR_2);
+      }
+      if(pointsUsed<=0){
+        // Old flow: no conversion page, amount na points
+        pointsUsed = nairaAmount;
+        nairaAmount = Math.floor(pointsUsed / CONVERT_DIVISOR_2);
+      }
+      if(!pointsUsed || pointsUsed<=0) return res.status(400).json({success:false, message:"Enter withdrawal amount"});
+      if(nairaAmount<=0) return res.status(400).json({success:false, message:"Amount too small after conversion"});
+      const balCol = isAff ? "affiliate_balance" : "wallet_balance";
+      const balance = Number(user[balCol]||0);
+      if(pointsUsed > balance) return res.status(400).json({success:false, message:`Insufficient balance. Your balance na ₦${balance.toLocaleString()}`});
+      const min = isAff ? 20000 : 60000;
+      if(balance < min) return res.status(400).json({success:false, message:`Minimum withdrawal for ${type} na ${min.toLocaleString()} points`});
+      if(pointsUsed < min) return res.status(400).json({success:false, message:`Minimum withdrawal na ${min.toLocaleString()} points`});
+      // ✅ Consume code NOW - conversion submit success
+      const code = String(b.code || b.withdrawalCode || b.withdrawal_code || "").trim().toUpperCase();
+      if(code){
+        const row = db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(code);
+        if(!row) return res.status(400).json({success:false, message:"Invalid withdrawal code"});
+        if(row.type!=="withdraw") return res.status(400).json({success:false, message:"Wrong code type"});
+        if(Number(row.used)===1) return res.status(400).json({success:false, message:"This code don already use"});
+        const sure = getSureUser(user);
+        db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,code);
+      }
+      // ✅ Deduct POINTS, not naira
+      db.prepare(`UPDATE users SET ${balCol} = COALESCE(${balCol},0) - ? WHERE id=?`).run(pointsUsed, user.id);
+      const info = db.prepare(`INSERT INTO withdrawals (user_id, username, email, amount, points_used, converted_amount, conversion_rate, withdrawal_type, type, country, method, bank_name, account_name, account_number, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'pending')`).run(
+        user.id, user.username, user.email,
+        nairaAmount, pointsUsed, nairaAmount, CONVERT_DIVISOR_2,
+        type, type,
+        String(b.country||"Nigeria"),
+        String(b.method||"BANK"),
+        String(b.bankName||b.bank_name||b.bank||b.provider||""),
+        String(b.accountName||b.account_name||b.name||""),
+        String(b.accountNumber||b.account_number||b.number||b.account||b.usdtAddress||"")
+      );
+      try{ db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'withdrawal_request', ?, ?, datetime('now'))`).run(user.id, -pointsUsed, `Withdrawal request: ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} (÷${CONVERT_DIVISOR_2})`); }catch{}
+      try{ notifyUser(user.id, "Withdrawal Request", `Your withdrawal request of ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} don enter. E dey PENDING for Admin approval.`); }catch{}
+      return res.json({success:true, message:`Withdrawal request submitted: ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} go drop for your account.`, withdrawal:{id:info.lastInsertRowid, points_used:pointsUsed, amount:nairaAmount, converted_amount:nairaAmount}});
+    }catch(e){ return res.status(500).json({success:false, message:e.message}); }
+  });
+  safeAdd("get","/api/withdrawals", userGuard, (req,res)=>{
+    try{
+      const rows = db.prepare("SELECT * FROM withdrawals WHERE user_id=? ORDER BY id DESC LIMIT 20").all(req.user.id);
+      return res.json({success:true, withdrawals: rows});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  safeAdd("get","/api/admin/withdrawals", adminGuard, (req,res)=>{
+    try{
+      const rows = db.prepare("SELECT * FROM withdrawals ORDER BY id DESC LIMIT 200").all();
+      return res.json({success:true, withdrawals: rows, total: rows.length});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+  // Admin approve / reject withdrawal - pay converted naira only
+  safeAdd("post","/api/admin/withdrawals/action", adminGuard, (req,res)=>{
+    try{
+      const id = Number(req.body?.id||req.body?.withdrawalId||0);
+      const action = String(req.body?.action||req.body?.status||"").toUpperCase();
+      if(!id) return res.status(400).json({success:false,message:"Withdrawal ID required"});
+      const w = db.prepare("SELECT * FROM withdrawals WHERE id=?").get(id);
+      if(!w) return res.status(404).json({success:false,message:"Withdrawal not found"});
+      if(action.includes("APPROV")||action.includes("COMPLET")){
+        db.prepare("UPDATE withdrawals SET status='approved' WHERE id=?").run(id);
+        return res.json({success:true,message:`Withdrawal approved - Pay ₦${Number(w.amount||0).toLocaleString()} (from ${Number(w.points_used||0).toLocaleString()} points)`, withdrawal: db.prepare("SELECT * FROM withdrawals WHERE id=?").get(id)});
+      }
+      if(action.includes("REJECT")||action.includes("DECLIN")){
+        // Refund points
+        const balCol = String(w.withdrawal_type||"affiliate").includes("affiliate") ? "affiliate_balance" : "wallet_balance";
+        db.prepare(`UPDATE users SET ${balCol} = COALESCE(${balCol},0) + ? WHERE id=?`).run(Number(w.points_used||0), w.user_id);
+        db.prepare("UPDATE withdrawals SET status='rejected' WHERE id=?").run(id);
+        return res.json({success:true,message:`Withdrawal rejected - ${Number(w.points_used||0).toLocaleString()} points refunded`});
+      }
+      return res.status(400).json({success:false,message:"Action must be APPROVED or REJECTED"});
+    }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+  });
+
   safeAdd("get","/api/music/tracks", userGuard, (req,res)=>{
     try{
       const u = db.prepare(`SELECT package,plan,is_super,account_status,status FROM users WHERE id=?`).get(req.user.id);
@@ -1057,5 +1164,5 @@ module.exports = (app, db, requireUser, requireAdmin) => {
     console.log("✅ SERVER 3 CONNECTED - Loaded from Second Server");
   }catch(e){ console.log("⚠️ Server 3 not loaded yet (create jovia-server3.js):", e.message); }
 
-  console.log("✅ FINAL WITH PREVENTION - No duplicate SUPER jobs same day - Prices 3000/8000/13000 - Gold->Silver REMOVED - Bonus to AFFILIATE - Build go succeed");
+  console.log("✅ FINAL WITH PREVENTION - No duplicate SUPER jobs same day - Prices 3000/8000/13000 - Gold->Silver REMOVED - Bonus to AFFILIATE - Withdraw Conversion ÷10 - Build go succeed");
 };
