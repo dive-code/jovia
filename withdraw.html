@@ -133,7 +133,7 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .method-toggle-btn.active{background:var(--purple);color:#fff;border-color:var(--purple)}
 #activationOverlay,#inactiveOverlay{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(24,10,32,.75);backdrop-filter:blur(12px)}
 #activationOverlay.show,#inactiveOverlay.show{display:flex!important}
-#activationBox,#inactiveBox{width:100%;max-width:420px;padding:25px 22px;border-radius:22px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.4);border:1px solid #ede3f3;animation:popIn .35s ease}
+#activationBox,#inactiveBox{width:100%;max-width:420px;max-height:92vh;overflow-y:auto;padding:25px 22px;border-radius:22px;background:#fff;box-shadow:0 30px 90px rgba(0,0,0,.4);border:1px solid #ede3f3;animation:popIn .35s ease}
 @keyframes popIn{from{transform:scale(.94) translateY(12px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 .activation-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;background:linear-gradient(135deg,#fff8df,#ffefb0);border:1px solid #f0d88a;border-radius:20px;color:#7a5900;font-size:8px;font-weight:900;letter-spacing:.6px;margin-bottom:14px}
 .activation-title{font-size:19px;font-weight:900;color:#1a0a2e;line-height:1.25;margin-bottom:10px}
@@ -143,6 +143,20 @@ button:disabled{cursor:not-allowed;opacity:.55}
 .activation-error{display:none;margin-top:10px;padding:10px 12px;background:#fff0f0;border:1px solid #f0cccc;border-radius:10px;color:#c83c3c;font-size:10px;font-weight:700}
 .activation-error.show{display:block}
 .activation-actions{display:grid;grid-template-columns:1fr 1.6fr;gap:10px;margin-top:16px}
+.tg-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;margin-top:14px;padding:12px;border-radius:13px;background:#229ED9;color:#fff;font-weight:900;font-size:11.5px;text-decoration:none;box-shadow:0 8px 18px rgba(34,158,217,.25)}
+.tg-btn svg{width:20px;height:20px;flex-shrink:0;fill:#fff}
+.tg-btn small{display:block;font-weight:700;font-size:9px;opacity:.9}
+.tg-divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:#958d99;font-size:9px;font-weight:900;letter-spacing:1px}
+.tg-divider:before,.tg-divider:after{content:"";flex:1;height:1px;background:#eeeaf1}
+.pay-box{padding:14px;border:1px dashed #e5c35b;border-radius:14px;background:#fffdf0}
+.pay-box h4{color:#321047;font-size:12px;font-weight:900}
+.pay-box p{color:#5a4a68;font-size:10px;line-height:1.6;margin-top:5px}
+.pay-account{margin-top:10px;padding:11px;border-radius:10px;background:#fff;border:1px solid #f0d88a;font-size:10.5px;line-height:1.7}
+.pay-account b{color:#321047}
+.copy-btn{border:0;background:#321047;color:#fff;padding:6px 10px;border-radius:8px;font-size:9px;font-weight:900;margin-left:6px}
+.upload-label{display:block;margin-top:12px;color:#321047;font-size:10px;font-weight:800}
+.upload-input{width:100%;margin-top:6px;padding:10px;border:1px solid #e7dff0;border-radius:10px;background:#fff;font-size:10px}
+.preview-img{width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-top:10px;display:none}
 #conversionPage{display:none}
 #conversionPage.show{display:block}
 .conv-hero{padding:22px;border-radius:22px;background:linear-gradient(135deg,#180520,#321047 55%,#54166a);color:#fff;margin-bottom:16px}
@@ -242,10 +256,9 @@ button:disabled{cursor:not-allowed;opacity:.55}
 <button class="nav active" onclick="location.href='withdraw.html'"><div class="nav-icon">↓</div>Withdraw</button>
 </nav>
 <div class="modal-overlay" id="confirmModal"><div class="modal"><h3 id="confirmTitle">Confirm Withdrawal</h3><p class="modal-description" id="confirmDesc">Review your withdrawal information before continuing.</p><div class="confirm-details"><div class="confirm-row"><span>Type</span><strong id="confirmType">Regular</strong></div><div class="confirm-row"><span>Country</span><strong id="confirmCountry">Nigeria</strong></div><div class="confirm-row"><span>Method</span><strong id="confirmMethod">Bank</strong></div><div class="confirm-row"><span>Amount</span><strong id="confirmAmount">₦0</strong></div><div class="confirm-row"><span>Account</span><strong id="confirmAccount">—</strong></div><div class="confirm-row"><span>Bank / Provider</span><strong id="confirmBank">—</strong></div><div class="confirm-row"><span>Number</span><strong id="confirmNumber">—</strong></div></div><div class="modal-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeConfirmModal()">Cancel</button><button type="button" class="modal-btn modal-confirm" id="confirmWithdrawButton" onclick="openActivationModal()">Continue →</button></div></div></div>
-<div id="activationOverlay"><div id="activationBox"><div class="activation-badge">🔐 WITHDRAWAL CODE · ₦10,000</div><div class="activation-title">Enter Withdrawal Code</div><div class="activation-desc">Enter your valid JOVIA withdrawal code to continue.<br><br>Code format: <b>JOVIA-XXXXXX</b><br>Code fee: <b>₦10,000</b><br><br>If you need a code, contact <b>@customer_support_team0001</b>.</div><div class="form-group"><label for="activationCodeInput">Withdrawal Code</label><input id="activationCodeInput" class="activation-input" type="text" placeholder="JOVIA-XXXXXX" maxlength="20" autocomplete="off" spellcheck="false"></div><div id="activationError" class="activation-error"></div><div class="activation-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeActivationModal()">Back</button><button type="button" class="modal-btn modal-confirm" id="activationConfirmBtn" onclick="confirmWithdrawalWithCode()">Verify &amp; Continue →</button></div></div></div>
+<div id="activationOverlay"><div id="activationBox"><div class="activation-badge">🔐 WITHDRAWAL CODE · ₦10,000</div><div class="activation-title">Enter Withdrawal Code</div><div class="activation-desc">Enter your valid JOVIA withdrawal code to continue.<br><br>Code format: <b>JOVIA-XXXXXX</b><br>Code fee: <b>₦10,000</b></div><div class="form-group"><label for="activationCodeInput">Withdrawal Code</label><input id="activationCodeInput" class="activation-input" type="text" placeholder="JOVIA-XXXXXX" maxlength="20" autocomplete="off" spellcheck="false"></div><div id="activationError" class="activation-error"></div><div class="activation-actions"><button type="button" class="modal-btn modal-cancel" onclick="closeActivationModal()">Back</button><button type="button" class="modal-btn modal-confirm" id="activationConfirmBtn" onclick="confirmWithdrawalWithCode()">Verify &amp; Continue →</button></div><a id="tgBuyCodeBtn" class="tg-btn" href="https://t.me/customer_support_team0001" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M9.04 15.31l-.38 5.32c.54 0 .78-.23 1.06-.5l2.55-2.44 5.28 3.86c.97.53 1.66.25 1.92-.9L22.9 3.6c.2-1.04-.38-1.45-1.07-1.19L1.9 9.6c-1.02.4-1 1 .19 1.25l5.1 1.6 11.83-7.47c.56-.34 1.07-.16.65.22L9.04 15.31z"/></svg><span>Buy Code on Telegram<small>Chat @customer_support_team0001 — message already typed</small></span></a><div class="tg-divider">OR PAY ON SITE</div><div class="pay-box"><h4>💳 Pay ₦10,000 on Site</h4><p>Transfer <b>₦10,000</b> to the account below, then upload your receipt. Admin go verify + send your code.</p><div class="pay-account">Bank: <b id="codePayBank">OPay</b><br>Account Number: <b id="codePayNumber">6159244881</b> <button type="button" class="copy-btn" onclick="copyCodeAccount()">Copy</button><br>Account Name: <b id="codePayName">EASYTOP RELOADED SERVICES</b><br>Amount: <b>₦10,000</b> &nbsp;•&nbsp; Narration: <b>Withdrawal Code + Your Username</b></div><label class="upload-label" for="codeProofInput">📸 Upload Payment Screenshot / Receipt</label><input id="codeProofInput" class="upload-input" type="file" accept="image/*" onchange="previewCodeProof(this)"><img id="codeProofPreview" class="preview-img" alt=""><div id="codeProofMsg" class="activation-error"></div><button type="button" class="modal-btn modal-confirm" id="codeProofBtn" style="width:100%;margin-top:12px;min-height:48px" onclick="submitCodeProof()">Send Screenshot to Admin →</button><p style="text-align:center;margin-top:8px">After Admin confirm, your code go enter your notification / Telegram.</p></div></div></div>
 <div id="inactiveOverlay"><div id="inactiveBox"><div class="activation-badge" style="background:linear-gradient(135deg,#fff0f0,#ffd6d6);border-color:#f0cccc;color:#c83c3c">ACCOUNT NOT ACTIVE</div><div class="activation-title">Activate Your Account</div><div class="activation-desc" style="background:#fff8f8;border-color:#f0cccc">Your account is currently pending and cannot make withdrawal requests.<br><br>Complete your account activation to access withdrawals.</div><div class="activation-actions" style="grid-template-columns:1fr"><button type="button" class="modal-btn modal-confirm" onclick="location.href='payment.html'" style="min-height:52px">Activate Account Now →</button><button type="button" class="modal-btn modal-cancel" onclick="location.href='dashboard.html'" style="margin-top:8px">Back to Dashboard</button></div></div></div>
 <script>
-/* ✅ FIXED: Regular portal now respects Admin setting. Default = ON (true), not hardcoded false */
 let currentUser=null,walletBalance=0,affiliateBalance=0,pendingWithdrawal=null,loadingUser=false,submittingWithdrawal=false,regularWithdrawalsEnabled=true,affiliateWithdrawalsEnabled=true;
 let ghanaMethod='BANK',cameroonMethod='BANK';
 const CONVERT_DIVISOR = 10;
@@ -256,7 +269,7 @@ function getSelectedBalance(){return document.getElementById("withdrawalType").v
 function getWithdrawalTypeLabel(t){return t==="affiliate"?"Affiliate Earnings":"Regular Earnings"}
 function isSuperUser(){return String(currentUser?.package||currentUser?.plan||"").toUpperCase().includes("SUPER")}
 function isPortalOpenFor(type){ return type==="affiliate" ? affiliateWithdrawalsEnabled : regularWithdrawalsEnabled; }
-function getRegularWithdrawMsg(){return "Regular withdrawals are currently OFF. Admin don close Regular portal — please try again later or use Affiliate Earnings."}
+function getRegularWithdrawMsg(){return "Regular withdrawals are currently unavailable. Please try again month end."}
 function getMinimumMsg(type,balance,amount){
   const min=getMinimumWithdrawal(type),label=getWithdrawalTypeLabel(type);
   const base=Math.max(balance||0,0);
@@ -270,18 +283,26 @@ function hasReachedMinimum(type,balance,amount){
   const min=getMinimumWithdrawal(type);
   return Number(balance||0)>=min && Number(amount||0)>=min;
 }
-function showRegularBlocked(){const msg=getRegularWithdrawMsg();const cta=document.getElementById("withdrawUpgradeCta");if(cta)cta.classList.remove("show");showMessage(msg,"error");return false}
+/* ✅ FIXED: OFF message only on attempt, then go back to normal after 4s — for BOTH Regular + Affiliate */
+let _blockedTimer=null;
+function showBlockedAndGoBack(msg){
+  showMessage(msg,"error");
+  clearTimeout(_blockedTimer);
+  _blockedTimer=setTimeout(()=>{ clearMessage(); },4000);
+}
+function showRegularBlocked(){ showBlockedAndGoBack(getRegularWithdrawMsg()); return false; }
+function showAffiliateBlocked(){ showBlockedAndGoBack("Affiliate withdrawals are currently unavailable. Please try again later."); return false; }
 function showMinimumBlocked(type,balance,amount){const cta=document.getElementById("withdrawUpgradeCta");if(cta)cta.classList.remove("show");showMessage(getMinimumMsg(type,balance,amount),"info");return false}
 function showInactivePopup(){const o=document.getElementById("inactiveOverlay");o.classList.add("show");o.style.display="flex";document.body.style.overflow="hidden"}
+/* ✅ FIXED: If OFF -> HIDE banner completely. If ON -> show OPEN banner only. Never show OFF on page load. */
 function updatePortalStatus(){
   const el=document.getElementById("portalStatus");
   if(!el) return;
   const t=document.getElementById("withdrawalType").value;
   const open=isPortalOpenFor(t);
   if(open){ el.textContent="✅ "+getWithdrawalTypeLabel(t)+" portal is OPEN — you fit withdraw now."; el.className="form-message success"; el.style.display="block"; }
-  else { el.textContent="⛔ "+getWithdrawalTypeLabel(t)+" portal is OFF — Admin don close am. Try Affiliate Earnings or wait."; el.className="form-message error"; el.style.display="block"; }
+  else { el.textContent=""; el.className="form-message"; el.style.display="none"; }
 }
-/* ✅ FIXED: Read BOTH regular + affiliate from backend, accept any field name backend uses */
 async function loadWithdrawalSettings(){
   try{
     const r=await fetch("/api/settings/withdrawals?t="+Date.now(),{credentials:"include",cache:"no-store"});
@@ -292,7 +313,6 @@ async function loadWithdrawalSettings(){
     const aff = pick("affiliateEnabled","affiliate","affiliateWithdrawalsEnabled","affiliate_withdrawals_enabled","affiliateOpen","affiliatePortal");
     if(reg!==undefined) regularWithdrawalsEnabled = (reg===true || reg===1 || String(reg).toLowerCase()==="true" || String(reg).toLowerCase()==="on" || String(reg).toLowerCase()==="open" || String(reg).toLowerCase()==="enabled");
     if(aff!==undefined) affiliateWithdrawalsEnabled = (aff===true || aff===1 || String(aff).toLowerCase()==="true" || String(aff).toLowerCase()==="on" || String(aff).toLowerCase()==="open" || String(aff).toLowerCase()==="enabled");
-    // If backend only sends one generic flag, use am for both
     const generic = pick("withdrawalsEnabled","enabled","open","isOpen");
     if(reg===undefined && aff===undefined && generic!==undefined){ const v=(generic===true||String(generic).toLowerCase()==="true"); regularWithdrawalsEnabled=v; affiliateWithdrawalsEnabled=v; }
   }catch{}
@@ -316,7 +336,7 @@ function isDetailsComplete(d){if(!d)return false;if(d.country==="Nigeria")return
 async function saveWithdrawalDetails(){clearMessage();const d=getCurrentDetails();if(!isDetailsComplete(d)){showMessage("Please complete all required "+d.country+" payment details.","error");return}const btn=document.getElementById("saveDetailsBtn");btn.disabled=true;try{const all=JSON.parse(localStorage.getItem("jovia_withdrawal_details")||"{}");all[d.country]=d;localStorage.setItem("jovia_withdrawal_details",JSON.stringify(all));showMessage("Payment details saved on this device.","success");document.getElementById("savedBadge").classList.add("show")}catch(e){showMessage("Unable to save payment details on this device.","error")}finally{btn.disabled=false}}
 function loadSavedForCountry(c){try{const all=JSON.parse(localStorage.getItem("jovia_withdrawal_details")||"{}"),d=all[c];if(!d){document.getElementById("savedBadge").classList.remove("show");return}document.getElementById("savedBadge").classList.add("show");if(c==="Nigeria"){document.getElementById("ngBank").value=d.traditionalBank||d.bank||"";document.getElementById("ngProvider").value=d.provider||"";document.getElementById("accountName").value=d.accountName||"";document.getElementById("accountNumber").value=d.accountNumber||""}if(c==="Ghana"){if(d.method==="MOMO"){setGhanaMethod("MOMO");document.getElementById("ghProvider").value=d.provider||"";document.getElementById("ghNumber").value=d.number||"";document.getElementById("ghName").value=d.name||""}else{setGhanaMethod("BANK");document.getElementById("ghBank").value=d.bank||"";document.getElementById("ghBankAccount").value=d.accountNumber||"";document.getElementById("ghBankName").value=d.accountName||""}}if(c==="Cameroon"){if(d.method==="MOMO"){setCameroonMethod("MOMO");document.getElementById("cmProvider").value=d.provider||"";document.getElementById("cmNumber").value=d.number||"";document.getElementById("cmName").value=d.name||""}else{setCameroonMethod("BANK");document.getElementById("cmBank").value=d.bank||"";document.getElementById("cmBankAccount").value=d.accountNumber||"";document.getElementById("cmBankName").value=d.accountName||""}}if(c==="Others"){if(d.method)document.getElementById("othersMethod").value=d.method;if(d.usdtAddress)document.getElementById("usdtAddress").value=d.usdtAddress;if(d.bankName)document.getElementById("intBankName").value=d.bankName;if(d.account)document.getElementById("intAccount").value=d.account;if(d.name)document.getElementById("intName").value=d.name}}catch(e){}}
 function editDetails(){document.getElementById("savedBadge").classList.remove("show")}
-async function loadUser(){if(loadingUser)return;loadingUser=true;try{const r=await fetch("/api/me?t="+Date.now(),{credentials:"include",cache:"no-store"});if(r.status===401||r.status===403){location.href="login.html";return}if(!r.ok)throw new Error("Unable to load account");const data=await r.json();const user=data.user||data.data?.user||data.member||data;currentUser=user;const status=String(user.account_status||user.accountStatus||"").toLowerCase();if(status!=="active"&&status!=="approved"){showInactivePopup();return}walletBalance=Number(user.walletBalance??user.wallet_balance??0)||0;affiliateBalance=Number(user.affiliateBalance??user.affiliate_balance??0)||0;await loadWithdrawalSettings();onCountryChange();updateBalance();await loadWithdrawalHistory()}catch(e){showMessage("Unable to load your account. Please refresh and try again.","error")}finally{loadingUser=false}}
+async function loadUser(){if(loadingUser)return;loadingUser=true;try{const r=await fetch("/api/me?t="+Date.now(),{credentials:"include",cache:"no-store"});if(r.status===401||r.status===403){location.href="login.html";return}if(!r.ok)throw new Error("Unable to load account");const data=await r.json();const user=data.user||data.data?.user||data.member||data;currentUser=user;const status=String(user.account_status||user.accountStatus||"").toLowerCase();if(status!=="active"&&status!=="approved"){showInactivePopup();return}walletBalance=Number(user.walletBalance??user.wallet_balance??0)||0;affiliateBalance=Number(user.affiliateBalance??user.affiliate_balance??0)||0;await loadWithdrawalSettings();setupTelegramBuyCode();onCountryChange();updateBalance();await loadWithdrawalHistory()}catch(e){showMessage("Unable to load your account. Please refresh and try again.","error")}finally{loadingUser=false}}
 document.getElementById("withdrawalType").addEventListener("change",function(){document.getElementById("amount").value="";document.querySelectorAll(".amount-btn").forEach(b=>b.classList.remove("active"));clearMessage();document.getElementById("withdrawUpgradeCta").classList.remove("show");updateBalance()});
 function setAmount(a,b){document.getElementById("amount").value=a;document.querySelectorAll(".amount-btn").forEach(i=>i.classList.remove("active"));if(b)b.classList.add("active")}
 document.getElementById("amount").addEventListener("input",function(){document.querySelectorAll(".amount-btn").forEach(b=>b.classList.remove("active"))});
@@ -329,11 +349,40 @@ function openActivationModal(){
   const wt=pendingWithdrawal.withdrawalType;
   const amt=Number(pendingWithdrawal.amount||0), bal=wt==="affiliate"?affiliateBalance:walletBalance;
   if(!hasReachedMinimum(wt,bal,amt)){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";showMinimumBlocked(wt,bal,amt);return}
-  /* ✅ FIXED: Only block Regular if Admin OFF. If Admin ON, allow am pass to Code + Conversion */
-  if(!isPortalOpenFor(wt)){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";if(wt==="regular") showRegularBlocked(); else showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error");return}
+  if(!isPortalOpenFor(wt)){document.getElementById("confirmModal").classList.remove("show");document.body.style.overflow="";if(wt==="regular") showRegularBlocked(); else showAffiliateBlocked();return}
+  setupTelegramBuyCode();
   document.getElementById("confirmModal").classList.remove("show");document.getElementById("activationOverlay").classList.add("show");document.getElementById("activationOverlay").style.display="flex";return}
 function closeActivationModal(){if(submittingWithdrawal)return;const overlay=document.getElementById("activationOverlay");overlay.classList.remove("show");overlay.style.display="none";document.getElementById("confirmModal").classList.add("show")}
 document.getElementById("activationOverlay").addEventListener("click",function(e){if(e.target===this)closeActivationModal()});
+function setupTelegramBuyCode(){
+  const btn=document.getElementById("tgBuyCodeBtn"); if(!btn) return;
+  const username=currentUser?.username||currentUser?.full_name||"";
+  const email=currentUser?.email||"";
+  const msg=`Hello Admin, I'm ready to purchase withdrawal code of ₦10,000. I go pay to OPay - 6159244881 - EASYTOP RELOADED SERVICES. My username: ${username} | Email: ${email} | Please send me my JOVIA withdrawal code. Thank you.`;
+  btn.href="https://t.me/customer_support_team0001?text="+encodeURIComponent(msg);
+}
+function copyCodeAccount(){ navigator.clipboard.writeText("6159244881").then(()=>{ alert("Copied: 6159244881 (OPay - EASYTOP RELOADED SERVICES)"); }); }
+function previewCodeProof(input){ const file=input.files?.[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ const img=document.getElementById("codeProofPreview"); img.src=e.target.result; img.style.display="block"; }; reader.readAsDataURL(file); }
+async function submitCodeProof(){
+  const file=document.getElementById("codeProofInput").files?.[0];
+  const msg=document.getElementById("codeProofMsg");
+  const btn=document.getElementById("codeProofBtn");
+  if(!file){ msg.textContent="Please select your payment screenshot first."; msg.classList.add("show"); return; }
+  msg.classList.remove("show"); btn.disabled=true; btn.textContent="Sending...";
+  try{
+    const reader=new FileReader();
+    reader.onload=async(e)=>{
+      try{
+        const res=await fetch("/api/withdraw/code-request",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({amount:10000, proof_image:e.target.result, withdrawalType:pendingWithdrawal?.withdrawalType||document.getElementById("withdrawalType").value})});
+        const data=await res.json(); if(!res.ok) throw new Error(data?.message||"Unable to send");
+        alert("✅ Screenshot sent to Admin! Admin go verify + send your code. Check your notifications / Telegram.");
+        document.getElementById("codeProofInput").value=""; document.getElementById("codeProofPreview").style.display="none";
+      }catch(err){ msg.textContent=err.message; msg.classList.add("show"); }
+      btn.disabled=false; btn.textContent="Send Screenshot to Admin →";
+    };
+    reader.readAsDataURL(file);
+  }catch(e){ msg.textContent="Unable to send screenshot."; msg.classList.add("show"); btn.disabled=false; btn.textContent="Send Screenshot to Admin →"; }
+}
 async function confirmWithdrawalWithCode(){const codeInput=document.getElementById("activationCodeInput");const errorEl=document.getElementById("activationError");const btn=document.getElementById("activationConfirmBtn");let code=(codeInput.value||"").trim().toUpperCase().replace(/\s/g,"");if(!code){errorEl.textContent="Please enter your withdrawal code.";errorEl.classList.add("show");return}if(!code.startsWith("JOVIA-")){errorEl.textContent="Invalid code format. Your code must start with JOVIA-.";errorEl.classList.add("show");return}btn.disabled=true;btn.textContent="Verifying...";errorEl.classList.remove("show");try{const res=await fetch("/api/withdraw/apply",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"include",body:JSON.stringify({code:code})});const data=await res.json();if(!(data&&data.success===true)){errorEl.textContent=data?.message||"Invalid or unavailable withdrawal code.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}}catch(e){errorEl.textContent="Unable to verify the code. Please try again.";errorEl.classList.add("show");btn.disabled=false;btn.textContent="Verify & Continue →";return}
   verifiedCode=code;
   document.getElementById("activationOverlay").style.display="none";document.getElementById("activationOverlay").classList.remove("show");
@@ -394,9 +443,8 @@ async function submitWithdrawal(){
   if(amt<min){showMinimumBlocked(wt,sel,amt);return}
   if(sel<min){showMinimumBlocked(wt,sel,amt);return}
   if(amt>sel){showMessage("Insufficient balance. Your available balance is "+money(sel)+".","error");return}
-  /* ✅ FIXED: Only block if portal OFF. If Admin ON, allow am */
   await loadWithdrawalSettings();
-  if(!isPortalOpenFor(wt)){ if(wt==="regular") showRegularBlocked(); else showMessage("Affiliate withdrawals are currently unavailable. Please try again later.","error"); return; }
+  if(!isPortalOpenFor(wt)){ if(wt==="regular") showRegularBlocked(); else showAffiliateBlocked(); return; }
   const d=getCurrentDetails();
   const missingAcct=getMissingAccountNumber(d);
   if(missingAcct){showMessage(missingAcct.msg,"info");const el=document.getElementById(missingAcct.focusId);if(el)el.focus();return}
