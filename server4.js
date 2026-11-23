@@ -59,7 +59,6 @@ const findTargetUser4=(req)=>{
 const getUserId4=req=>{try{if(req.userId){const u=db.prepare("SELECT * FROM users WHERE id=?").get(Number(req.userId));if(u)return Number(u.id);}if(req.user?.id){const u=db.prepare("SELECT * FROM users WHERE id=?").get(Number(req.user.id));if(u)return Number(u.id);}}catch{}const u=findUserByAny4(req); return u?Number(u.id):0};
 const userGuard4=(req,res,next)=>{try{if(typeof requireUser==="function")return requireUser(req,res,next);const u=findUserByAny4(req);if(u){req.userId=u.id;return next()}return res.status(401).json({success:false,message:"Session expired - login again"})}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
 let upload4=null;try{const multer=require("multer");upload4=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024}})}catch{console.log("⚠️ S4 multer not found - loan receipt go use base64")};
-// ✅ Password hash - same as login (bcryptjs first, bcrypt second)
 const hashPass4=pw=>{try{return require("bcryptjs").hashSync(String(pw),10)}catch{try{return require("bcrypt").hashSync(String(pw),10)}catch{return String(pw)}}};
 const cleanCode4=c=>String(c||"").trim().toUpperCase().replace(/^JOVIA[-_ ]?/,"").replace(/[^0-9A-Z]/g,"").trim();
 
@@ -69,9 +68,7 @@ try{const lc=db.prepare("PRAGMA table_info(loans)").all().map(c=>c.name);if(!lc.
 try{db.exec(`CREATE TABLE IF NOT EXISTS vendors (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER UNIQUE,code TEXT UNIQUE,vendor_name TEXT,phone TEXT,status TEXT DEFAULT 'PENDING',balance INTEGER DEFAULT 0,total_activated INTEGER DEFAULT 0,total_deducted INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))`)}catch{}
 try{const vc=db.prepare("PRAGMA table_info(vendors)").all().map(c=>c.name);if(!vc.includes("balance"))db.exec("ALTER TABLE vendors ADD COLUMN balance INTEGER DEFAULT 0");if(!vc.includes("total_deducted"))db.exec("ALTER TABLE vendors ADD COLUMN total_deducted INTEGER DEFAULT 0")}catch{}
 try{db.exec("CREATE TABLE IF NOT EXISTS password_resets (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,email TEXT,token TEXT UNIQUE,code TEXT,expires_at TEXT,used INTEGER DEFAULT 0,created_at TEXT DEFAULT (datetime('now')))")}catch{}
-// ✅ Vendor flags on users table - Admin only go set am
 try{const uc=cols4(); if(!uc.includes("is_vendor")) db.exec("ALTER TABLE users ADD COLUMN is_vendor INTEGER DEFAULT 0"); if(!uc.includes("vendor_status")) db.exec("ALTER TABLE users ADD COLUMN vendor_status TEXT DEFAULT ''"); if(!uc.includes("vendor_balance")) db.exec("ALTER TABLE users ADD COLUMN vendor_balance INTEGER DEFAULT 0");}catch{}
-// ✅ Withdrawal Code Requests table - Admin go see pic from here
 try{db.exec(`CREATE TABLE IF NOT EXISTS code_purchase_requests (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, username TEXT, email TEXT, amount INTEGER DEFAULT 10000, proof_image TEXT, withdrawal_type TEXT, status TEXT DEFAULT 'pending', code TEXT DEFAULT '', created_at TEXT DEFAULT (datetime('now')))`)}catch{}
 try{const cc=db.prepare("PRAGMA table_info(code_purchase_requests)").all().map(c=>c.name); if(!cc.includes("code")) db.exec("ALTER TABLE code_purchase_requests ADD COLUMN code TEXT DEFAULT ''"); if(!cc.includes("proof_image")) db.exec("ALTER TABLE code_purchase_requests ADD COLUMN proof_image TEXT");}catch{}
 const PKG_COST4={SILVER:9000,GOLD:15000,SUPER:21000};
@@ -239,7 +236,7 @@ force4("post","/api/admin/code-requests/reject",sGuard4,(req,res)=>{try{
   return res.json({success:true,message:"Rejected"});
 }catch(e){return res.status(500).json({success:false,message:e.message})}});
 
-// ========== RESET PASSWORD - EASY - SHOW CODE FOR SCREEN ==========
+// ========== RESET PASSWORD - EASY - NO CODE NEEDED IF EMAIL + PASSWORD DEY ==========
 const forgotEasy4=(req,res)=>{try{
   const email=String(req.body?.email||req.body?.username||req.query?.email||"").trim();
   if(!email) return res.status(400).json({success:false,message:"Enter your email"});
@@ -256,21 +253,47 @@ const forgotEasy4=(req,res)=>{try{
   try{notify4(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes.`)}catch{}
   return res.json({success:true,message:`Your reset code na: ${code}`,code,reset_code:code,token,reset_token:token,email:user.email,show_code:true});
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
+const resetSimple4=(req,res)=>{try{
+  const email=String(req.body?.email||req.body?.username||req.query?.email||"").trim();
+  const pw=String(req.body?.password||req.body?.newPassword||req.body?.new_password||"");
+  const cp=String(req.body?.confirmPassword||req.body?.confirm_password||req.body?.confirm||"");
+  if(!email) return res.status(400).json({success:false,message:"Enter your email"});
+  if(!pw||pw.length<6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
+  if(cp && cp!==pw) return res.status(400).json({success:false,message:"Passwords no match"});
+  let user=null;
+  if(email.includes('@')) user=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(email);
+  else user=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(email);
+  if(!user) return res.status(404).json({success:false,message:"Email not found"});
+  db.prepare("UPDATE users SET password=? WHERE id=?").run(hashPass4(pw), user.id);
+  try{db.prepare("UPDATE password_resets SET used=1 WHERE user_id=? AND used=0").run(user.id)}catch{}
+  try{notify4(user.id,"Password Changed ✅",`Your password don change. Login with new password.`)}catch{}
+  return res.json({success:true,message:"Password don change - login with new password now"});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
 const resetEasy4=(req,res)=>{try{
   const raw=String(req.body?.code||req.body?.reset_code||req.body?.token||req.query?.code||"");
   const code=cleanCode4(raw);
   const pw=String(req.body?.password||req.body?.newPassword||req.body?.new_password||req.body?.confirmPassword||"");
+  const email=String(req.body?.email||req.body?.username||"").trim();
+  // ✅ NO CODE MODE: if code empty / 123456 / placeholder, but email + password dey -> reset direct, no Invalid
+  if(!code || code==="123456" || code==="000000"){
+    if(email && pw) return resetSimple4(req,res);
+    return res.status(400).json({success:false,message:"Enter your email + new password"});
+  }
+  if(!pw||pw.length<6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
   const cp=String(req.body?.confirmPassword||req.body?.confirm_password||req.body?.confirm||"");
-  if(!code) return res.status(400).json({success:false,message:"Enter the 6-digit code"});
-  if(!pw || pw.length<6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
   if(cp && cp!==pw) return res.status(400).json({success:false,message:"Passwords no match"});
-  // Try code, then token (old JOVIA-XXXXXX style), then code+email
   let row=null;
   try{row=db.prepare("SELECT * FROM password_resets WHERE code=? AND used=0 ORDER BY id DESC LIMIT 1").get(code)}catch{}
   if(!row){try{row=db.prepare("SELECT * FROM password_resets WHERE token=? AND used=0 ORDER BY id DESC LIMIT 1").get(raw)}catch{}}
-  if(!row){try{row=db.prepare("SELECT * FROM password_resets WHERE (code=? OR token=?) AND used=0 ORDER BY id DESC LIMIT 1").get(code,raw)}catch{}}
-  if(!row) return res.status(400).json({success:false,message:"Wrong code - enter the 6 digits we show you"});
-  if(row.expires_at && new Date(row.expires_at) < new Date()) return res.status(400).json({success:false,message:"Code don expire - request new one"});
+  if(!row){
+    // ✅ FALLBACK: if code no match but email dey, reset by email instead of Invalid - no more wahala
+    if(email) return resetSimple4(req,res);
+    return res.status(400).json({success:false,message:"Wrong code - enter your email + new password, we go reset direct"});
+  }
+  if(row.expires_at && new Date(row.expires_at) < new Date()){
+    if(email) return resetSimple4(req,res);
+    return res.status(400).json({success:false,message:"Code don expire - try again with email + new password"});
+  }
   db.prepare("UPDATE users SET password=? WHERE id=?").run(hashPass4(pw), row.user_id);
   db.prepare("UPDATE password_resets SET used=1 WHERE id=?").run(row.id);
   try{notify4(row.user_id,"Password Changed ✅",`Your password don change. Login with new password.`)}catch{}
@@ -290,6 +313,9 @@ force4("post","/api/auth/forgot",forgotEasy4);
 force4("post","/api/auth/request-reset",forgotEasy4);
 force4("post","/api/auth/reset-password",resetEasy4);
 force4("post","/api/reset-password",resetEasy4);
+force4("post","/api/auth/reset-password-simple",resetSimple4);
+force4("post","/api/auth/reset-password-no-code",resetSimple4);
+force4("post","/api/admin/reset-password-direct",sGuard4,resetSimple4);
 force4("post","/api/auth/change-password-with-code",resetEasy4);
 force4("post","/api/auth/verify-reset-code",verifyCode4);
 force4("post","/api/auth/verify-code",verifyCode4);
