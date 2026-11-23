@@ -59,6 +59,9 @@ const findTargetUser4=(req)=>{
 const getUserId4=req=>{try{if(req.userId){const u=db.prepare("SELECT * FROM users WHERE id=?").get(Number(req.userId));if(u)return Number(u.id);}if(req.user?.id){const u=db.prepare("SELECT * FROM users WHERE id=?").get(Number(req.user.id));if(u)return Number(u.id);}}catch{}const u=findUserByAny4(req); return u?Number(u.id):0};
 const userGuard4=(req,res,next)=>{try{if(typeof requireUser==="function")return requireUser(req,res,next);const u=findUserByAny4(req);if(u){req.userId=u.id;return next()}return res.status(401).json({success:false,message:"Session expired - login again"})}catch(e){return res.status(401).json({success:false,message:"Session expired"})}};
 let upload4=null;try{const multer=require("multer");upload4=multer({storage:multer.memoryStorage(),limits:{fileSize:5*1024*1024}})}catch{console.log("⚠️ S4 multer not found - loan receipt go use base64")};
+// ✅ Password hash - same as login (bcryptjs first, bcrypt second)
+const hashPass4=pw=>{try{return require("bcryptjs").hashSync(String(pw),10)}catch{try{return require("bcrypt").hashSync(String(pw),10)}catch{return String(pw)}}};
+const cleanCode4=c=>String(c||"").trim().toUpperCase().replace(/^JOVIA[-_ ]?/,"").replace(/[^0-9A-Z]/g,"").trim();
 
 // ---------- Tables ----------
 try{db.exec(`CREATE TABLE IF NOT EXISTS loans (id INTEGER PRIMARY KEY AUTOINCREMENT,loan_code TEXT UNIQUE,user_id INTEGER NOT NULL,username TEXT,email TEXT,full_name TEXT,amount INTEGER NOT NULL,fee INTEGER NOT NULL,purpose TEXT,term_months INTEGER DEFAULT 2,receipt_name TEXT,receipt_data TEXT,receipt_type TEXT,status TEXT DEFAULT 'PENDING',fee_status TEXT DEFAULT 'PENDING',approved_at TEXT,disbursed_at TEXT,estimated_from TEXT,estimated_to TEXT,processing_time TEXT DEFAULT '6 - 12 Weeks',processing_message TEXT,reviewed_at TEXT,created_at TEXT DEFAULT (datetime('now')))`)}catch{}
@@ -206,7 +209,6 @@ force4("post","/api/withdraw/code-request",userGuard4,(req,res)=>{try{
   const info=db.prepare(`INSERT INTO code_purchase_requests (user_id, username, email, amount, proof_image, withdrawal_type, status) VALUES (?,?,?,?,?,?,'pending')`).run(user.id,user.username,user.email,10000,proof,String(req.body?.withdrawalType||req.body?.withdrawal_type||"withdrawal"));
   return res.json({success:true,message:"Screenshot sent to Admin - wait, your code go enter notification",id:info.lastInsertRowid});
 }catch(e){return res.status(500).json({success:false,message:e.message})}});
-force4("post","/api/withdraw/code-request-alt",userGuard4,(req,res)=>{return res.redirect(307,"/api/withdraw/code-request")});
 const codeList4=(req,res)=>{try{
   const status=String(req.query.status||"").toLowerCase();
   let rows;
@@ -236,6 +238,61 @@ force4("post","/api/admin/code-requests/reject",sGuard4,(req,res)=>{try{
   try{notify4(r.user_id,"Withdrawal Code Rejected ❌",`Your ₦10,000 code payment screenshot no confirm. Upload correct screenshot again.`);}catch{}
   return res.json({success:true,message:"Rejected"});
 }catch(e){return res.status(500).json({success:false,message:e.message})}});
+
+// ========== RESET PASSWORD - EASY - SHOW CODE FOR SCREEN ==========
+const forgotEasy4=(req,res)=>{try{
+  const email=String(req.body?.email||req.body?.username||req.query?.email||"").trim();
+  if(!email) return res.status(400).json({success:false,message:"Enter your email"});
+  let user=null;
+  if(/^\d+$/.test(email)) user=db.prepare("SELECT * FROM users WHERE id=?").get(Number(email));
+  else if(email.includes('@')) user=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(email);
+  else user=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(email);
+  if(!user) return res.status(404).json({success:false,message:"Email not found",code:"",reset_code:""});
+  const code=String(Math.floor(100000+Math.random()*900000));
+  let token=""; try{token=require("crypto").randomBytes(24).toString("hex")}catch{token=Date.now().toString(36)+Math.random().toString(36).slice(2)}
+  const exp=new Date(Date.now()+30*60*1000).toISOString();
+  try{db.prepare("UPDATE password_resets SET used=1 WHERE user_id=? AND used=0").run(user.id)}catch{}
+  db.prepare("INSERT INTO password_resets (user_id,email,token,code,expires_at,used) VALUES (?,?,?,?,?,0)").run(user.id,user.email,token,code,exp);
+  try{notify4(user.id,"Password Reset Code 🔑",`Your JOVIA reset code na: ${code}. E go expire in 30 minutes.`)}catch{}
+  return res.json({success:true,message:`Your reset code na: ${code}`,code,reset_code:code,token,reset_token:token,email:user.email,show_code:true});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const resetEasy4=(req,res)=>{try{
+  const raw=String(req.body?.code||req.body?.reset_code||req.body?.token||req.query?.code||"");
+  const code=cleanCode4(raw);
+  const pw=String(req.body?.password||req.body?.newPassword||req.body?.new_password||req.body?.confirmPassword||"");
+  const cp=String(req.body?.confirmPassword||req.body?.confirm_password||req.body?.confirm||"");
+  if(!code) return res.status(400).json({success:false,message:"Enter the 6-digit code"});
+  if(!pw || pw.length<6) return res.status(400).json({success:false,message:"New password must be at least 6 characters"});
+  if(cp && cp!==pw) return res.status(400).json({success:false,message:"Passwords no match"});
+  // Try code, then token (old JOVIA-XXXXXX style), then code+email
+  let row=null;
+  try{row=db.prepare("SELECT * FROM password_resets WHERE code=? AND used=0 ORDER BY id DESC LIMIT 1").get(code)}catch{}
+  if(!row){try{row=db.prepare("SELECT * FROM password_resets WHERE token=? AND used=0 ORDER BY id DESC LIMIT 1").get(raw)}catch{}}
+  if(!row){try{row=db.prepare("SELECT * FROM password_resets WHERE (code=? OR token=?) AND used=0 ORDER BY id DESC LIMIT 1").get(code,raw)}catch{}}
+  if(!row) return res.status(400).json({success:false,message:"Wrong code - enter the 6 digits we show you"});
+  if(row.expires_at && new Date(row.expires_at) < new Date()) return res.status(400).json({success:false,message:"Code don expire - request new one"});
+  db.prepare("UPDATE users SET password=? WHERE id=?").run(hashPass4(pw), row.user_id);
+  db.prepare("UPDATE password_resets SET used=1 WHERE id=?").run(row.id);
+  try{notify4(row.user_id,"Password Changed ✅",`Your password don change. Login with new password.`)}catch{}
+  return res.json({success:true,message:"Password don change - login with new password now"});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+const verifyCode4=(req,res)=>{try{
+  const code=cleanCode4(req.body?.code||req.body?.reset_code||req.query?.code||"");
+  if(!code) return res.status(400).json({success:false,message:"Enter code"});
+  const row=db.prepare("SELECT * FROM password_resets WHERE code=? AND used=0 ORDER BY id DESC LIMIT 1").get(code);
+  if(!row) return res.status(400).json({success:false,message:"Wrong code"});
+  if(row.expires_at && new Date(row.expires_at) < new Date()) return res.status(400).json({success:false,message:"Code don expire"});
+  return res.json({success:true,message:"Code correct",email:row.email});
+}catch(e){return res.status(500).json({success:false,message:e.message})}};
+force4("post","/api/auth/forgot-password",forgotEasy4);
+force4("post","/api/forgot-password",forgotEasy4);
+force4("post","/api/auth/forgot",forgotEasy4);
+force4("post","/api/auth/request-reset",forgotEasy4);
+force4("post","/api/auth/reset-password",resetEasy4);
+force4("post","/api/reset-password",resetEasy4);
+force4("post","/api/auth/change-password-with-code",resetEasy4);
+force4("post","/api/auth/verify-reset-code",verifyCode4);
+force4("post","/api/auth/verify-code",verifyCode4);
 
 // ========== REFERRALS - FIXED: FORCE EMAIL TO SHOW ==========
 const referralsHandler4=(req,res)=>{
