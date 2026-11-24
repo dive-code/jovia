@@ -43,20 +43,18 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
 .hist-title{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;line-height:1.5;word-break:break-word;overflow-wrap:anywhere}
 .hist-item{border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
 .upline-line{font-size:12px;font-weight:800;color:#0f172a;background:#dcfce7;border:1px solid #bbf7d0;padding:8px 10px;border-radius:10px;margin-top:6px}
+.debug-box{background:#0f172a;color:#22c55e;font-size:11px;padding:12px;border-radius:12px;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow:auto;margin-top:10px}
 </style>
 </head>
 <body>
-
 <div class="top">
   <div><h3>🏪 JOVIA VENDOR PAGE</h3><small>Make Vendor • Approve • Fund • Separate Page</small></div>
   <button class="back" onclick="window.location.href='jovia-codes.html'">← Back to Admin</button>
 </div>
-
 <div class="container">
-
   <div class="card">
     <h3>🏪 Vendor Control</h3>
-    <p class="sub">1. Make Vendor → 2. Approve → 3. Fund. Only after approve + fund, Vendor Panel go show for that user dashboard.<br>Activation go deduct: <b>SILVER ₦9,000 • GOLD ₦15,000 • SUPER ₦21,000</b></p>
+    <p class="sub">1. Make Vendor → 2. Approve → 3. Fund. Activation: <b>SILVER ₦9,000 • GOLD ₦15,000 • SUPER ₦21,000</b></p>
     <div class="stat-grid">
       <div class="stat"><span>Total Vendors</span><b id="vendorTotalStat">0</b></div>
       <div class="stat"><span>Approved</span><b id="vendorApprovedStat" style="color:#16a34a">0</b></div>
@@ -65,10 +63,10 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     </div>
   </div>
 
-  <!-- ========== VENDOR PANEL - SAME AS DASHBOARD VIDEO ========== -->
+  <!-- VENDOR PANEL -->
   <div class="card" style="border:2px solid #16a34a">
-    <h3>🏪 Vendor Panel — Pending Users (Same as Dashboard Video)</h3>
-    <p class="sub">This na the Vendor Panel wey dey for video — Dorothy, ogar, okolie, etc. Each person MUST show <b>👥 Referred: @upline</b> before Activate button.<br>If e show <b>Referred: — No referrer</b>, that user register without referral code.</p>
+    <h3>🏪 Vendor Panel — Pending Users</h3>
+    <p class="sub">Auto-loads on open. Each person MUST show <b>👥 Referred: @upline</b> before Activate. If e show <b>No referrer</b>, check DEBUG below — e go tell us whether Server send upline or DB no get am.</p>
     <div class="stat-grid">
       <div class="stat"><span>Vendor Balance</span><b id="vpBalance">₦0</b></div>
       <div class="stat"><span>Pending Users</span><b id="vpPendingCount">0</b></div>
@@ -80,13 +78,14 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
       <button class="btn btn-light" onclick="loadVendorPending()">🔍 Refresh</button>
     </div>
     <div id="vpMsg" class="msg"></div>
-    <div id="vendorPendingList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Pending Users...</p></div>
+    <div id="debugBox" class="debug-box">DEBUG: waiting...</div>
+    <div id="vendorPendingList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Loading Pending Users...</p></div>
   </div>
 
-  <!-- ========== REFERRED BOARD - FIXED UPLINE BUG ========== -->
+  <!-- REFERRED BOARD -->
   <div class="card" style="border:2px solid #16a34a">
-    <h3>👥 Referred Board — Track Before You Activate</h3>
-    <p class="sub">Upline full name NO go show — only <b>Referred: @username (ID)</b>.<br><b>FIXED BUG:</b> Before, e dey show person herself as her own upline because e dey read <i>referred_label</i> (self) instead of <i>referred_by_label</i> (upline). Now e dey read upline first.</p>
+    <h3>👥 Referred Board</h3>
+    <p class="sub">Upline full name NO go show — only <b>Referred: @username (ID)</b>.</p>
     <div class="stat-grid">
       <div class="stat"><span>Referred Total</span><b id="refTotalStat">0</b></div>
       <div class="stat"><span>Activated</span><b id="refActiveStat" style="color:#16a34a">0</b></div>
@@ -100,26 +99,25 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
       <button class="btn btn-green" onclick="fixReferralBonus()">💰 Fix Missing Referral Bonus</button>
     </div>
     <div id="refMsg" class="msg"></div>
-    <div id="referredList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Referred to load board...</p></div>
-    <p class="sub" style="margin-top:8px">Bonus rule: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> → go to <b>Affiliate Balance</b> of the person wey refer them.</p>
+    <div id="referredList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Referred...</p></div>
+    <p class="sub" style="margin-top:8px">Bonus: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> → Affiliate Balance of upline.</p>
   </div>
 
-  <!-- ========== PENDING USERS FOR VENDOR - WITH UPLINE ========== -->
+  <!-- PENDING ADMIN -->
   <div class="card" style="border:2px solid #f59e0b">
     <h3>⏳ Pending Users — Admin View</h3>
-    <p class="sub">Same as Vendor Panel Pending Users, but for Admin. Each person go show <b>👥 Referred: @upline</b>.</p>
-    <input id="pendingSearch" placeholder="🔍 Search pending — username / email / referred..." oninput="renderPendingUsers()">
+    <input id="pendingSearch" placeholder="🔍 Search pending..." oninput="renderPendingUsers()">
     <div style="height:8px"></div>
     <button class="btn btn-black" onclick="loadPendingUsers()">🔍 Show Pending Users</button>
     <div id="pendingMsg" class="msg"></div>
     <div id="pendingList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Pending Users...</p></div>
   </div>
 
-  <!-- ========== GENERAL HISTORY + MY HISTORY - NO CUT ========== -->
+  <!-- HISTORY -->
   <div class="card" style="border:2px solid #0f172a">
-    <h3>📜 General History — Vendor Activations + My History</h3>
-    <p class="sub">E go show <b>who vendor activate</b> + <b>who refer am</b>, with username FIRST — no more <i>Vendor activation - ₦9,0...</i> cut.<br>Example: <b>Vendor activation - @Dorothy (Gold) - ₦15,000 - Referred: @Kelly</b><br>Old rows wey be <i>Vendor activation - ₦9,000 deducted for activating X</i> go auto-rebuild to username-first for display.</p>
-    <input id="histSearch" placeholder="🔍 Search history — username / vendor / referred..." oninput="renderGeneralHistory()">
+    <h3>📜 General History — Vendor Activations</h3>
+    <p class="sub">Example: <b>Vendor activation - @Dorothy (Gold) - ₦15,000 - Referred: @Kelly</b></p>
+    <input id="histSearch" placeholder="🔍 Search history..." oninput="renderGeneralHistory()">
     <div class="grid2" style="margin-top:6px">
       <button class="btn btn-black" onclick="loadGeneralHistory()">🔄 Show General History</button>
       <button class="btn btn-light" onclick="loadGeneralHistory(true)">🔍 Show All History</button>
@@ -127,13 +125,13 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     <div style="height:8px"></div>
     <button class="btn btn-green" onclick="fixOldHistory()">🛠️ Fix Old History Rows (One Time)</button>
     <div id="histMsg" class="msg"></div>
-    <div id="generalHistoryList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show General History to load...</p></div>
+    <div id="generalHistoryList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show General History...</p></div>
   </div>
 
-  <!-- ========== BACKPAY 2 ========== -->
+  <!-- BACKPAY -->
   <div class="card" style="border:2px solid #f59e0b">
     <h3>💰 Backpay 2 — Direct Referral Only</h3>
-    <p class="sub">Works with Backpay 1. No double pay — same mark <b>BACKPAY_ALL_{id}</b>.<br>Direct Referral ONLY: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b></p>
+    <p class="sub">No double pay — same mark <b>BACKPAY_ALL_{id}</b>. <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b></p>
     <div class="grid2">
       <div><label class="lbl">From Date</label><input id="bpFrom" type="date"></div>
       <div><label class="lbl">To Date</label><input id="bpTo" type="date"></div>
@@ -153,7 +151,6 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
 
   <div class="card">
     <h3>➕ Make Someone Vendor</h3>
-    <p class="sub">Enter email / username / userId. E go create as PENDING, then you approve am below.</p>
     <label class="lbl">User Email / Username / UserId</label>
     <input id="vendorMakeInput" placeholder="e.g opeyemi@gmail.com or username or 123">
     <input id="vendorMakePhone" placeholder="Vendor Phone (optional) e.g 0803...">
@@ -166,7 +163,6 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
 
   <div class="card">
     <h3>💰 Fund Vendor</h3>
-    <p class="sub">Fund Vendor Balance so e fit activate users. Example: ₦90,000 = 10 SILVER activations.</p>
     <label class="lbl">Vendor ID</label>
     <input id="vendorFundId" type="number" placeholder="Vendor ID e.g 1">
     <label class="lbl">Amount ₦</label>
@@ -186,82 +182,89 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     <input id="vendorSearch" placeholder="🔍 Search vendor..." oninput="renderVendors()">
     <div id="adminVendorList"><p style="text-align:center;color:#94a3b8;padding:20px">Loading...</p></div>
   </div>
-
   <button class="btn btn-light" onclick="window.location.href='admin.html'">← Back to Admin Dashboard</button>
 </div>
 
 <script>
-function getHeaders(){
-  const p = sessionStorage.getItem('jovia_session_pass') || sessionStorage.getItem('adminPass') || localStorage.getItem('jovia_session_pass') || '';
-  const h = {'Content-Type':'application/json'};
-  if(p) { h['x-admin-password']=p; h['x-admin-key']=p; }
-  return h;
-}
-function adminQS(){ return '?t='+Date.now()+'&key=jovia123'; }
+function getHeaders(){const p=sessionStorage.getItem('jovia_session_pass')||sessionStorage.getItem('adminPass')||localStorage.getItem('jovia_session_pass')||'';const h={'Content-Type':'application/json'};if(p){h['x-admin-password']=p;h['x-admin-key']=p}return h}
+function adminQS(){return '?t='+Date.now()+'&key=jovia123'}
 function fmt(n){return Number(n||0).toLocaleString()}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function escAttr(s){ return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
-let allVendors=[], vendorFilter='ALL';
-let allReferred=[];
-let allHistory=[];
-let allPending=[];
-let allVendorPending=[];
-
+function escAttr(s){return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+let allVendors=[],vendorFilter='ALL',allReferred=[],allHistory=[],allPending=[],allVendorPending=[];
+let refById={};
 function setMsg(id,t,k){const el=document.getElementById(id);el.textContent=t;el.className='msg show '+(k||'info')}
 function setVendorFilter(f){vendorFilter=f;['All','Approved','Pending','Rejected'].forEach(x=>{const el=document.getElementById('vendorFilter'+x);if(el)el.className='filter-btn'});const map={ALL:'vendorFilterAll',APPROVED:'vendorFilterApproved',PENDING:'vendorFilterPending',REJECTED:'vendorFilterRejected'};document.getElementById(map[f]).className='filter-btn active';renderVendors()}
 
-// ✅ FIXED UPLINE: referred_by_label / upline_label FIRST. NEVER use referred_label (that one na SELF)
+// ✅ UPLINE - ignore self, ignore "No referrer" if other source get am, enrich from Referred Board
 function uplineLine(u){
   if(!u) return '👥 Referred: — No referrer';
-  // 1. Backend upline label - correct one
-  const byLabel = String(u.referred_by_label||u.upline_label||'').trim();
-  if(byLabel && byLabel.toLowerCase().startsWith('referred')) {
-    // If backend mistakenly send self as upline, ignore am - check below
-    // Self check: if label contains own username AND own id, and no other username field, treat as no upline
-    // But normal case: referred_by_label na upline, use am
-    return '👥 '+byLabel;
+  const selfName=String(u.username||'').toLowerCase();
+  const selfId=String(u.id||'');
+  // 1. Enriched from Referred Board
+  const enriched=refById[String(u.id)];
+  if(enriched && enriched.id && String(enriched.id)!==selfId) return `👥 Referred: @${enriched.username} (ID ${enriched.id})`;
+  if(enriched && enriched.label && !enriched.label.toLowerCase().includes('@'+selfName) && !enriched.label.includes('No referrer')) return '👥 '+enriched.label;
+  // 2. Direct fields
+  const name=u.referred_by_username||u.referrer_username||u.upline_username||'';
+  const id=u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||'';
+  if(name && String(name).toLowerCase()!==selfName) return `👥 Referred: @${name} (ID ${id||''})`.trim();
+  if(id && String(id)!==selfId) return `👥 Referred by: ID ${id}`;
+  // 3. Labels - only if no be self and no be "No referrer"
+  for(const k of ['referred_by_label','upline_label','referred_label']){
+    const lab=String(u[k]||'').trim();
+    if(!lab) continue;
+    if(lab.toLowerCase().includes('no referrer')) continue;
+    if(lab.toLowerCase().includes('@'+selfName) && !lab.toLowerCase().includes('(id '+selfId+')')) {
+      // If label na self, skip am unless e get different ID inside
+      const m=lab.match(/ID\s*(\d+)/i);
+      if(!m || m[1]===selfId) continue;
+    }
+    if(lab.toLowerCase().startsWith('referred')) return '👥 '+lab;
   }
-  // 2. Username fields
-  const name = u.referred_by_username||u.referrer_username||u.upline_username||'';
-  const id = u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||'';
-  // If name == self username, na bug - ignore
-  if(name && String(name).toLowerCase()!==String(u.username||'').toLowerCase()) return `👥 Referred: @${name} (ID ${id||''})`.trim();
-  if(id && String(id)!==String(u.id)) return `👥 Referred by: ID ${id}`;
-  // 3. Fallback: if referred_label exists but e no be self, use am
-  const selfLabel = String(u.referred_label||'').trim();
-  if(selfLabel && selfLabel.toLowerCase().startsWith('referred') && !selfLabel.toLowerCase().includes('@'+String(u.username||'').toLowerCase())) return '👥 '+selfLabel;
   return '👥 Referred: — No referrer';
 }
-function pkgCost(pkg){
-  const p=String(pkg||'').toLowerCase();
-  if(p.includes('gold')) return 15000;
-  if(p.includes('super')) return 21000;
-  return 9000;
-}
+function pkgCost(pkg){const p=String(pkg||'').toLowerCase();if(p.includes('gold'))return 15000;if(p.includes('super'))return 21000;return 9000}
+function referralBonusFor(pkg){const p=String(pkg||'').toLowerCase();if(p.includes('silver'))return 8000;if(p.includes('gold'))return 13000;if(p.includes('super'))return 13000;return 0}
+function isActivated(u){const s=String(u.account_status||u.status||'').toLowerCase();return ['active','approved','activated'].includes(s)}
 
-// ---------- VENDOR PANEL - PENDING USERS ----------
 async function loadVendorPending(){
   const el=document.getElementById('vendorPendingList');
+  const dbg=document.getElementById('debugBox');
   el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading pending users...</p>';
   setMsg('vpMsg','⏳ Loading Vendor Panel pending users...','info');
   try{
-    let rows=[], bal=0;
-    // Try vendor endpoint (for vendor login), fallback to referred (for admin login)
+    let rows=[], bal=0, source='none';
+    // 1. Try vendor endpoint
     try{
       const r=await fetch('/api/vendor/pending-users'+adminQS(),{headers:getHeaders(),credentials:'include'});
       const d=await r.json();
-      if(r.ok && Array.isArray(d.users) && d.users.length){ rows=d.users; bal=Number(d.vendor_balance||0); }
-      else throw new Error('no-vendor-session');
-    }catch(e){
-      // Admin fallback: use referred board pending
-      if(!allReferred.length) await loadReferred();
-      rows=allReferred.filter(u=>!isActivated(u));
+      if(r.ok && Array.isArray(d.users) && d.users.length){ rows=d.users; bal=Number(d.vendor_balance||0); source='vendor/pending-users'; }
+      else throw new Error('vendor endpoint empty / '+ (d.message||''));
+    }catch(e){ source='vendor failed: '+e.message; }
+    // 2. Always load Referred Board too, to enrich upline
+    try{ await loadReferred(true); }catch{}
+    // Build map from referred
+    refById={};
+    (allReferred||[]).forEach(u=>{
+      const upId=u.referred_by||u.referrer_id||u.upline_id||'';
+      const upName=u.referred_by_username||u.referrer_username||u.upline_username||'';
+      const upLabel=u.referred_by_label||u.upline_label||'';
+      if(upId || upName) refById[String(u.id)]={id:upId,username:upName,label:upLabel};
+    });
+    // 3. If vendor endpoint fail, use referred pending
+    if(!rows.length){
+      rows=(allReferred||[]).filter(u=>!isActivated(u));
+      source+=' + fallback=referred';
     }
     allVendorPending=rows;
     document.getElementById('vpBalance').textContent='₦'+fmt(bal||0);
     document.getElementById('vpPendingCount').textContent=rows.length;
+    // DEBUG - show raw first 3 users
+    const sample=rows.slice(0,3).map(u=>({id:u.id,username:u.username,referred_by:u.referred_by||u.referrer_id||u.upline_id||null,referred_by_username:u.referred_by_username||u.referrer_username||u.upline_username||null,referred_by_label:u.referred_by_label||u.upline_label||null,referred_label:u.referred_label||null,enriched:refById[String(u.id)]||null}));
+    dbg.textContent='SOURCE: '+source+'\nTOTAL: '+rows.length+'\nSAMPLE (first 3 raw from server):\n'+JSON.stringify(sample,null,2);
     renderVendorPending();
-    setMsg('vpMsg','✅ Loaded '+rows.length+' pending user(s) — each one get 👥 Referred line.','success');
+    setMsg('vpMsg','✅ Loaded '+rows.length+' pending — check DEBUG above for wetin server send.','success');
   }catch(e){ setMsg('vpMsg','❌ '+e.message,'error'); }
 }
 function renderVendorPending(){
@@ -282,37 +285,22 @@ function renderVendorPending(){
     </div>`;
   }).join('');
 }
-async function vendorActivateUser(id, name){
+async function vendorActivateUser(id,name){
   if(!confirm('Activate '+name+' (ID '+id+')?')) return;
   setMsg('vpMsg','⏳ Activating '+name+'...','info');
   try{
     const r=await fetch('/api/vendor/activate'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({userId:id})});
     const d=await r.json();
-    if(!r.ok||!d.success) throw new Error(d.message||'Activate failed - make sure you be approved vendor or admin');
-    setMsg('vpMsg','✅ '+d.message,'success');
-    alert('✅ '+d.message);
-    await loadVendorPending();
-    await loadGeneralHistory();
+    if(!r.ok||!d.success) throw new Error(d.message||'Activate failed');
+    setMsg('vpMsg','✅ '+d.message,'success'); alert('✅ '+d.message);
+    await loadVendorPending(); await loadGeneralHistory();
   }catch(e){ setMsg('vpMsg','❌ '+e.message,'error'); }
 }
-
-// ---------- REFERRED BOARD ----------
-function referralBonusFor(pkg){
-  const p=String(pkg||'').toLowerCase();
-  if(p.includes('silver')) return 8000;
-  if(p.includes('gold')) return 13000;
-  if(p.includes('super')) return 13000;
-  return 0;
-}
-function isActivated(u){
-  const s=String(u.account_status||u.status||'').toLowerCase();
-  return ['active','approved','activated'].includes(s);
-}
-async function loadReferred(){
-  const filter=(document.getElementById('refFilterInput').value||'').trim().toLowerCase();
+async function loadReferred(silent){
+  const filter=(document.getElementById('refFilterInput')?.value||'').trim().toLowerCase();
   const el=document.getElementById('referredList');
-  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading referred...</p>';
-  setMsg('refMsg','⏳ Loading referred board...','info');
+  if(!silent) el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading referred...</p>';
+  if(!silent) setMsg('refMsg','⏳ Loading referred board...','info');
   try{
     let rows=[];
     try{
@@ -327,23 +315,15 @@ async function loadReferred(){
       rows=d2.users||d2||[];
       rows=rows.filter(u=>u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id);
     }
-    if(filter){
-      rows=rows.filter(u=>{
-        const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''} ${u.referred_by_label||''} ${u.upline_label||''}`.toLowerCase();
-        const self=`${u.id} ${u.username||''} ${u.email||''}`.toLowerCase();
-        return hay.includes(filter) || self.includes(filter);
-      });
-    }
+    if(filter){ rows=rows.filter(u=>{ const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''} ${u.referred_by_label||''} ${u.upline_label||''}`.toLowerCase(); const self=`${u.id} ${u.username||''} ${u.email||''}`.toLowerCase(); return hay.includes(filter)||self.includes(filter); }); }
     allReferred=rows;
-    renderReferred();
-    setMsg('refMsg','✅ Loaded '+rows.length+' referred user(s) — Upline na Referred: @username, no full name.','success');
-  }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); el.innerHTML='<p style="color:red;text-align:center">❌ '+esc(e.message)+'</p>'; }
+    if(!silent) renderReferred();
+    if(!silent) setMsg('refMsg','✅ Loaded '+rows.length+' referred user(s).','success');
+  }catch(e){ if(!silent){ setMsg('refMsg','❌ '+e.message,'error'); el.innerHTML='<p style="color:red;text-align:center">❌ '+esc(e.message)+'</p>'; } }
 }
 function renderReferred(){
-  const el=document.getElementById('referredList');
-  const rows=allReferred||[];
-  const active=rows.filter(isActivated).length;
-  const pending=rows.length-active;
+  const el=document.getElementById('referredList'); const rows=allReferred||[];
+  const active=rows.filter(isActivated).length; const pending=rows.length-active;
   const missing=rows.filter(u=>isActivated(u) && !u.bonus_paid && u.referral_bonus_paid!==1 && u.bonus_status!=='paid').length;
   document.getElementById('refTotalStat').textContent=rows.length;
   document.getElementById('refActiveStat').textContent=active;
@@ -351,273 +331,74 @@ function renderReferred(){
   document.getElementById('refMissingStat').textContent=missing;
   if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No referred user found.</p>'; return; }
   el.innerHTML=rows.map(u=>{
-    const pkg=u.package||u.plan||'Silver';
-    const bonus=referralBonusFor(pkg);
-    const activated=isActivated(u);
+    const pkg=u.package||u.plan||'Silver'; const bonus=referralBonusFor(pkg); const activated=isActivated(u);
     const paid=u.bonus_paid||u.referral_bonus_paid===1||u.bonus_status==='paid';
-    const bonusLabel= !activated ? '<span style="color:#f59e0b">⏳ Not activated yet — no bonus yet</span>' : paid ? '<span style="color:#16a34a">✅ Bonus Paid → Affiliate Dashboard</span>' : '<span style="color:#dc2626">❌ Bonus MISSING — press Fix below</span>';
+    const bonusLabel=!activated?'<span style="color:#f59e0b">⏳ Not activated yet</span>':paid?'<span style="color:#16a34a">✅ Bonus Paid</span>':'<span style="color:#dc2626">❌ Bonus MISSING</span>';
     return `<div class="dep-item ${!activated?'pending':''}">
-      <div style="display:flex;justify-content:space-between;gap:8px"><b>Referred: @${esc(u.username||u.full_name||('User '+u.id))}</b><span class="badge" style="background:${activated?'#dcfce7;color:#166534':'#fef3c7;color:#92400e'}">${activated?'ACTIVATED':'PENDING'}</span></div>
-      <div style="font-size:11px;margin-top:6px;line-height:1.7">
-        User ID: <b>${u.id}</b> • Package: <b>${esc(pkg)}</b><br>
-        Email: ${esc(u.email||'-')}<br>
-        Referral Bonus: <b>₦${fmt(bonus)}</b> — ${bonusLabel}<br>
-        Date: ${esc(u.created_at||'')}
-      </div>
+      <div style="display:flex;justify-content:space-between;gap:8px"><b>Referred: @${esc(u.username||('User '+u.id))}</b><span class="badge" style="background:${activated?'#dcfce7;color:#166534':'#fef3c7;color:#92400e'}">${activated?'ACTIVATED':'PENDING'}</span></div>
+      <div style="font-size:11px;margin-top:6px;line-height:1.7">User ID: <b>${u.id}</b> • Package: <b>${esc(pkg)}</b><br>Email: ${esc(u.email||'-')}<br>Referral Bonus: <b>₦${fmt(bonus)}</b> — ${bonusLabel}<br>Date: ${esc(u.created_at||'')}</div>
       <div class="upline-line">${esc(uplineLine(u))}</div>
     </div>`;
   }).join('');
 }
 async function loadPendingUsers(){
-  const el=document.getElementById('pendingList');
-  setMsg('pendingMsg','⏳ Loading pending users...','info');
-  try{
-    if(!allReferred.length) await loadReferred();
-    allPending=allReferred.filter(u=>!isActivated(u));
-    renderPendingUsers();
-    setMsg('pendingMsg','✅ Loaded '+allPending.length+' pending user(s) with upline.','success');
-  }catch(e){ setMsg('pendingMsg','❌ '+e.message,'error'); }
+  const el=document.getElementById('pendingList'); setMsg('pendingMsg','⏳ Loading...','info');
+  try{ if(!allReferred.length) await loadReferred(); allPending=allReferred.filter(u=>!isActivated(u)); renderPendingUsers(); setMsg('pendingMsg','✅ Loaded '+allPending.length+' pending.','success'); }catch(e){ setMsg('pendingMsg','❌ '+e.message,'error'); }
 }
 function renderPendingUsers(){
-  const el=document.getElementById('pendingList');
-  const q=(document.getElementById('pendingSearch').value||'').toLowerCase().trim();
-  let rows=[...allPending];
-  if(q) rows=rows.filter(u=>`${u.username||''} ${u.email||''} ${u.referred_by_username||''} ${u.referred_by_label||''} ${u.upline_label||''} ${u.id}`.toLowerCase().includes(q));
-  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No pending user here. Press Show Pending Users.</p>'; return; }
-  el.innerHTML=rows.map(u=>{
-    const pkg=u.package||u.plan||'Silver';
-    const cost=pkgCost(pkg);
-    return `<div class="dep-item pending">
-      <b>${esc(u.username||('User '+u.id))}</b>
-      <div style="font-size:11px;margin-top:4px;line-height:1.7">ID: <b>${u.id}</b> • ${esc(u.email||'')} • ${esc(u.full_name||'')}</div>
-      <div style="font-size:11px">Cost: <b>₦${fmt(cost)}</b> • Package: <b>${esc(pkg)}</b></div>
-      <div class="upline-line">${esc(uplineLine(u))}</div>
-    </div>`;
-  }).join('');
+  const el=document.getElementById('pendingList'); const q=(document.getElementById('pendingSearch').value||'').toLowerCase().trim();
+  let rows=[...allPending]; if(q) rows=rows.filter(u=>`${u.username||''} ${u.email||''} ${u.referred_by_username||''} ${u.referred_by_label||''} ${u.upline_label||''} ${u.id}`.toLowerCase().includes(q));
+  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No pending here.</p>'; return; }
+  el.innerHTML=rows.map(u=>{ const pkg=u.package||u.plan||'Silver'; return `<div class="dep-item pending"><b>${esc(u.username||('User '+u.id))}</b><div style="font-size:11px">ID: <b>${u.id}</b> • ${esc(u.email||'')}</div><div style="font-size:11px">Cost: <b>₦${fmt(pkgCost(pkg))}</b> • ${esc(pkg)}</div><div class="upline-line">${esc(uplineLine(u))}</div></div>`; }).join('');
 }
 async function fixReferralBonus(){
   const filter=(document.getElementById('refFilterInput').value||'').trim();
-  if(!confirm('Fix missing referral bonus'+(filter?' for '+filter:' for ALL')+'? E go pay only missing ones, no double.')) return;
-  setMsg('refMsg','⏳ Fixing missing referral bonus...','info');
-  try{
-    const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:null,to:null,mode:'pay',filter:filter||undefined})});
-    const d=await r.json();
-    if(!r.ok||!d.success) throw new Error(d.message||'Fix failed');
-    setMsg('refMsg','✅ '+(d.message||'Referral bonus fixed!'),'success');
-    alert('✅ '+(d.message||'Referral bonus fixed!'));
-    await loadReferred();
-  }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); }
+  if(!confirm('Fix missing referral bonus? No double.')) return;
+  setMsg('refMsg','⏳ Fixing...','info');
+  try{ const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:null,to:null,mode:'pay',filter:filter||undefined})}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Fix failed'); setMsg('refMsg','✅ '+(d.message||'Fixed!'),'success'); alert('✅ '+(d.message||'Fixed!')); await loadReferred(); }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); }
 }
-
-// ---------- GENERAL HISTORY - REBUILD OLD ROWS FOR DISPLAY ----------
-function cleanHistTitle(raw, item){
+function cleanHistTitle(raw,item){
   let t=String(raw||item.description||item.title||'');
-  // Old: "Vendor activation - ₦9,000 deducted for activating dorothy (Gold)"
   const oldMatch=t.match(/activating\s+@?([A-Za-z0-9_.\-]+)\s*\(([^)]+)\)/i);
-  if(oldMatch && t.toLowerCase().startsWith('vendor activation')){
-    const amtMatch=t.match(/₦[\d,]+/);
-    const referred = item.referred_label||item.referred_by_label||item.upline_label||'';
-    // If referred_label na self, ignore am
-    const refClean = (referred && !referred.toLowerCase().includes('@'+oldMatch[1].toLowerCase())) ? ' - '+referred : '';
-    return `Vendor activation - @${oldMatch[1]} (${oldMatch[2]}) - ${amtMatch?amtMatch[0]:''} deducted${refClean}`;
-  }
-  // Old: "Vendor activation - ₦9,000..." with no username in text - use item.username
-  if(t.toLowerCase().startsWith('vendor activation - ₦') && item.username){
-    const amtMatch=t.match(/₦[\d,]+/);
-    const ref = item.referred_by_label||item.upline_label||'';
-    return `Vendor activation - @${item.username} (${item.package||item.plan||''}) - ${amtMatch?amtMatch[0]:''} deducted${ref?' - '+ref:''}`;
-  }
+  if(oldMatch && t.toLowerCase().startsWith('vendor activation')){ const amtMatch=t.match(/₦[\d,]+/); const ref=item.referred_by_label||item.upline_label||''; return `Vendor activation - @${oldMatch[1]} (${oldMatch[2]}) - ${amtMatch?amtMatch[0]:''} deducted${ref?' - '+ref:''}`; }
+  if(t.toLowerCase().startsWith('vendor activation - ₦') && item.username){ const amtMatch=t.match(/₦[\d,]+/); const ref=item.referred_by_label||item.upline_label||''; return `Vendor activation - @${item.username} (${item.package||item.plan||''}) - ${amtMatch?amtMatch[0]:''} deducted${ref?' - '+ref:''}`; }
   return t;
 }
 async function loadGeneralHistory(showAll){
-  const el=document.getElementById('generalHistoryList');
-  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading general history...</p>';
-  setMsg('histMsg','⏳ Loading general history...','info');
+  const el=document.getElementById('generalHistoryList'); el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading...</p>'; setMsg('histMsg','⏳ Loading...','info');
   try{
-    let rows=[];
-    const urls=['/api/admin/vendors/history','/api/admin/vendors/activations','/api/admin/history','/api/admin/wallet/history','/api/admin/transactions'];
-    for(const u of urls){
-      try{
-        const r=await fetch(u+adminQS(),{headers:getHeaders(),credentials:'include'});
-        const d=await r.json();
-        const arr=d.history||d.activations||d.transactions||d.data||d.rows||[];
-        if(r.ok && Array.isArray(arr) && arr.length){ rows=arr; break; }
-        if(r.ok && d.success && Array.isArray(arr)){ rows=arr; break; }
-      }catch(e){}
-    }
-    if(!rows.length){
-      setMsg('histMsg','⚠️ History endpoint never deploy yet for Server 4 — add /api/admin/vendors/history there.','info');
-      el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:14px">No history endpoint yet. Use Referred Board above.</p>';
-      return;
-    }
-    if(!showAll){
-      rows=rows.filter(x=>{
-        const s=`${x.type||''} ${x.description||''} ${x.title||''}`.toLowerCase();
-        return s.includes('vendor') || s.includes('activation');
-      });
-    }
-    allHistory=rows;
-    renderGeneralHistory();
-    setMsg('histMsg','✅ Loaded '+rows.length+' history record(s) — username first, no cut.','success');
+    let rows=[]; const urls=['/api/admin/vendors/history','/api/admin/vendors/activations','/api/admin/history','/api/admin/wallet/history','/api/admin/transactions'];
+    for(const u of urls){ try{ const r=await fetch(u+adminQS(),{headers:getHeaders(),credentials:'include'}); const d=await r.json(); const arr=d.history||d.activations||d.transactions||d.data||d.rows||[]; if(r.ok && Array.isArray(arr) && arr.length){ rows=arr; break; } }catch(e){} }
+    if(!rows.length){ setMsg('histMsg','⚠️ History endpoint never deploy yet.','info'); el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:14px">No history endpoint yet.</p>'; return; }
+    if(!showAll){ rows=rows.filter(x=>{ const s=`${x.type||''} ${x.description||''} ${x.title||''}`.toLowerCase(); return s.includes('vendor')||s.includes('activation'); }); }
+    allHistory=rows; renderGeneralHistory(); setMsg('histMsg','✅ Loaded '+rows.length+' history.','success');
   }catch(e){ setMsg('histMsg','❌ '+e.message,'error'); }
 }
 function renderGeneralHistory(){
-  const el=document.getElementById('generalHistoryList');
-  const q=(document.getElementById('histSearch').value||'').toLowerCase().trim();
-  let rows=[...allHistory];
-  if(q) rows=rows.filter(x=>`${x.username||''} ${x.description||''} ${x.title||''} ${x.referred_label||''} ${x.referred_by_label||''} ${x.vendor_username||''} ${x.user_id||''}`.toLowerCase().includes(q));
-  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No history here. Press Show General History.</p>'; return; }
-  el.innerHTML=rows.map(item=>{
-    const amt=Math.abs(Number(item.amount||item.cost||0));
-    const title=cleanHistTitle(item.description||item.title||'', item);
-    const referred=item.referred_by_label||item.upline_label||'';
-    const who=item.username||item.activated_username||item.target_username||'';
-    const vendorName=item.vendor_username||item.vendor_name||item.activated_by||'';
-    return `<div class="hist-item">
-      <div class="hist-title"><b>${esc(title)}</b></div>
-      <div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">
-        ${who?`Activated: <b>@${esc(who)}</b> • `:''}
-        ${item.package||item.plan?`Package: <b>${esc(item.package||item.plan)}</b> • `:''}
-        ${amt?`Amount: <b style="color:#dc2626">-₦${fmt(amt)}</b><br>`:''}
-        ${referred?`${esc(referred)}<br>`:''}
-        ${vendorName?`Vendor: <b>${esc(vendorName)}</b> • `:''}
-        ${item.created_at||item.date?`Date: ${esc(item.created_at||item.date)}`:''}
-      </div>
-    </div>`;
-  }).join('');
+  const el=document.getElementById('generalHistoryList'); const q=(document.getElementById('histSearch').value||'').toLowerCase().trim();
+  let rows=[...allHistory]; if(q) rows=rows.filter(x=>`${x.username||''} ${x.description||''} ${x.title||''} ${x.referred_by_label||''} ${x.vendor_username||''} ${x.user_id||''}`.toLowerCase().includes(q));
+  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No history here.</p>'; return; }
+  el.innerHTML=rows.map(item=>{ const amt=Math.abs(Number(item.amount||item.cost||0)); const title=cleanHistTitle(item.description||item.title||'',item); const referred=item.referred_by_label||item.upline_label||''; const who=item.username||item.activated_username||item.target_username||''; const vendorName=item.vendor_username||item.vendor_name||item.activated_by||''; return `<div class="hist-item"><div class="hist-title"><b>${esc(title)}</b></div><div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">${who?`Activated: <b>@${esc(who)}</b> • `:''}${item.package||item.plan?`Package: <b>${esc(item.package||item.plan)}</b> • `:''}${amt?`Amount: <b style="color:#dc2626">-₦${fmt(amt)}</b><br>`:''}${referred?`${esc(referred)}<br>`:''}${vendorName?`Vendor: <b>${esc(vendorName)}</b> • `:''}${item.created_at||item.date?`Date: ${esc(item.created_at||item.date)}`:''}</div></div>`; }).join('');
 }
 async function fixOldHistory(){
-  if(!confirm('Fix old Vendor History rows in DB to username-first? One time only.')) return;
-  setMsg('histMsg','⏳ Fixing old history rows...','info');
-  try{
-    const r=await fetch('/api/admin/fix-vendor-history'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({})});
-    const d=await r.json();
-    if(!r.ok||!d.success) throw new Error(d.message||'Fix failed - add /api/admin/fix-vendor-history to Server 4 first');
-    setMsg('histMsg','✅ '+(d.message||'Old history fixed!'),'success');
-    alert('✅ '+(d.message||'Old history fixed!'));
-    await loadGeneralHistory();
-  }catch(e){ setMsg('histMsg','❌ '+e.message,'error'); }
+  if(!confirm('Fix old Vendor History rows in DB? One time.')) return;
+  setMsg('histMsg','⏳ Fixing...','info');
+  try{ const r=await fetch('/api/admin/fix-vendor-history'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({})}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Fix failed - add endpoint to Server 4'); setMsg('histMsg','✅ '+(d.message||'Fixed!'),'success'); alert('✅ '+(d.message||'Fixed!')); await loadGeneralHistory(); }catch(e){ setMsg('histMsg','❌ '+e.message,'error'); }
 }
-
-// ---------- BACKPAY 2 ----------
-function backpayGetDates(){ return {from:document.getElementById('bpFrom').value, to:document.getElementById('bpTo').value}; }
-function backpayQuick(mode){
-  const today=new Date(); const fmtD=d=>d.toISOString().slice(0,10);
-  if(mode==='last7'){ const from=new Date(today); from.setDate(from.getDate()-7); document.getElementById('bpFrom').value=fmtD(from); document.getElementById('bpTo').value=fmtD(today); }
-  else { document.getElementById('bpFrom').value=''; document.getElementById('bpTo').value=''; }
-  checkBackpay2();
-}
-function backpayRenderPreview(d){
-  const el=document.getElementById('bpResult'); const miss=d.missing||[];
-  el.innerHTML=`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px">
-    <b>From:</b> ${esc(d.from||'All')} &nbsp; <b>To:</b> ${esc(d.to||'All')}<br>
-    <b>Active:</b> ${d.total_active||0} | <b style="color:#dc2626">Missing: ${d.missing_count||0}</b> | <b style="color:#16a34a">Paid: ${d.paid_count||0}</b> | No Upline: ${d.no_upline_count||0}<br>
-    <b>Total to Pay:</b> <span style="font-size:16px;color:#16a34a">₦${fmt(d.total_to_pay||0)}</span><br>
-    ${miss.length?`<div style="margin-top:8px;max-height:220px;overflow:auto">${miss.map(m=>`• ${esc(m.username)} (${esc(m.package)}) — ₦${fmt(m.bonus)} → Upline ID ${m.uplineId} <small>${esc(m.created_at||'')}</small>`).join('<br>')}</div>`:'<small style="color:#16a34a">No missing ✅</small>'}
-  </div>`;
-}
-async function checkBackpay2(){
-  const {from,to}=backpayGetDates();
-  setMsg('bpMsg','⏳ Checking backpay...','info'); document.getElementById('bpResult').innerHTML='';
-  try{
-    const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:from||null,to:to||null,mode:'check'})});
-    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Check failed');
-    setMsg('bpMsg','✅ Check done — Missing: '+(d.missing_count||0)+' | Total: ₦'+fmt(d.total_to_pay||0),'success'); backpayRenderPreview(d);
-  }catch(e){setMsg('bpMsg','❌ '+e.message,'error')}
-}
-async function payBackpay2(){
-  const {from,to}=backpayGetDates();
-  if(!confirm('Pay Backpay? E go pay only missing, no double.')) return;
-  setMsg('bpMsg','⏳ Paying backpay...','info');
-  try{
-    const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:from||null,to:to||null,mode:'pay'})});
-    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Pay failed');
-    setMsg('bpMsg','✅ '+(d.message||'Backpay Paid!'),'success');
-    backpayRenderPreview({from,to,total_active:d.total_active||0,missing_count:0,paid_count:(d.paid||0),no_upline_count:0,total_to_pay:d.totalPaid||0,missing:[]});
-    alert('✅ '+(d.message||'Backpay Paid!')); setTimeout(()=>location.reload(),1200);
-  }catch(e){setMsg('bpMsg','❌ '+e.message,'error')}
-}
-async function loadAdminVendors(){
-  const el=document.getElementById('adminVendorList');
-  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading vendors...</p>';
-  try{
-    const r=await fetch('/api/admin/vendors'+adminQS(),{headers:getHeaders(),credentials:'include'});
-    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'No vendors endpoint');
-    allVendors=d.vendors||[];
-  }catch(e){el.innerHTML='<p style="color:red;text-align:center">❌ '+esc(e.message)+'</p>';return}
-  document.getElementById('vendorTotalStat').textContent=allVendors.length;
-  document.getElementById('vendorApprovedStat').textContent=allVendors.filter(v=>v.status==='APPROVED').length;
-  document.getElementById('vendorPendingStat').textContent=allVendors.filter(v=>v.status==='PENDING').length;
-  document.getElementById('vendorFundedStat').textContent='₦'+fmt(allVendors.reduce((s,v)=>s+Number(v.balance||0),0));
-  renderVendors();
-}
-function renderVendors(){
-  const el=document.getElementById('adminVendorList');
-  const q=(document.getElementById('vendorSearch').value||'').toLowerCase().trim();
-  let list=vendorFilter==='ALL'?[...allVendors]:allVendors.filter(v=>v.status===vendorFilter);
-  if(q) list=list.filter(v=>`${v.username||''} ${v.email||''} ${v.vendor_name||''} ${v.code||''} ${v.phone||''}`.toLowerCase().includes(q));
-  document.getElementById('vendorCount').textContent=list.length;
-  if(!list.length){el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No vendors here.</p>';return}
-  el.innerHTML=list.map(v=>{
-    const st=String(v.status||'PENDING');
-    const col=st==='APPROVED'?'#dcfce7;color:#166534':st==='PENDING'?'#fef3c7;color:#92400e':'#fee2e2;color:#991b1b';
-    const name = v.username||v.vendor_name||'Vendor';
-    return `<div class="dep-item ${st==='PENDING'?'pending':''}">
-      <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(name)}</b><span class="badge" style="background:${col}">${esc(st)}</span></div>
-      <div style="font-size:11px;margin-top:6px;line-height:1.7">Vendor ID: <b>${v.id}</b> • User ID: <b>${v.user_id}</b> • Code: <b>${esc(v.code||'-')}</b><br>Name: ${esc(v.vendor_name||'-')}<br>Email: ${esc(v.email||'-')}<br>Phone: ${esc(v.phone||'-')}<br>Balance: <b>₦${fmt(v.balance)}</b> • Activated: <b>${v.total_activated||0}</b> • Deducted: ₦${fmt(v.total_deducted||0)}<br>Date: ${esc(v.created_at||'')}</div>
-      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-        ${st!=='APPROVED'?`<button onclick="adminVendorAction(${v.id},'APPROVED')" style="flex:1;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve</button>`:''}
-        ${st!=='REJECTED'?`<button onclick="adminVendorAction(${v.id},'REJECTED')" style="flex:1;padding:12px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800;font-size:12px">✕ Reject</button>`:''}
-        <button onclick="adminVendorFundPrompt(${v.id},'${escAttr(name)}')" style="flex:1;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-weight:900;font-size:12px">💰 Fund</button>
-      </div>
-    </div>`
-  }).join('');
-}
-async function vendorMake(){
-  const val=document.getElementById('vendorMakeInput').value.trim();
-  const phone=document.getElementById('vendorMakePhone').value.trim();
-  if(!val){setMsg('vendorMakeMsg','❌ Enter email / username / userId first','error');return}
-  if(!confirm('Make '+val+' a Vendor?')) return;
-  setMsg('vendorMakeMsg','⏳ Making vendor...','info');
-  try{
-    let body={}; if(/^\d+$/.test(val)) body.userId=Number(val); else if(val.includes('@')) body.email=val; else body.username=val;
-    if(phone) body.phone=phone; body.user=val; body.user_id=body.userId||undefined;
-    const r=await fetch('/api/admin/vendors/create'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify(body)});
-    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Create failed');
-    setMsg('vendorMakeMsg','✅ '+d.message,'success');
-    document.getElementById('vendorMakeInput').value=''; document.getElementById('vendorMakePhone').value='';
-    await loadAdminVendors();
-  }catch(e){setMsg('vendorMakeMsg','❌ '+e.message,'error')}
-}
-async function adminVendorAction(id,action){
-  if(!confirm(action+' this vendor?')) return;
-  try{
-    const r=await fetch('/api/admin/vendors/action'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,action})});
-    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Failed');
-    alert('✅ '+d.message); loadAdminVendors();
-  }catch(e){alert('❌ '+e.message)}
-}
-async function adminVendorFundPrompt(id,name){
-  const amt=prompt('How much you wan fund '+name+' (Vendor '+id+') with? e.g 90000');
-  if(!amt||Number(amt)<=0) return; await vendorFundDo(id,Number(amt));
-}
-async function vendorFundDirect(){
-  const id=Number(document.getElementById('vendorFundId').value);
-  const amt=Number(document.getElementById('vendorFundAmount').value);
-  if(!id||!amt||amt<=0){setMsg('vendorFundMsg','❌ Enter Vendor ID + valid amount','error');return}
-  await vendorFundDo(id,amt);
-}
-async function vendorFundDo(id,amt){
-  setMsg('vendorFundMsg','⏳ Funding...','info');
-  try{
-    if(!confirm('Fund Vendor '+id+' with ₦'+fmt(amt)+'?')){setMsg('vendorFundMsg','Cancelled','info');return}
-    const r=await fetch('/api/admin/vendors/fund'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,amount:amt})});
-    const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Fund failed');
-    setMsg('vendorFundMsg','✅ '+d.message,'success'); alert('✅ '+d.message);
-    document.getElementById('vendorFundAmount').value=''; await loadAdminVendors();
-  }catch(e){setMsg('vendorFundMsg','❌ '+e.message,'error')}
-}
+function backpayGetDates(){ return {from:document.getElementById('bpFrom').value,to:document.getElementById('bpTo').value}; }
+function backpayQuick(mode){ const today=new Date(); const fmtD=d=>d.toISOString().slice(0,10); if(mode==='last7'){ const from=new Date(today); from.setDate(from.getDate()-7); document.getElementById('bpFrom').value=fmtD(from); document.getElementById('bpTo').value=fmtD(today); } else { document.getElementById('bpFrom').value=''; document.getElementById('bpTo').value=''; } checkBackpay2(); }
+function backpayRenderPreview(d){ const el=document.getElementById('bpResult'); const miss=d.missing||[]; el.innerHTML=`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px"><b>From:</b> ${esc(d.from||'All')} <b>To:</b> ${esc(d.to||'All')}<br><b>Active:</b> ${d.total_active||0} | <b style="color:#dc2626">Missing: ${d.missing_count||0}</b> | <b style="color:#16a34a">Paid: ${d.paid_count||0}</b><br><b>Total:</b> <span style="font-size:16px;color:#16a34a">₦${fmt(d.total_to_pay||0)}</span><br>${miss.length?`<div style="margin-top:8px;max-height:220px;overflow:auto">${miss.map(m=>`• ${esc(m.username)} (${esc(m.package)}) — ₦${fmt(m.bonus)} → Upline ID ${m.uplineId}`).join('<br>')}</div>`:'<small style="color:#16a34a">No missing ✅</small>'}</div>`; }
+async function checkBackpay2(){ const {from,to}=backpayGetDates(); setMsg('bpMsg','⏳ Checking...','info'); document.getElementById('bpResult').innerHTML=''; try{ const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:from||null,to:to||null,mode:'check'})}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Check failed'); setMsg('bpMsg','✅ Check done — Missing: '+(d.missing_count||0),'success'); backpayRenderPreview(d); }catch(e){ setMsg('bpMsg','❌ '+e.message,'error'); } }
+async function payBackpay2(){ const {from,to}=backpayGetDates(); if(!confirm('Pay Backpay? No double.')) return; setMsg('bpMsg','⏳ Paying...','info'); try{ const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:from||null,to:to||null,mode:'pay'})}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Pay failed'); setMsg('bpMsg','✅ '+(d.message||'Paid!'),'success'); alert('✅ '+(d.message||'Paid!')); setTimeout(()=>location.reload(),1200); }catch(e){ setMsg('bpMsg','❌ '+e.message,'error'); } }
+async function loadAdminVendors(){ const el=document.getElementById('adminVendorList'); el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading vendors...</p>'; try{ const r=await fetch('/api/admin/vendors'+adminQS(),{headers:getHeaders(),credentials:'include'}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'No vendors endpoint'); allVendors=d.vendors||[]; }catch(e){ el.innerHTML='<p style="color:red;text-align:center">❌ '+esc(e.message)+'</p>'; return; } document.getElementById('vendorTotalStat').textContent=allVendors.length; document.getElementById('vendorApprovedStat').textContent=allVendors.filter(v=>v.status==='APPROVED').length; document.getElementById('vendorPendingStat').textContent=allVendors.filter(v=>v.status==='PENDING').length; document.getElementById('vendorFundedStat').textContent='₦'+fmt(allVendors.reduce((s,v)=>s+Number(v.balance||0),0)); renderVendors(); }
+function renderVendors(){ const el=document.getElementById('adminVendorList'); const q=(document.getElementById('vendorSearch').value||'').toLowerCase().trim(); let list=vendorFilter==='ALL'?[...allVendors]:allVendors.filter(v=>v.status===vendorFilter); if(q) list=list.filter(v=>`${v.username||''} ${v.email||''} ${v.vendor_name||''} ${v.code||''} ${v.phone||''}`.toLowerCase().includes(q)); document.getElementById('vendorCount').textContent=list.length; if(!list.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No vendors here.</p>'; return; } el.innerHTML=list.map(v=>{ const st=String(v.status||'PENDING'); const col=st==='APPROVED'?'#dcfce7;color:#166534':st==='PENDING'?'#fef3c7;color:#92400e':'#fee2e2;color:#991b1b'; const name=v.username||v.vendor_name||'Vendor'; return `<div class="dep-item ${st==='PENDING'?'pending':''}"><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(name)}</b><span class="badge" style="background:${col}">${esc(st)}</span></div><div style="font-size:11px;margin-top:6px;line-height:1.7">Vendor ID: <b>${v.id}</b> • User ID: <b>${v.user_id}</b> • Code: <b>${esc(v.code||'-')}</b><br>Name: ${esc(v.vendor_name||'-')}<br>Email: ${esc(v.email||'-')}<br>Phone: ${esc(v.phone||'-')}<br>Balance: <b>₦${fmt(v.balance)}</b> • Activated: <b>${v.total_activated||0}</b></div><div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${st!=='APPROVED'?`<button onclick="adminVendorAction(${v.id},'APPROVED')" style="flex:1;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:900;font-size:12px">✅ Approve</button>`:''}${st!=='REJECTED'?`<button onclick="adminVendorAction(${v.id},'REJECTED')" style="flex:1;padding:12px;background:#fee2e2;color:#991b1b;border:none;border-radius:10px;font-weight:800;font-size:12px">✕ Reject</button>`:''}<button onclick="adminVendorFundPrompt(${v.id},'${escAttr(name)}')" style="flex:1;padding:12px;background:#f59e0b;color:#000;border:none;border-radius:10px;font-weight:900;font-size:12px">💰 Fund</button></div></div>`; }).join(''); }
+async function vendorMake(){ const val=document.getElementById('vendorMakeInput').value.trim(); const phone=document.getElementById('vendorMakePhone').value.trim(); if(!val){ setMsg('vendorMakeMsg','❌ Enter email / username / userId','error'); return; } if(!confirm('Make '+val+' a Vendor?')) return; setMsg('vendorMakeMsg','⏳ Making vendor...','info'); try{ let body={}; if(/^\d+$/.test(val)) body.userId=Number(val); else if(val.includes('@')) body.email=val; else body.username=val; if(phone) body.phone=phone; body.user=val; body.user_id=body.userId||undefined; const r=await fetch('/api/admin/vendors/create'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify(body)}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Create failed'); setMsg('vendorMakeMsg','✅ '+d.message,'success'); document.getElementById('vendorMakeInput').value=''; document.getElementById('vendorMakePhone').value=''; await loadAdminVendors(); }catch(e){ setMsg('vendorMakeMsg','❌ '+e.message,'error'); } }
+async function adminVendorAction(id,action){ if(!confirm(action+' this vendor?')) return; try{ const r=await fetch('/api/admin/vendors/action'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,action})}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Failed'); alert('✅ '+d.message); loadAdminVendors(); }catch(e){ alert('❌ '+e.message); } }
+async function adminVendorFundPrompt(id,name){ const amt=prompt('How much you wan fund '+name+' (Vendor '+id+') with? e.g 90000'); if(!amt||Number(amt)<=0) return; await vendorFundDo(id,Number(amt)); }
+async function vendorFundDirect(){ const id=Number(document.getElementById('vendorFundId').value); const amt=Number(document.getElementById('vendorFundAmount').value); if(!id||!amt||amt<=0){ setMsg('vendorFundMsg','❌ Enter Vendor ID + valid amount','error'); return; } await vendorFundDo(id,amt); }
+async function vendorFundDo(id,amt){ setMsg('vendorFundMsg','⏳ Funding...','info'); try{ if(!confirm('Fund Vendor '+id+' with ₦'+fmt(amt)+'?')){ setMsg('vendorFundMsg','Cancelled','info'); return; } const r=await fetch('/api/admin/vendors/fund'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({id,amount:amt})}); const d=await r.json(); if(!r.ok||!d.success) throw new Error(d.message||'Fund failed'); setMsg('vendorFundMsg','✅ '+d.message,'success'); alert('✅ '+d.message); document.getElementById('vendorFundAmount').value=''; await loadAdminVendors(); }catch(e){ setMsg('vendorFundMsg','❌ '+e.message,'error'); } }
 loadAdminVendors();
+loadVendorPending();
 </script>
 </body>
 </html>
