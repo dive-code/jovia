@@ -62,6 +62,28 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     </div>
   </div>
 
+  <!-- ========== NEW: REFERRED BOARD - NO UPLINE NAME ========== -->
+  <div class="card" style="border:2px solid #16a34a">
+    <h3>👥 Referred Board — Track Before You Activate</h3>
+    <p class="sub">This board show people wey <b>Referred</b> you / vendor refer. <b>Upline full name NO go show here</b> — only <b>Referred by: You</b> / <b>Referred: @username</b>.<br>Use am to check who you never activate, and whether their <b>Referral Bonus don enter Affiliate Dashboard</b> or still missing.</p>
+    <div class="stat-grid">
+      <div class="stat"><span>Referred Total</span><b id="refTotalStat">0</b></div>
+      <div class="stat"><span>Activated</span><b id="refActiveStat" style="color:#16a34a">0</b></div>
+      <div class="stat"><span>Pending Activate</span><b id="refPendingStat" style="color:#f59e0b">0</b></div>
+      <div class="stat"><span>Bonus Missing</span><b id="refMissingStat" style="color:#dc2626">0</b></div>
+    </div>
+    <label class="lbl">Filter by Vendor / Referrer — User ID or Username</label>
+    <input id="refFilterInput" placeholder="e.g 12 or username — leave empty to show all">
+    <div class="grid2">
+      <button class="btn btn-black" onclick="loadReferred()">🔍 Show Referred</button>
+      <button class="btn btn-green" onclick="fixReferralBonus()">💰 Fix Missing Referral Bonus</button>
+    </div>
+    <div id="refMsg" class="msg"></div>
+    <div id="referredList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Referred to load board...</p></div>
+    <p class="sub" style="margin-top:8px">Bonus rule: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> → go to <b>Affiliate Balance</b> of the person wey refer them, immediately after vendor approve / activate. If e show MISSING, press Fix button.</p>
+  </div>
+  <!-- ========== END REFERRED BOARD ========== -->
+
   <!-- ========== BACKPAY 2 - BY DATE - WORKS WITH BACKPAY 1 ========== -->
   <div class="card" style="border:2px solid #f59e0b">
     <h3>💰 Backpay 2 — Direct Referral Only</h3>
@@ -142,9 +164,102 @@ function fmt(n){return Number(n||0).toLocaleString()}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function escAttr(s){ return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 let allVendors=[], vendorFilter='ALL';
+let allReferred=[];
 
 function setMsg(id,t,k){const el=document.getElementById(id);el.textContent=t;el.className='msg show '+(k||'info')}
 function setVendorFilter(f){vendorFilter=f;['All','Approved','Pending','Rejected'].forEach(x=>{const el=document.getElementById('vendorFilter'+x);if(el)el.className='filter-btn'});const map={ALL:'vendorFilterAll',APPROVED:'vendorFilterApproved',PENDING:'vendorFilterPending',REJECTED:'vendorFilterRejected'};document.getElementById(map[f]).className='filter-btn active';renderVendors()}
+
+// ---------- NEW: REFERRED BOARD - NO UPLINE NAME ----------
+function referralBonusFor(pkg){
+  const p=String(pkg||'').toLowerCase();
+  if(p.includes('silver')) return 8000;
+  if(p.includes('gold')) return 13000;
+  if(p.includes('super')) return 13000;
+  return 0;
+}
+function isActivated(u){
+  const s=String(u.account_status||u.status||'').toLowerCase();
+  return ['active','approved','activated'].includes(s);
+}
+async function loadReferred(){
+  const filter=(document.getElementById('refFilterInput').value||'').trim().toLowerCase();
+  const el=document.getElementById('referredList');
+  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading referred...</p>';
+  setMsg('refMsg','⏳ Loading referred board...','info');
+  try{
+    // Try dedicated endpoint first, fallback to users list
+    let rows=[];
+    try{
+      const r=await fetch('/api/admin/vendors/referred'+adminQS()+(filter?'&q='+encodeURIComponent(filter):''),{headers:getHeaders(),credentials:'include'});
+      const d=await r.json();
+      if(r.ok && d.success && Array.isArray(d.referred)) rows=d.referred;
+      else if(r.ok && Array.isArray(d.users)) rows=d.users;
+      else throw new Error('no-endpoint');
+    }catch(e){
+      const r2=await fetch('/api/admin/users'+adminQS(),{headers:getHeaders(),credentials:'include'});
+      const d2=await r2.json();
+      rows=d2.users||d2||[];
+      // Only people wey get referrer - so board no empty with everybody
+      rows=rows.filter(u=>u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id);
+    }
+    if(filter){
+      rows=rows.filter(u=>{
+        const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''}`.toLowerCase();
+        const self=`${u.id} ${u.username||''} ${u.email||''}`.toLowerCase();
+        return hay.includes(filter) || self.includes(filter);
+      });
+    }
+    allReferred=rows;
+    renderReferred();
+    setMsg('refMsg','✅ Loaded '+rows.length+' referred user(s) — Upline name hidden, only Referred label dey show.','success');
+  }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); el.innerHTML='<p style="color:red;text-align:center">❌ '+esc(e.message)+'</p>'; }
+}
+function renderReferred(){
+  const el=document.getElementById('referredList');
+  const rows=allReferred||[];
+  const active=rows.filter(isActivated).length;
+  const pending=rows.length-active;
+  // Bonus missing = activated but no bonus flag from backend. If backend no send bonus_paid, assume missing if activated.
+  const missing=rows.filter(u=>isActivated(u) && !u.bonus_paid && u.referral_bonus_paid!==1 && u.bonus_status!=='paid').length;
+  document.getElementById('refTotalStat').textContent=rows.length;
+  document.getElementById('refActiveStat').textContent=active;
+  document.getElementById('refPendingStat').textContent=pending;
+  document.getElementById('refMissingStat').textContent=missing;
+  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No referred user found for this filter. Enter Vendor ID / Username for the vendor wey refer them.</p>'; return; }
+  el.innerHTML=rows.map(u=>{
+    const pkg=u.package||u.plan||'Silver';
+    const bonus=referralBonusFor(pkg);
+    const activated=isActivated(u);
+    const paid=u.bonus_paid||u.referral_bonus_paid===1||u.bonus_status==='paid';
+    const bonusLabel= !activated ? '<span style="color:#f59e0b">⏳ Not activated yet — no bonus yet</span>' : paid ? '<span style="color:#16a34a">✅ Bonus Paid → Affiliate Dashboard</span>' : '<span style="color:#dc2626">❌ Bonus MISSING — press Fix below</span>';
+    // ✅ NEVER show upline full name — only Referred label + masked ID
+    const refId=u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||'-';
+    return `<div class="dep-item ${!activated?'pending':''}">
+      <div style="display:flex;justify-content:space-between;gap:8px"><b>Referred: @${esc(u.username||u.full_name||('User '+u.id))}</b><span class="badge" style="background:${activated?'#dcfce7;color:#166534':'#fef3c7;color:#92400e'}">${activated?'ACTIVATED':'PENDING'}</span></div>
+      <div style="font-size:11px;margin-top:6px;line-height:1.7">
+        User ID: <b>${u.id}</b> • Package: <b>${esc(pkg)}</b><br>
+        Referred by: <b>You (Vendor / Referrer ID ${esc(refId)})</b> — <small>upline name hidden</small><br>
+        Email: ${esc(u.email||'-')}<br>
+        Referral Bonus: <b>₦${fmt(bonus)}</b> — ${bonusLabel}<br>
+        Date: ${esc(u.created_at||'')}
+      </div>
+    </div>`;
+  }).join('');
+}
+async function fixReferralBonus(){
+  const filter=(document.getElementById('refFilterInput').value||'').trim();
+  if(!confirm('Fix missing referral bonus'+(filter?' for '+filter:' for ALL')+'? E go pay only missing ones, no double. Continue?')) return;
+  setMsg('refMsg','⏳ Fixing missing referral bonus... no close page','info');
+  try{
+    // Use same Backpay 2 pay endpoint — e dey pay only missing, no double
+    const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:null,to:null,mode:'pay',filter:filter||undefined})});
+    const d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.message||'Fix failed - make sure Backpay 2 don deploy');
+    setMsg('refMsg','✅ '+(d.message||'Referral bonus fixed!')+' — Check Affiliate Dashboard now.','success');
+    alert('✅ '+(d.message||'Referral bonus fixed!'));
+    await loadReferred();
+  }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); }
+}
 
 // ---------- BACKPAY 2 - BY DATE ----------
 function backpayGetDates(){
@@ -198,7 +313,6 @@ async function payBackpay2(){
     setMsg('bpMsg','✅ '+(d.message||'Backpay Paid!')+' — Everybody balance go don update.','success');
     backpayRenderPreview({from,to,total_active:d.total_active||0,missing_count:0,paid_count:(d.paid||0),no_upline_count:0,total_to_pay:d.totalPaid||0,missing:[]});
     alert('✅ '+(d.message||'Backpay Paid!'));
-    // Auto reload everybody side
     setTimeout(()=>location.reload(),1200);
   }catch(e){setMsg('bpMsg','❌ '+e.message,'error')}
 }
