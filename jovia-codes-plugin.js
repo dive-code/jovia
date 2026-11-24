@@ -1,5 +1,3 @@
-"
-```js
 "use strict";
 const crypto = require("crypto");
 
@@ -217,7 +215,7 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  const getTotalCodes = () => db.prepare("SELECT COUNT(*) AS total FROM jovia_codes").get().total;
  const ADMIN_PASS = process.env.ADMIN_PASSWORD || "Divine@@1";
  const WIN_RATE = 35;
- const CONVERT_DIVISOR_2 = 10; // ✅ REGULAR ONLY: 10 points = ₦1, 10,000 = ₦1,000, 200,000 = ₦20,000
+ const CONVERT_DIVISOR_2 = 10; // ✅ REGULAR ONLY: 10 points = ₦1
 
  // ===== ✅ FIXED PRICES: Silver->Gold 3000, Gold->Super 8000, Silver->Super 13000 =====
  const UPGRADE_PRICES = { "silver->gold": 3000, "gold->super": 8000, "silver->super": 13000 };
@@ -845,13 +843,11 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  });
 
  // ===== ✅ WITHDRAW CODE - REGULAR ONLY =====
- // ✅ AFFILIATE = DIRECT, NO CODE. Frontend no go call this for Affiliate.
- // If any old frontend call am with withdrawalType=affiliate, return success immediately.
  safeAdd("post","/api/withdraw/apply",userGuard,(req,res)=>{
  const raw=normalizeCode(req.body?.code);
- const wt = String(req.body?.withdrawalType||req.body?.type||"").toLowerCase();
- if(wt.includes("affiliate")){
- return res.json({success:true,message:"Affiliate - No code needed, direct withdrawal",code:null});
+ // ✅ AFFILIATE = NO CODE
+ if(String(req.body?.withdrawalType||req.body?.type||"").toLowerCase().includes("affiliate")){
+ return res.json({success:true,message:"Affiliate - No code needed",code:null});
  }
  try{
  const user=db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
@@ -865,8 +861,6 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  });
 
  // ===== ✅ WITHDRAWALS - AFFILIATE DIRECT, REGULAR CONVERSION =====
- // AFFILIATE: amount = amount direct, conversion_rate=1, NO code, NO ÷10
- // REGULAR: amount = converted naira, points_used = points, conversion ÷10, code REQUIRED
  safeAdd("post","/api/withdrawals", userGuard, (req,res)=>{
  try{
  const user = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
@@ -875,17 +869,12 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  const b = req.body||{};
  const type = String(b.withdrawalType || b.type || "affiliate").toLowerCase();
  const isAff = type.includes("affiliate");
-
- let pointsUsed, nairaAmount, conversionRate;
-
+ let pointsUsed, nairaAmount, convRate;
  if(isAff){
- // ✅ AFFILIATE DIRECT - wetin you type na wetin go drop
+ // ✅ AFFILIATE DIRECT - wetin you type na wetin go drop, NO ÷10, NO CODE
  nairaAmount = Number(b.converted_amount || b.convertedAmount || b.amount || 0);
- // Frontend for affiliate sends converted_amount = amount, points_used = amount
- // If old frontend send points, still treat as naira direct - NO ÷10
- if(!nairaAmount || nairaAmount<=0) return res.status(400).json({success:false, message:"Enter withdrawal amount"});
  pointsUsed = nairaAmount;
- conversionRate = 1;
+ convRate = 1;
  } else {
  // ✅ REGULAR - CONVERSION ÷10
  pointsUsed = Number(b.points_used || b.pointsUsed || 0);
@@ -894,38 +883,36 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  nairaAmount = Math.floor(pointsUsed / CONVERT_DIVISOR_2);
  }
  if(pointsUsed<=0){
- // Old flow: no conversion page, amount na points
  pointsUsed = nairaAmount;
  nairaAmount = Math.floor(pointsUsed / CONVERT_DIVISOR_2);
  }
+ convRate = CONVERT_DIVISOR_2;
+ }
  if(!pointsUsed || pointsUsed<=0) return res.status(400).json({success:false, message:"Enter withdrawal amount"});
  if(nairaAmount<=0) return res.status(400).json({success:false, message:"Amount too small after conversion"});
- conversionRate = CONVERT_DIVISOR_2;
- }
-
  const balCol = isAff ? "affiliate_balance": "wallet_balance";
  const balance = Number(user[balCol]||0);
  if(pointsUsed > balance) return res.status(400).json({success:false, message:`Insufficient balance. Your balance na ₦${balance.toLocaleString()}`});
  const min = isAff ? 20000: 60000;
- if(balance < min) return res.status(400).json({success:false, message:`Minimum withdrawal for ${isAff?"Affiliate":"Regular"} na ₦${min.toLocaleString()}`});
- if(pointsUsed < min) return res.status(400).json({success:false, message:`Minimum withdrawal na ₦${min.toLocaleString()}`});
-
- // ✅ CODE: REGULAR ONLY - REQUIRED. AFFILIATE: SKIP COMPLETELY, even if code = AFFILIATE_NO_CODE
- const codeRaw = String(b.code || b.withdrawalCode || b.withdrawal_code || "").trim().toUpperCase();
+ if(balance < min) return res.status(400).json({success:false, message:`Minimum withdrawal for ${type} na ${min.toLocaleString()} points`});
+ if(pointsUsed < min) return res.status(400).json({success:false, message:`Minimum withdrawal na ${min.toLocaleString()} points`});
+ // ✅ CODE: REGULAR ONLY - REQUIRED. AFFILIATE: SKIP
+ const code = String(b.code || b.withdrawalCode || b.withdrawal_code || "").trim().toUpperCase();
  if(!isAff){
- if(!codeRaw || codeRaw==="AFFILIATE_NO_CODE") return res.status(400).json({success:false, message:"Withdrawal code required for Regular - Enter JOVIA-XXXXXX"});
- const row = db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(codeRaw);
+ if(!code || code==="AFFILIATE_NO_CODE") return res.status(400).json({success:false, message:"Withdrawal code required for Regular"});
+ }
+ if(code && !isAff){
+ const row = db.prepare("SELECT * FROM jovia_codes WHERE code=?").get(code);
  if(!row) return res.status(400).json({success:false, message:"Invalid withdrawal code"});
  if(row.type!=="withdraw") return res.status(400).json({success:false, message:"Wrong code type"});
  if(Number(row.used)===1) return res.status(400).json({success:false, message:"This code don already use"});
  const sure = getSureUser(user);
- db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,codeRaw);
+ db.prepare(`UPDATE jovia_codes SET used=1,used_by=?,used_by_name=?,used_by_email=?,used_by_id=?,used_at=datetime('now') WHERE code=? AND used=0`).run(sure.display,sure.sureName,sure.sureEmail,sure.id,code);
  }
- // ✅ Deduct: Affiliate = deduct naira amount direct. Regular = deduct points.
  db.prepare(`UPDATE users SET ${balCol} = COALESCE(${balCol},0) - ? WHERE id=?`).run(pointsUsed, user.id);
  const info = db.prepare(`INSERT INTO withdrawals (user_id, username, email, amount, points_used, converted_amount, conversion_rate, withdrawal_type, type, country, method, bank_name, account_name, account_number, status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?, 'pending')`).run(
  user.id, user.username, user.email,
- nairaAmount, pointsUsed, nairaAmount, conversionRate,
+ nairaAmount, pointsUsed, nairaAmount, convRate,
  type, type,
  String(b.country||"Nigeria"),
  String(b.method||"BANK"),
@@ -934,19 +921,14 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  String(b.accountNumber||b.account_number||b.number||b.account||b.usdtAddress||"")
  );
  try{
- if(isAff){
- db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'withdrawal_request', ?, ?, datetime('now'))`).run(user.id, -pointsUsed, `Affiliate withdrawal request: ₦${nairaAmount.toLocaleString()} DIRECT - No code, No conversion`);
- } else {
- db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'withdrawal_request', ?, ?, datetime('now'))`).run(user.id, -pointsUsed, `Withdrawal request: ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} (÷${CONVERT_DIVISOR_2})`);
- }
+ if(isAff) db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'withdrawal_request', ?, ?, datetime('now'))`).run(user.id, -pointsUsed, `Affiliate withdrawal request: ₦${nairaAmount.toLocaleString()} DIRECT`);
+ else db.prepare(`INSERT INTO wallet_transactions (user_id, type, amount, description, created_at) VALUES (?, 'withdrawal_request', ?, ?, datetime('now'))`).run(user.id, -pointsUsed, `Withdrawal request: ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} (÷${CONVERT_DIVISOR_2})`);
  }catch{}
  try{
  if(isAff) notifyUser(user.id, "Withdrawal Request", `Your AFFILIATE withdrawal request of ₦${nairaAmount.toLocaleString()} don enter. E dey PENDING for Admin approval.`);
  else notifyUser(user.id, "Withdrawal Request", `Your withdrawal request of ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} don enter. E dey PENDING for Admin approval.`);
  }catch{}
- if(isAff){
- return res.json({success:true, message:`Affiliate withdrawal submitted: ₦${nairaAmount.toLocaleString()} go drop for your account.`, withdrawal:{id:info.lastInsertRowid, points_used:pointsUsed, amount:nairaAmount, converted_amount:nairaAmount}});
- }
+ if(isAff) return res.json({success:true, message:`Affiliate withdrawal submitted: ₦${nairaAmount.toLocaleString()} go drop for your account.`, withdrawal:{id:info.lastInsertRowid, points_used:pointsUsed, amount:nairaAmount, converted_amount:nairaAmount}});
  return res.json({success:true, message:`Withdrawal request submitted: ${pointsUsed.toLocaleString()} points = ₦${nairaAmount.toLocaleString()} go drop for your account.`, withdrawal:{id:info.lastInsertRowid, points_used:pointsUsed, amount:nairaAmount, converted_amount:nairaAmount}});
  }catch(e){ return res.status(500).json({success:false, message:e.message}); }
  });
@@ -975,11 +957,10 @@ module.exports = (app, db, requireUser, requireAdmin) => {
  return res.json({success:true,message:`Withdrawal approved - Pay ₦${Number(w.amount||0).toLocaleString()} (from ${Number(w.points_used||0).toLocaleString()} points)`, withdrawal: db.prepare("SELECT * FROM withdrawals WHERE id=?").get(id)});
  }
  if(action.includes("REJECT")||action.includes("DECLIN")){
- // Refund points / amount - Affiliate: same amount, Regular: points
  const balCol = String(w.withdrawal_type||"affiliate").includes("affiliate") ? "affiliate_balance": "wallet_balance";
  db.prepare(`UPDATE users SET ${balCol} = COALESCE(${balCol},0) + ? WHERE id=?`).run(Number(w.points_used||0), w.user_id);
  db.prepare("UPDATE withdrawals SET status='rejected' WHERE id=?").run(id);
- return res.json({success:true,message:`Withdrawal rejected - ${Number(w.points_used||0).toLocaleString()} refunded`});
+ return res.json({success:true,message:`Withdrawal rejected - ${Number(w.points_used||0).toLocaleString()} points refunded`});
  }
  return res.status(400).json({success:false,message:"Action must be APPROVED or REJECTED"});
  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
@@ -1202,4 +1183,3 @@ module.exports = (app, db, requireUser, requireAdmin) => {
 
  console.log("✅ FINAL WITH PREVENTION - No duplicate SUPER jobs same day - Prices 3000/8000/13000 - Gold->Silver REMOVED - Bonus to AFFILIATE - Withdraw Conversion ÷10 - Build go succeed");
 };
-```
