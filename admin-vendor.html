@@ -40,6 +40,9 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
 .msg.success{background:#dcfce7;color:#166534}
 .msg.error{background:#fee2e2;color:#991b1b}
 .msg.info{background:#eef2ff;color:#3730a3}
+/* ✅ GENERAL HISTORY - NO CUT */
+.hist-title{white-space:normal !important;overflow:visible !important;text-overflow:clip !important;line-height:1.5;word-break:break-word;overflow-wrap:anywhere}
+.hist-item{border:1.5px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;background:#fff}
 </style>
 </head>
 <body>
@@ -62,10 +65,10 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     </div>
   </div>
 
-  <!-- ========== NEW: REFERRED BOARD - NO UPLINE NAME ========== -->
+  <!-- ========== REFERRED BOARD - NO UPLINE NAME ========== -->
   <div class="card" style="border:2px solid #16a34a">
     <h3>👥 Referred Board — Track Before You Activate</h3>
-    <p class="sub">This board show people wey <b>Referred</b> you / vendor refer. <b>Upline full name NO go show here</b> — only <b>Referred by: You</b> / <b>Referred: @username</b>.<br>Use am to check who you never activate, and whether their <b>Referral Bonus don enter Affiliate Dashboard</b> or still missing.</p>
+    <p class="sub">This board show people wey <b>Referred</b> you / vendor refer. <b>Upline full name NO go show here</b> — only <b>Referred: @username</b> / <b>Referred by: ID / @username</b>.<br>Use am to check who you never activate, and whether their <b>Referral Bonus don enter Affiliate Dashboard</b> or still missing.</p>
     <div class="stat-grid">
       <div class="stat"><span>Referred Total</span><b id="refTotalStat">0</b></div>
       <div class="stat"><span>Activated</span><b id="refActiveStat" style="color:#16a34a">0</b></div>
@@ -84,7 +87,21 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
   </div>
   <!-- ========== END REFERRED BOARD ========== -->
 
-  <!-- ========== BACKPAY 2 - BY DATE - WORKS WITH BACKPAY 1 ========== -->
+  <!-- ========== NEW: GENERAL HISTORY - VENDOR ACTIVATIONS ========== -->
+  <div class="card" style="border:2px solid #0f172a">
+    <h3>📜 General History — Vendor Activations</h3>
+    <p class="sub">This na the <b>General History</b> for vendor activations. E go show <b>who vendor activate</b> + <b>who refer am</b>, with username FIRST — no more <i>Vendor activation - ₦9,0...</i> cut.<br>Example: <b>Vendor activation - @chiemerie (Silver) - ₦9,000 - Referred: @Kelly</b></p>
+    <input id="histSearch" placeholder="🔍 Search history — username / vendor / referred..." oninput="renderGeneralHistory()">
+    <div class="grid2" style="margin-top:6px">
+      <button class="btn btn-black" onclick="loadGeneralHistory()">🔄 Show General History</button>
+      <button class="btn btn-light" onclick="loadGeneralHistory(true)">🔍 Show All History</button>
+    </div>
+    <div id="histMsg" class="msg"></div>
+    <div id="generalHistoryList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show General History to load...</p></div>
+  </div>
+  <!-- ========== END GENERAL HISTORY ========== -->
+
+  <!-- ========== BACKPAY 2 - BY DATE ========== -->
   <div class="card" style="border:2px solid #f59e0b">
     <h3>💰 Backpay 2 — Direct Referral Only</h3>
     <p class="sub">Works with Backpay 1 (Main Server). No double pay — same mark <b>BACKPAY_ALL_{id}</b>.<br>Direct Referral ONLY: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> • No upgrade.<br>Pick date, press Check first to see preview, then Pay. After Pay, everybody balance go update.</p>
@@ -165,11 +182,12 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;',
 function escAttr(s){ return String(s==null?'':s).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 let allVendors=[], vendorFilter='ALL';
 let allReferred=[];
+let allHistory=[];
 
 function setMsg(id,t,k){const el=document.getElementById(id);el.textContent=t;el.className='msg show '+(k||'info')}
 function setVendorFilter(f){vendorFilter=f;['All','Approved','Pending','Rejected'].forEach(x=>{const el=document.getElementById('vendorFilter'+x);if(el)el.className='filter-btn'});const map={ALL:'vendorFilterAll',APPROVED:'vendorFilterApproved',PENDING:'vendorFilterPending',REJECTED:'vendorFilterRejected'};document.getElementById(map[f]).className='filter-btn active';renderVendors()}
 
-// ---------- NEW: REFERRED BOARD - NO UPLINE NAME ----------
+// ---------- REFERRED BOARD ----------
 function referralBonusFor(pkg){
   const p=String(pkg||'').toLowerCase();
   if(p.includes('silver')) return 8000;
@@ -187,7 +205,6 @@ async function loadReferred(){
   el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading referred...</p>';
   setMsg('refMsg','⏳ Loading referred board...','info');
   try{
-    // Try dedicated endpoint first, fallback to users list
     let rows=[];
     try{
       const r=await fetch('/api/admin/vendors/referred'+adminQS()+(filter?'&q='+encodeURIComponent(filter):''),{headers:getHeaders(),credentials:'include'});
@@ -199,12 +216,11 @@ async function loadReferred(){
       const r2=await fetch('/api/admin/users'+adminQS(),{headers:getHeaders(),credentials:'include'});
       const d2=await r2.json();
       rows=d2.users||d2||[];
-      // Only people wey get referrer - so board no empty with everybody
       rows=rows.filter(u=>u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id);
     }
     if(filter){
       rows=rows.filter(u=>{
-        const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''}`.toLowerCase();
+        const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''} ${u.referred_by_label||''}`.toLowerCase();
         const self=`${u.id} ${u.username||''} ${u.email||''}`.toLowerCase();
         return hay.includes(filter) || self.includes(filter);
       });
@@ -219,7 +235,6 @@ function renderReferred(){
   const rows=allReferred||[];
   const active=rows.filter(isActivated).length;
   const pending=rows.length-active;
-  // Bonus missing = activated but no bonus flag from backend. If backend no send bonus_paid, assume missing if activated.
   const missing=rows.filter(u=>isActivated(u) && !u.bonus_paid && u.referral_bonus_paid!==1 && u.bonus_status!=='paid').length;
   document.getElementById('refTotalStat').textContent=rows.length;
   document.getElementById('refActiveStat').textContent=active;
@@ -232,13 +247,14 @@ function renderReferred(){
     const activated=isActivated(u);
     const paid=u.bonus_paid||u.referral_bonus_paid===1||u.bonus_status==='paid';
     const bonusLabel= !activated ? '<span style="color:#f59e0b">⏳ Not activated yet — no bonus yet</span>' : paid ? '<span style="color:#16a34a">✅ Bonus Paid → Affiliate Dashboard</span>' : '<span style="color:#dc2626">❌ Bonus MISSING — press Fix below</span>';
-    // ✅ NEVER show upline full name — only Referred label + masked ID
     const refId=u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||'-';
+    const refName=u.referred_by_username||u.referrer_username||u.upline_username||u.referred_by_label||'';
+    const refLine = refName ? `Referred by: @${esc(String(refName).replace(/^Referred by: /,''))} (ID ${esc(refId)})` : `Referred by: ID ${esc(refId)}`;
     return `<div class="dep-item ${!activated?'pending':''}">
       <div style="display:flex;justify-content:space-between;gap:8px"><b>Referred: @${esc(u.username||u.full_name||('User '+u.id))}</b><span class="badge" style="background:${activated?'#dcfce7;color:#166534':'#fef3c7;color:#92400e'}">${activated?'ACTIVATED':'PENDING'}</span></div>
       <div style="font-size:11px;margin-top:6px;line-height:1.7">
         User ID: <b>${u.id}</b> • Package: <b>${esc(pkg)}</b><br>
-        Referred by: <b>You (Vendor / Referrer ID ${esc(refId)})</b> — <small>upline name hidden</small><br>
+        ${refLine} — <small>upline full name hidden</small><br>
         Email: ${esc(u.email||'-')}<br>
         Referral Bonus: <b>₦${fmt(bonus)}</b> — ${bonusLabel}<br>
         Date: ${esc(u.created_at||'')}
@@ -251,7 +267,6 @@ async function fixReferralBonus(){
   if(!confirm('Fix missing referral bonus'+(filter?' for '+filter:' for ALL')+'? E go pay only missing ones, no double. Continue?')) return;
   setMsg('refMsg','⏳ Fixing missing referral bonus... no close page','info');
   try{
-    // Use same Backpay 2 pay endpoint — e dey pay only missing, no double
     const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:null,to:null,mode:'pay',filter:filter||undefined})});
     const d=await r.json();
     if(!r.ok||!d.success) throw new Error(d.message||'Fix failed - make sure Backpay 2 don deploy');
@@ -261,7 +276,86 @@ async function fixReferralBonus(){
   }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); }
 }
 
-// ---------- BACKPAY 2 - BY DATE ----------
+// ---------- GENERAL HISTORY - VENDOR ACTIVATIONS - USERNAME FIRST, NO CUT ----------
+function cleanHistTitle(raw, item){
+  let t=String(raw||item.description||item.title||'');
+  // Old format: "Vendor activation - ₦9,000 deducted for activating chiemerie (Silver)" -> rebuild username first
+  const oldMatch=t.match(/activating\s+@?([A-Za-z0-9_.\-]+)\s*\(([^)]+)\)/i);
+  if(oldMatch && t.toLowerCase().startsWith('vendor activation')){
+    const amtMatch=t.match(/₦[\d,]+/);
+    const referred = item.referred_label||item.referred_by_label||item.upline_label||'';
+    return `Vendor activation - @${oldMatch[1]} (${oldMatch[2]}) - ${amtMatch?amtMatch[0]:''} deducted${referred? ' - '+referred : ''}`;
+  }
+  // New format already username-first, return as-is, full, no slice
+  return t;
+}
+async function loadGeneralHistory(showAll){
+  const el=document.getElementById('generalHistoryList');
+  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading general history...</p>';
+  setMsg('histMsg','⏳ Loading general history...','info');
+  try{
+    let rows=[];
+    const urls=[
+      '/api/admin/vendors/history',
+      '/api/admin/vendors/activations',
+      '/api/admin/history',
+      '/api/admin/wallet/history',
+      '/api/admin/transactions'
+    ];
+    for(const u of urls){
+      try{
+        const r=await fetch(u+adminQS(),{headers:getHeaders(),credentials:'include'});
+        const d=await r.json();
+        const arr=d.history||d.activations||d.transactions||d.data||d.rows||[];
+        if(r.ok && Array.isArray(arr) && arr.length){ rows=arr; break; }
+        if(r.ok && d.success && Array.isArray(arr)){ rows=arr; break; }
+      }catch(e){}
+    }
+    // Fallback: build from vendors list (Activated count) if no history endpoint yet
+    if(!rows.length){
+      setMsg('histMsg','⚠️ History endpoint never deploy yet for Server 4 — add /api/admin/vendors/history there, or check Referred Board for now. New activations go show username-first after Server 4 patch.','info');
+      el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:14px">No history endpoint yet. Use Referred Board above to see who vendor activate.<br><small>After Server 4 patch, new Vendor activation history go be:<br><b>Vendor activation - @username (Package) - ₦9,000 - Referred: @...</b></small></p>';
+      return;
+    }
+    // Only vendor activations, or all if Show All
+    if(!showAll){
+      rows=rows.filter(x=>{
+        const s=`${x.type||''} ${x.description||''} ${x.title||''}`.toLowerCase();
+        return s.includes('vendor') || s.includes('activation');
+      });
+    }
+    allHistory=rows;
+    renderGeneralHistory();
+    setMsg('histMsg','✅ Loaded '+rows.length+' history record(s) — username first, no cut.','success');
+  }catch(e){ setMsg('histMsg','❌ '+e.message,'error'); }
+}
+function renderGeneralHistory(){
+  const el=document.getElementById('generalHistoryList');
+  const q=(document.getElementById('histSearch').value||'').toLowerCase().trim();
+  let rows=[...allHistory];
+  if(q) rows=rows.filter(x=>`${x.username||''} ${x.description||''} ${x.title||''} ${x.referred_label||''} ${x.referred_by_label||''} ${x.vendor_username||''} ${x.user_id||''}`.toLowerCase().includes(q));
+  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No history here. Press Show General History.</p>'; return; }
+  el.innerHTML=rows.map(item=>{
+    const amt=Math.abs(Number(item.amount||item.cost||0));
+    const title=cleanHistTitle(item.description||item.title||'', item);
+    const referred=item.referred_label||item.referred_by_label||item.upline_label||'';
+    const who=item.username||item.activated_username||item.target_username||'';
+    const vendorName=item.vendor_username||item.vendor_name||item.activated_by||'';
+    return `<div class="hist-item">
+      <div class="hist-title"><b>${esc(title)}</b></div>
+      <div style="font-size:11px;color:#64748b;margin-top:6px;line-height:1.7">
+        ${who?`Activated: <b>@${esc(who)}</b> • `:''}
+        ${item.package||item.plan?`Package: <b>${esc(item.package||item.plan)}</b> • `:''}
+        ${amt?`Amount: <b style="color:#dc2626">-₦${fmt(amt)}</b><br>`:''}
+        ${referred?`${esc(referred)}<br>`:''}
+        ${vendorName?`Vendor: <b>${esc(vendorName)}</b> • `:''}
+        ${item.created_at||item.date?`Date: ${esc(item.created_at||item.date)}`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- BACKPAY 2 ----------
 function backpayGetDates(){
   let from=document.getElementById('bpFrom').value;
   let to=document.getElementById('bpTo').value;
