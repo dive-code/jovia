@@ -127,6 +127,25 @@ const vendorActivate4=(req,res)=>{try{
   try{db.prepare("UPDATE users SET account_status='active' WHERE id=?").run(targetId)}catch{}try{db.prepare("UPDATE users SET status='active' WHERE id=?").run(targetId)}catch{}
   try{const wel=pkg==="GOLD"?15000:pkg==="SUPER"?21000:9000;const hasWel=db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(targetId,`WELCOME_${targetId}`);if(!hasWel){db.prepare("UPDATE users SET wallet_balance=COALESCE(wallet_balance,0)+? WHERE id=?").run(wel,targetId);db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(targetId,"welcome_bonus",wel,"wallet",`WELCOME_${targetId}`,`Welcome bonus - ${pkg} activated by Vendor`)}}catch{}
   try{db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(uid,"vendor_activation_deduct",-cost,"vendor",`VENDOR_ACT_${targetId}`,`Vendor activation - ${money4(cost)} deducted for activating ${target.username} (${pkg})`)}catch{}
+  // ✅ FIX: REFERRAL BONUS — pay person wey refer this user, DIRECT to Affiliate Dashboard
+  try{
+    const _refId = Number(target.referred_by || target.referrer_id || target.upline_id || target.invited_by || target.sponsor_id || target.referred_by_id || 0);
+    let _finalRef = _refId;
+    if(!_finalRef && target.referral_code_used){
+      const _f = db.prepare("SELECT * FROM users WHERE referral_code=? COLLATE NOCASE").get(String(target.referral_code_used).trim());
+      if(_f) _finalRef = Number(_f.id);
+    }
+    if(_finalRef && _finalRef !== targetId){
+      const _bonus = pkg==="SILVER" ? 8000 : 13000;
+      const _already = (()=>{ try{ return db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(_finalRef, `BACKPAY_ALL_${targetId}`) || db.prepare("SELECT * FROM wallet_transactions WHERE user_id=? AND reference=?").get(_finalRef, `REF_BONUS_${targetId}`); }catch{ return null; } })();
+      if(!_already){
+        db.prepare("UPDATE users SET affiliate_balance=COALESCE(affiliate_balance,0)+? WHERE id=?").run(_bonus, _finalRef);
+        try{ db.prepare("INSERT INTO referral_rewards (referrer_id, referred_user_id, amount, referrer_package, referred_package) VALUES (?,?,?,?,?)").run(_finalRef, targetId, _bonus, "", pkg); }catch{}
+        db.prepare("INSERT INTO wallet_transactions (user_id,type,amount,balance_type,reference,description,created_at) VALUES (?,?,?,?,?,?,datetime('now'))").run(_finalRef,"referral_reward",_bonus,"affiliate",`BACKPAY_ALL_${targetId}`,`Referral bonus - ${target.username} ${pkg} [VENDOR]`);
+        try{ notify4(_finalRef,"Referral Bonus 💰",`You don get ₦${_bonus.toLocaleString()} for ${target.username} (${pkg}) — e don enter your Affiliate Balance.`); }catch{}
+      }
+    }
+  }catch(e){ console.log("Referral bonus vendor fail:", e.message); }
   try{notify4(uid,"Vendor Activation - Deducted",`${money4(cost)} deducted for activating ${target.username} (${pkg}). Remaining: ${money4(bal-cost)}`)}catch{}try{notify4(targetId,"Account Activated ✅",`Your ${pkg} account don activate. Welcome bonus don enter.`)}catch{}
   return res.json({success:true,message:`${target.username} (${pkg}) activated ✅ ${money4(cost)} deducted. Remaining: ${money4(bal-cost)}`,deducted:cost,cost,remaining_balance:bal-cost,vendor_balance:bal-cost})
 }catch(e){return res.status(500).json({success:false,message:e.message})}};
@@ -274,7 +293,6 @@ const resetEasy4=(req,res)=>{try{
   const code=cleanCode4(raw);
   const pw=String(req.body?.password||req.body?.newPassword||req.body?.new_password||req.body?.confirmPassword||"");
   const email=String(req.body?.email||req.body?.username||"").trim();
-  // ✅ NO CODE MODE: if code empty / 123456 / placeholder, but email + password dey -> reset direct, no Invalid
   if(!code || code==="123456" || code==="000000"){
     if(email && pw) return resetSimple4(req,res);
     return res.status(400).json({success:false,message:"Enter your email + new password"});
@@ -286,7 +304,6 @@ const resetEasy4=(req,res)=>{try{
   try{row=db.prepare("SELECT * FROM password_resets WHERE code=? AND used=0 ORDER BY id DESC LIMIT 1").get(code)}catch{}
   if(!row){try{row=db.prepare("SELECT * FROM password_resets WHERE token=? AND used=0 ORDER BY id DESC LIMIT 1").get(raw)}catch{}}
   if(!row){
-    // ✅ FALLBACK: if code no match but email dey, reset by email instead of Invalid - no more wahala
     if(email) return resetSimple4(req,res);
     return res.status(400).json({success:false,message:"Wrong code - enter your email + new password, we go reset direct"});
   }
@@ -456,6 +473,32 @@ force4("get","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const r=runBackpay
 force4("post","/api/admin/backpay-two",sGuard4,(req,res)=>{try{const b=req.body||{};const r=runBackpay2(b.from||null,b.to||null,"pay");return res.json({success:true,message:`Backpay 2 Done - Paid ${r.paid}, Total ₦${r.totalPaid}`,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 force4("post","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const {from,to,mode}=req.body||{};const r=runBackpay2(from||null,to||null,mode==="pay"?"pay":"check");if(mode==="pay")return res.json({success:true,message:`Backpay Range Done ${from} to ${to} - Paid ${r.paid}, Skipped ${r.skipped_count||0}, Total ₦${r.totalPaid}`,...r});return res.json({success:true,from,to,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
 force4("get","/api/admin/backpay-range",sGuard4,(req,res)=>{try{const r=runBackpay2(req.query.from||null,req.query.to||null,"check");return res.json({success:true,from:req.query.from||null,to:req.query.to||null,...r});}catch(e){return res.status(500).json({success:false,message:e.message})}});
+
+// ---------- REFERRED BOARD - NO UPLINE NAME ----------
+force4("get","/api/admin/vendors/referred",sGuard4,(req,res)=>{
+  try{
+    const q=String(req.query.q||req.query.filter||"").trim().toLowerCase();
+    let rows=db.prepare("SELECT id, username, email, full_name, package, plan, account_status, status, referred_by, referrer_id, upline_id, invited_by, sponsor_id, created_at FROM users WHERE referred_by IS NOT NULL OR referrer_id IS NOT NULL OR upline_id IS NOT NULL OR invited_by IS NOT NULL OR sponsor_id IS NOT NULL ORDER BY id DESC LIMIT 500").all();
+    let out=rows.map(u=>{
+      const pkg=String(u.package||u.plan||"SILVER").toUpperCase();
+      const activated=["active","approved","activated"].includes(String(u.account_status||u.status||"").toLowerCase());
+      let bonus_paid=false;
+      try{ const w=db.prepare("SELECT id FROM wallet_transactions WHERE reference=? LIMIT 1").get(`BACKPAY_ALL_${u.id}`); if(w) bonus_paid=true; }catch{}
+      return {
+        id:u.id, username:u.username, email:u.email,
+        package:pkg, plan:pkg,
+        account_status:u.account_status, status:u.status,
+        referred_by:u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||null,
+        referred_label:`Referred: @${u.username||("User "+u.id)}`,
+        referred_by_label:`Referred by: Vendor / Referrer ID ${u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||'-'}`,
+        bonus_paid, referral_bonus_paid: bonus_paid?1:0,
+        created_at:u.created_at, is_activated:activated
+      };
+    });
+    if(q) out=out.filter(u=>String(u.referred_by||"").toLowerCase().includes(q) || String(u.username||"").toLowerCase().includes(q) || String(u.id).includes(q) || String(u.email||"").toLowerCase().includes(q));
+    return res.json({success:true, referred:out, total:out.length});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
 
 // ---------- PING ----------
 force4("get","/api/server4/ping",(req,res)=>{return res.json({success:true,message:"Server4 dey work ✅ - LOANS + VENDORS + REFERRALS FULL FIXED - ADMIN ONLY VENDOR"})});
