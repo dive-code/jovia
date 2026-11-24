@@ -65,10 +65,28 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     </div>
   </div>
 
-  <!-- ========== REFERRED BOARD - FIXED UPLINE ========== -->
+  <!-- ========== VENDOR PANEL - SAME AS DASHBOARD VIDEO ========== -->
+  <div class="card" style="border:2px solid #16a34a">
+    <h3>🏪 Vendor Panel — Pending Users (Same as Dashboard Video)</h3>
+    <p class="sub">This na the Vendor Panel wey dey for video — Dorothy, ogar, okolie, etc. Each person MUST show <b>👥 Referred: @upline</b> before Activate button.<br>If e show <b>Referred: — No referrer</b>, that user register without referral code.</p>
+    <div class="stat-grid">
+      <div class="stat"><span>Vendor Balance</span><b id="vpBalance">₦0</b></div>
+      <div class="stat"><span>Pending Users</span><b id="vpPendingCount">0</b></div>
+    </div>
+    <input id="vpSearch" placeholder="🔍 Search Pending Users — Email, Name, Username or ID..." oninput="renderVendorPending()">
+    <div style="height:8px"></div>
+    <div class="grid2">
+      <button class="btn btn-black" onclick="loadVendorPending()">🔄 Show Pending Users</button>
+      <button class="btn btn-light" onclick="loadVendorPending()">🔍 Refresh</button>
+    </div>
+    <div id="vpMsg" class="msg"></div>
+    <div id="vendorPendingList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Pending Users...</p></div>
+  </div>
+
+  <!-- ========== REFERRED BOARD - FIXED UPLINE BUG ========== -->
   <div class="card" style="border:2px solid #16a34a">
     <h3>👥 Referred Board — Track Before You Activate</h3>
-    <p class="sub">This board show people wey <b>Referred</b> you / vendor refer. <b>Upline full name NO go show here</b> — only <b>Referred: @username (ID)</b>.<br>Use am to check who you never activate, and whether their <b>Referral Bonus don enter Affiliate Dashboard</b> or still missing.</p>
+    <p class="sub">Upline full name NO go show — only <b>Referred: @username (ID)</b>.<br><b>FIXED BUG:</b> Before, e dey show person herself as her own upline because e dey read <i>referred_label</i> (self) instead of <i>referred_by_label</i> (upline). Now e dey read upline first.</p>
     <div class="stat-grid">
       <div class="stat"><span>Referred Total</span><b id="refTotalStat">0</b></div>
       <div class="stat"><span>Activated</span><b id="refActiveStat" style="color:#16a34a">0</b></div>
@@ -83,13 +101,13 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     </div>
     <div id="refMsg" class="msg"></div>
     <div id="referredList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Referred to load board...</p></div>
-    <p class="sub" style="margin-top:8px">Bonus rule: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> → go to <b>Affiliate Balance</b> of the person wey refer them, immediately after vendor approve / activate. If e show MISSING, press Fix button.</p>
+    <p class="sub" style="margin-top:8px">Bonus rule: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> → go to <b>Affiliate Balance</b> of the person wey refer them.</p>
   </div>
 
-  <!-- ========== NEW: PENDING USERS FOR VENDOR - WITH UPLINE ========== -->
+  <!-- ========== PENDING USERS FOR VENDOR - WITH UPLINE ========== -->
   <div class="card" style="border:2px solid #f59e0b">
-    <h3>⏳ Pending Users — Vendor Go Activate These</h3>
-    <p class="sub">Same as Vendor Panel Pending Users, but for Admin. Each person go show <b>👥 Referred: @upline</b> so you fit track upline before vendor activate am.<br>If e show <b>Referred: — No referrer</b>, that user register without referral code, e no get upline.</p>
+    <h3>⏳ Pending Users — Admin View</h3>
+    <p class="sub">Same as Vendor Panel Pending Users, but for Admin. Each person go show <b>👥 Referred: @upline</b>.</p>
     <input id="pendingSearch" placeholder="🔍 Search pending — username / email / referred..." oninput="renderPendingUsers()">
     <div style="height:8px"></div>
     <button class="btn btn-black" onclick="loadPendingUsers()">🔍 Show Pending Users</button>
@@ -97,15 +115,17 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
     <div id="pendingList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show Pending Users...</p></div>
   </div>
 
-  <!-- ========== GENERAL HISTORY ========== -->
+  <!-- ========== GENERAL HISTORY + MY HISTORY - NO CUT ========== -->
   <div class="card" style="border:2px solid #0f172a">
-    <h3>📜 General History — Vendor Activations</h3>
-    <p class="sub">E go show <b>who vendor activate</b> + <b>who refer am</b>, with username FIRST — no more <i>Vendor activation - ₦9,0...</i> cut.<br>Example: <b>Vendor activation - @chiemerie (Silver) - ₦9,000 - Referred: @Kelly</b></p>
+    <h3>📜 General History — Vendor Activations + My History</h3>
+    <p class="sub">E go show <b>who vendor activate</b> + <b>who refer am</b>, with username FIRST — no more <i>Vendor activation - ₦9,0...</i> cut.<br>Example: <b>Vendor activation - @Dorothy (Gold) - ₦15,000 - Referred: @Kelly</b><br>Old rows wey be <i>Vendor activation - ₦9,000 deducted for activating X</i> go auto-rebuild to username-first for display.</p>
     <input id="histSearch" placeholder="🔍 Search history — username / vendor / referred..." oninput="renderGeneralHistory()">
     <div class="grid2" style="margin-top:6px">
       <button class="btn btn-black" onclick="loadGeneralHistory()">🔄 Show General History</button>
       <button class="btn btn-light" onclick="loadGeneralHistory(true)">🔍 Show All History</button>
     </div>
+    <div style="height:8px"></div>
+    <button class="btn btn-green" onclick="fixOldHistory()">🛠️ Fix Old History Rows (One Time)</button>
     <div id="histMsg" class="msg"></div>
     <div id="generalHistoryList" style="margin-top:12px"><p style="text-align:center;color:#94a3b8;padding:14px">Press Show General History to load...</p></div>
   </div>
@@ -113,7 +133,7 @@ input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:
   <!-- ========== BACKPAY 2 ========== -->
   <div class="card" style="border:2px solid #f59e0b">
     <h3>💰 Backpay 2 — Direct Referral Only</h3>
-    <p class="sub">Works with Backpay 1 (Main Server). No double pay — same mark <b>BACKPAY_ALL_{id}</b>.<br>Direct Referral ONLY: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b> • No upgrade.<br>Pick date, press Check first to see preview, then Pay. After Pay, everybody balance go update.</p>
+    <p class="sub">Works with Backpay 1. No double pay — same mark <b>BACKPAY_ALL_{id}</b>.<br>Direct Referral ONLY: <b>SILVER ₦8,000 • GOLD ₦13,000 • SUPER ₦13,000</b></p>
     <div class="grid2">
       <div><label class="lbl">From Date</label><input id="bpFrom" type="date"></div>
       <div><label class="lbl">To Date</label><input id="bpTo" type="date"></div>
@@ -185,23 +205,98 @@ let allVendors=[], vendorFilter='ALL';
 let allReferred=[];
 let allHistory=[];
 let allPending=[];
+let allVendorPending=[];
 
 function setMsg(id,t,k){const el=document.getElementById(id);el.textContent=t;el.className='msg show '+(k||'info')}
 function setVendorFilter(f){vendorFilter=f;['All','Approved','Pending','Rejected'].forEach(x=>{const el=document.getElementById('vendorFilter'+x);if(el)el.className='filter-btn'});const map={ALL:'vendorFilterAll',APPROVED:'vendorFilterApproved',PENDING:'vendorFilterPending',REJECTED:'vendorFilterRejected'};document.getElementById(map[f]).className='filter-btn active';renderVendors()}
 
-// ✅ FIXED: Build Upline / Referred line - NO full name, NO double "Referred by: @Referred by:"
+// ✅ FIXED UPLINE: referred_by_label / upline_label FIRST. NEVER use referred_label (that one na SELF)
 function uplineLine(u){
   if(!u) return '👥 Referred: — No referrer';
-  const label = String(u.referred_label||u.referred_by_label||u.upline_label||'').trim();
-  // If backend already send full label like "Referred: @Kelly (ID 12)", use am as-is
-  if(label && label.toLowerCase().startsWith('referred')) return '👥 '+label;
+  // 1. Backend upline label - correct one
+  const byLabel = String(u.referred_by_label||u.upline_label||'').trim();
+  if(byLabel && byLabel.toLowerCase().startsWith('referred')) {
+    // If backend mistakenly send self as upline, ignore am - check below
+    // Self check: if label contains own username AND own id, and no other username field, treat as no upline
+    // But normal case: referred_by_label na upline, use am
+    return '👥 '+byLabel;
+  }
+  // 2. Username fields
   const name = u.referred_by_username||u.referrer_username||u.upline_username||'';
   const id = u.referred_by||u.referrer_id||u.upline_id||u.invited_by||u.sponsor_id||'';
-  if(name) return `👥 Referred: @${name} (ID ${id||''})`.trim();
-  if(id) return `👥 Referred by: ID ${id}`;
+  // If name == self username, na bug - ignore
+  if(name && String(name).toLowerCase()!==String(u.username||'').toLowerCase()) return `👥 Referred: @${name} (ID ${id||''})`.trim();
+  if(id && String(id)!==String(u.id)) return `👥 Referred by: ID ${id}`;
+  // 3. Fallback: if referred_label exists but e no be self, use am
+  const selfLabel = String(u.referred_label||'').trim();
+  if(selfLabel && selfLabel.toLowerCase().startsWith('referred') && !selfLabel.toLowerCase().includes('@'+String(u.username||'').toLowerCase())) return '👥 '+selfLabel;
   return '👥 Referred: — No referrer';
 }
+function pkgCost(pkg){
+  const p=String(pkg||'').toLowerCase();
+  if(p.includes('gold')) return 15000;
+  if(p.includes('super')) return 21000;
+  return 9000;
+}
 
+// ---------- VENDOR PANEL - PENDING USERS ----------
+async function loadVendorPending(){
+  const el=document.getElementById('vendorPendingList');
+  el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading pending users...</p>';
+  setMsg('vpMsg','⏳ Loading Vendor Panel pending users...','info');
+  try{
+    let rows=[], bal=0;
+    // Try vendor endpoint (for vendor login), fallback to referred (for admin login)
+    try{
+      const r=await fetch('/api/vendor/pending-users'+adminQS(),{headers:getHeaders(),credentials:'include'});
+      const d=await r.json();
+      if(r.ok && Array.isArray(d.users) && d.users.length){ rows=d.users; bal=Number(d.vendor_balance||0); }
+      else throw new Error('no-vendor-session');
+    }catch(e){
+      // Admin fallback: use referred board pending
+      if(!allReferred.length) await loadReferred();
+      rows=allReferred.filter(u=>!isActivated(u));
+    }
+    allVendorPending=rows;
+    document.getElementById('vpBalance').textContent='₦'+fmt(bal||0);
+    document.getElementById('vpPendingCount').textContent=rows.length;
+    renderVendorPending();
+    setMsg('vpMsg','✅ Loaded '+rows.length+' pending user(s) — each one get 👥 Referred line.','success');
+  }catch(e){ setMsg('vpMsg','❌ '+e.message,'error'); }
+}
+function renderVendorPending(){
+  const el=document.getElementById('vendorPendingList');
+  const q=(document.getElementById('vpSearch').value||'').toLowerCase().trim();
+  let rows=[...allVendorPending];
+  if(q) rows=rows.filter(u=>`${u.username||''} ${u.email||''} ${u.full_name||''} ${u.id} ${u.referred_by_username||''} ${u.referred_by_label||''} ${u.upline_label||''}`.toLowerCase().includes(q));
+  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No pending user here.</p>'; return; }
+  el.innerHTML=rows.map(u=>{
+    const pkg=u.package||u.plan||'Silver';
+    const cost=u.activation_cost||pkgCost(pkg);
+    return `<div class="dep-item pending">
+      <div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(u.username||('User '+u.id))}</b><span class="badge" style="background:#fef3c7;color:#92400e">${esc(pkg)}</span></div>
+      <div style="font-size:11px;margin-top:4px;line-height:1.7">ID: <b>${u.id}</b> • ${esc(u.email||'')} • ${esc(u.full_name||'')}</div>
+      <div style="font-size:11px">Cost: <b>₦${fmt(cost)}</b></div>
+      <div class="upline-line">${esc(uplineLine(u))}</div>
+      <button onclick="vendorActivateUser(${u.id},'${escAttr(u.username||'')}')" style="width:100%;margin-top:10px;padding:12px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-weight:900;font-size:12px;cursor:pointer">✅ Activate ${esc(u.username||'')} - ₦${fmt(cost)}</button>
+    </div>`;
+  }).join('');
+}
+async function vendorActivateUser(id, name){
+  if(!confirm('Activate '+name+' (ID '+id+')?')) return;
+  setMsg('vpMsg','⏳ Activating '+name+'...','info');
+  try{
+    const r=await fetch('/api/vendor/activate'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({userId:id})});
+    const d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.message||'Activate failed - make sure you be approved vendor or admin');
+    setMsg('vpMsg','✅ '+d.message,'success');
+    alert('✅ '+d.message);
+    await loadVendorPending();
+    await loadGeneralHistory();
+  }catch(e){ setMsg('vpMsg','❌ '+e.message,'error'); }
+}
+
+// ---------- REFERRED BOARD ----------
 function referralBonusFor(pkg){
   const p=String(pkg||'').toLowerCase();
   if(p.includes('silver')) return 8000;
@@ -234,7 +329,7 @@ async function loadReferred(){
     }
     if(filter){
       rows=rows.filter(u=>{
-        const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''} ${u.referred_by_label||''} ${u.referred_label||''}`.toLowerCase();
+        const hay=`${u.referred_by||''} ${u.referrer_id||''} ${u.upline_id||''} ${u.invited_by||''} ${u.sponsor_id||''} ${u.referrer_username||''} ${u.referred_by_username||''} ${u.upline_username||''} ${u.referred_by_label||''} ${u.upline_label||''}`.toLowerCase();
         const self=`${u.id} ${u.username||''} ${u.email||''}`.toLowerCase();
         return hay.includes(filter) || self.includes(filter);
       });
@@ -254,7 +349,7 @@ function renderReferred(){
   document.getElementById('refActiveStat').textContent=active;
   document.getElementById('refPendingStat').textContent=pending;
   document.getElementById('refMissingStat').textContent=missing;
-  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No referred user found. Enter Vendor ID / Username.</p>'; return; }
+  if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No referred user found.</p>'; return; }
   el.innerHTML=rows.map(u=>{
     const pkg=u.package||u.plan||'Silver';
     const bonus=referralBonusFor(pkg);
@@ -273,7 +368,6 @@ function renderReferred(){
     </div>`;
   }).join('');
 }
-// ✅ NEW: Pending Users - same data as Referred, but only PENDING
 async function loadPendingUsers(){
   const el=document.getElementById('pendingList');
   setMsg('pendingMsg','⏳ Loading pending users...','info');
@@ -288,11 +382,11 @@ function renderPendingUsers(){
   const el=document.getElementById('pendingList');
   const q=(document.getElementById('pendingSearch').value||'').toLowerCase().trim();
   let rows=[...allPending];
-  if(q) rows=rows.filter(u=>`${u.username||''} ${u.email||''} ${u.referred_by_username||''} ${u.referred_label||''} ${u.referred_by_label||''} ${u.id}`.toLowerCase().includes(q));
+  if(q) rows=rows.filter(u=>`${u.username||''} ${u.email||''} ${u.referred_by_username||''} ${u.referred_by_label||''} ${u.upline_label||''} ${u.id}`.toLowerCase().includes(q));
   if(!rows.length){ el.innerHTML='<p style="text-align:center;color:#94a3b8;padding:20px">No pending user here. Press Show Pending Users.</p>'; return; }
   el.innerHTML=rows.map(u=>{
     const pkg=u.package||u.plan||'Silver';
-    const cost=String(pkg).toLowerCase().includes('gold')?15000:String(pkg).toLowerCase().includes('super')?21000:9000;
+    const cost=pkgCost(pkg);
     return `<div class="dep-item pending">
       <b>${esc(u.username||('User '+u.id))}</b>
       <div style="font-size:11px;margin-top:4px;line-height:1.7">ID: <b>${u.id}</b> • ${esc(u.email||'')} • ${esc(u.full_name||'')}</div>
@@ -303,7 +397,7 @@ function renderPendingUsers(){
 }
 async function fixReferralBonus(){
   const filter=(document.getElementById('refFilterInput').value||'').trim();
-  if(!confirm('Fix missing referral bonus'+(filter?' for '+filter:' for ALL')+'? E go pay only missing ones, no double. Continue?')) return;
+  if(!confirm('Fix missing referral bonus'+(filter?' for '+filter:' for ALL')+'? E go pay only missing ones, no double.')) return;
   setMsg('refMsg','⏳ Fixing missing referral bonus...','info');
   try{
     const r=await fetch('/api/admin/backpay-range'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({from:null,to:null,mode:'pay',filter:filter||undefined})});
@@ -315,14 +409,23 @@ async function fixReferralBonus(){
   }catch(e){ setMsg('refMsg','❌ '+e.message,'error'); }
 }
 
-// ---------- GENERAL HISTORY ----------
+// ---------- GENERAL HISTORY - REBUILD OLD ROWS FOR DISPLAY ----------
 function cleanHistTitle(raw, item){
   let t=String(raw||item.description||item.title||'');
+  // Old: "Vendor activation - ₦9,000 deducted for activating dorothy (Gold)"
   const oldMatch=t.match(/activating\s+@?([A-Za-z0-9_.\-]+)\s*\(([^)]+)\)/i);
   if(oldMatch && t.toLowerCase().startsWith('vendor activation')){
     const amtMatch=t.match(/₦[\d,]+/);
     const referred = item.referred_label||item.referred_by_label||item.upline_label||'';
-    return `Vendor activation - @${oldMatch[1]} (${oldMatch[2]}) - ${amtMatch?amtMatch[0]:''} deducted${referred? ' - '+referred : ''}`;
+    // If referred_label na self, ignore am
+    const refClean = (referred && !referred.toLowerCase().includes('@'+oldMatch[1].toLowerCase())) ? ' - '+referred : '';
+    return `Vendor activation - @${oldMatch[1]} (${oldMatch[2]}) - ${amtMatch?amtMatch[0]:''} deducted${refClean}`;
+  }
+  // Old: "Vendor activation - ₦9,000..." with no username in text - use item.username
+  if(t.toLowerCase().startsWith('vendor activation - ₦') && item.username){
+    const amtMatch=t.match(/₦[\d,]+/);
+    const ref = item.referred_by_label||item.upline_label||'';
+    return `Vendor activation - @${item.username} (${item.package||item.plan||''}) - ${amtMatch?amtMatch[0]:''} deducted${ref?' - '+ref:''}`;
   }
   return t;
 }
@@ -367,7 +470,7 @@ function renderGeneralHistory(){
   el.innerHTML=rows.map(item=>{
     const amt=Math.abs(Number(item.amount||item.cost||0));
     const title=cleanHistTitle(item.description||item.title||'', item);
-    const referred=item.referred_label||item.referred_by_label||item.upline_label||'';
+    const referred=item.referred_by_label||item.upline_label||'';
     const who=item.username||item.activated_username||item.target_username||'';
     const vendorName=item.vendor_username||item.vendor_name||item.activated_by||'';
     return `<div class="hist-item">
@@ -382,6 +485,18 @@ function renderGeneralHistory(){
       </div>
     </div>`;
   }).join('');
+}
+async function fixOldHistory(){
+  if(!confirm('Fix old Vendor History rows in DB to username-first? One time only.')) return;
+  setMsg('histMsg','⏳ Fixing old history rows...','info');
+  try{
+    const r=await fetch('/api/admin/fix-vendor-history'+adminQS(),{method:'POST',headers:getHeaders(),credentials:'include',body:JSON.stringify({})});
+    const d=await r.json();
+    if(!r.ok||!d.success) throw new Error(d.message||'Fix failed - add /api/admin/fix-vendor-history to Server 4 first');
+    setMsg('histMsg','✅ '+(d.message||'Old history fixed!'),'success');
+    alert('✅ '+(d.message||'Old history fixed!'));
+    await loadGeneralHistory();
+  }catch(e){ setMsg('histMsg','❌ '+e.message,'error'); }
 }
 
 // ---------- BACKPAY 2 ----------
@@ -422,7 +537,6 @@ async function payBackpay2(){
     alert('✅ '+(d.message||'Backpay Paid!')); setTimeout(()=>location.reload(),1200);
   }catch(e){setMsg('bpMsg','❌ '+e.message,'error')}
 }
-
 async function loadAdminVendors(){
   const el=document.getElementById('adminVendorList');
   el.innerHTML='<p style="text-align:center;padding:15px">⏳ Loading vendors...</p>';
