@@ -688,6 +688,83 @@ app.get("/api/admin/backpay-all", async (req,res)=>{
     return res.json({success:true, message:fullMessage, paidCount, totalPaid, skippedCount, superCount, noReferrerCount, totalChecked:allActivated.length, details});
   }catch(e){ return res.status(500).json({success:false, message:e.message}); }
 });
+app.get("/api/admin/private-messages",requireAdmin,(req,res)=>{
+  try{
+    const rows = db.prepare("SELECT * FROM private_messages ORDER BY id DESC LIMIT 200").all();
+    const mapped = rows.map(r=>{
+      let ids=[]; try{ids=JSON.parse(r.recipient_ids||"[]");}catch{}
+      let recips=[];
+      if(ids.length && ids.length<=20){
+        try{ recips = db.prepare(`SELECT id, full_name, username, email FROM users WHERE id IN (${ids.map(()=>'?').join(',')})`).all(...ids); }catch{}
+      }
+      return {id:r.id, title:r.title, message:r.message, recipient_ids:ids, recipients:recips.length?recips:r.recipient_summary, recipient_summary:r.recipient_summary, type:r.type, status:r.status, created_at:r.created_at, createdAt:r.created_at};
+    });
+    return res.json({success:true, messages:mapped});
+  }catch(e){return res.status(500).json({success:false,message:e.message});}
+});
+app.get("/api/user/private-messages",requireUser,(req,res)=>{
+  try{
+    const userId = req.user.id;
+    const all = db.prepare("SELECT * FROM private_messages WHERE status='sent' ORDER BY id DESC LIMIT 100").all();
+    const unread = [];
+    for(const msg of all){
+      let ids=[]; try{ids=JSON.parse(msg.recipient_ids||"[]");}catch{}
+      if(!ids.includes(userId)) continue;
+      const read = db.prepare("SELECT id FROM private_message_reads WHERE message_id=? AND user_id=? LIMIT 1").get(msg.id, userId);
+      if(!read) unread.push({id:msg.id, title:msg.title, message:msg.message, type:msg.type, created_at:msg.created_at});
+    }
+    return res.json({success:true, messages:unread, count:unread.length});
+  }catch(e){return res.status(500).json({success:false,message:e.message});}
+});
+app.post("/api/admin/private-messages",requireAdmin,(req,res)=>{
+  try{
+    const {recipientIds, title, message, type} = req.body||{};
+    if(!Array.isArray(recipientIds) || recipientIds.length===0) return res.status(400).json({success:false,message:"Select at least one recipient"});
+    const cleanTitle = cleanString(title,150);
+    const cleanMessage = cleanString(message,5000);
+    if(!cleanTitle) return res.status(400).json({success:false,message:"Title required"});
+    if(!cleanMessage) return res.status(400).json({success:false,message:"Message required"});
+    const validIds = recipientIds.map(n=>Number(n)).filter(n=>Number.isInteger(n)&&n>0);
+    if(!validIds.length) return res.status(400).json({success:false,message:"No valid recipient IDs"});
+    let summary = "";
+    if(validIds.length===1){
+      const u = db.prepare("SELECT full_name, username, email FROM users WHERE id=?").get(validIds[0]);
+      summary = u? `${u.full_name} (${u.username}) - ONE user` : `User ID ${validIds[0]} - ONE`;
+    } else {
+      summary = `${validIds.length} users - ALL/POP`;
+    }
+    const result = db.prepare("INSERT INTO private_messages (title, message, recipient_ids, recipient_summary, type, status, created_by) VALUES (?,?,?,?,?,?,?)").run(cleanTitle, cleanMessage, JSON.stringify(validIds), summary, cleanString(type||"popup",20)||"popup", "sent", req.admin.username||"admin");
+    return res.json({success:true, message:`Pop sent to ${validIds.length} user(s)`, id:result.lastInsertRowid, recipientCount:validIds.length, recipients:summary});
+  }catch(e){return res.status(500).json({success:false,message:e.message});}
+});
+app.post("/api/user/private-messages/read",requireUser,(req,res)=>{
+  try{
+    const id = toPositiveInteger(req.body?.id || req.body?.message_id);
+    if(!id) return res.status(400).json({success:false,message:"Invalid id"});
+    db.prepare("INSERT OR IGNORE INTO private_message_reads (message_id, user_id) VALUES (?,?)").run(id, req.user.id);
+    return res.json({success:true, message:"Marked as read"});
+  }catch(e){return res.status(400).json({success:false,message:e.message});}
+});
+app.post("/api/admin/email/send",requireAdmin,async(req,res)=>{
+  try{
+    const {recipients, subject, message} = req.body||{};
+    if(!Array.isArray(recipients) || recipients.length===0) return res.status(400).json({success:false,message:"No recipients"});
+    const cleanSub = cleanString(subject,200);
+    const cleanMsg = cleanString(message,10000);
+    if(!cleanSub) return res.status(400).json({success:false,message:"Subject required"});
+    if(!cleanMsg) return res.status(400).json({success:false,message:"Message required"});
+    const unique = [...new Set(recipients.map(e=>normalizeEmail(e)).filter(e=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)))];
+    if(!unique.length) return res.status(400).json({success:false,message:"No valid emails"});
+    if(!BREVO_API_KEY) return res.status(400).json({success:false,message:"BREVO_API_KEY not set"});
+    let sent=0, failed=0;
+    const errors=[];
+    for(const email of unique){
+      try{ await sendBrevoEmail(email, cleanSub, cleanMsg); sent++; }catch(err){ failed++; errors.push(`${email}: ${err.message}`); }
+    }
+    return res.json({success:true, sent, failed, total:unique.length, message:`Email campaign: Sent ${sent}, Failed ${failed} of ${unique.length}`, errors:errors.slice(0,5)});
+  }catch(e){return res.status(500).json({success:false,message:e.message});}
+});
+
 app.get("/api/admin/withdrawals",requireAdmin,(req,res)=>{try{const status=cleanString(req.query.status,30).toLowerCase();let rows;if(["pending","processing","paid","rejected"].includes(status)){rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.status=? ORDER BY w.id DESC`).all(status);}else{rows=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id ORDER BY w.id DESC`).all();}return res.json({success:true,withdrawals:rows.map((row)=>({...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)}})),withdrawalsEnabled:isWithdrawalsEnabled(),regularEnabled:isRegularWithdrawalsEnabled(),affiliateEnabled:isAffiliateWithdrawalsEnabled(),codesEnabled:isWithdrawalCodesEnabled()});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawals."});}});
 app.get("/api/admin/withdrawals/:id",requireAdmin,(req,res)=>{try{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});const row=db.prepare(`SELECT w.*, u.full_name, u.username, u.email, u.phone, u.package, u.wallet_balance, u.affiliate_balance FROM withdrawals w JOIN users u ON u.id=w.user_id WHERE w.id=?`).get(id);if(!row)return res.status(404).json({success:false,message:"Withdrawal not found."});const events=db.prepare(`SELECT * FROM withdrawal_events WHERE withdrawal_id=? ORDER BY id DESC`).all(id);return res.json({success:true,withdrawal:{...withdrawalResult(row),username:row.username,full_name:row.full_name,user:{id:row.user_id,fullName:row.full_name,full_name:row.full_name,username:row.username,email:row.email,phone:row.phone,package:row.package,walletBalance:Number(row.wallet_balance||0),affiliateBalance:Number(row.affiliate_balance||0)},events}});}catch(error){return res.status(500).json({success:false,message:"Unable to load withdrawal."});}});
 app.post("/api/admin/withdrawals/:id/approve",requireAdmin,(req,res)=>{const id=toPositiveInteger(req.params.id);if(!id)return res.status(400).json({success:false,message:"Invalid withdrawal."});try{const transferReference=cleanString(req.body?.transferReference??req.body?.manualTransferReference,150);const withdrawal=db.transaction(()=>{const row=db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);if(!row)throw new Error("Withdrawal not found.");if(row.status!=="pending")throw new Error(`Withdrawal is already ${row.status}.`);db.prepare(`UPDATE withdrawals SET status='paid',gateway='manual',gateway_reference=COALESCE(NULLIF(?, ''), gateway_reference),gateway_status='MANUAL_TRANSFER_COMPLETED',approved_by=?,approved_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=? AND status='pending'`).run(transferReference,req.admin.username,id);addWithdrawalEvent(id,"admin_approved_manual",req.admin.username,{method:"manual_bank_transfer",transferReference:transferReference||null,status:"paid",fullAmount:true});return db.prepare(`SELECT * FROM withdrawals WHERE id=?`).get(id);})();return res.json({success:true,message:"Withdrawal approved",withdrawal:withdrawalResult(withdrawal)});}catch(error){return res.status(400).json({success:false,message:error.message||"Unable to approve withdrawal."});}});
