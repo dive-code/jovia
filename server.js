@@ -130,7 +130,70 @@ function paymentResultForUser(p){if(!p)return null;return{id:p.id,userId:p.user_
 function withdrawalResult(r){if(!r)return null;return{id:r.id,user_id:r.user_id,userId:r.user_id,amount:r.amount,type:r.type,withdrawal_type:r.type,status:r.status,bank_name:r.bank_name,bankName:r.bank_name,account_name:r.account_name,accountName:r.account_name,account_number:r.account_number,accountNumber:r.account_number,note:r.note,gateway:r.gateway,username:r.username,full_name:r.full_name,email:r.email,created_at:r.created_at,createdAt:r.created_at,approved_by:r.approved_by,rejected_by:r.rejected_by};}
 function requireUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Not authenticated"});req.user=u;next();}
 function requireActiveUser(req,res,next){const u=getSessionUser(req);if(!u)return res.status(401).json({success:false,message:"Account not active yet"});req.user=u;next();}
+// ========== PRIVATE MESSAGES - ADMIN TO USER ==========
+try{ db.exec(`CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id INTEGER, sender_role TEXT DEFAULT 'admin', receiver_id INTEGER, user_id INTEGER, title TEXT DEFAULT '', message TEXT, is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`) }catch{}
+try{
+  const pmCols = db.prepare("PRAGMA table_info(private_messages)").all().map(c=>c.name);
+  if(!pmCols.includes("user_id")) db.exec("ALTER TABLE private_messages ADD COLUMN user_id INTEGER");
+  if(!pmCols.includes("title")) db.exec("ALTER TABLE private_messages ADD COLUMN title TEXT DEFAULT ''");
+  if(!pmCols.includes("is_read")) db.exec("ALTER TABLE private_messages ADD COLUMN is_read INTEGER DEFAULT 0");
+}catch{}
 
+// ✅ POST /api/admin/private-messages - Admin send private message to 1 user
+force4("post","/api/admin/private-messages",sGuard4,(req,res)=>{
+  try{
+    const b=req.body||{}, q=req.query||{};
+    const msg=String(b.message||b.text||b.content||"").trim();
+    const title=String(b.title||b.subject||"Message from Admin").trim();
+    // Accept any of these: userId, user_id, receiver_id, receiverId, email, username
+    let target=null;
+    const val=b.userId||b.user_id||b.receiver_id||b.receiverId||b.target_id||b.id||q.userId||q.user_id||"";
+    const em=String(b.email||b.user_email||q.email||"").trim();
+    const un=String(b.username||b.user||q.username||"").trim();
+    if(val && /^\d+$/.test(String(val).trim())) target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(val));
+    if(!target && em && em.includes("@")) target=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(em);
+    if(!target && un) target=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(un);
+    if(!target) return res.status(400).json({success:false,message:"User not found - send userId / email / username"});
+    if(!msg) return res.status(400).json({success:false,message:"Message empty - write message first"});
+    const adminId=Number(req.userId||req.user?.id||0)||0;
+    const info=db.prepare("INSERT INTO private_messages (sender_id, sender_role, receiver_id, user_id, title, message, is_read) VALUES (?,?,?,?,?,?,0)").run(adminId,"admin",Number(target.id),Number(target.id),title,msg);
+    // Also put for notifications so user go see am for bell
+    try{ notify4(Number(target.id), title||"Private Message 💬", msg); }catch{}
+    const row=db.prepare("SELECT * FROM private_messages WHERE id=?").get(info.lastInsertRowid);
+    return res.json({success:true,message:`Private message sent to @${target.username}`, data:row, pm:row});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+
+// ✅ GET - Admin see all private messages
+force4("get","/api/admin/private-messages",sGuard4,(req,res)=>{
+  try{
+    const uid=Number(req.query.userId||req.query.user_id||0);
+    let rows=[];
+    if(uid) rows=db.prepare("SELECT pm.*, u.username as username, u.email as email FROM private_messages pm LEFT JOIN users u ON u.id=pm.user_id WHERE pm.user_id=? OR pm.receiver_id=? ORDER BY pm.id DESC LIMIT 200").all(uid,uid);
+    else rows=db.prepare("SELECT pm.*, u.username as username, u.email as email FROM private_messages pm LEFT JOIN users u ON u.id=pm.user_id ORDER BY pm.id DESC LIMIT 200").all();
+    return res.json({success:true, messages:rows, data:rows, total:rows.length});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+
+// ✅ GET - User see him own private messages
+force4("get","/api/user/private-messages",userGuard4,(req,res)=>{
+  try{
+    const uid=getUserId4(req);
+    if(!uid) return res.status(401).json({success:false,message:"Session expired"});
+    const rows=db.prepare("SELECT * FROM private_messages WHERE user_id=? OR receiver_id=? ORDER BY id DESC LIMIT 100").all(uid,uid);
+    return res.json({success:true, messages:rows, data:rows, total:rows.length});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
+
+// ✅ POST - Mark as read
+force4("post","/api/admin/private-messages/read",sGuard4,(req,res)=>{
+  try{
+    const id=Number(req.body?.id||req.query?.id||0);
+    if(!id) return res.status(400).json({success:false,message:"Message ID required"});
+    db.prepare("UPDATE private_messages SET is_read=1 WHERE id=?").run(id);
+    return res.json({success:true,message:"Marked as read"});
+  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
+});
 // ===== FIXED: requireAdmin - accept cookie + Bearer token, no more cut off =====
 function requireAdmin(req,res,next){
   let a=null;
