@@ -891,8 +891,6 @@ app.post("/api/admin/user/unsuspend", suspendGuard, handleUnsuspendUser);
 app.post("/api/admin/users/unblock", suspendGuard, handleUnsuspendUser);
 app.get("/api/admin/unsuspend", suspendGuard, handleUnsuspendUser);
 // === END SUSPEND ===
-
-// ========== PRIVATE MESSAGES - FORCED DIRECT IN MAIN FILE - MUST BE BEFORE app.use("/api") ==========
 try{ db.exec(`CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id INTEGER, sender_role TEXT DEFAULT 'admin', receiver_id INTEGER, user_id INTEGER, title TEXT DEFAULT '', message TEXT, is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`); }catch{}
 app.post("/api/admin/private-messages", (req,res)=>{
   try{
