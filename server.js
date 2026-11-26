@@ -891,41 +891,6 @@ app.post("/api/admin/user/unsuspend", suspendGuard, handleUnsuspendUser);
 app.post("/api/admin/users/unblock", suspendGuard, handleUnsuspendUser);
 app.get("/api/admin/unsuspend", suspendGuard, handleUnsuspendUser);
 // === END SUSPEND ===
-try{ db.exec(`CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender_id INTEGER, sender_role TEXT DEFAULT 'admin', receiver_id INTEGER, user_id INTEGER, title TEXT DEFAULT '', message TEXT, is_read INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))`); }catch{}
-app.post("/api/admin/private-messages", (req,res)=>{
-  try{
-    const b=req.body||{}, q=req.query||{};
-    const msg=String(b.message||b.text||b.content||b.body||"").trim();
-    const title=String(b.title||b.subject||"Message from Admin").trim();
-    let rawVal = b.userId||b.user_id||b.receiver_id||b.to||b.recipient||b.target||b.user||b.vendorId||b.vendor_id||b.id||q.userId||q.user_id||q.to||"";
-    if(rawVal && typeof rawVal==="object") rawVal = rawVal.id||rawVal.userId||rawVal.username||rawVal.email||"";
-    let em = String(b.email||q.email||"").trim();
-    let un = String(b.username||b.user||q.username||"").trim();
-    if(typeof rawVal==="string" && rawVal.includes("@") && !em) em = rawVal.trim();
-    if(typeof rawVal==="string" && !/^\d+$/.test(rawVal.trim()) && !rawVal.includes("@") && !un) un = rawVal.trim();
-    if(un.startsWith("@")) un = un.slice(1);
-    let target=null;
-    if(rawVal && /^\d+$/.test(String(rawVal).trim())){
-      target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(rawVal));
-      if(!target){ try{ const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(Number(rawVal)); if(v && v.user_id) target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(v.user_id)); }catch{} }
-    }
-    if(!target && em && em.includes("@")) target=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(em);
-    if(!target && un) target=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(un);
-    if(!target) return res.status(400).json({success:false,message:"User not found", received:{rawVal:rawVal||null, email:em||null, username:un||null}});
-    if(!msg) return res.status(400).json({success:false,message:"Message empty"});
-    const info=db.prepare("INSERT INTO private_messages (sender_id, sender_role, receiver_id, user_id, title, message, is_read) VALUES (?,?,?,?,?,?,0)").run(0,"admin",Number(target.id),Number(target.id),title,msg);
-    try{ db.prepare("INSERT INTO notifications (user_id,title,message) VALUES (?,?,?)").run(Number(target.id), title||"Private Message", msg); }catch{}
-    const row=db.prepare("SELECT * FROM private_messages WHERE id=?").get(info.lastInsertRowid);
-    return res.json({success:true,message:`Private message sent to @${target.username}`,data:row,[STRIPPED]
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-app.get("/api/admin/private-messages",(req,res)=>{
-  try{
-    const rows=db.prepare("SELECT pm.*, u.username as username, u.email as email FROM private_messages pm LEFT JOIN users u ON u.id=pm.user_id ORDER BY pm.id DESC LIMIT 200").all();
-    return res.json({success:true,messages:rows,data:rows,[STRIPPED]
-  }catch(e){ return res.status(500).json({success:false,message:e.message}); }
-});
-// ========== END PRIVATE MESSAGES ==========
 
 app.use("/api",(req,res)=>{console.log("MISSING API:",req.method,req.originalUrl); return res.status(404).json({success:false,message:`API endpoint not found: ${req.method} ${req.originalUrl}`});});
 app.use((error,req,res,next)=>{console.error("SERVER ERROR:",error); if(error instanceof multer.MulterError){if(error.code==='LIMIT_FILE_SIZE') return res.status(400).json({success:false,message:"Video too large - max 200MB"}); return res.status(400).json({success:false,message:error.message});} if(res.headersSent)return next(error); return res.status(500).json({success:false,message:error.message||"Internal server error."});});
