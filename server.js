@@ -138,7 +138,6 @@ try{
   if(!pmCols.includes("title")) db.exec("ALTER TABLE private_messages ADD COLUMN title TEXT DEFAULT ''");
   if(!pmCols.includes("is_read")) db.exec("ALTER TABLE private_messages ADD COLUMN is_read INTEGER DEFAULT 0");
 }catch{}
-
 // ✅ POST /api/admin/private-messages - Admin send private message to 1 user
 force4("post","/api/admin/private-messages",sGuard4,(req,res)=>{
   try{
@@ -163,7 +162,6 @@ force4("post","/api/admin/private-messages",sGuard4,(req,res)=>{
     return res.json({success:true,message:`Private message sent to @${target.username}`, data:row, pm:row});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
-
 // ✅ GET - Admin see all private messages
 force4("get","/api/admin/private-messages",sGuard4,(req,res)=>{
   try{
@@ -174,7 +172,6 @@ force4("get","/api/admin/private-messages",sGuard4,(req,res)=>{
     return res.json({success:true, messages:rows, data:rows, total:rows.length});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
-
 // ✅ GET - User see him own private messages
 force4("get","/api/user/private-messages",userGuard4,(req,res)=>{
   try{
@@ -184,7 +181,6 @@ force4("get","/api/user/private-messages",userGuard4,(req,res)=>{
     return res.json({success:true, messages:rows, data:rows, total:rows.length});
   }catch(e){ return res.status(500).json({success:false,message:e.message}); }
 });
-
 // ✅ POST - Mark as read
 force4("post","/api/admin/private-messages/read",sGuard4,(req,res)=>{
   try{
