@@ -35,26 +35,36 @@ try{db.exec(`CREATE TABLE IF NOT EXISTS private_messages (id INTEGER PRIMARY KEY
 try{const c=db.prepare("PRAGMA table_info(private_messages)").all().map(x=>x.name);if(!c.includes("user_id"))db.exec("ALTER TABLE private_messages ADD COLUMN user_id INTEGER");if(!c.includes("title"))db.exec("ALTER TABLE private_messages ADD COLUMN title TEXT DEFAULT ''");if(!c.includes("is_read"))db.exec("ALTER TABLE private_messages ADD COLUMN is_read INTEGER DEFAULT 0");}catch{}
 
 // ========== PRIVATE MESSAGES ==========
-// POST /api/admin/private-messages - Admin send to 1 user
+// POST /api/admin/private-messages - Admin send to 1 user - FIXED: accepts all field names + Vendor ID + @username
 force5("post","/api/admin/private-messages",sGuard5,(req,res)=>{
   try{
-    const b=req.body||{},q=req.query||{};
-    const msg=String(b.message||b.text||b.content||"").trim();
+    const b=req.body||{},q=req.query||{},p=req.params||{};
+    const msg=String(b.message||b.text||b.content||b.body||"").trim();
     const title=String(b.title||b.subject||"Message from Admin").trim();
+    let rawVal = b.userId||b.user_id||b.receiver_id||b.receiverId||b.target_id||b.targetId||b.to||b.recipient||b.receiver||b.target||b.user||b.vendorId||b.vendor_id||b.vendor||b.id||q.userId||q.user_id||q.to||q.receiver_id||p.id||"";
+    if(rawVal && typeof rawVal==="object"){ rawVal = rawVal.id||rawVal.userId||rawVal.user_id||rawVal.username||rawVal.email||""; }
+    let em = String(b.email||b.user_email||b.receiver_email||b.to_email||q.email||"").trim();
+    let un = String(b.username||b.user_name||b.receiver_username||b.to_username||q.username||"").trim();
+    if(typeof rawVal==="string" && rawVal.includes("@") && !em) em = rawVal.trim();
+    if(typeof rawVal==="string" && !/^\d+$/.test(rawVal.trim()) && !rawVal.includes("@") && !un) un = rawVal.trim();
+    if(un.startsWith("@")) un = un.slice(1);
+    if(em.startsWith("@")) em = em.slice(1);
+    console.log("📩 PRIVATE-MSG DEBUG:", JSON.stringify({rawVal, em, un, bodyKeys:Object.keys(b)}));
     let target=null;
-    const val=b.userId||b.user_id||b.receiver_id||b.receiverId||b.target_id||b.id||q.userId||q.user_id||"";
-    const em=String(b.email||b.user_email||q.email||"").trim();
-    const un=String(b.username||b.user||q.username||"").trim();
-    if(val && /^\d+$/.test(String(val).trim())) target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(val));
+    if(rawVal && /^\d+$/.test(String(rawVal).trim())){
+      target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(rawVal));
+      if(!target){ try{ const v=db.prepare("SELECT * FROM vendors WHERE id=?").get(Number(rawVal)); if(v && v.user_id) target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(v.user_id)); }catch{} }
+      if(!target){ try{ const v=db.prepare("SELECT * FROM vendors WHERE user_id=?").get(Number(rawVal)); if(v && v.user_id) target=db.prepare("SELECT * FROM users WHERE id=?").get(Number(v.user_id)); }catch{} }
+    }
     if(!target && em && em.includes("@")) target=db.prepare("SELECT * FROM users WHERE email=? COLLATE NOCASE").get(em);
     if(!target && un) target=db.prepare("SELECT * FROM users WHERE username=? COLLATE NOCASE").get(un);
-    if(!target) return res.status(400).json({success:false,message:"User not found - send userId / email / username"});
-    if(!msg) return res.status(400).json({success:false,message:"Message empty"});
+    if(!target) return res.status(400).json({success:false,message:"User not found - send userId / email / username", received:{rawVal:rawVal||null, email:em||null, username:un||null, bodyKeys:Object.keys(b)}});
+    if(!msg) return res.status(400).json({success:false,message:"Message empty - write message first"});
     const adminId=Number(req.userId||req.user?.id||0)||0;
     const info=db.prepare("INSERT INTO private_messages (sender_id, sender_role, receiver_id, user_id, title, message, is_read) VALUES (?,?,?,?,?,?,0)").run(adminId,"admin",Number(target.id),Number(target.id),title,msg);
     try{notify5(Number(target.id),title||"Private Message 💬",msg);}catch{}
     const row=db.prepare("SELECT * FROM private_messages WHERE id=?").get(info.lastInsertRowid);
-    return res.json({success:true,message:`Private message sent to @${target.username}`,data:row,pm:row});
+    return res.json({success:true,message:`Private message sent to @${target.username} (User ID ${target.id})`,data:row,[STRIPPED]
   }catch(e){return res.status(500).json({success:false,message:e.message})}
 });
 // GET - Admin see all
@@ -64,7 +74,7 @@ force5("get","/api/admin/private-messages",sGuard5,(req,res)=>{
     let rows=[];
     if(uid) rows=db.prepare("SELECT pm.*, u.username as username, u.email as email FROM private_messages pm LEFT JOIN users u ON u.id=pm.user_id WHERE pm.user_id=? OR pm.receiver_id=? ORDER BY pm.id DESC LIMIT 200").all(uid,uid);
     else rows=db.prepare("SELECT pm.*, u.username as username, u.email as email FROM private_messages pm LEFT JOIN users u ON u.id=pm.user_id ORDER BY pm.id DESC LIMIT 200").all();
-    return res.json({success:true,messages:rows,data:rows,total:rows.length});
+    return res.json({success:true,messages:rows,data:rows,[STRIPPED]
   }catch(e){return res.status(500).json({success:false,message:e.message})}
 });
 // GET - User see him own
@@ -73,7 +83,7 @@ force5("get","/api/user/private-messages",userGuard5,(req,res)=>{
     const uid=getUserId5(req);
     if(!uid) return res.status(401).json({success:false,message:"Session expired"});
     const rows=db.prepare("SELECT * FROM private_messages WHERE user_id=? OR receiver_id=? ORDER BY id DESC LIMIT 100").all(uid,uid);
-    return res.json({success:true,messages:rows,data:rows,total:rows.length});
+    return res.json({success:true,messages:rows,data:rows,[STRIPPED]
   }catch(e){return res.status(500).json({success:false,message:e.message})}
 });
 force5("get","/api/private-messages",userGuard5,(req,res)=>{
@@ -81,7 +91,7 @@ force5("get","/api/private-messages",userGuard5,(req,res)=>{
     const uid=getUserId5(req);
     if(!uid) return res.status(401).json({success:false,message:"Session expired"});
     const rows=db.prepare("SELECT * FROM private_messages WHERE user_id=? OR receiver_id=? ORDER BY id DESC LIMIT 100").all(uid,uid);
-    return res.json({success:true,messages:rows,data:rows,total:rows.length});
+    return res.json({success:true,messages:rows,data:rows,[STRIPPED]
   }catch(e){return res.status(500).json({success:false,message:e.message})}
 });
 // POST - Mark read
@@ -98,7 +108,6 @@ force5("get","/api/server5/ping",(req,res)=>{return res.json({success:true,messa
 console.log("✅ SERVER 5 READY - PRIVATE MESSAGES");
 
 // ========== CHAIN TO SERVER 6 & 7 - SO 7 WORK TOGETHER ==========
-// Server 5 go load Server 6, Server 6 go load Server 7. No add Server 5 3 times.
 try{
   const _fs=require("fs"); const _path=require("path");
   const _candidates=["./server6.js","./server6/index.js","../server6.js","./server-6.js"];
